@@ -1,21 +1,35 @@
+const express = require('express');
 const jwt = require('jsonwebtoken');
 
 const __prod__ = process.env.MODE === 'production';
 
-const cookieOpts = {
+/** @type express.CookieOptions */
+const aCookieOpts = {
     httpOnly: true,
-    sameSite: __prod__ ? 'Lax' : 'None',
+    sameSite: __prod__ ? 'lax' : 'none',
+    secure: true,
+    maxAge: 15 * 60 * 1000 // 15 mins
+};
+
+/** @type express.CookieOptions */
+const rCookieOpts = {
+    httpOnly: true,
+    sameSite: __prod__ ? 'lax' : 'none',
     secure: true,
     maxAge: 15 * 24 * 60 * 60 * 1000 // 15 days
 };
 
-const rTokenName = 'tamagostart_rtoken';
+/** @type string */
+const aTokenName = process.env.ACCESS_TOKEN_COOKIE_NAME;
+
+/** @type string */
+const rTokenName = process.env.REFRESH_TOKEN_COOKIE_NAME;
 
 /**
- * @param {User} user
+ * @param {UserPayload} user
  */
 const createAccessToken = (user) => {
-    const { _id: userId, username } = user;
+    const { userId, username } = user;
     const accessToken = jwt.sign(
         { userId, username },
         process.env.ACCESS_TOKEN,
@@ -25,10 +39,10 @@ const createAccessToken = (user) => {
 };
 
 /**
- * @param {User} user
+ * @param {UserPayload} user
  */
 const createRefreshToken = (user) => {
-    const { _id: userId, username, refreshTokenVersion } = user;
+    const { userId, username, refreshTokenVersion } = user;
     const refreshToken = jwt.sign(
         { userId, username, refreshTokenVersion },
         process.env.REFRESH_TOKEN,
@@ -38,7 +52,7 @@ const createRefreshToken = (user) => {
 };
 
 /**
- * @param {User} user
+ * @param {UserPayload} user
  */
 const createAuthTokens = (user) => {
     const accessToken = createAccessToken(user);
@@ -47,33 +61,46 @@ const createAuthTokens = (user) => {
 };
 
 /**
- * @param {Response} res
- * @param {User} user
- * @param {JWTToken} rToken
+ * @param {express.Response} res
+ * @param {String} accessToken
  */
-const sendAuthCookies = (res, user, rToken = null) => {
-    if (rToken) {
-        res.cookie(rTokenName, rToken, cookieOpts);
-        return;
-    }
-
-    const refreshToken = createRefreshToken(user);
-    res.cookie(rTokenName, refreshToken, cookieOpts);
+const sendAccessTokenCookie = (res, accessToken) => {
+    res.cookie(aTokenName, accessToken, aCookieOpts);
 };
 
 /**
- * @param {Response} res
+ * @param {express.Response} res
+ * @param {String} refreshToken
+ */
+const sendRefreshTokenCookie = (res, refreshToken) => {
+    res.cookie(rTokenName, refreshToken, rCookieOpts);
+};
+
+/**
+ * @param {express.Response} res
+ * @param {UserPayload} user
+ */
+const sendAuthCookies = (res, user) => {
+    const { accessToken, refreshToken } = createAuthTokens(user);
+    sendAccessTokenCookie(res, accessToken);
+    sendRefreshTokenCookie(res, refreshToken);
+};
+
+/**
+ * @param {express.Response} res
  */
 const clearAuthCookies = (res) => {
-    res.clearCookie(rTokenName, cookieOpts);
+    res.clearCookie(rTokenName, rCookieOpts);
+    res.clearCookie(aTokenName, aCookieOpts);
 };
 
 module.exports = {
     rTokenName,
-    cookieOpts,
     createAccessToken,
     createRefreshToken,
     createAuthTokens,
     sendAuthCookies,
+    sendAccessTokenCookie,
+    sendRefreshTokenCookie,
     clearAuthCookies,
 }

@@ -3,13 +3,36 @@ require('dotenv').config();
 const { Server } = require("socket.io");
 
 const __prod__ = process.env.MODE === "production";
+const opts = __prod__ ? {} : {
+    cors: {
+        origin: 'http://localhost:5173',
+        methods: ['GET', 'POST'],
+        credentials: true,
+    },
+};
 
 const boardIdMap = new Map();
 const usernameMap = {};
 
 const initSocket = (server) => {
-    const opts = __prod__ ? {} : { cors: "*", methods: ["GET", "POST"] };
     const io = new Server(server, opts);
+
+    io.use(async (socket, next) => {
+        const cookies = socket.handshake.headers.cookie;
+        if (cookies) {
+            const cookiePairs = cookies.split('; ').reduce((acc, cookie) => {
+                const [name, value] = cookie.split('=');
+                acc[name] = value;
+                return acc;
+            }, {});
+            const accessToken = cookiePairs['access_token'];
+            const refreshToken = cookiePairs['refresh_token'];
+            console.log(cookiePairs);
+            console.log(accessToken);
+            console.log(refreshToken);
+        }
+        next();
+    });
 
     io.on('connection', (socket) => {
         // BOARD ===============================================================
@@ -19,7 +42,7 @@ const initSocket = (server) => {
             boardIdMap.set(socket.id, boardId);
             usernameMap[socket.id] = username;
             socket.join(boardId);
-            console.log(`User [username: ${username}] [socket_id: ${socket.id}] joins board with id ${boardId}`);
+            // console.log(`User [username: ${username}] [socket_id: ${socket.id}] joins board with id ${boardId}`);
         });
 
         socket.on("leaveBoard", (data) => {
@@ -226,9 +249,9 @@ const initSocket = (server) => {
                 socket.leave(boardId);
                 boardIdMap.delete(socket.id);
                 delete usernameMap[socket.id];
-                console.log(`#disconnectFromBoard: User with socket ID ${socket.id} disconnected from board ${boardId}`);
+                // console.log(`#disconnectFromBoard: User with socket ID ${socket.id} disconnected from board ${boardId}`);
             } else {
-                console.log(`#disconnectFromBoard: User with socket ID ${socket.id} disconnected without joining a board`);
+                // console.log(`#disconnectFromBoard: User with socket ID ${socket.id} disconnected without joining a board`);
             }
         });
 
