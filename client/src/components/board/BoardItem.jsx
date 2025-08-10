@@ -1,12 +1,12 @@
-import useAuth from "../../hooks/useAuth";
 import dateFormatter from "../../utils/dateFormatter";
 import { Link } from "react-router-dom";
 import { pluralizeString } from "../../utils/pluralize";
+import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 
 const BoardItem = ({ item }) => {
-    const { _id, title, description, members, createdBy, createdAt } = item;
+    const { currentUser } = useCurrentUserContext();
 
-    const { auth } = useAuth();
+    const { _id, title, description, members, createdBy, createdAt } = item;
 
     return (
         <Link
@@ -17,7 +17,7 @@ const BoardItem = ({ item }) => {
                 className="w-[210px] sm:w-[250px] h-[120px] sm:h-[135px] board--style board--hover md:border-[2px] border-[2px] border-gray-600 py-3 px-5 shadow-gray-600 select-none relative"
                 style={{ backgroundColor: "rgba(241, 241, 241, 0.5)" }}
             >
-                {auth?.user?._id === createdBy && (
+                {currentUser._id === createdBy && (
                     <div className="absolute top-0 right-0 w-[10px] h-[10px] bg-gray-600 z-20"></div>
                 )}
 

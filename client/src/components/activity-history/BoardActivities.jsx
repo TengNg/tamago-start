@@ -1,26 +1,24 @@
 import { useState, useEffect, useRef } from "react";
-import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import ActivityItem from "./ActivityItem";
 import Loading from "../ui/Loading";
 
-import useAuth from "../../hooks/useAuth";
 import useBoardState from "../../hooks/useBoardState";
 import Icon from "../shared/Icon";
+import useCurrentUserContext from "../../hooks/useCurrentUserContext";
+import { axiosPrivate } from "../../api/axios";
 
 const ACTIVITIES_PER_PAGE = 50;
 
 const BoardActivities = ({ open, setOpen }) => {
-    const { auth } = useAuth();
+    const { currentUser } = useCurrentUserContext();
     const { boardState } = useBoardState();
 
-    const dialog = useRef();
-
-    const axiosPrivate = useAxiosPrivate();
     const [activities, setActivities] = useState([]);
-
     const [activitiesPage, setActivitiesPage] = useState(1);
     const [loading, setLoading] = useState(false);
     const [allActivitiesFetched, setAllActivitiesFetched] = useState(false);
+
+    const dialog = useRef();
 
     useEffect(() => {
         if (open) {
@@ -123,7 +121,7 @@ const BoardActivities = ({ open, setOpen }) => {
                         {activities.length}
                     </div>
 
-                    {boardState?.board?.createdBy?._id === auth?.user?._id && (
+                    {boardState?.board?.createdBy?._id === currentUser._id && (
                         <div
                             className="badge text-red-500 bg-rose-100 cursor-pointer"
                             onClick={() => {

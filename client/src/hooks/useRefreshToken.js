@@ -11,7 +11,7 @@ const useRefreshToken = () => {
             setAuth({ user, accessToken });
             return accessToken;
         } catch (err) {
-            await axiosPrivate.get("/logout");
+            // await axiosPrivate.get("/logout");
             return undefined;
         }
     };

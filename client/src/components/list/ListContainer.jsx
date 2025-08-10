@@ -2,9 +2,7 @@ import React, { useMemo, useState } from "react";
 import List from "./List";
 import useBoardState from "../../hooks/useBoardState";
 import AddList from "./AddList";
-import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import { lexorank } from "../../utils/class/Lexorank";
-import useAuth from "../../hooks/useAuth";
 import {
     closestCenter,
     DndContext,
@@ -20,8 +18,12 @@ import {
 import { createPortal } from "react-dom";
 import Card from "../card/Card";
 import { useMouseDragScroll } from "../../hooks/useMouseDragScroll";
+import useCurrentUserContext from "../../hooks/useCurrentUserContext";
+import { axiosPrivate } from "../../api/axios";
 
 const ListContainer = ({ openAddList, setOpenAddList }) => {
+    const { currentUser } = useCurrentUserContext();
+
     const { boardState, setBoardState, socket } = useBoardState();
     const [clonedBoardState, setClonedBoardState] = useState(null);
 
@@ -29,10 +31,6 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
     const [activeCard, setActiveCard] = useState(undefined);
 
     const listContaineRef = useMouseDragScroll();
-
-    const { auth } = useAuth();
-
-    const axiosPrivate = useAxiosPrivate();
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -44,10 +42,10 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
 
     function validateBoardMember() {
         if (
-            boardState?.board?.createdBy?._id !== auth?.user?._id &&
+            boardState?.board?.createdBy?._id !== currentUser._id &&
             !boardState?.board?.members
                 .map((member) => member._id)
-                .includes(auth?.user?._id)
+                .includes(currentUser._id)
         ) {
             alert("You don't have permission, please join the board first");
             return;

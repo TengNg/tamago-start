@@ -6,16 +6,15 @@ import {
 import useBoardState from "../../hooks/useBoardState";
 import dateFormatter from "../../utils/dateFormatter";
 import { useState, useRef, useMemo, useEffect } from "react";
-import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import Icon from "../shared/Icon";
-import useAuth from "../../hooks/useAuth";
 import { useSearchParams } from "react-router-dom";
+import useCurrentUserContext from "../../hooks/useCurrentUserContext";
+import { axiosPrivate } from "../../api/axios";
 
 const CardComments = ({ card }) => {
     const queryClient = useQueryClient();
-    const axiosPrivate = useAxiosPrivate();
     const { socket } = useBoardState();
-    const { auth } = useAuth();
+    const { currentUser } = useCurrentUserContext();
     const commentTextareaRef = useRef();
     const linkedCommentRef = useRef();
     const [content, setContent] = useState("");
@@ -270,7 +269,7 @@ const CardComments = ({ card }) => {
                                     <div className="text-sm text-gray-700 flex flex-row justify-start items-start gap-1">
                                         <div className="flex items-center gap-1">
                                             {linkedComment.userId._id ===
-                                                auth?.user?._id && (
+                                                currentUser._id && (
                                                 <div className="font-medium mx-auto">
                                                     <Icon
                                                         className="w-3.5 h-3.5"
@@ -352,7 +351,7 @@ const CardComments = ({ card }) => {
                                             </button>
 
                                             {comment.userId._id ===
-                                                auth?.user?._id && (
+                                                currentUser._id && (
                                                 <button
                                                     onClick={() =>
                                                         handleDeleteComment(
@@ -373,7 +372,7 @@ const CardComments = ({ card }) => {
                                     <div className="text-sm text-gray-700 flex flex-row justify-start items-start gap-1">
                                         <div className="flex items-center gap-1">
                                             {comment.userId._id ===
-                                                auth?.user?._id && (
+                                                currentUser._id && (
                                                 <div className="font-medium mx-auto">
                                                     <Icon
                                                         className="w-3.5 h-3.5"

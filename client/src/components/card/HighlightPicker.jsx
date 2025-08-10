@@ -1,13 +1,11 @@
 import highlightColors from "../../data/highlights";
 import useBoardState from "../../hooks/useBoardState";
-import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import Icon from "../shared/Icon";
+import { axiosPrivate } from "../../api/axios";
 
 const HighlightPicker = ({ setOpen, card }) => {
     const { setCardDetailHighlight, setCardHighlight, socket } =
         useBoardState();
-
-    const axiosPrivate = useAxiosPrivate();
 
     const handleSetCardHighlight = async (value) => {
         if (value == null) {

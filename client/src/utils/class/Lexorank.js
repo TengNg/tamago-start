@@ -21,7 +21,8 @@ class Lexorank {
         let rank = "";
         let i = 0;
 
-        while (true) {
+        const maxLength = Math.max(prev.length, next.length);
+        while (i <= maxLength) {
             let prevChar = this.getChar(prev, i, this.MIN_CHAR);
             let nextChar = this.getChar(next, i, this.MAX_CHAR);
 

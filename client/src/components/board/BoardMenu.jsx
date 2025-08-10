@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from "react";
-import useAuth from "../../hooks/useAuth";
-import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import useBoardState from "../../hooks/useBoardState";
 import { useNavigate } from "react-router-dom";
 import { formatDateToYYYYMMDD } from "../../utils/dateFormatter";
 import Icon from "../shared/Icon";
+import useCurrentUserContext from "../../hooks/useCurrentUserContext";
+import { axiosPrivate } from "../../api/axios";
 
 const BoardMenu = ({
     setOpen,
@@ -12,12 +12,11 @@ const BoardMenu = ({
     setOpenBoardConfiguration,
     setOpenBoardActivities,
 }) => {
-    const { auth } = useAuth();
+    const { currentUser } = useCurrentUserContext();
     const { boardState, removeMemberFromBoard, socket } = useBoardState();
 
     const [showDescription, setShowDescription] = useState(false);
 
-    const axiosPrivate = useAxiosPrivate();
     const navigate = useNavigate();
 
     const containerRef = useRef();
@@ -31,8 +30,8 @@ const BoardMenu = ({
             await axiosPrivate.put(
                 `/boards/${boardState.board._id}/members/leave`,
             );
-            removeMemberFromBoard(auth?.user?.username);
-            socket.emit("leaveBoard", { username: auth?.user?.username });
+            removeMemberFromBoard(currentUser.username);
+            socket.emit("leaveBoard", { username: currentUser.username });
             navigate("/boards");
         } catch (err) {
             console.log(err);
@@ -132,7 +131,7 @@ const BoardMenu = ({
                 </div>
 
                 {boardState.board.createdBy.username ===
-                auth?.user?.username ? (
+                currentUser.username ? (
                     <div className="flex justify-start">
                         <button
                             onClick={() => handleCloseBoard()}
@@ -171,7 +170,7 @@ const BoardMenu = ({
                     <p className="font-normal text-start text-[0.75rem]">
                         created by:{" "}
                         <span className="font-medium underline">
-                            {auth?.user?.username}
+                            {currentUser.username}
                         </span>
                     </p>
                     <p className="font-normal text-[0.75rem] text-start mt-2">

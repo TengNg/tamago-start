@@ -2,13 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import Loading from "../ui/Loading";
 import VISIBILITY_MAP from "../../data/visibility";
 import useBoardState from "../../hooks/useBoardState";
-import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import Icon from "../shared/Icon";
+import { axiosPrivate } from "../../api/axios";
 
 const VisibilityConfig = ({ open, setOpen }) => {
     const { boardState, setBoardVisibility } = useBoardState();
-
-    const axiosPrivate = useAxiosPrivate();
 
     const [updating, setUpdating] = useState(false);
 

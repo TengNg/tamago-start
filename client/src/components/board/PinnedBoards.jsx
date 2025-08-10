@@ -1,7 +1,5 @@
-import useAuth from "../../hooks/useAuth";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import Loading from "../ui/Loading";
 import {
     SortableContext,
@@ -20,6 +18,8 @@ import {
 } from "@dnd-kit/core";
 import { createPortal } from "react-dom";
 import Icon from "../shared/Icon";
+import useCurrentUserContext from "../../hooks/useCurrentUserContext";
+import { axiosPrivate } from "../../api/axios";
 
 const Pinned = ({
     boardId,
@@ -71,7 +71,7 @@ const Pinned = ({
 };
 
 const PinnedBoards = ({ setOpen }) => {
-    const { auth, setAuth } = useAuth();
+    const { currentUser } = useCurrentUserContext();
 
     const [activeItem, setActiveItem] = useState(null);
     const [cleaned, setCleaned] = useState(false);
@@ -79,12 +79,9 @@ const PinnedBoards = ({ setOpen }) => {
     const [deletingBoardId, setDeletingBoardId] = useState(null);
 
     const navigate = useNavigate();
-    const axiosPrivate = useAxiosPrivate();
-
-    useEffect(() => {}, [auth.user?.pinnedBoardIdCollection]);
 
     const pinnedBoards = useMemo(() => {
-        const boards = auth?.user?.pinnedBoardIdCollection;
+        const boards = currentUser.pinnedBoardIdCollection;
         if (boards) {
             const entries = Object.entries(boards).map((entry, _) => {
                 const [boardId, obj] = entry;
@@ -95,7 +92,7 @@ const PinnedBoards = ({ setOpen }) => {
         }
 
         return [];
-    }, [auth?.user?.pinnedBoardIdCollection]);
+    }, [currentUser.pinnedBoardIdCollection]);
 
     const handleClose = () => {
         setOpen(false);
@@ -114,16 +111,6 @@ const PinnedBoards = ({ setOpen }) => {
             const response = await axiosPrivate.delete(
                 `/boards/${boardId}/pinned`,
             );
-            setAuth((prev) => {
-                return {
-                    ...prev,
-                    user: {
-                        ...prev.user,
-                        pinnedBoardIdCollection:
-                            response?.data?.result?.pinnedBoardIdCollection,
-                    },
-                };
-            });
         } catch (err) {
             console.log(err);
             alert("Failed to removed this board");
@@ -138,13 +125,6 @@ const PinnedBoards = ({ setOpen }) => {
         try {
             setLoading(true);
             await axiosPrivate.put(`/boards/pinned/clean`);
-
-            setAuth((prev) => {
-                return {
-                    ...prev,
-                    user: { ...prev.user, pinnedBoardIdCollection: {} },
-                };
-            });
 
             setLoading(false);
             setCleaned(true);
@@ -230,16 +210,6 @@ const PinnedBoards = ({ setOpen }) => {
         newPinnedBoards.forEach((board) => {
             const [boardId, boardTitle] = board;
             mapped[boardId] = { title: boardTitle };
-        });
-
-        setAuth((prev) => {
-            return {
-                ...prev,
-                user: {
-                    ...prev.user,
-                    pinnedBoardIdCollection: mapped,
-                },
-            };
         });
 
         return;

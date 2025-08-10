@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import useBoardState from "../../hooks/useBoardState";
-import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import HighlightPicker from "./HighlightPicker";
 import CardDetailInfo from "./CardDetailInfo";
 import Loading from "../ui/Loading";
@@ -8,6 +7,7 @@ import Loading from "../ui/Loading";
 import { useSearchParams } from "react-router-dom";
 import Icon from "../shared/Icon";
 import CardComments from "./CardComments";
+import { axiosPrivate } from "../../api/axios";
 
 const CardDetail = ({
     open,
@@ -41,8 +41,6 @@ const CardDetail = ({
     const [openCardDeleteConfirm, setOpenCardDeleteConfirm] = useState(false);
     const [isSavingDescription, setIsSavingDescription] = useState(false);
 
-    const axiosPrivate = useAxiosPrivate();
-
     const dialog = useRef();
     const cardDescriptionInput = useRef();
 
@@ -57,10 +55,10 @@ const CardDetail = ({
             dialog.current.showModal();
             dialog.current.focus();
 
-            //const textarea = dialog.current.querySelector('#card__title__textarea')
-            //if (textarea) {
-            //    textarea.blur();
-            //}
+            // const textarea = dialog.current.querySelector('#card__title__textarea')
+            // if (textarea) {
+            //     textarea.blur();
+            // }
 
             setOpenCardDeleteConfirm(false);
 
@@ -554,7 +552,7 @@ const CardDetail = ({
                                     >
                                         <Icon className="w-3 h-3" name="copy" />
                                         <span className="hidden sm:inline-block">
-                                            copy
+                                            duplicate
                                         </span>
                                     </button>
                                 </div>

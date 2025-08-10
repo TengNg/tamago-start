@@ -4,6 +4,7 @@ import useBoardState from "../../hooks/useBoardState";
 
 export default function ListMenu({
     list,
+    open,
     setOpen,
     handleDelete,
     handleCopy,
@@ -11,23 +12,41 @@ export default function ListMenu({
 }) {
     const containerRef = useRef();
 
-    const {
-        setListToMove,
-        openMoveListForm,
-        setOpenMoveListForm,
-        collapseList,
-        theme,
-    } = useBoardState();
+    const { setListToMove, setOpenMoveListForm, collapseList, theme } =
+        useBoardState();
 
     useEffect(() => {
         containerRef.current.focus();
-    }, []);
+        const abortController = new AbortController();
 
-    useEffect(() => {
-        if (!openMoveListForm) {
-            containerRef.current.focus();
-        }
-    }, [openMoveListForm]);
+        window.addEventListener(
+            "keydown",
+            (e) => {
+                if (e.key === "Escape" && open) {
+                    setOpen(false);
+                }
+            },
+            { signal: abortController.signal },
+        );
+
+        window.addEventListener(
+            "mousedown",
+            (e) => {
+                if (
+                    containerRef.current &&
+                    !containerRef.current.contains(e.target) &&
+                    collapse
+                ) {
+                    setOpen(false);
+                }
+            },
+            { signal: abortController.signal },
+        );
+
+        return () => {
+            abortController.abort();
+        };
+    }, []);
 
     const del = () => {
         handleDelete();
@@ -49,6 +68,7 @@ export default function ListMenu({
     const handleOpenMoveListForm = () => {
         setOpenMoveListForm(true);
         setListToMove(list);
+        setOpen(false);
     };
 
     return (

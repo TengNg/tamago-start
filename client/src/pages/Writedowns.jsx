@@ -2,7 +2,6 @@ import { useState, useEffect, useMemo } from "react";
 import Title from "../components/ui/Title";
 import Editor from "../components/writedown/Editor";
 
-import useAxiosPrivate from "../hooks/useAxiosPrivate";
 import WritedownItem from "../components/writedown/WritedownItem";
 
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -10,6 +9,7 @@ import { closestCenter, DndContext, DragOverlay } from "@dnd-kit/core";
 import { rectSwappingStrategy, SortableContext } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
 import { lexorank } from "../utils/class/Lexorank";
+import { axiosPrivate } from "../api/axios";
 
 const Writedown = () => {
     const [activeWritedown, setActiveWritedown] = useState(null);
@@ -27,15 +27,13 @@ const Writedown = () => {
 
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const axiosPrivate = useAxiosPrivate();
-
     const navigate = useNavigate();
 
     useEffect(() => {
         fetchWritedowns();
     }, []);
 
-    const handleFilterPinned = () => {
+    function handleFilterPinned() {
         if (searchParams.get("filter") === "pinned") {
             searchParams.delete("filter");
             setSearchParams(searchParams, { replace: true });
@@ -44,7 +42,7 @@ const Writedown = () => {
 
         searchParams.set("filter", "pinned");
         setSearchParams(searchParams, { replace: true });
-    };
+    }
 
     async function fetchWritedowns() {
         setIsDataLoaded(false);
@@ -52,11 +50,7 @@ const Writedown = () => {
             const response = await axiosPrivate.get("/personal_writedowns");
             setWritedowns(response.data.writedowns);
         } catch (err) {
-            if (err.response?.status === 403 || err.response?.status === 401) {
-                navigate("/login", { replace: true });
-            } else {
-                alert("Failed to get writedowns. Please try again.");
-            }
+            alert("Failed to get writedowns. Please try again.");
         } finally {
             setIsDataLoaded(true);
         }

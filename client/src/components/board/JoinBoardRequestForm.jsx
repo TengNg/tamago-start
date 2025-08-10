@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import Icon from "../shared/Icon";
+import { axiosPrivate } from "../../api/axios";
 
 const JoinBoardRequestForm = ({ open, setOpen }) => {
     const dialog = useRef();
     const boardCodeInput = useRef();
-
-    const axiosPrivate = useAxiosPrivate();
 
     const [success, setSuccess] = useState(false);
 

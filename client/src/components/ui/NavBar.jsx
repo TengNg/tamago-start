@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import { useNavigate, useLocation, NavLink } from "react-router-dom";
 import UserAccount from "./UserAccount";
-import useAuth from "../../hooks/useAuth";
 
 import PAGES from "../../data/pages";
 import Icon from "../shared/Icon";
+import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 
 const NAV_PAGES = [
     PAGES.BOARDS,
@@ -22,9 +22,10 @@ const KEYS = Object.freeze({
 });
 
 const NavBar = ({ setOpenPinnedBoards }) => {
+    const { currentUser } = useCurrentUserContext();
+
     const navigate = useNavigate();
     const { pathname } = useLocation();
-    const { auth } = useAuth();
 
     useEffect(() => {
         const handleOnKeyDown = (e) => {
@@ -41,7 +42,7 @@ const NavBar = ({ setOpenPinnedBoards }) => {
                 return;
 
             if (e.key === "5") {
-                const recentlyViewedBoardId = auth?.user?.recentlyViewedBoardId;
+                const recentlyViewedBoardId = currentUser.recentlyViewedBoardId;
                 if (recentlyViewedBoardId) {
                     navigate(`/b/${recentlyViewedBoardId}`);
                 }
@@ -59,9 +60,9 @@ const NavBar = ({ setOpenPinnedBoards }) => {
         () => {
             document.removeEventListener("keydown", handleOnKeyDown);
         };
-    }, [auth?.user?.username, auth?.user?.recentlyViewedBoardId]);
+    }, []);
 
-    if (Object.keys(auth).length == 0 || auth?.accessToken == undefined) {
+    if (!currentUser) {
         return (
             <section
                 id="header-section"
@@ -128,13 +129,13 @@ const NavBar = ({ setOpenPinnedBoards }) => {
                 <div className="md:block hidden w-[40px] h-[40px]"></div>
 
                 <div className="absolute lg:flex hidden items-center gap-2 lg:top-4 lg:left-4 top-2 left-2 text-[0.75rem] font-medium">
-                    {auth?.user?.recentlyViewedBoardId && (
+                    {currentUser.recentlyViewedBoardId && (
                         <button
                             title="Go to last viewed board"
                             className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border-[1px] border-dashed text-[0.75rem] lg:p-2 p-1 font-medium"
                             onClick={() => {
                                 const recentlyViewedBoardId =
-                                    auth?.user?.recentlyViewedBoardId;
+                                    currentUser.recentlyViewedBoardId;
                                 if (recentlyViewedBoardId) {
                                     navigate(`/b/${recentlyViewedBoardId}`);
                                 }
@@ -194,13 +195,12 @@ const NavBar = ({ setOpenPinnedBoards }) => {
 
                         <li className="lg:hidden block">
                             <div className="flex gap-2">
-                                {auth?.user?.recentlyViewedBoardId && (
+                                {currentUser.recentlyViewedBoardId && (
                                     <button
                                         className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border-[1px] border-dashed text-[0.75rem] lg:p-2 p-1 font-normal"
                                         onClick={() => {
                                             const recentlyViewedBoardId =
-                                                auth?.user
-                                                    ?.recentlyViewedBoardId;
+                                                currentUser.recentlyViewedBoardId;
                                             if (recentlyViewedBoardId) {
                                                 navigate(
                                                     `/b/${recentlyViewedBoardId}`,

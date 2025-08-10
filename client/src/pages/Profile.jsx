@@ -1,26 +1,25 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import useAuth from "../hooks/useAuth";
-import useAxiosPrivate from "../hooks/useAxiosPrivate";
 
-import Loading from "../components/ui/Loading";
 import Title from "../components/ui/Title";
 import BoardStats from "../components/board/BoardStats";
-import { axiosPrivate as axios } from "../api/axios";
+import { axiosPrivate } from "../api/axios";
 
 import dateFormatter from "../utils/dateFormatter";
+import useCurrentUserContext from "../hooks/useCurrentUserContext";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getOwnedBoards } from "../api/boardApi";
+import { updatePassword, updateUsername } from "../api/accountApi";
 
 const Profile = () => {
+    const queryClient = useQueryClient();
+
+    const { currentUser, logout } = useCurrentUserContext();
+
     const [changePassword, setChangePassword] = useState(false);
     const [password, setPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmedPassword, setConfirmedPassword] = useState("");
-    const [loading, setLoading] = useState(false);
-
-    const [ownedBoards, setOwnedBoards] = useState({
-        fetching: true,
-        boards: [],
-    });
 
     const [boardStatsModal, setBoardStatsModal] = useState({
         stats: [],
@@ -34,33 +33,9 @@ const Profile = () => {
         content: "",
     });
 
-    const { auth, setAuth } = useAuth();
     const navigate = useNavigate();
 
-    const axiosPrivate = useAxiosPrivate();
-
     const usernameInputRef = useRef(null);
-
-    useEffect(() => {
-        if (usernameInputRef.current) {
-            usernameInputRef.current.value = auth?.user?.username;
-        }
-
-        const getBoards = async () => {
-            const response = await axiosPrivate.get(`/boards/owned`);
-            const { boards } = response.data;
-            setOwnedBoards({ fetching: false, boards: boards });
-        };
-
-        getBoards().catch((err) => {
-            if (err.response?.status === 403 || err.response?.status === 401) {
-                navigate("/login", { replace: true });
-            } else {
-                alert("Failed to get owned boards");
-            }
-            console.log(err);
-        });
-    }, []);
 
     useEffect(() => {
         let id = null;
@@ -72,6 +47,66 @@ const Profile = () => {
         return () => clearTimeout(id);
     }, [msg]);
 
+    const ownedBoardsQuery = useQuery({
+        queryKey: ["boards", "owned"],
+        queryFn: () => getOwnedBoards(),
+    });
+
+    const updateUsernameMutation = useMutation({
+        mutationFn: (newUsername) => updateUsername({ username: newUsername }),
+        onSuccess: (_data, _variables, _context) => {
+            queryClient.invalidateQueries({ queryKey: ["me"], exact: true });
+            usernameInputRef.current.value = "";
+        },
+        onError: (err) => {
+            const { status } = err?.response;
+            if (status === 409 || status === 400) {
+                setMsg({
+                    error: true,
+                    content: err?.response?.data?.msg,
+                });
+            } else {
+                setMsg({
+                    error: true,
+                    content: "Failed to update username",
+                });
+            }
+        },
+    });
+
+    const updatePasswordMutation = useMutation({
+        mutationFn: (currentPwd, newPwd) => {
+            return updatePassword({
+                currentPassword: currentPwd,
+                newPassword: newPwd,
+            });
+        },
+        onSuccess: (data, _variables, _context) => {
+            if (data?.notice === "PLEASE_PROVIDE_NEW_PASSWORD") {
+                setMsg({ error: true, content: "Please provide new password" });
+                return;
+            }
+
+            if (data?.notice === "PASSWORD_NOT_CHANGED") {
+                setMsg({
+                    error: true,
+                    content: "New password is the same as current password",
+                });
+                return;
+            }
+
+            queryClient.invalidateQueries({ queryKey: ["me"], exact: true });
+        },
+        onError: (err) => {
+            console.log(err);
+            const errMsg =
+                err?.response?.status === 400
+                    ? "Current password is incorrect"
+                    : "Can't change password";
+            setMsg({ error: true, content: errMsg });
+        },
+    });
+
     const closeChangePasswordOption = () => {
         setPassword("");
         setNewPassword("");
@@ -82,12 +117,12 @@ const Profile = () => {
     const checkPassword = () => {
         if (confirmedPassword === "" || newPassword === "" || password === "") {
             setMsg({ error: true, content: "Please fill all required fields" });
-            return false;
+            return;
         }
 
         if (!newPassword) {
             setMsg({ error: true, content: "Please provide new password" });
-            return false;
+            return;
         }
 
         if (newPassword === password) {
@@ -95,7 +130,7 @@ const Profile = () => {
                 error: true,
                 content: "New password is the same as current password",
             });
-            return false;
+            return;
         }
 
         if (confirmedPassword !== newPassword) {
@@ -103,112 +138,36 @@ const Profile = () => {
                 error: true,
                 content: "Confirmed password is not matched",
             });
-            return false;
+            return;
         }
 
-        return true;
+        setMsg({
+            error: true,
+            content: "Failed to update password",
+        });
     };
 
     const handleSaveProfile = async (e) => {
         e.preventDefault();
         const newUsername = usernameInputRef.current.value.trim();
 
-        if (newUsername === "" || newUsername === auth?.user?.username) {
+        if (newUsername === "" || newUsername === currentUser.username) {
             return;
         }
 
-        try {
-            setLoading(true);
-            const response = await axiosPrivate.put(
-                `/account/edit/new-username`,
-                JSON.stringify({ newUsername }),
-            );
-            const { accessToken } = response.data;
-            setLoading(false);
-            setAuth((prev) => {
-                return {
-                    ...prev,
-                    accessToken,
-                    user: { ...prev.user, username: newUsername },
-                };
-            });
-        } catch (err) {
-            const { status } = err?.response;
-            if (status === 409 || status === 400) {
-                setMsg({
-                    error: true,
-                    content: err?.response?.data?.msg,
-                });
-                setLoading(false);
-            } else {
-                console.log(err);
-                setAuth({});
-                navigate("/login");
-            }
-        }
+        updateUsernameMutation.mutate(newUsername);
     };
 
     const handleCheckPassword = async (e) => {
         e.preventDefault();
-        const ok = checkPassword();
-        if (!ok) return;
-
-        try {
-            setLoading(true);
-
-            const response = await axiosPrivate.put(
-                `/account/edit/new-password`,
-                JSON.stringify({
-                    currentPassword: password,
-                    newPassword: newPassword,
-                }),
-            );
-
-            if (response?.data?.notice === "PLEASE_PROVIDE_NEW_PASSWORD") {
-                setMsg({ error: true, content: "Please provide new password" });
-                setLoading(false);
-                return;
-            }
-
-            if (response?.data?.notice === "PASSWORD_NOT_CHANGED") {
-                setMsg({
-                    error: true,
-                    content: "New password is the same as current password",
-                });
-                setLoading(false);
-                return;
-            }
-
-            setMsg({ error: false, content: "Password updated" });
-            closeChangePasswordOption();
-            setLoading(false);
-
-            //await new Promise(resolve => setTimeout(resolve, 1000));
-            //await axios.get('/logout/');
-            //setAuth({});
-            //navigate('/login');
-        } catch (err) {
-            const errMsg =
-                err?.response?.status === 400
-                    ? "Current password is incorrect"
-                    : "Can't change password";
-            console.log(err);
-            setLoading(false);
-            setMsg({ error: true, content: errMsg });
-            alert("Oops, something went wrong. Please try again.");
-            // setAuth({});
-            // navigate('/login');
-        }
+        checkPassword();
+        updatePasswordMutation.mutate(password, newPassword);
     };
 
     const handleLogout = async (e) => {
         e.preventDefault();
-
-        if (!confirm("Are you sure you want to logout?")) return;
-
         try {
-            await axios.get("/logout/");
-            setAuth({});
+            await logout();
             navigate("/login");
         } catch (err) {
             console.log(err);
@@ -223,8 +182,7 @@ const Profile = () => {
             return;
 
         try {
-            await axios.get("/logout/all-devices");
-            setAuth({});
+            await logout({ allDevices: true });
             navigate("/login");
         } catch (err) {
             console.log(err);
@@ -274,10 +232,6 @@ const Profile = () => {
         }
     };
 
-    if (!auth?.user?.username) {
-        return null;
-    }
-
     return (
         <>
             <BoardStats
@@ -289,14 +243,22 @@ const Profile = () => {
                 <Title titleName={"profile"} />
 
                 <div className="mx-auto sm:w-3/4 w-[90%] flex flex-col items-center">
-                    <Loading loading={loading} position={"absolute"} />
-
                     <span className="text-gray-600">information</span>
 
                     <div
                         className="box--style border-[2px] border-gray-700 shadow-gray-700 bg-gray-100 sm:p-4 p-3 lg:w-[450px] sm:w-[400px] w-full"
-                        style={{ backgroundColor: "rgba(241, 241, 241, 0.75)" }}
+                        style={{ backgoundColor: "rgba(241, 241, 241, 0.75)" }}
                     >
+                        <div className="font-medium text-gray-700">
+                            {currentUser.username}
+                        </div>
+
+                        <div className="text-[0.75rem] text-gray-600">
+                            joined at {dateFormatter(currentUser.createdAt)}
+                        </div>
+
+                        <div className="h-[1px] my-3 bg-gray-800"></div>
+
                         <form
                             id="userInfoForm"
                             className="relative w-[100%] flex flex-col h-fit gap-2 text-gray-700"
@@ -307,25 +269,14 @@ const Profile = () => {
                                 {msg.content}
                             </p>
                             <div className="flex flex-col">
-                                <label
-                                    htmlFor="username"
-                                    className="label--style m-0 p-0"
-                                >
-                                    Username
-                                </label>
                                 <input
                                     ref={usernameInputRef}
-                                    className="border-[2px] border-black p-1 font-medium bg-transparent"
+                                    className="border-[1px] border-gray-500 p-1 font-medium bg-transparent"
                                     type="text"
                                     id="username"
                                     autoComplete="off"
-                                    defaultValue={auth?.user?.username}
-                                    required
+                                    placeholder={currentUser.username}
                                 />
-                                <span className="text-[0.75rem] my-2 font-medium">
-                                    joined at{" "}
-                                    {dateFormatter(auth?.user?.createdAt)}
-                                </span>
                             </div>
 
                             <button
@@ -333,8 +284,11 @@ const Profile = () => {
                                 form="userInfoForm"
                                 onClick={handleSaveProfile}
                                 className="text-white p-2 text-[0.75rem] bg-sky-800 font-medium hover:bg-sky-700 w-[100%]"
+                                disabled={updateUsernameMutation.isPending}
                             >
-                                update username
+                                {updateUsernameMutation.isPending
+                                    ? "updating..."
+                                    : "update username"}
                             </button>
 
                             {changePassword && (
@@ -401,7 +355,7 @@ const Profile = () => {
                                     />
                                 </div>
                             )}
-                            {auth?.user?.loginWithDiscord == false && (
+                            {currentUser.loginWithDiscord == false && (
                                 <div className="flex flex-col gap-4">
                                     {!changePassword ? (
                                         <button
@@ -414,18 +368,23 @@ const Profile = () => {
                                         </button>
                                     ) : (
                                         <button
+                                            disabled={
+                                                updatePasswordMutation.isPending
+                                            }
                                             onClick={(e) =>
                                                 handleCheckPassword(e)
                                             }
                                             className="text-white p-2 text-[0.75rem] bg-sky-800 font-medium hover:bg-sky-700 w-[100%]"
                                         >
-                                            update password
+                                            {updatePasswordMutation.isPending
+                                                ? "updating..."
+                                                : "update password"}
                                         </button>
                                     )}
                                 </div>
                             )}
 
-                            <div className="h-[1px] bg-gray-800"></div>
+                            <div className="h-[1px] my-1 bg-gray-800"></div>
 
                             <button
                                 onClick={handleLogout}
@@ -453,14 +412,15 @@ const Profile = () => {
                         style={{ backgroundColor: "rgba(241, 241, 241, 0.75)" }}
                     >
                         <div className="flex flex-col items-center mt-3 gap-4 pb-4 px-4 lg:px-2 max-h-[450px] overflow-auto">
-                            {ownedBoards.fetching ? (
+                            {ownedBoardsQuery.isPending ||
+                            ownedBoardsQuery.isError ? (
                                 <div className="loader mx-auto"></div>
-                            ) : ownedBoards.boards.length === 0 ? (
+                            ) : ownedBoardsQuery.data.boards.length === 0 ? (
                                 <p className="text-[0.75rem] text-gray-600 mt-2">
                                     you currently have no owned boards.
                                 </p>
                             ) : (
-                                ownedBoards.boards.map((item) => {
+                                ownedBoardsQuery.data.boards.map((item) => {
                                     const {
                                         _id,
                                         title,

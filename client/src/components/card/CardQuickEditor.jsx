@@ -1,8 +1,7 @@
 import { useRef, useState, useEffect } from "react";
 import useBoardState from "../../hooks/useBoardState";
-import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import QuickEditorHighlightPicker from "./QuickEditorHighlightPicker";
-
+import { axiosPrivate } from "../../api/axios";
 import { useSearchParams } from "react-router-dom";
 
 const CardQuickEditor = ({
@@ -19,8 +18,6 @@ const CardQuickEditor = ({
         theme,
         socket,
     } = useBoardState();
-
-    const axiosPrivate = useAxiosPrivate();
 
     const [initialTitle, setInitialTitle] = useState(card.title);
     const [openHighlightPicker, setOpenHighlightPicker] = useState(true);
@@ -220,28 +217,28 @@ const CardQuickEditor = ({
                             onClick={() => handleOpenCardDetail()}
                             className="hover:ms-1 transition-all text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80"
                         >
-                            open card
+                            open
                         </button>
 
                         <button
                             onClick={() => handleToggleHighlightPicker()}
                             className={`${openHighlightPicker ? "bg-gray-600" : "bg-gray-800"} hover:ms-1 transition-all text-[0.75rem] text-white px-3 py-1 flex--center opacity-80 z-30`}
                         >
-                            change highlight
+                            highlight
                         </button>
 
                         <button
                             onClick={() => copyCard()}
                             className="hover:ms-1 transition-all text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80"
                         >
-                            create a copy
+                            duplicate
                         </button>
 
                         <button
                             onClick={() => deleteCard()}
                             className="hover:ms-1 transition-all text-[0.75rem] relative text-white bg-gray-800 px-3 py-1 flex--center opacity-80 z-30"
                         >
-                            delete card
+                            delete
                         </button>
 
                         <button

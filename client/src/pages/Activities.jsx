@@ -1,9 +1,9 @@
 import { useReducer, useState, useEffect, useMemo } from "react";
-import useAxiosPrivate from "../hooks/useAxiosPrivate";
 import Title from "../components/ui/Title";
 import Invitations from "../components/invitation/Invitations";
 import JoinBoardRequests from "../components/join-board-request/JoinRequests";
 import ActivitiesHelp from "../components/ui/ActivitiesHelp";
+import { axiosPrivate } from "../api/axios";
 
 import {
     useInfiniteQuery,
@@ -44,8 +44,6 @@ const Activities = () => {
     const { showInvitations, showJoinBoardRequests } = state;
 
     const [openHelp, setOpenHelp] = useState(false);
-
-    const axiosPrivate = useAxiosPrivate();
 
     useEffect(() => {
         const handleKeyDown = (e) => {

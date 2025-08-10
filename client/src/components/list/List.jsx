@@ -3,10 +3,10 @@ import { CSS } from "@dnd-kit/utilities";
 import { useMemo, useState, useRef } from "react";
 import Card from "../card/Card";
 import useBoardState from "../../hooks/useBoardState";
-import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import CardComposer from "../card/CardComposer";
 import ListMenu from "./ListMenu";
 import { lexorank } from "../../utils/class/Lexorank";
+import { axiosPrivate } from "../../api/axios";
 
 const List = ({ index, list, cards }) => {
     const {
@@ -35,8 +35,6 @@ const List = ({ index, list, cards }) => {
         hasFilter,
         socket,
     } = useBoardState();
-
-    const axiosPrivate = useAxiosPrivate();
 
     const [initialListData, setInitialListData] = useState(list.title);
     const [openCardComposer, setOpenCardComposer] = useState(false);

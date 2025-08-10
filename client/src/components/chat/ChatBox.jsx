@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
 import useBoardState from "../../hooks/useBoardState";
-import useAuth from "../../hooks/useAuth";
 import Chat from "./Chat";
 import ChatInput from "./ChatInput";
 import Loading from "../ui/Loading";
 import Icon from "../shared/Icon";
+import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 
 const ChatBox = ({
     error,
@@ -23,10 +23,10 @@ const ChatBox = ({
     hasReceivedNewMessage,
     setHasReceivedNewMessage,
 }) => {
+    const { currentUser } = useCurrentUserContext();
+
     const { boardState, chats, isAtBottomOfChat, setIsAtBottomOfChat } =
         useBoardState();
-
-    const { auth } = useAuth();
 
     const messageEndRef = useRef();
     const chatContainer = useRef();
@@ -115,7 +115,7 @@ const ChatBox = ({
                 <p className="flex-1 font-semibold text-gray-600">Chat</p>
 
                 <div className="flex items-center gap-2">
-                    {auth.user?.username ===
+                    {currentUser.username ===
                         boardState.board.createdBy.username && (
                         <button
                             onClick={handleClearMessages}

@@ -3,6 +3,7 @@ import useRefreshToken from "../../hooks/useRefreshToken";
 import { useState, useEffect } from "react";
 import useAuth from "../../hooks/useAuth";
 
+// UNUSED
 const PersistLogin = () => {
     const [isLoading, setIsLoading] = useState(true);
     const { auth } = useAuth();

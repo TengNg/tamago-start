@@ -1,7 +1,10 @@
+import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 import Avatar from "../avatar/Avatar";
 import Icon from "../shared/Icon";
 
-const Member = ({ auth, user, boardState, handleRemoveMemberFromBoard }) => {
+const Member = ({ user, boardState, handleRemoveMemberFromBoard }) => {
+    const { currentUser } = useCurrentUserContext();
+
     return (
         <>
             <div className="flex gap-1">
@@ -14,13 +17,13 @@ const Member = ({ auth, user, boardState, handleRemoveMemberFromBoard }) => {
                     <div className="flex flex-col justify-center">
                         <p className="text-[0.75rem] text-gray-800 font-medium">
                             {user.username}{" "}
-                            {auth?.user?.username === user.username && "(you)"}
+                            {currentUser.username === user.username && "(you)"}
                         </p>
                         <p className="text-[0.75rem] text-gray-800">member</p>
                     </div>
                 </div>
                 {boardState.board.createdBy.username ===
-                    auth?.user?.username && (
+                    currentUser.username && (
                     <button
                         onClick={() =>
                             handleRemoveMemberFromBoard(user.username)

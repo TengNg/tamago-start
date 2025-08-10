@@ -1,10 +1,10 @@
 import { useRef, useEffect } from "react";
 import useBoardState from "../../hooks/useBoardState";
-import useAuth from "../../hooks/useAuth";
 import Chat from "./Chat";
 import ChatInput from "./ChatInput";
 import Loading from "../ui/Loading";
 import Icon from "../shared/Icon";
+import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 
 const FloatingChat = ({
     open,
@@ -22,10 +22,10 @@ const FloatingChat = ({
     hasReceivedNewMessage,
     setHasReceivedNewMessage,
 }) => {
+    const { currentUser } = useCurrentUserContext();
+
     const { chats, boardState, isAtBottomOfChat, setIsAtBottomOfChat } =
         useBoardState();
-
-    const { auth } = useAuth();
 
     const messageEndRef = useRef();
     const chatContainer = useRef();
@@ -92,7 +92,7 @@ const FloatingChat = ({
                     <div>Chat</div>
 
                     <div className="flex justify-center items-center">
-                        {auth.user?.username ===
+                        {currentUser.username ===
                             boardState.board.createdBy.username && (
                             <button
                                 onClick={handleClearMessages}

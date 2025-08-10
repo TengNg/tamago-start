@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import useBoardState from "../../hooks/useBoardState";
-import useAxiosPrivate from "../../hooks/useAxiosPrivate";
+import { axiosPrivate } from "../../api/axios";
 import Loading from "../ui/Loading";
 import Icon from "../shared/Icon";
 
@@ -13,7 +13,6 @@ const CopyBoardForm = ({ setOpen }) => {
         (boardState.board?.title || "") + " (copy)",
     );
     const [desciption, setDescription] = useState("");
-    const axiosPrivate = useAxiosPrivate();
 
     const handleClose = () => {
         setOpen(false);

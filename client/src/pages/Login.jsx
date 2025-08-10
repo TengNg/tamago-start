@@ -1,87 +1,58 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
-import useAuth from "../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
-import { axiosPrivate } from "../api/axios";
 import Title from "../components/ui/Title";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { login } from "../api/authApi";
 
 export default function Login() {
+    const queryClient = useQueryClient();
+
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [errMsg, setErrMsg] = useState("");
-    const [success, setSuccess] = useState(false);
-    const [loading, setLoading] = useState(false);
 
     const [searchParams, _] = useSearchParams();
 
-    const { setAuth } = useAuth();
-
     const usernameInputEl = useRef();
+    const passwordInputEl = useRef();
 
     const navigate = useNavigate();
 
     const location = useLocation();
     const from = location.state?.from?.pathname || "/boards";
 
-    useEffect(() => {
-        const isLoggedIn = async () => {
-            const response = await axiosPrivate.get("/check-cookies");
-            if (response.status === 200) {
-                navigate(from, { replace: true });
-            }
-        };
-        isLoggedIn().catch((err) => {
-            console.error(err);
-            setSuccess(false);
-            usernameInputEl.current.focus();
-        });
-    }, []);
+    const loginMutation = useMutation({
+        mutationFn: () => login({ username, password }),
+        onSuccess: (_data, _variables, _context) => {
+            queryClient.resetQueries({ queryKey: ["me"], exact: true });
+            navigate(from, { replace: true });
+        },
+        onMutate: () => {
+            usernameInputEl.current.readOnly = true;
+            passwordInputEl.current.readOnly = true;
+        },
+        onError: (err) => {
+            const errMsg = err?.response?.data?.msg || "Something went wrong";
+            usernameInputEl.current.readOnly = false;
+            passwordInputEl.current.readOnly = false;
+            setErrMsg(errMsg);
+        },
+    });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
-
-        try {
-            const response = await axiosPrivate.post(
-                "/login",
-                JSON.stringify({ username: username.trim(), password }),
-            );
-            const accessToken = response?.data?.accessToken;
-            const user = response?.data?.user;
-            setAuth({ user, accessToken });
-            setUsername("");
-            setPassword("");
-            setSuccess(true);
-            navigate(from, { replace: true });
-        } catch (err) {
-            if (!err?.response) {
-                setErrMsg("No Server Response");
-            } else if (
-                err.response?.status === 401 ||
-                err.response?.status === 400
-            ) {
-                setErrMsg("Username or Password is incorrect");
-            } else if (err.response?.status === 429) {
-                const errMsg = err.response.data?.msg || "Failed to Login";
-                setErrMsg(errMsg);
-            } else {
-                setErrMsg("Failed to Login");
-            }
-
-            navigate("/login", { replace: true });
-        }
-
-        setLoading(false);
+        loginMutation.mutate();
     };
 
     return (
         <>
-            <section className="relative w-[100%] h-[100vh] bg-transparent flex items-center flex-col p-5 gap-2">
+            <section className="relative w-[100%] h-[100vh] bg-transparent flex items-center flex-col gap-2">
                 <Title titleName={"login"} />
 
                 <form
                     onSubmit={handleSubmit}
-                    className="flex flex-col form--style p-4 pt-2 bg-gray-100 w-[325px]"
+                    className="flex flex-col form--style p-4 pt-2 bg-gray-200 w-[325px]"
                 >
                     <label htmlFor="username">Username</label>
                     <input
@@ -98,6 +69,7 @@ export default function Login() {
 
                     <label htmlFor="password">Password</label>
                     <input
+                        ref={passwordInputEl}
                         className="border-[3px] border-black p-1 font-medium select-none"
                         type="password"
                         id="password"
@@ -107,8 +79,8 @@ export default function Login() {
                         required
                     />
 
-                    {success === false && (
-                        <p className="text-[0.65rem] text-red-700 ms-1 mt-1 font-medium select-none">
+                    {errMsg && (
+                        <p className="text-[0.75rem] text-red-800 ms-1 mt-1 font-medium select-none">
                             {errMsg}
                         </p>
                     )}
@@ -128,9 +100,11 @@ export default function Login() {
                     <div className="flex flex-col gap-3 mt-4">
                         <button
                             className="button--style--dark flex--center"
-                            disabled={loading}
+                            disabled={loginMutation.isPending}
                         >
-                            {loading ? "Logging in..." : "Log in"}
+                            {loginMutation.isPending
+                                ? "Logging in..."
+                                : "Log in"}
                         </button>
                         <a
                             className="button--style border-none text-gray-50 bg-indigo-700 hover:bg-indigo-500 flex--center"
@@ -142,7 +116,7 @@ export default function Login() {
                 </form>
 
                 <div className="flex flex-col font-normal select-none mt-4">
-                    Don't have an account?
+                    Don&apos;t have an account?
                     <Link className="text-black" to="/register">
                         <button className="button--style mt-1">Sign up</button>
                     </Link>

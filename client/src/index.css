@@ -116,6 +116,11 @@ input, textarea {
     border-radius: 0;
 }
 
+input:focus, textarea:focus {
+    border-radius: 0;
+    outline: none;
+}
+
 select:focus {
     outline: none;
 }

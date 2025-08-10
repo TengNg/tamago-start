@@ -1,13 +1,11 @@
 import highlightColors from "../../data/highlights";
 import useBoardState from "../../hooks/useBoardState";
-import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import Icon from "../shared/Icon";
+import { axiosPrivate } from "../../api/axios";
 
 const QuickEditorHighlightPicker = ({ card }) => {
     const { setCardQuickEditorHighlight, setCardHighlight, socket } =
         useBoardState();
-
-    const axiosPrivate = useAxiosPrivate();
 
     const handleSetCardHighlight = async (value) => {
         if (card.highlight === value) return;
@@ -29,7 +27,7 @@ const QuickEditorHighlightPicker = ({ card }) => {
     };
 
     return (
-        <div className="absolute top-0 left-0 w-[100px] translate-x-[150%] flex flex-col gap-1 cursor-pointer">
+        <div className="absolute top-0 left-0 w-[100px] translate-x-[100%] flex flex-col gap-1 cursor-pointer">
             {Object.keys(highlightColors).map((item, index) => {
                 return (
                     <div

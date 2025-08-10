@@ -1,14 +1,14 @@
 import { useRef, useEffect } from "react";
-import useAuth from "../../hooks/useAuth";
 import Avatar from "../avatar/Avatar";
 import useBoardState from "../../hooks/useBoardState";
 import dateFormatter from "../../utils/dateFormatter";
 import Icon from "../shared/Icon";
+import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 
 const Members = ({ open, setOpen }) => {
     const dialog = useRef();
 
-    const { auth } = useAuth();
+    const { currentUser } = useCurrentUserContext();
 
     const { boardState } = useBoardState();
 
@@ -69,7 +69,7 @@ const Members = ({ open, setOpen }) => {
                             size="lg"
                             withBorder={
                                 boardState.board.createdBy.username ===
-                                auth?.user?.username
+                                currentUser.username
                             }
                             isAdmin={true}
                             clickable={false}
@@ -103,7 +103,7 @@ const Members = ({ open, setOpen }) => {
                                     username={user.username}
                                     profileImage={user.profileImage}
                                     withBorder={
-                                        user.username === auth?.user?.username
+                                        user.username === currentUser.username
                                     }
                                     size="lg"
                                     clickable={false}

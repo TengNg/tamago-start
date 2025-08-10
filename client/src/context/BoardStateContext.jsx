@@ -5,10 +5,10 @@ import { createContext, useEffect, useState } from "react";
 import useLocalStorage from "../hooks/useLocalStorage";
 import LOCAL_STORAGE_KEYS from "../data/localStorageKeys";
 import dateFormatter from "../utils/dateFormatter";
-import useAuth from "../hooks/useAuth";
 import { useParams } from "react-router-dom";
 import useWindowSize from "../hooks/useWindowSize";
 import { useQueryClient } from "@tanstack/react-query";
+import useCurrentUserContext from "../hooks/useCurrentUserContext";
 
 const BoardStateContext = createContext({});
 
@@ -20,6 +20,7 @@ const filterParams = () => {
 };
 
 export const BoardStateContextProvider = ({ children }) => {
+    const { currentUser } = useCurrentUserContext();
     const queryClient = useQueryClient();
 
     const { width: windowWidth } = useWindowSize();
@@ -59,18 +60,16 @@ export const BoardStateContextProvider = ({ children }) => {
 
     const [isConnected, setIsConnected] = useState(false);
 
-    const { auth } = useAuth();
-
     const notify = ({ message, timeSent, duration, from }) => {
         setToast({ open: true, message, timeSent, duration, from });
     };
 
     useEffect(() => {
         const onConnect = async () => {
-            if (auth && auth.user && boardId) {
+            if (currentUser) {
                 socket.emit("joinBoard", {
                     boardId,
-                    username: auth.user.username,
+                    username: currentUser.username,
                 });
                 setIsConnected(true);
             }

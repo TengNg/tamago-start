@@ -6,7 +6,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 import NavBar from "./components/ui/NavBar";
 import ThemesDialog from "./components/ui/ThemesDialog";
 
-import PersistLogin from "./components/auth/PersistLogin";
+import RequireAuth from "./components/auth/RequireAuth";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -27,8 +27,6 @@ import PAGES from "./data/pages";
 import LOCAL_STORAGE_KEYS from "./data/localStorageKeys";
 import Icon from "./components/shared/Icon";
 import PinnedBoards from "./components/board/PinnedBoards";
-
-const noNavPaths = ["/login", "/register"];
 
 const titleMap = Object.values(PAGES).reduce((obj, p, index) => {
     const title = `0${index} ${p.title}`;
@@ -85,17 +83,15 @@ function App() {
 
     return (
         <>
-            {!noNavPaths.includes(pathname) && (
-                <NavBar setOpenPinnedBoards={setOpenPinnedBoards} />
-            )}
+            <NavBar setOpenPinnedBoards={setOpenPinnedBoards} />
             <Suspense fallback={<Loading />}>
                 <Routes>
+                    <Route path="/" element={<About />} />
+                    <Route path="/about" element={<About />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
 
-                    <Route element={<PersistLogin />}>
-                        <Route path="/" element={<About />} />
-                        <Route path="/about" element={<About />} />
+                    <Route element={<RequireAuth />}>
                         <Route path="/boards" element={<Boards />} />
                         <Route path="/writedowns" element={<Writedowns />} />
                         <Route path="/activities" element={<Activities />} />

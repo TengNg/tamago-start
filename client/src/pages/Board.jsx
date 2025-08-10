@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { lexorank } from "../utils/class/Lexorank";
 import useBoardState from "../hooks/useBoardState";
-import useAxiosPrivate from "../hooks/useAxiosPrivate";
-import useAuth from "../hooks/useAuth";
 import useKeyBinds from "../hooks/useKeyBinds";
 import useCardActions from "../hooks/useCardActions";
 import useFetchCardDetail from "../hooks/useFetchCardDetail";
@@ -24,10 +22,14 @@ import KeyBindings from "../components/ui/KeyBindings";
 import BoardActivities from "../components/activity-history/BoardActivities";
 import Toast from "../components/ui/Toast";
 import VISIBILITY_MAP from "../data/visibility";
+import useCurrentUserContext from "../hooks/useCurrentUserContext";
+import { axiosPrivate } from "../api/axios";
 
 const chatsPerPage = 50;
 
 const Board = () => {
+    const { currentUser } = useCurrentUserContext();
+
     const {
         boardState,
         setBoardState,
@@ -80,8 +82,6 @@ const Board = () => {
         socket,
     } = useBoardState();
 
-    const { auth, setAuth } = useAuth();
-
     const {
         openMembers,
         setOpenMembers,
@@ -102,8 +102,6 @@ const Board = () => {
         openBoardActivities,
         setOpenBoardActivities,
     } = useKeyBinds();
-
-    const axiosPrivate = useAxiosPrivate();
 
     const [openBoardMenu, setOpenBoardMenu] = useState(false);
     const [openCopyBoardForm, setOpenCopyBoardForm] = useState(false);
@@ -160,13 +158,6 @@ const Board = () => {
 
     useEffect(() => {
         socket.connect();
-
-        setAuth((prev) => {
-            if (prev && prev.user) {
-                prev.user.recentlyViewedBoardId = boardId;
-            }
-            return prev;
-        });
 
         setChats([]);
         setIsDataLoaded(false);
@@ -294,19 +285,7 @@ const Board = () => {
         if (e.button !== 0) return;
 
         try {
-            const response = await axiosPrivate.put(
-                `/boards/${boardState.board._id}/pinned/`,
-            );
-            setAuth((prev) => {
-                return {
-                    ...prev,
-                    user: {
-                        ...prev.user,
-                        pinnedBoardIdCollection:
-                            response?.data?.result?.pinnedBoardIdCollection,
-                    },
-                };
-            });
+            await axiosPrivate.put(`/boards/${boardState.board._id}/pinned/`);
         } catch (err) {
             console.log(err);
             alert("Failed to pin board");
@@ -486,7 +465,7 @@ const Board = () => {
             trackedId: msgTrackedId,
             content: value,
             type: "MESSAGE",
-            sentBy: { username: auth?.user?.username },
+            sentBy: { username: currentUser.username },
         };
 
         setChats((prev) => {
@@ -516,7 +495,7 @@ const Board = () => {
                 createdAt: chatMsg.createdAt,
                 sentBy: {
                     ...newMessage.sentBy,
-                    username: auth?.user?.username,
+                    username: currentUser.username,
                 },
             });
             setHasReceivedNewMessage(true);
@@ -854,11 +833,11 @@ const Board = () => {
                 <button
                     onClick={handlePinBoard}
                     className={`
-                        w-[100px] ${auth?.user?.pinnedBoardIdCollection?.hasOwnProperty(boardId) ? "mt-1 text-gray-100 shadow-[0_1px_0_0]" : "shadow-gray-600 shadow-[0_3px_0_0]"}
+                        w-[100px] ${currentUser.pinnedBoardIdCollection?.hasOwnProperty(boardId) ? "mt-1 text-gray-100 shadow-[0_1px_0_0]" : "shadow-gray-600 shadow-[0_3px_0_0]"}
                         bg-gray-50 border-[2px] border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium
                     `}
                 >
-                    {auth?.user?.pinnedBoardIdCollection?.hasOwnProperty(
+                    {currentUser.pinnedBoardIdCollection?.hasOwnProperty(
                         boardId,
                     ) ? (
                         <div className="flex justify-center items-center gap-2">

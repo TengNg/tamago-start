@@ -1,12 +1,12 @@
 import { useEffect, useRef } from "react";
 import { useState } from "react";
-import useAxiosPrivate from "../hooks/useAxiosPrivate";
 import BoardItem from "../components/board/BoardItem";
 import BoardForm from "../components/board/BoardForm";
 import Title from "../components/ui/Title";
 import JoinBoardRequestForm from "../components/board/JoinBoardRequestForm";
 import BoardsHelp from "../components/ui/BoardsHelp";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getBoards } from "../api/boardApi";
 
 const FILTERS = Object.freeze({
     ALL: "all",
@@ -27,15 +27,12 @@ const Boards = () => {
     const [openJoinBoardRequestForm, setOpenJoinBoardRequestForm] =
         useState(false);
 
-    const axiosPrivate = useAxiosPrivate();
-
     const boardFormRef = useRef();
     const createBoardButtonRef = useRef();
 
     const boardsQuery = useQuery({
         queryKey: ["boards", boardFilter],
-        refetchOnMount: true,
-        queryFn: () => fetchBoards(boardFilter),
+        queryFn: () => getBoards({ filter: boardFilter }),
     });
 
     useEffect(() => {
@@ -45,11 +42,6 @@ const Boards = () => {
             document.removeEventListener("keydown", handleKeyDown);
         };
     }, []);
-
-    async function fetchBoards(filter = "") {
-        const response = await axiosPrivate.get(`/boards?filter=${filter}`);
-        return response.data;
-    }
 
     function handleFilter(status) {
         setBoardFilter(status);
@@ -97,6 +89,7 @@ const Boards = () => {
                     break;
                 case ";":
                     setOpenBoardForm((prev) => !prev);
+                    break;
                 default:
                     break;
             }

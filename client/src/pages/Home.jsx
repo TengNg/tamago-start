@@ -132,6 +132,7 @@ const Home = () => {
                 href="https://github.com/TengNg/task-manager"
                 className="fixed right-4 bottom-3 text-gray-700 text-[0.75rem] underline"
                 target="_blank"
+                rel="noreferrer"
             >
                 Github
             </a>

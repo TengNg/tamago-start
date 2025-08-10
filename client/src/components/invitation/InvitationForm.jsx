@@ -1,17 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import useBoardState from "../../hooks/useBoardState";
-import useAxiosPrivate from "../../hooks/useAxiosPrivate";
-import useAuth from "../../hooks/useAuth";
 import Avatar from "../avatar/Avatar";
 import Loading from "../ui/Loading";
 import Member from "./Member";
 import Icon from "../shared/Icon";
+import useCurrentUserContext from "../../hooks/useCurrentUserContext";
+import { axiosPrivate } from "../../api/axios";
 
 const InvitationForm = ({ open, setOpen }) => {
-    const { auth } = useAuth();
+    const { currentUser } = useCurrentUserContext();
     const { boardState, removeMemberFromBoard, socket } = useBoardState();
-
-    const axiosPrivate = useAxiosPrivate();
 
     const [username, setUsername] = useState("");
     const [errMsg, setErrMsg] = useState("");
@@ -84,7 +82,7 @@ const InvitationForm = ({ open, setOpen }) => {
         }
 
         if (
-            usernameInputRef.current.value.trim() === auth.username ||
+            usernameInputRef.current.value.trim() === currentUser.username ||
             usernameInputRef.current.value.trim() ===
                 boardState.board.createdBy.username
         ) {
@@ -198,7 +196,7 @@ const InvitationForm = ({ open, setOpen }) => {
                         <div className="flex flex-col justify-center">
                             <p className="text-[0.75rem] text-gray-800 font-medium">
                                 {boardState.board.createdBy.username}{" "}
-                                {auth?.user?.username ===
+                                {currentUser.username ===
                                     boardState.board.createdBy.username &&
                                     "(you)"}
                             </p>
@@ -217,7 +215,6 @@ const InvitationForm = ({ open, setOpen }) => {
                                 }
                                 boardState={boardState}
                                 user={user}
-                                auth={auth}
                             />
                         );
                     })}

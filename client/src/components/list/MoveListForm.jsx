@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import useBoardState from "../../hooks/useBoardState";
-import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import { lexorank } from "../../utils/class/Lexorank";
 import Loading from "../ui/Loading";
 import Icon from "../shared/Icon";
+import { axiosPrivate } from "../../api/axios";
 
 const MoveListForm = () => {
     const [boards, setBoards] = useState([]);
@@ -21,8 +21,6 @@ const MoveListForm = () => {
         openMoveListForm: open,
         setOpenMoveListForm: setOpen,
     } = useBoardState();
-
-    const axiosPrivate = useAxiosPrivate();
 
     const dialog = useRef();
 

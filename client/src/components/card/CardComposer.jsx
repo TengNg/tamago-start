@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import useBoardState from "../../hooks/useBoardState";
-import useAxiosPrivate from "../../hooks/useAxiosPrivate";
 import { lexorank } from "../../utils/class/Lexorank";
+import { axiosPrivate } from "../../api/axios";
 
 const CardComposer = ({ list, open, setOpen }) => {
     const [text, setText] = useState("");
@@ -14,8 +14,6 @@ const CardComposer = ({ list, open, setOpen }) => {
 
     const textAreaRef = useRef();
     const composerRef = useRef();
-
-    const axiosPrivate = useAxiosPrivate();
 
     const [isAddingCard, setIsAddingCard] = useState(false);
 
@@ -149,8 +147,7 @@ const CardComposer = ({ list, open, setOpen }) => {
             socket.emit("addCard", newCard);
         } catch (err) {
             console.log(err);
-            const errMsg =
-                err?.response?.data?.errMsg || "Failed to add new card";
+            const errMsg = err?.response?.data?.msg || "Failed to add new card";
             alert(errMsg);
             setBoardState((prev) => {
                 return { ...prev, lists: tempLists };

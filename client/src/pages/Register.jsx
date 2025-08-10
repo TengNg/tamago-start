@@ -1,7 +1,8 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { axiosPrivate } from "../api/axios";
 import Title from "../components/ui/Title";
+import { register } from "../api/authApi";
+import { useMutation } from "@tanstack/react-query";
 
 // const USER_REGEX = /^[A-z][A-z0-9-_]{3,23}$/;
 // const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/;
@@ -21,23 +22,27 @@ export default function Register() {
     const [errMsg, setErrMsg] = useState("");
     const [success, setSuccess] = useState(false);
 
-    const [loading, setLoading] = useState(false);
-
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const isLoggedIn = async () => {
-            const response = await axiosPrivate.get("/check-cookies");
-            if (response.status === 200) {
-                navigate("/boards", { replace: true });
-            }
-        };
-        isLoggedIn().catch((err) => {
-            console.error(err);
-            setSuccess(false);
-            usernameInputEl.current.focus();
-        });
-    }, []);
+    const registerMutation = useMutation({
+        mutationFn: () => register({ username, password, confirmedPassword }),
+        onSuccess: (_data, _variables, _context) => {
+            queryClient.resetQueries({ queryKey: ["me"], exact: true });
+            navigate(from, { replace: true });
+        },
+        onMutate: () => {
+            usernameInputEl.current.readOnly = true;
+            passwordInputEl.current.readOnly = true;
+            confirmedPasswordInputEl.current.readOnly = true;
+        },
+        onError: (err) => {
+            const errMsg = err?.response?.data?.msg || "Something went wrong";
+            usernameInputEl.current.readOnly = false;
+            passwordInputEl.current.readOnly = false;
+            confirmedPasswordInputEl.current.readOnly = false;
+            setErrMsg(errMsg);
+        },
+    });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -47,7 +52,7 @@ export default function Register() {
 
         if (!usernameMatched) {
             setErrMsg(
-                "Invalid Username, must be between 3 and 20 characters (no spaces)",
+                "Username must be between 3 and 20 characters (no spaces)",
             );
             usernameInputEl.current.focus();
             return;
@@ -60,46 +65,23 @@ export default function Register() {
         }
 
         if (confirmedPassword !== password) {
-            setErrMsg("Password do not match");
+            setErrMsg("Confirmed password do not match");
             setSuccess(false);
             confirmedPasswordInputEl.current.focus();
             return;
         }
 
-        setLoading(true);
-
-        try {
-            await axiosPrivate.post(
-                "/register",
-                JSON.stringify({ username, password }),
-            );
-            setSuccess(true);
-            setUsername("");
-            setPassword("");
-            navigate("/login", { replace: true });
-        } catch (err) {
-            if (!err?.response) {
-                setErrMsg("No Server Response");
-            } else if (err.response?.status === 409) {
-                setErrMsg("Username Taken");
-            } else {
-                setErrMsg(
-                    `${err?.response?.data?.error || "Failed to Register"}`,
-                );
-            }
-        }
-
-        setLoading(false);
+        registerMutation.mutate();
     };
 
     return (
         <>
-            <section className="relative w-[100%] h-[100vh] bg-transparent flex flex-col items-center p-5 gap-2">
+            <section className="relative w-[100%] h-[100vh] bg-transparent flex flex-col items-center gap-2">
                 <Title titleName={"register"} />
 
                 <form
                     onSubmit={handleSubmit}
-                    className="flex flex-col form--style p-4 pt-2 bg-gray-100 w-[325px]"
+                    className="flex flex-col form--style p-4 pt-2 bg-gray-200 w-[325px]"
                 >
                     <label htmlFor="username">Username</label>
                     <input
@@ -148,9 +130,11 @@ export default function Register() {
                     <div className="flex flex-col gap-3 mt-4">
                         <button
                             className="button--style--dark flex--center"
-                            disabled={loading}
+                            disabled={registerMutation.isPending}
                         >
-                            {loading ? "Signing up..." : "Sign up"}
+                            {registerMutation.isPending
+                                ? "Signing up..."
+                                : "Sign up"}
                         </button>
                         <a
                             className="button--style border-0 text-gray-50 bg-indigo-700 hover:bg-indigo-500 flex--center"

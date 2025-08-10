@@ -1,8 +1,8 @@
 import dateFormatter from "../../utils/dateFormatter";
-import useAuth from "../../hooks/useAuth";
 import { useLocation, Link } from "react-router-dom";
 import Icon from "../shared/Icon";
 import validUrl from "../../utils/validUrl";
+import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 
 const MESSAGE_PADDING = {
     x: {
@@ -35,7 +35,7 @@ const Chat = ({
     const location = useLocation();
     const { pathname } = location;
 
-    const { auth } = useAuth();
+    const { currentUser } = useCurrentUserContext();
 
     const { trackedId, content, sentBy, createdAt, error, type } = chat;
 
@@ -57,13 +57,13 @@ const Chat = ({
                 <div className="flex w-full justify-start items-start">
                     <div className="flex w-full gap-2 justify-between flex-wrap">
                         <div
-                            className={`flex items-center gap-1 text-[0.75rem] font-bold ${chat.sentBy?.username === auth?.user?.username ? "text-teal-700" : "text-gray-700"}`}
+                            className={`flex items-center gap-1 text-[0.75rem] font-bold ${chat.sentBy?.username === currentUser.username ? "text-teal-700" : "text-gray-700"}`}
                         >
                             <p>{sentBy?.username}</p>
 
                             {withUserIcon &&
                                 chat.sentBy?.username ===
-                                    auth?.user?.username && (
+                                    currentUser.username && (
                                     <Icon className="w-3 h-3" name="profile" />
                                 )}
                         </div>
@@ -86,7 +86,7 @@ const Chat = ({
 
                     type === "MESSAGE" ? (
                         <div
-                            className={`max-w-[95%] w-fit flex justify-center items-center ${highlightOwnMessages && chat.sentBy?.username === auth?.user?.username ? "bg-teal-50 border-[1px] border-teal-600" : `bg-slate-100 ${inMiniChat && "bg-slate-50 border-[1px] border-gray-500"}`} rounded ${padding.x} ${padding.y}`}
+                            className={`max-w-[95%] w-fit flex justify-center items-center ${highlightOwnMessages && chat.sentBy?.username === currentUser.username ? "bg-teal-50 border-[1px] border-teal-600" : `bg-slate-100 ${inMiniChat && "bg-slate-50 border-[1px] border-gray-500"}`} rounded ${padding.x} ${padding.y}`}
                         >
                             <div
                                 className={`${validUrl(chatContent) ? "cursor-pointer hover:underline" : ""} w-full break-words whitespace-pre-line text-[0.75rem] px-[1px] text-gray-600 font-medium`}
@@ -135,7 +135,7 @@ const Chat = ({
                     )
                 }
 
-                {chat.sentBy?.username === auth?.user?.username && (
+                {chat.sentBy?.username === currentUser.username && (
                     <button
                         onClick={() => deleteMessage(trackedId)}
                         className="absolute top-[1.1rem] right-[0.2rem] text-transparent group-hover:text-gray-400"
