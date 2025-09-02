@@ -1,6 +1,8 @@
 require('dotenv').config();
 
-const { Server } = require("socket.io");
+const jwt = require('jsonwebtoken');
+const { Server: HttpServer } = require('http');
+const { Server: SocketServer } = require("socket.io");
 
 const __prod__ = process.env.MODE === "production";
 const opts = __prod__ ? {} : {
@@ -14,8 +16,13 @@ const opts = __prod__ ? {} : {
 const boardIdMap = new Map();
 const usernameMap = {};
 
+/**
+ * Initialize socket-server
+ *
+ * @param {HttpServer} server
+ */
 const initSocket = (server) => {
-    const io = new Server(server, opts);
+    const io = new SocketServer(server, opts);
 
     io.use(async (socket, next) => {
         const cookies = socket.handshake.headers.cookie;
@@ -25,11 +32,40 @@ const initSocket = (server) => {
                 acc[name] = value;
                 return acc;
             }, {});
-            const accessToken = cookiePairs['access_token'];
-            const refreshToken = cookiePairs['refresh_token'];
-            console.log(cookiePairs);
-            console.log(accessToken);
-            console.log(refreshToken);
+
+            const aTokenName = process.env.ACCESS_TOKEN_COOKIE_NAME;
+            const rTokenName = process.env.REFRESH_TOKEN_COOKIE_NAME;
+            const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
+
+            const accessToken = cookiePairs[aTokenName];
+            const refreshToken = cookiePairs[rTokenName];
+
+            if (process.env.MODE == "development") {
+                console.log("socket-middleware#cookiePairs: ", cookiePairs);
+                console.log("socket-middleware#accessToken: ", accessToken);
+                console.log("socket-middleware#refreshToken: ", refreshToken);
+            }
+
+            if (!accessToken) {
+                return next(new Error('Authentication error: No access token provided'));
+            }
+
+            try {
+                const decoded = jwt.verify(accessToken, accessTokenSecret);
+                socket.user = {
+                    id: decoded.id,
+                    username: decoded.username,
+                };
+
+                if (process.env.MODE === "development") {
+                    console.log('Authenticated user:', socket.user);
+                }
+
+                next();
+            } catch (err) {
+                console.log('Access token verification failed:', err.message);
+                return next(new Error('Authentication error: Invalid access token'));
+            }
         }
         next();
     });
@@ -38,24 +74,24 @@ const initSocket = (server) => {
         // BOARD ===============================================================
 
         socket.on("joinBoard", (data) => {
-            const { boardId, username } = data;
+            const { boardId } = data;
             boardIdMap.set(socket.id, boardId);
+
+            const username = socket.user.username;
             usernameMap[socket.id] = username;
             socket.join(boardId);
-            // console.log(`User [username: ${username}] [socket_id: ${socket.id}] joins board with id ${boardId}`);
+
+            if (process.env.MODE === "development") {
+                console.log(`User [username: ${username}] [socket_id: ${socket.id}] joins board with id ${boardId}`);
+            }
         });
 
-        socket.on("leaveBoard", (data) => {
+        socket.on("leaveBoard", (_data) => {
             const boardId = boardIdMap.get(socket.id);
             if (!boardId) return;
-            const { username } = data;
-            socket.to(boardId).emit("memberLeaved", { username });
-        });
 
-        socket.on("acceptInvitation", (data) => {
-            const { boardId, username, profileImage } = data;
-            if (!boardId) return;
-            socket.to(boardId).emit("invitationAccepted", { username, profileImage });
+            const username = socket.user.username;
+            socket.to(boardId).emit("memberLeaved", { username });
         });
 
         socket.on("kickMember", (memberName) => {

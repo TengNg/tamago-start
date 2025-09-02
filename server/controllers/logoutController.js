@@ -17,7 +17,7 @@ const handleLogoutOfAllDevices = async (req, res) => {
     if (!cookies || !cookies[rTokenName]) return res.sendStatus(204);
 
     const refreshToken = cookies[rTokenName];
-    const data = jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
+    const data = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
 
     await User.findOneAndUpdate(
         { username: data.username },

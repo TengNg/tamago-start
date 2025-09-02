@@ -31,11 +31,6 @@ if (process.env.MODE !== "production") {
     }));
 }
 
-// (deprecated)
-// app.use("/api/home", require("./routes/home"));
-// app.use("/api/refresh", require("./routes/refresh"));
-// app.use("/api/check-cookies", require("./routes/checkCookies"));
-
 // (discord)
 app.use(require('./routes/api/discord'));
 

@@ -3,8 +3,8 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User.js');
 const { createAccessToken, sendAccessTokenCookie } = require('../services/createAuthTokensService.js');
 
-const aTokenSecret = process.env.ACCESS_TOKEN;
-const rTokenSecret = process.env.REFRESH_TOKEN;
+const aTokenSecret = process.env.ACCESS_TOKEN_SECRET;
+const rTokenSecret = process.env.REFRESH_TOKEN_SECRET;
 
 const aTokenName = process.env.ACCESS_TOKEN_COOKIE_NAME;
 const rTokenName = process.env.REFRESH_TOKEN_COOKIE_NAME;

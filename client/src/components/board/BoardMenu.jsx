@@ -31,7 +31,7 @@ const BoardMenu = ({
                 `/boards/${boardState.board._id}/members/leave`,
             );
             removeMemberFromBoard(currentUser.username);
-            socket.emit("leaveBoard", { username: currentUser.username });
+            socket.emit("leaveBoard");
             navigate("/boards");
         } catch (err) {
             console.log(err);

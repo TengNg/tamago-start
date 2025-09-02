@@ -16,3 +16,12 @@ declare module 'express' {
         user?: UserPayload;
     }
 }
+
+declare module "socket.io" {
+  interface Socket {
+    user?: {
+      id: string;
+      username: string;
+    };
+  }
+}

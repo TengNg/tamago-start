@@ -69,7 +69,6 @@ export const BoardStateContextProvider = ({ children }) => {
             if (currentUser) {
                 socket.emit("joinBoard", {
                     boardId,
-                    username: currentUser.username,
                 });
                 setIsConnected(true);
             }
