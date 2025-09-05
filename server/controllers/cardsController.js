@@ -62,9 +62,13 @@ const reorder = async (req, res) => {
         select: '_id title'
     });
 
-    if (!foundCard) return res.status(404).json({ error: 'Card not found' });
-    const currentListId = foundCard.listId._id;
-    const currentCardListTitle = foundCard.listId.title;
+    if (!foundCard) {
+        return res.status(404).json({ error: 'Card not found' });
+    }
+
+    const populatedList = /** @type {any} */(foundCard.listId);
+    const currentListId = populatedList._id;
+    const currentCardListTitle = populatedList.title;
 
     const foundList = await listById(listId);
     if (!foundList) return res.status(404).json({ error: 'List not found' });

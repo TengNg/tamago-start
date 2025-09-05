@@ -62,7 +62,7 @@ const createAuthTokens = (user) => {
 
 /**
  * @param {express.Response} res
- * @param {String} accessToken
+ * @param {string} accessToken
  */
 const sendAccessTokenCookie = (res, accessToken) => {
     res.cookie(aTokenName, accessToken, aCookieOpts);
@@ -70,7 +70,7 @@ const sendAccessTokenCookie = (res, accessToken) => {
 
 /**
  * @param {express.Response} res
- * @param {String} refreshToken
+ * @param {string} refreshToken
  */
 const sendRefreshTokenCookie = (res, refreshToken) => {
     res.cookie(rTokenName, refreshToken, rCookieOpts);

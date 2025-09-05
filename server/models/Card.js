@@ -103,7 +103,7 @@ cardSchema.pre('save', async function(next) {
             return next(error);
         }
     } else {
-        this.updatedAt = Date.now();
+        this.updatedAt = new Date();
     }
 
     if (this.dueDate) {

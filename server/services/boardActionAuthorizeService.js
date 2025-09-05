@@ -1,25 +1,40 @@
+const { Types } = require('mongoose');
 const Board = require('../models/Board');
 
 /**
- * Check if this action authorized (by user and board)
- *
- * @param {String} boardId
- * @param {String} userId
+ * @typedef {object} AuthorizationResult
+ * @property {InstanceType<typeof Board>} [board]
+ * @property {boolean} authorized
+ */
+
+/**
+ * @param {Types.ObjectId | string} boardId
+ * @param {string} userId
+ * @param {{ ownerOnly?: boolean }} [opt]
+ * @returns {Promise<AuthorizationResult>}
  */
 const isActionAuthorized = async (boardId, userId, opt = { ownerOnly: false }) => {
     const board = await Board.findById(boardId);
-    if (!board) return false;
+    if (!board) {
+        return {
+            authorized: false,
+        };
+    }
 
     const ownerOnly = opt.ownerOnly;
 
-    if (ownerOnly === false && (board.createdBy.toString() === userId || board.members.includes(userId))) {
+    const isOwner = board.createdBy.toString() === userId;
+    const isMember = board.members.map(id => id.toString()).includes(userId);
+    const haveAccess = isOwner || isMember;
+
+    if (ownerOnly === false && haveAccess) {
         return {
             board,
             authorized: true
         }
     }
 
-    if (ownerOnly === true && board.createdBy.toString() === userId) {
+    if (ownerOnly === true && isOwner) {
         return {
             board,
             authorized: true

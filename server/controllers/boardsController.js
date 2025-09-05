@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const Board = require("../models/Board");
 const BoardMembership = require("../models/BoardMembership");
 const List = require("../models/List");
@@ -30,11 +29,11 @@ const getBoards = async (req, res) => {
     const ownedBoardsCount = mapped.filter(b => b.owned === true).length;
     const joinedBoardsCount = mapped.length - ownedBoardsCount;
 
-    let validStatus = "";
-    if (filter && Array.isArray(filter) && filter.length > 0) {
-        validStatus = filter[0];
-    } else {
+    let validStatus = "all";
+    if (typeof filter === "string") {
         validStatus = filter;
+    } else if (Array.isArray(filter) && typeof filter[0] === "string") {
+        validStatus = filter[0];
     }
 
     let filtered = [...mapped];
@@ -331,7 +330,8 @@ const leaveBoard = async (req, res) => {
     const { board, authorized } = await isActionAuthorized(id, userId, { ownerOnly: false });
     if (!authorized) return res.status(403).json({ msg: "unauthorized" });
 
-    const indexOfMember = board.members.indexOf(userId);
+    const memberIds = board.members.map(m => m.toString());
+    const indexOfMember = memberIds.indexOf(userId);
     if (indexOfMember !== -1) {
         board.members.splice(indexOfMember, 1);
         await board.save();
@@ -386,7 +386,7 @@ const closeBoard = async (req, res) => {
         const { userId } = req.user;
         const { id } = req.params;
 
-        const { board: _board, user: _user, authorized } = await isActionAuthorized(id, userId, { ownerOnly: true });
+        const { board: _board, authorized } = await isActionAuthorized(id, userId, { ownerOnly: true });
         if (!authorized) return res.status(403).json({ msg: "unauthorized" });
 
         await Card.deleteMany({ boardId: id }, { session });

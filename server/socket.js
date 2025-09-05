@@ -18,7 +18,6 @@ const usernameMap = {};
 
 /**
  * Initialize socket-server
- *
  * @param {HttpServer} server
  */
 const initSocket = (server) => {

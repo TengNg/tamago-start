@@ -77,7 +77,6 @@ const reorder = async (req, res) => {
         action: "update list rank",
         type: "list",
         description: `(${+sourceIndex + 1}) > (${+destinationIndex + 1})`,
-        createdAt: foundList.updatedAt,
     })
 
     res.status(200).json({ message: 'list updated', newList: foundList });
@@ -188,18 +187,18 @@ const moveList = async (req, res) => {
     const foundList = await List.findById(id);
     if (!foundList) return res.status(403).json({ msg: "List not found" });
 
-    const { board: _, authorized } = await isActionAuthorized(boardId, userId, { ownerOnly: false });
+    const { board, authorized } = await isActionAuthorized(boardId, userId, { ownerOnly: false });
     if (!authorized) return res.status(403).json({ msg: 'unauthorized' });
 
     const sortedLists = await List.find({ boardId }).sort({ order: 'asc' });
-    const [newOrder, ok] = lexorank.insert(sortedLists[index - 1]?.order, sortedLists[index]?.order);
+    const [newOrder, ok] = lexorank.insert(sortedLists[+index - 1]?.order, sortedLists[+index]?.order);
 
     if (!ok) {
         return res.status(403).send('Bad Request');
     }
 
     foundList.order = newOrder;
-    foundList.boardId = boardId;
+    foundList.boardId = board._id;
     await foundList.save();
 
     await Card.updateMany({ listId: id }, { boardId });

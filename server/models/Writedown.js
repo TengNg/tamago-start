@@ -48,7 +48,7 @@ writedownSchema.index({ userId: 1, order: 1 });
 
 writedownSchema.pre('save', function (next) {
     if (!this.isNew) {
-        this.updatedAt = Date.now();
+        this.updatedAt = new Date();
     }
 
     next();

@@ -26,7 +26,7 @@ const getMessages = async (req, res) => {
         .limit(perPage)
         .populate({
             path: 'sentBy',
-            field: 'username'
+            select: 'username'
         });
 
     res.json({ messages });

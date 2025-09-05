@@ -2,12 +2,18 @@ const RATE_LIMIT_DURATION = 2 * 60 * 1000;
 const BLOCK_PERIOD_MS = 5 * 60 * 1000;
 const MAX_REQUESTS = 10;
 
-/** @type {Object<string, number[]> */
+/** @type {{[key: string]: number[]}} */
 const requestLogs = {};
 
-/** @type {Object<string, number> */
+/** @type {{[key: string]: number}} */
 const blockedUsers = {};
 
+/**
+ *
+ * @param req
+ * @param res
+ * @param next
+ */
 function rateLimiter(req, res, next) {
     const userIP = req.ip;
     const currentTime = Date.now();

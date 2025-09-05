@@ -8,8 +8,8 @@ class Lexorank {
 
     /**
      *
-     * @param {String} prev
-     * @param {String} next
+     * @param {string} prev
+     * @param {string} next
      * @returns {Array} of [String, Boolean]
      */
     insert(prev, next){
@@ -53,9 +53,9 @@ class Lexorank {
 
     /**
      *
-     * @param {Number} prev
-     * @param {Number} next
-     * @returns {Number}
+     * @param {number} prev
+     * @param {number} next
+     * @returns {number}
      */
     mid(prev, next){
         // TODO: consider to use 8 steps each jump
@@ -63,9 +63,9 @@ class Lexorank {
     }
 
     /**
-     * @param {Number} i
-     * @param {String} str
-     * @param {Number} defaultChar
+     * @param {string} str
+     * @param {number} i
+     * @param {number} defaultChar
      */
     getChar(str, i, defaultChar){
         if (i >= str.length) {
@@ -76,7 +76,7 @@ class Lexorank {
 
 
     /**
-     * @returns {Number}
+     * @returns {number}
      * @param {string} char
      */
     byte(char){
@@ -84,8 +84,8 @@ class Lexorank {
     }
 
     /**
-     * @returns {String}
-     * @param {Number} byte
+     * @returns {string}
+     * @param {number} byte
      */
     string(byte){
         return String.fromCharCode(byte);
