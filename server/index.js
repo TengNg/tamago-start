@@ -11,6 +11,7 @@ const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 
 const app = express();
+const apiRouter = express.Router();
 
 mongoose.set("strictQuery", true);
 mongoose
@@ -32,25 +33,28 @@ if (process.env.MODE !== "production") {
 }
 
 // (discord)
-app.use(require('./routes/api/discord'));
+apiRouter.use(require('./routes/api/discord'));
 
 // (auth)
-app.use("/api/register", rateLimiter, require("./routes/api/register"));
-app.use("/api/login", rateLimiter, require("./routes/api/login"));
-app.use("/api/logout", require("./routes/api/logout"));
+apiRouter.use("/register", rateLimiter, require("./routes/api/register"));
+apiRouter.use("/login", rateLimiter, require("./routes/api/login"));
+apiRouter.use("/logout", require("./routes/api/logout"));
 
 // (require-auth)
-app.use(require("./middlewares/authenticateToken"));
-app.use("/api/me", require("./routes/api/me"));
-app.use("/api/boards", require("./routes/api/boards"));
-app.use("/api/lists", require("./routes/api/lists"));
-app.use("/api/cards", require("./routes/api/cards"));
-app.use("/api/invitations", require("./routes/api/invitations"));
-app.use("/api/chats", require("./routes/api/chats"));
-app.use("/api/join_board_requests", require("./routes/api/joinBoardRequests"));
-app.use("/api/account", require("./routes/api/account"));
-app.use("/api/personal_writedowns", require("./routes/api/writedowns"));
-app.use("/api/board_activities", require("./routes/api/boardActivities"));
+apiRouter.use(require("./middlewares/authenticateToken"));
+apiRouter.use("/me", require("./routes/api/me"));
+apiRouter.use("/boards", require("./routes/api/boards"));
+apiRouter.use("/lists", require("./routes/api/lists"));
+apiRouter.use("/cards", require("./routes/api/cards"));
+apiRouter.use("/invitations", require("./routes/api/invitations"));
+apiRouter.use("/chats", require("./routes/api/chats"));
+apiRouter.use("/join_board_requests", require("./routes/api/joinBoardRequests"));
+apiRouter.use("/account", require("./routes/api/account"));
+apiRouter.use("/personal_writedowns", require("./routes/api/writedowns"));
+apiRouter.use("/board_activities", require("./routes/api/boardActivities"));
+
+// (mount api-routers)
+app.use("/api", apiRouter);
 
 // (prod-setup)
 if (process.env.MODE === "production") {
