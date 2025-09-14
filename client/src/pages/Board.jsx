@@ -28,7 +28,7 @@ import { axiosPrivate } from "../api/axios";
 const chatsPerPage = 50;
 
 const Board = () => {
-    const { currentUser } = useCurrentUserContext();
+    const { currentUser, currentUserQuery } = useCurrentUserContext();
 
     const {
         boardState,
@@ -286,6 +286,7 @@ const Board = () => {
 
         try {
             await axiosPrivate.put(`/boards/${boardState.board._id}/pinned/`);
+            await currentUserQuery.refetch();
         } catch (err) {
             console.log(err);
             alert("Failed to pin board");
@@ -742,7 +743,7 @@ const Board = () => {
                     </div>
 
                     <div
-                        className="flex h-[2.5rem] gap-2 z-20"
+                        className="flex h-[2.25rem] gap-2 z-20"
                         id="board-options-wrapper"
                     >
                         <div>
@@ -751,7 +752,7 @@ const Board = () => {
                                 className={`h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-[80px] px-4 bg-sky-100 border-[2px] text-[0.75rem] text-gray-600 font-medium
                                         ${openChatBox || openFloatingChat ? "shadow-[0_1px_0_0] mt-[2px]" : "shadow-[0_3px_0_0]"}`}
                             >
-                                Chat
+                                chat
                             </div>
                         </div>
 
@@ -761,7 +762,7 @@ const Board = () => {
                                 className={`h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-[80px] px-4 bg-sky-100 border-[2px] text-[0.75rem] text-gray-600 font-medium
                                         ${openFilter ? "shadow-[0_1px_0_0] mt-[2px]" : "shadow-[0_3px_0_0]"} ${hasFilter ? "text-white bg-teal-600" : ""}`}
                             >
-                                Filter
+                                filter
                             </div>
                         </div>
 
@@ -771,7 +772,7 @@ const Board = () => {
                                 className={`h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-[80px] px-4 bg-sky-100 border-[2px] text-[0.75rem] text-gray-600 font-medium
                                         ${openInvitationForm ? "shadow-[0_1px_0_0] mt-[2px]" : "shadow-[0_3px_0_0]"}`}
                             >
-                                Invite
+                                invite
                             </div>
                         </div>
 
@@ -785,7 +786,7 @@ const Board = () => {
                                 className={`flex--center cursor-pointer select-none h-full border-gray-600 w-[80px] shadow-gray-600 px-4 bg-sky-100 border-[2px] text-[0.75rem] text-gray-600 font-medium
                                     ${openBoardMenu ? "shadow-[0_1px_0_0] mt-[2px]" : "shadow-[0_3px_0_0]"}`}
                             >
-                                Options
+                                options
                             </button>
 
                             {openBoardMenu && (

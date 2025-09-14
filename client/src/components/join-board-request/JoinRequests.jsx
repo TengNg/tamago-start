@@ -22,7 +22,7 @@ export default function JoinRequests({
     if (error) {
         return (
             <div
-                className={`mx-auto lg:w-1/2 md:w-3/4 w-[90%] ${!show && "hidden"}`}
+                className={`mx-auto lg:w-1/2 md:w-3/4 w-[90%] ${show ? "" : "hidden"}`}
             >
                 <div className="relative box--style border-[2px] border-gray-600 shadow-gray-600 mx-auto overflow-auto p-4 md:p-8 bg-gray-100/75 flex flex-col gap-4">
                     <div className="text-gray-500 text-center text-[0.85rem]">
@@ -36,7 +36,7 @@ export default function JoinRequests({
     return (
         <>
             <div
-                className={`mx-auto lg:w-1/2 md:w-3/4 w-[90%] ${!show && "hidden"}`}
+                className={`mx-auto lg:w-1/2 md:w-3/4 w-[90%] ${show ? "" : "hidden"}`}
             >
                 <div className="flex justify-between items-center">
                     <p className="text-[0.75rem] text-gray-700 m-0 p-0">
@@ -53,7 +53,7 @@ export default function JoinRequests({
                     </button>
                 </div>
 
-                <div className="relative box--style border-[2px] border-gray-600 shadow-gray-600 h-[350px] mx-auto overflow-auto p-4 md:p-8 bg-gray-100/75 flex flex-col gap-4">
+                <div className="relative box--style border-[2px] border-gray-600 shadow-gray-600 h-[350px] mx-auto overflow-auto p-4 md:p-8 bg-gray-100/50 flex flex-col gap-4">
                     {requests.length === 0 && (
                         <div className="text-gray-500 text-center text-[0.85rem] mt-[7.5rem]">
                             no requests found.
@@ -78,7 +78,7 @@ export default function JoinRequests({
                             <div
                                 key={index}
                                 className={`button--style--rounded rounded-none border-gray-700 shadow-gray-700 flex justify-between flex-wrap sm:flex-nowrap items-center p-4
-                                        ${status === "accepted" ? "bg-blue-100" : status === "rejected" ? "bg-red-100" : "bg-slate-100"}`}
+                                        ${status === "accepted" ? "bg-blue-100" : status === "rejected" ? "bg-red-100" : "bg-transparent"}`}
                             >
                                 <div className="flex gap-2 mb-4 sm:mb-0">
                                     <div className="sm:mt-1 sm:block hidden">
@@ -155,7 +155,7 @@ export default function JoinRequests({
                                                     requesterName,
                                                 })
                                             }
-                                            className="button--style--rounded rounded-none px-3 py-2 bg-white text-[0.65rem] sm:text-[0.75rem] text-blue-700 border-blue-700"
+                                            className="button--style--rounded rounded-none px-3 py-2 bg-white text-[0.65rem] sm:text-[0.75rem] text-blue-700 border-blue-700 bg-gray-100"
                                         >
                                             {accept.isLoading &&
                                             accept.variables.id === _id
@@ -174,7 +174,7 @@ export default function JoinRequests({
                                                     requesterName,
                                                 })
                                             }
-                                            className="button--style--rounded rounded-none px-3 py-2 bg-white text-[0.65rem] sm:text-[0.75rem] text-red-700 border-red-700"
+                                            className="button--style--rounded rounded-none px-3 py-2 bg-white text-[0.65rem] sm:text-[0.75rem] text-red-700 border-red-700 bg-gray-100"
                                         >
                                             {reject.isLoading &&
                                             reject.variables.id === _id

@@ -54,7 +54,7 @@ const BoardForm = forwardRef(({}, ref) => {
                     className="border-[2px] border-gray-400 text-gray-600 p-2"
                     type="text"
                     autoComplete="off"
-                    placeholder="title (required)"
+                    placeholder="title *"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     required
@@ -64,7 +64,7 @@ const BoardForm = forwardRef(({}, ref) => {
                     className="border-[2px] border-gray-400 text-gray-600 p-2"
                     type="text"
                     autoComplete="off"
-                    placeholder="description..."
+                    placeholder="description"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                 />

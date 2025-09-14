@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    --card-item-bg: 241, 241, 241;
+    --past-due-card-bg: 255, 194, 231;
+    --card-item-focused-bg: 173, 216, 230;
+  }
+
+  [data-theme="mist"] {
+    --card-item-bg: 225, 225, 225;
+    --past-due-card-bg: 255, 194, 231;
+    --card-item-focused-bg: 173, 216, 230;
+  }
+}
+
 @layer components {
     .flex--center {
         @apply flex justify-center items-center
@@ -16,7 +30,7 @@
     }
 
     .underline--hover {
-        @apply before:hover:w-[90%]
+        @apply before:hover:w-[95%]
     }
 
     .section--style {
@@ -78,13 +92,32 @@
     .card--details--button {
         @apply flex items-center justify-center gap-1 w-fit min-w-[40px] h-[35px] border-2 shadow-[0_2px_0_0] bg-gray-100 text-[9px] sm:text-[0.75rem] p-2 font-semibold hover:shadow-[0_1px_0_0] hover:mt-[1px]
     }
+
+    .card__item {
+        @apply text-gray-800 dark:text-white;
+        background: rgb(var(--card-item-bg));
+    }
+
+    .past__due__card {
+        @apply text-gray-800 dark:text-white;
+        background: rgb(var(--past-due-card-bg));
+    }
+
+    .card__item.focused {
+        @apply text-gray-800 dark:text-white;
+        background: rgb(var(--card-item-focused-bg)) !important;
+    }
+
+    .list__item {
+        @apply text-gray-800 dark:text-white;
+        background: rgb(var(--card-item-bg));
+    }
 }
 
-@font-face { font-family: 'Roboto Mono'; src: url('./fonts/RobotoMono-VariableFont_wght.ttf') format('truetype'); }
-@font-face { font-family: 'Fira Code'; src: url('./fonts/FiraCode-VariableFont_wght.ttf') format('truetype'); }
+@font-face { font-family: 'JetBrainsMono'; src: url('./fonts/JetBrainsMono-VariableFont_wght.ttf') format('truetype'); }
 
 * {
-    font-family: 'Roboto Mono', monospace;
+    font-family: 'JetBrainsMono', monospace;
 }
 
 #root {
@@ -152,24 +185,8 @@ dialog button:focus {
 /*    background: transparent; */
 /*}*/
 
-.card__item {
-    background: rgba(241, 241, 241, 0.55);
-}
-
-.past__due__card {
-    background: rgba(255, 194, 231, 0.55);
-}
-
-.card__item.focused {
-    background: rgba(173, 216, 230, 0.55) !important;
-}
-
-.list__item {
-    background: rgba(241, 241, 241, 0.55);
-}
-
 .list__item__wrapper {
-    height: calc(100vh - 15rem);
+    height: calc(100vh - 14rem);
 }
 
 #header-section {
@@ -178,10 +195,6 @@ dialog button:focus {
 }
 
 /* Writedown Editor ========================================================================================== */
-
-.rsw-editor * {
-    font-family: 'Fira Code', monospace !important;
-}
 
 .rsw-ce ul {
     list-style: disc;
@@ -232,7 +245,7 @@ dialog button:focus {
 
 /* Media Queries =============================================================================================== */
 
-@media only screen and (max-width: 500px) {
+@media only screen and (max-width: 425px) {
     #root {
         position: relative;
         min-height: 600px;
@@ -251,11 +264,11 @@ dialog button:focus {
     #header-section {
         height: 50px;
         min-height: 50px;
-        padding: 0.5rem;
+        padding: 0.5rem 1rem;
     }
 
     #header-section > nav {
-        padding: 0.25rem;
+        width: 100%;
     }
 
     #header-section > nav > ul > li {
@@ -295,15 +308,15 @@ dialog button:focus {
         height: 480px;
     }
 
-    /*dialog.full-in-small-screen {*/
-    /*    width: 100vw !important;*/
-    /*    margin: 0 !important;*/
-    /*    max-width: 100vw !important;*/
-    /*    height: 100vh !important;*/
-    /*    max-height: 100vh !important;*/
-    /*    min-height: 100vh !important;*/
-    /*    min-width: 100vw !important;*/
-    /*}*/
+    dialog.full-in-small-screen {
+        margin: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        min-height: 100vh !important;
+        min-width: 100vw !important;
+        border: 0 !important;
+        box-shadow: 0 !important;
+    }
 
     dialog.full-in-small-screen textarea,
     dialog.full-in-small-screen input:not([type='date']) {

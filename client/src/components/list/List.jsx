@@ -183,8 +183,8 @@ const List = ({ index, list, cards }) => {
     const style = {
         transform: transform ? CSS.Translate.toString(transform) : undefined,
         transition,
-        opacity: isDragging ? 0.2 : 1,
         cursor: "auto",
+        opacity: isDragging ? 0.25 : 1,
     };
 
     if (list.collapsed) {

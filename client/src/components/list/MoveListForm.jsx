@@ -212,7 +212,7 @@ const MoveListForm = () => {
         <>
             <dialog
                 ref={dialog}
-                className="z-40 backdrop:bg-black/15 fixed top-0 right-0 box--style gap-4 items-start p-3 pb-5 h-fit w-[90%] sm:w-1/2 lg:w-1/4 border-black border-[2px] bg-gray-200"
+                className="z-40 backdrop:bg-black/15 fixed top-0 right-0 box--style gap-4 items-start p-3 pb-5 h-fit w-[90%] sm:w-1/2 max-w-[350px] border-black border-[2px] bg-gray-200"
                 onClick={handleCloseOnOutsideClick}
             >
                 <Loading

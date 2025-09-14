@@ -14,7 +14,7 @@ const BoardItem = ({ item }) => {
             className="w-[200px] sm:w-[250px] h-[120px] sm:h-[135px] text-gray-600"
         >
             <div
-                className="w-[210px] sm:w-[250px] h-[120px] sm:h-[135px] board--style board--hover md:border-[2px] border-[2px] border-gray-600 py-3 px-5 shadow-gray-600 select-none relative"
+                className="w-[210px] sm:w-[250px] h-[120px] sm:h-[135px] board--style board--hover md:border-[2px] border-[2px] border-gray-600 py-3 px-3 md:px-5 shadow-gray-600 select-none relative"
                 style={{ backgroundColor: "rgba(241, 241, 241, 0.5)" }}
             >
                 {currentUser._id === createdBy && (

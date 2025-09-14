@@ -246,8 +246,8 @@ const Profile = () => {
                     <span className="text-gray-600">information</span>
 
                     <div
-                        className="box--style border-[2px] border-gray-700 shadow-gray-700 bg-gray-100 sm:p-4 p-3 lg:w-[450px] sm:w-[400px] w-full"
-                        style={{ backgoundColor: "rgba(241, 241, 241, 0.75)" }}
+                        className="box--style border-[2px] border-gray-700 shadow-gray-700 sm:p-4 p-3 lg:w-[450px] sm:w-[400px] w-full"
+                        style={{ backgroundColor: "rgba(241, 241, 241, 0.25)" }}
                     >
                         <div className="font-medium text-gray-700">
                             {currentUser.username}
@@ -271,7 +271,7 @@ const Profile = () => {
                             <div className="flex flex-col">
                                 <input
                                     ref={usernameInputRef}
-                                    className="border-[1px] border-gray-500 p-1 font-medium bg-transparent"
+                                    className="border-[1px] border-gray-500 px-2 py-1 font-medium bg-transparent"
                                     type="text"
                                     id="username"
                                     autoComplete="off"
@@ -408,8 +408,8 @@ const Profile = () => {
                     <span className="text-gray-600">owned boards</span>
 
                     <div
-                        className="box--style relative border-[2px] border-gray-700 shadow-gray-700 bg-gray-100 sm:p-4 p-3 lg:w-[450px] sm:w-[400px] w-full"
-                        style={{ backgroundColor: "rgba(241, 241, 241, 0.75)" }}
+                        className="box--style relative border-[2px] border-gray-700 shadow-gray-700 sm:p-4 p-3 lg:w-[450px] sm:w-[400px] w-full"
+                        style={{ backgroundColor: "rgba(241, 241, 241, 0.25)" }}
                     >
                         <div className="flex flex-col items-center mt-3 gap-4 pb-4 px-4 lg:px-2 max-h-[450px] overflow-auto">
                             {ownedBoardsQuery.isPending ||

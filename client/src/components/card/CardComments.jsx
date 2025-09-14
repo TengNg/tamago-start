@@ -189,7 +189,7 @@ const CardComments = ({ card }) => {
     }
 
     return (
-        <div className="relative flex flex-col gap-4 text-[0.65rem] sm:text-[0.8rem] text-gray-700 px-4 pt-4 pb-6 border-[1px] border-gray-700">
+        <div className="relative flex flex-col gap-4 text-[0.65rem] sm:text-[0.8rem] text-gray-700 px-4 pt-4 pb-6 mb-4 border-[1px] border-gray-700">
             <div className="w-full flex justify-start items-start gap-1">
                 <textarea
                     maxLength={1000}
@@ -197,7 +197,7 @@ const CardComments = ({ card }) => {
                     readOnly={addCommentQuery.isPending}
                     onKeyDown={handleTextAreaOnKeydown}
                     onChange={handleSetTextAreaContent}
-                    className="font-text-composer overflow-y-auto border-[1px] shadow-[0_2px_0_0] border-gray-400 shadow-gray-400 focus:border-gray-600 focus:shadow-gray-600 break-words py-2 px-3 w-full text-gray-700 focus:bg-gray-100 bg-transparent font-medium placeholder-gray-400 focus:outline-none"
+                    className="overflow-y-auto border-[1px] shadow-[0_2px_0_0] border-gray-400 shadow-gray-400 focus:border-gray-600 focus:shadow-gray-600 break-words py-2 px-3 w-full text-gray-700 focus:bg-gray-100 bg-transparent font-medium placeholder-gray-400 focus:outline-none"
                     placeholder="add a comment..."
                 />
                 <div className="flex flex-col gap-2 min-w-[60px] w-[60px]">

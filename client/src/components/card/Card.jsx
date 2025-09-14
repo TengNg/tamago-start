@@ -20,7 +20,7 @@ export default function Card({ card }) {
         isLargeScreen,
     } = useBoardState();
 
-    const { attributes, listeners, setNodeRef, isDragging } = useSortable({
+    const { attributes, listeners, isDragging, setNodeRef } = useSortable({
         id: card._id,
         data: {
             type: "card",
@@ -29,9 +29,9 @@ export default function Card({ card }) {
     });
 
     const style = {
-        opacity: isDragging ? 0.2 : 1,
         boxShadow: `${card.highlight == null ? "0 3px 0 0 #4b5563" : `0 3px 0 0 ${card.highlight}`}`,
         borderColor: `${card.highlight == null ? "#4b5563" : `${card.highlight}`}`,
+        opacity: isDragging ? 0.25 : 1,
     };
 
     const handleOpenQuickEditor = (e) => {

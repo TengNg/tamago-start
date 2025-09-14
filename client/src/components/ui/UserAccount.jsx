@@ -78,7 +78,7 @@ const UserAccount = () => {
                         {currentUser && (
                             <>
                                 <button
-                                    className="absolute right-2 top-2 text-gray-600 p-2 rounded-sm hover:bg-gray-200"
+                                    className="absolute right-2 top-2 text-gray-600 p-1.5 rounded-sm hover:bg-gray-200"
                                     onClick={() => setCollapse(true)}
                                 >
                                     <Icon className="w-3 h-3" name="xmark" />
@@ -92,10 +92,13 @@ const UserAccount = () => {
                                 </div>
 
                                 <div className="select-none font-medium text-[0.8rem] max-w-[200px] overflow-hidden whitespace-nowrap text-ellipsis text-gray-700">
+                                    joined:{" "}
                                     {dateFormatter(currentUser.createdAt, {
                                         withTime: false,
                                     })}
                                 </div>
+
+                                <div className="h-px w-full bg-gray-400"></div>
 
                                 <div className="flex flex-col gap-2">
                                     <Link

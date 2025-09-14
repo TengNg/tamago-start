@@ -27,7 +27,13 @@ const NavBar = ({ setOpenPinnedBoards }) => {
     const navigate = useNavigate();
     const { pathname } = useLocation();
 
+    const isBoardPath = pathname.startsWith("/b/");
+
     useEffect(() => {
+        if (!currentUser) {
+            return;
+        }
+
         const handleOnKeyDown = (e) => {
             const isTextFieldFocused = document.querySelector(
                 "input:focus, textarea:focus",
@@ -60,7 +66,7 @@ const NavBar = ({ setOpenPinnedBoards }) => {
         () => {
             document.removeEventListener("keydown", handleOnKeyDown);
         };
-    }, []);
+    }, [currentUser]);
 
     if (!currentUser) {
         return (
@@ -128,39 +134,39 @@ const NavBar = ({ setOpenPinnedBoards }) => {
             >
                 <div className="md:block hidden w-[40px] h-[40px]"></div>
 
-                <div className="absolute lg:flex hidden items-center gap-2 lg:top-4 lg:left-4 top-2 left-2 text-[0.75rem] font-medium">
+                <div className="absolute md:flex hidden items-center gap-2 md:top-4 md:left-4 top-2 left-2 text-[0.75rem] font-medium">
                     {currentUser.recentlyViewedBoardId && (
-                        <button
-                            title="Go to last viewed board"
-                            className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border-[1px] border-dashed text-[0.75rem] lg:p-2 p-1 font-medium"
-                            onClick={() => {
-                                const recentlyViewedBoardId =
-                                    currentUser.recentlyViewedBoardId;
-                                if (recentlyViewedBoardId) {
-                                    navigate(`/b/${recentlyViewedBoardId}`);
-                                }
-                            }}
-                        >
-                            <span className="lg:block hidden">
-                                05 recently viewed board
-                            </span>
-                            <Icon
-                                name="rotate-right"
-                                className="lg:hidden block lg:w-4 lg:h-4 w-2.5 h-2.5 -scale-x-100"
-                            />
-                        </button>
+                        <>
+                            {!isBoardPath && (
+                                <button
+                                    title="[05] Go to last viewed board"
+                                    className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border-[1px] border-dashed text-[0.75rem] md:p-2 p-1 font-medium"
+                                    onClick={() => {
+                                        const recentlyViewedBoardId =
+                                            currentUser.recentlyViewedBoardId;
+                                        if (recentlyViewedBoardId) {
+                                            navigate(
+                                                `/b/${recentlyViewedBoardId}`,
+                                            );
+                                        }
+                                    }}
+                                >
+                                    <Icon
+                                        name="rotate-right"
+                                        className="md:block hidden w-2.5 h-2.5 -scale-x-100"
+                                    />
+                                </button>
+                            )}
+                        </>
                     )}
                     <button
-                        className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border-[1px] border-dashed text-[0.75rem] lg:p-2 p-1 font-medium"
-                        title="Open your pinned boards"
+                        className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border-[1px] border-dashed text-[0.75rem] md:p-2 p-1 font-medium"
+                        title="[C-E] Open your pinned boards"
                         onClick={() => {
                             setOpenPinnedBoards(true);
                         }}
                     >
-                        <Icon
-                            name="pin"
-                            className="lg:w-4 lg:h-4 w-2.5 h-2.5"
-                        />
+                        <Icon name="pin" className="w-2.5 h-2.5" />
                     </button>
                 </div>
 
@@ -193,37 +199,38 @@ const NavBar = ({ setOpenPinnedBoards }) => {
                             );
                         })}
 
-                        <li className="lg:hidden block">
+                        <li className="md:hidden block">
                             <div className="flex gap-2">
                                 {currentUser.recentlyViewedBoardId && (
-                                    <button
-                                        className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border-[1px] border-dashed text-[0.75rem] lg:p-2 p-1 font-normal"
-                                        onClick={() => {
-                                            const recentlyViewedBoardId =
-                                                currentUser.recentlyViewedBoardId;
-                                            if (recentlyViewedBoardId) {
-                                                navigate(
-                                                    `/b/${recentlyViewedBoardId}`,
-                                                );
-                                            }
-                                        }}
-                                    >
-                                        <Icon
-                                            name="rotate-right"
-                                            className="lg:hidden block lg:w-4 lg:h-4 w-3 h-3 -scale-x-100"
-                                        />
-                                    </button>
+                                    <>
+                                        {!isBoardPath && (
+                                            <button
+                                                className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border-[1px] border-dashed text-[0.75rem] md:p-2 p-1 font-normal"
+                                                onClick={() => {
+                                                    const recentlyViewedBoardId =
+                                                        currentUser.recentlyViewedBoardId;
+                                                    if (recentlyViewedBoardId) {
+                                                        navigate(
+                                                            `/b/${recentlyViewedBoardId}`,
+                                                        );
+                                                    }
+                                                }}
+                                            >
+                                                <Icon
+                                                    name="rotate-right"
+                                                    className="md:hidden block md:w-4 md:h-4 w-3 h-3 -scale-x-100"
+                                                />
+                                            </button>
+                                        )}
+                                    </>
                                 )}
                                 <button
-                                    className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border-[1px] border-dashed text-[0.75rem] lg:p-2 p-1 font-medium"
+                                    className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border-[1px] border-dashed text-[0.75rem] md:p-2 p-1 font-medium"
                                     onClick={() => {
                                         setOpenPinnedBoards(true);
                                     }}
                                 >
-                                    <Icon
-                                        name="pin"
-                                        className="lg:w-4 lg:h-4 w-3 h-3"
-                                    />
+                                    <Icon name="pin" className="w-2.5 h-2.5" />
                                 </button>
                             </div>
                         </li>

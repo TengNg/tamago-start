@@ -45,28 +45,6 @@ const Activities = () => {
 
     const [openHelp, setOpenHelp] = useState(false);
 
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            switch (e.key) {
-                case "?":
-                    setOpenHelp((prev) => !prev);
-                    break;
-                case "i":
-                    handleToggleInvitationsSection();
-                    break;
-                case "o":
-                    handleToggleBoardRequestsSection();
-                    break;
-                default:
-                    break;
-            }
-        };
-        document.addEventListener("keydown", handleKeyDown);
-        () => {
-            document.removeEventListener("keydown", handleKeyDown);
-        };
-    }, []);
-
     const {
         data: invitationData,
         refetch: refetchInvitationData,
@@ -346,24 +324,13 @@ const Activities = () => {
             <section className="w-full h-full overflow-auto pb-8">
                 <Title titleName="activities" />
 
-                {!showInvitations && !showJoinBoardRequests && (
-                    <div className="absolute w-fit text-gray-500 text-[10px] sm:text-[0.8rem] top-1/2 left-1/2 -translate-x-[40%] -translate-y-1/2">
-                        <span className="key opacity-45">i</span> open
-                        inivitations
-                        <br />
-                        <br />
-                        <span className="key opacity-45">o</span> open join
-                        board requests
-                    </div>
-                )}
-
                 <div
                     className={`flex justify-center gap-2 mx-auto mb-6 sm:mb-4 lg:w-1/2 md:w-3/4 w-[90%]`}
                 >
                     <div className="h-[35px]">
                         <button
                             title='press "i" to open'
-                            className={`w-fit ${showInvitations ? "mt-[0.15rem] text-gray-100 shadow-[0_1px_0_0]" : "shadow-gray-600 shadow-[0_3px_0_0]"} bg-gray-50 border-[2px] border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium`}
+                            className={`w-fit ${showInvitations ? "mt-[0.15rem] text-gray-100 shadow-[0_1px_0_0]" : "shadow-gray-600 shadow-[0_3px_0_0]"} bg-gray-100 bg-opacity-45 border-[2px] border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium`}
                             onClick={handleToggleInvitationsSection}
                         >
                             inivitations
@@ -373,7 +340,7 @@ const Activities = () => {
                     <div className="h-[35px]">
                         <button
                             title='press "o" to open'
-                            className={`w-[100px] ${showJoinBoardRequests ? "mt-[0.15rem] text-gray-100 shadow-[0_1px_0_0]" : "shadow-gray-600 shadow-[0_3px_0_0]"} bg-gray-50 border-[2px] border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium`}
+                            className={`w-[100px] ${showJoinBoardRequests ? "mt-[0.15rem] text-gray-100 shadow-[0_1px_0_0]" : "shadow-gray-600 shadow-[0_3px_0_0]"} bg-gray-100 bg-opacity-45 border-[2px] border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium`}
                             onClick={handleToggleBoardRequestsSection}
                         >
                             requests

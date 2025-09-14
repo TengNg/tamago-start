@@ -34,7 +34,7 @@ const Toast = ({
         >
             <div className="flex w-full justify-between items-center border-b-[1px] border-gray-600 p-3">
                 <div
-                    className="font-text-composer text-sm cursor-pointer"
+                    className="text-sm cursor-pointer"
                     onClick={(e) => {
                         e.stopPropagation();
                         if (!isChatOpen) {
@@ -72,7 +72,7 @@ const Toast = ({
             </div>
             <div className="text-sm text-wrap break-words flex flex-col gap-1 px-3 pt-2">
                 <div
-                    className="font-text-composer font-medium max-h-[120px] overflow-auto"
+                    className="font-medium max-h-[120px] overflow-auto"
                     onClick={() => {
                         setToast({ ...toast, open: false });
                     }}

@@ -486,7 +486,7 @@ const CardDetail = ({
                             <textarea
                                 ref={cardDescriptionInput}
                                 id="card__detail__description__textarea"
-                                className="font-text-composer overflow-y-auto border-[2px] shadow-[0_2px_0_0] border-gray-600 shadow-gray-600 min-h-[250px] break-words box-border text-sm py-2 px-3 w-full text-gray-600 bg-gray-100 leading-normal font-medium placeholder-gray-400 focus:outline-none"
+                                className="overflow-y-auto border-[2px] shadow-[0_2px_0_0] border-gray-600 shadow-gray-600 min-h-[250px] break-words box-border text-sm py-2 px-3 w-full text-gray-600 bg-gray-100 leading-normal font-medium placeholder-gray-400 focus:outline-none"
                                 autoFocus={true}
                                 placeholder={"add description..."}
                                 value={description}

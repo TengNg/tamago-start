@@ -52,7 +52,8 @@ export default function Login() {
 
                 <form
                     onSubmit={handleSubmit}
-                    className="flex flex-col form--style p-4 pt-2 bg-gray-200 w-[325px]"
+                    className="flex flex-col form--style p-4 pt-2 w-[325px]"
+                    style={{ backgroundColor: "rgba(241, 241, 241, 0.75)" }}
                 >
                     <label htmlFor="username">Username</label>
                     <input

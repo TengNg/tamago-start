@@ -4,7 +4,7 @@ import Icon from "../shared/Icon";
 const ModalDialog = ({ children, ...props }) => {
     const dialog = useRef();
 
-    const { open, setOpen, title } = props;
+    const { open, setOpen, title, bodyClassName } = props;
 
     useEffect(() => {
         if (open) {
@@ -58,7 +58,9 @@ const ModalDialog = ({ children, ...props }) => {
                 </button>
             </div>
 
-            <div className="flex flex-col p-3 text-gray-600 text-[10px] sm:text-[0.75rem] font-medium">
+            <div
+                className={`flex flex-col py-3 px-4 text-gray-600 text-[10px] sm:text-[0.75rem] font-medium ${bodyClassName}`}
+            >
                 {children}
             </div>
         </dialog>

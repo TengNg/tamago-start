@@ -27,8 +27,6 @@ const Writedown = () => {
 
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const navigate = useNavigate();
-
     useEffect(() => {
         fetchWritedowns();
     }, []);
@@ -329,19 +327,19 @@ const Writedown = () => {
 
                                     <div className="w-fit grid place-items-center">
                                         <button
-                                            className="text-[0.75rem] text-gray-600 pe-1 text-center hover:underline cursor-pointer sm:mb-0 mb-1 mx-auto"
-                                            onClick={handleDeleteAllWritedowns}
+                                            className={`${searchParams.has("filter") ? "text-amber-600" : "text-gray-600"} text-[0.75rem] pe-1 text-center hover:underline cursor-pointer sm:mb-0 mb-1 mx-auto`}
+                                            onClick={handleFilterPinned}
                                         >
-                                            delete all
+                                            pinned
                                         </button>
                                     </div>
 
                                     <div className="w-fit grid place-items-center">
                                         <button
-                                            className={`${searchParams.has("filter") ? "text-amber-600" : "text-gray-600"} text-[0.75rem] pe-1 text-center hover:underline cursor-pointer sm:mb-0 mb-1 mx-auto`}
-                                            onClick={handleFilterPinned}
+                                            className="text-[0.75rem] text-gray-600 pe-1 text-center hover:underline hover:text-rose-800 cursor-pointer sm:mb-0 mb-1 mx-auto"
+                                            onClick={handleDeleteAllWritedowns}
                                         >
-                                            pinned
+                                            delete all
                                         </button>
                                     </div>
                                 </div>

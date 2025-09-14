@@ -65,7 +65,7 @@ const Avatar = ({
             >
                 {!profileImage ? (
                     <div
-                        className={`font-bold flex--center select-none ${SIZE[size] && "text-[11px]"}`}
+                        className={`font-bold flex--center select-none`}
                     >
                         {username?.charAt(0)?.toUpperCase()}
                     </div>

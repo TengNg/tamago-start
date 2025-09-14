@@ -30,7 +30,7 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
     const [activeList, setActiveList] = useState(undefined);
     const [activeCard, setActiveCard] = useState(undefined);
 
-    const listContaineRef = useMouseDragScroll();
+    const listContainerRef = useMouseDragScroll();
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -392,7 +392,7 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
 
     const lists = useMemo(() => {
         return boardState.lists || [];
-    }, [boardState.lists])
+    }, [boardState.lists]);
 
     const listIds = useMemo(() => {
         return lists.map((list) => list._id);
@@ -409,7 +409,7 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
         >
             <div
                 id="list-container"
-                ref={listContaineRef}
+                ref={listContainerRef}
                 className="flex justify-start items-start gap-4 px-4 pb-4 overflow-y-auto"
             >
                 <SortableContext

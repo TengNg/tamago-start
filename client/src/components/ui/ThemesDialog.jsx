@@ -8,8 +8,13 @@ const ThemesDialog = ({
     setBackgroundTheme,
 }) => {
     return (
-        <ModalDialog title={"themes"} open={open} setOpen={setOpen}>
-            <div className="flex flex-col gap-3 h-[420px]">
+        <ModalDialog
+            title={"themes"}
+            open={open}
+            setOpen={setOpen}
+            bodyClassName="!px-0"
+        >
+            <div className="flex flex-col gap-3 h-fit">
                 {Object.entries(backgroundThemes).map((el) => {
                     const [title, color] = el;
 

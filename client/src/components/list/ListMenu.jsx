@@ -99,25 +99,25 @@ export default function ListMenu({
                     onClick={collapse}
                     className="text-[14px] sm:text-[0.75rem] text-white bg-indigo-800 px-1 py-2 hover:bg-indigo-700"
                 >
-                    collapse list
+                    collapse
                 </button>
                 <button
                     onClick={copy}
                     className={`${processingList?.processing ? "cursor-not-allowed" : ""} text-[12px] sm:text-[0.75rem] text-white bg-gray-600 px-1 py-2 hover:bg-gray-500`}
                 >
-                    {processingList.processing ? "copying..." : "copy list"}
+                    {processingList.processing ? "copying..." : "copy"}
                 </button>
                 <button
                     onClick={handleOpenMoveListForm}
                     className="text-[14px] sm:text-[0.75rem] text-white bg-gray-600 px-1 py-2 hover:bg-gray-500"
                 >
-                    move list
+                    move
                 </button>
                 <button
                     onClick={del}
                     className="text-[14px] sm:text-[0.75rem] text-white bg-gray-600 px-1 py-2 hover:bg-gray-500"
                 >
-                    delete list
+                    delete
                 </button>
                 <button
                     onClick={close}

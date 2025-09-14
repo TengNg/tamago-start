@@ -74,6 +74,10 @@ function App() {
     useEffect(() => {
         document.querySelector("#root").style.backgroundColor =
             backgroundTheme?.hex || "#f1f1f1";
+        document.documentElement.setAttribute(
+            "data-theme",
+            backgroundTheme.theme,
+        );
     }, [backgroundTheme]);
 
     useEffect(() => {

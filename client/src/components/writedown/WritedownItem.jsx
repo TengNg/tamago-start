@@ -83,8 +83,7 @@ const WritedownItem = ({ writedown, open, remove, pin }) => {
             >
                 {title ? (
                     <p className="text-sm max-w-[200px] max-h-[100px] overflow-hidden text-gray-700 whitespace-pre-wrap cursor-pointer">
-                        <span className="font-medium">&#128205; title:</span>
-                        <span> </span>
+                        &#128205;{" "}
                         <span className="group-hover:underline">{title}</span>
                     </p>
                 ) : !title && content ? (
