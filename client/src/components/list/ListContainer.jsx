@@ -1,15 +1,15 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import List from "./List";
 import useBoardState from "../../hooks/useBoardState";
 import AddList from "./AddList";
 import { lexorank } from "../../utils/class/Lexorank";
 import {
-    closestCenter,
     DndContext,
     DragOverlay,
     PointerSensor,
     useSensor,
     useSensors,
+    pointerWithin,
 } from "@dnd-kit/core";
 import {
     SortableContext,
@@ -282,7 +282,9 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
                 if (newOverCards.length === 0) {
                     newOverCards.push(newCard);
                 } else {
-                    // FIXME: this cause the card jumps
+                    // NOTE:
+                    // this cause the card jumps when using collisionDetection=[closestCorners|closestCenter]
+                    // resolved with collisionDetection=pointerWithin
                     const overIndex = newOverCards.findIndex(
                         (c) => c._id === overId,
                     );
@@ -388,7 +390,9 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
         setClonedBoardState(null);
     }
 
-    const lists = boardState.lists || [];
+    const lists = useMemo(() => {
+        return boardState.lists || [];
+    }, [boardState.lists])
 
     const listIds = useMemo(() => {
         return lists.map((list) => list._id);
@@ -396,7 +400,7 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
 
     return (
         <DndContext
-            collisionDetection={closestCenter}
+            collisionDetection={pointerWithin}
             onDragEnd={handleOnDragEnd}
             onDragStart={handleOnDragStart}
             onDragOver={handleOnDragOver}
