@@ -91,7 +91,7 @@ const CardQuickEditor = ({
             const newTitle = textAreaRef.current.value;
             setCardTitle(card._id, card.listId, newTitle);
             setInitialTitle(newTitle);
-            await axiosPrivate.put(
+            await axiosPrivate.patch(
                 `/cards/${card._id}/new-title`,
                 JSON.stringify({ title: newTitle }),
             );
@@ -112,7 +112,7 @@ const CardQuickEditor = ({
 
         try {
             setIsVerifying(true);
-            const response = await axiosPrivate.put(
+            const response = await axiosPrivate.patch(
                 `/cards/${card._id}/toggle-verified`,
             );
             const { verified } = response.data;

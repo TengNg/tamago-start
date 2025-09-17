@@ -124,7 +124,7 @@ const PinnedBoards = ({ setOpen }) => {
 
         try {
             setLoading(true);
-            await axiosPrivate.put(`/boards/pinned/clean`);
+            await axiosPrivate.patch(`/boards/pinned/clean`);
 
             setLoading(false);
             setCleaned(true);
@@ -167,7 +167,7 @@ const PinnedBoards = ({ setOpen }) => {
         }
 
         try {
-            await axiosPrivate.put(
+            await axiosPrivate.patch(
                 `/boards/pinned/update`,
                 JSON.stringify({
                     pinnedBoards: auth.user.pinnedBoardIdCollection,

@@ -38,7 +38,7 @@ const VisibilityConfig = ({ open, setOpen }) => {
 
         try {
             setUpdating(true);
-            const response = await axiosPrivate.put(
+            const response = await axiosPrivate.patch(
                 `/boards/${boardState.board._id}/new-visibility`,
                 JSON.stringify({ visibility }),
             );

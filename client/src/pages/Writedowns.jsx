@@ -115,7 +115,7 @@ const Writedown = () => {
         });
 
         try {
-            const response = await axiosPrivate.put(
+            const response = await axiosPrivate.patch(
                 `/personal_writedowns/${id}`,
                 JSON.stringify({ content: value }),
             );
@@ -170,7 +170,7 @@ const Writedown = () => {
 
     async function handleUpdateWritedownTitle(id, newTitle) {
         try {
-            await axiosPrivate.put(`/personal_writedowns/${id}/update-title`, {
+            await axiosPrivate.patch(`/personal_writedowns/${id}/update-title`, {
                 title: newTitle,
             });
         } catch (err) {
@@ -189,7 +189,7 @@ const Writedown = () => {
                 });
             });
 
-            const response = await axiosPrivate.put(
+            const response = await axiosPrivate.patch(
                 `/personal_writedowns/${id}/pin`,
             );
 
@@ -245,7 +245,7 @@ const Writedown = () => {
             removed.order = rank;
             setWritedowns(items);
 
-            await axiosPrivate.put(
+            await axiosPrivate.patch(
                 `/personal_writedowns/${removed._id}/reorder`,
                 JSON.stringify({ rank }),
             );

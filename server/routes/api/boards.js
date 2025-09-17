@@ -35,31 +35,31 @@ router.route("/:id/stats")
     .get(getBoardStats)
 
 router.route("/:id/members/leave")
-    .put(leaveBoard)
+    .patch(leaveBoard)
 
 router.route("/:id/members/:memberName")
-    .put(removeMemberFromBoard)
+    .patch(removeMemberFromBoard)
 
 router.route("/:id/new-title")
-    .put(updateTitle)
+    .patch(updateTitle)
 
 router.route("/:id/new-description")
-    .put(updateDescription)
+    .patch(updateDescription)
 
 router.route("/:id/new-visibility")
-    .put(updateVisibility)
+    .patch(updateVisibility)
 
 router.route("/copy/:id")
     .post(copyBoard)
 
 router.route("/:id/pinned")
-    .put(togglePinBoard)
+    .patch(togglePinBoard)
     .delete(deletePinnedBoard)
 
 router.route("/pinned/update")
-    .put(updatePinnedBoardsCollection)
+    .patch(updatePinnedBoardsCollection)
 
 router.route("/pinned/clean")
-    .put(cleanPinnedBoardsCollection)
+    .patch(cleanPinnedBoardsCollection)
 
 module.exports = router;

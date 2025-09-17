@@ -13,7 +13,7 @@ const QuickEditorHighlightPicker = ({ card }) => {
         try {
             setCardQuickEditorHighlight(value);
             setCardHighlight(card._id, card.listId, value);
-            await axiosPrivate.put(`/cards/${card._id}/new-highlight`, {
+            await axiosPrivate.patch(`/cards/${card._id}/new-highlight`, {
                 highlight: value,
             });
             socket.emit("updateCardHighlight", {

@@ -7,9 +7,9 @@ const {
 } = require("../../controllers/userController");
 
 router.route("/new-username")
-    .put(updateUsername);
+    .patch(updateUsername);
 
 router.route("/new-password")
-    .put(updatePassword);
+    .patch(updatePassword);
 
 module.exports = router;

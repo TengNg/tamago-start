@@ -258,14 +258,14 @@ const Activities = () => {
     }
 
     async function handleAcceptInvitation(invitationId) {
-        return await axiosPrivate.put(
+        return await axiosPrivate.patch(
             `/invitations/${invitationId}/accept`,
             JSON.stringify({ id: invitationId }),
         );
     }
 
     async function handleRejectInvitation(invitationId) {
-        return await axiosPrivate.put(
+        return await axiosPrivate.patch(
             `/invitations/${invitationId}/reject`,
             JSON.stringify({ id: invitationId }),
         );
@@ -279,14 +279,14 @@ const Activities = () => {
     }
 
     async function handleAcceptBoardRequest({ id, boardId, requesterName }) {
-        return await axiosPrivate.put(
+        return await axiosPrivate.patch(
             `/join_board_requests/${id}/accept`,
             JSON.stringify({ boardId, requesterName }),
         );
     }
 
     async function handleRejectBoardRequest({ id, boardId, requesterName }) {
-        return await axiosPrivate.put(
+        return await axiosPrivate.patch(
             `/join_board_requests/${id}/reject`,
             JSON.stringify({ boardId, requesterName }),
         );

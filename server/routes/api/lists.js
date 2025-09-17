@@ -53,15 +53,15 @@ router.route("/:id")
     .delete(deleteList);
 
 router.route("/:id/reorder")
-    .put(reorder)
+    .patch(reorder)
 
 router.route("/:id/new-title")
-    .put(updateTitle)
+    .patch(updateTitle)
 
 router.route("/copy/:id")
     .post(withLock("copy", copyList))
 
 router.route("/move/:id/b/:boardId/i/:index")
-    .put(moveList)
+    .patch(moveList)
 
 module.exports = router;

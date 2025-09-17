@@ -104,7 +104,7 @@ const MoveListForm = () => {
         // move list to another board ==================================================================================
         if (list.boardId !== selectedBoardId) {
             try {
-                const response = await axiosPrivate.put(
+                const response = await axiosPrivate.patch(
                     `/lists/move/${listToMove._id}/b/${selectedBoardId}/i/${selectedIndex}`,
                 );
                 const { list, cards } = response.data;
@@ -185,7 +185,7 @@ const MoveListForm = () => {
             });
 
             const removedId = removed._id;
-            await axiosPrivate.put(
+            await axiosPrivate.patch(
                 `/lists/${removedId}/reorder`,
                 JSON.stringify({
                     rank,

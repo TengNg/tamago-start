@@ -150,7 +150,7 @@ const CardDetail = ({
 
     const handleCardOwnerChange = async (memberName) => {
         try {
-            const response = await axiosPrivate.put(
+            const response = await axiosPrivate.patch(
                 `/cards/${card._id}/member/update`,
                 JSON.stringify({ ownerName: memberName }),
             );
@@ -173,7 +173,7 @@ const CardDetail = ({
 
     const handleCardPriorityLevelChange = async (value) => {
         try {
-            const response = await axiosPrivate.put(
+            const response = await axiosPrivate.patch(
                 `/cards/${card._id}/priority/update`,
                 JSON.stringify({ priorityLevel: value }),
             );
@@ -213,7 +213,7 @@ const CardDetail = ({
 
         try {
             setIsVerifying(true);
-            const response = await axiosPrivate.put(
+            const response = await axiosPrivate.patch(
                 `/cards/${card._id}/toggle-verified`,
             );
             const { verified } = response.data;
@@ -234,7 +234,7 @@ const CardDetail = ({
 
     const handleChangeDueDate = async (value) => {
         try {
-            const response = await axiosPrivate.put(
+            const response = await axiosPrivate.patch(
                 `/cards/${card._id}/due-date/update`,
                 JSON.stringify({ dueDate: value }),
             );
@@ -267,7 +267,7 @@ const CardDetail = ({
 
         setIsSavingDescription(true);
         try {
-            await axiosPrivate.put(
+            await axiosPrivate.patch(
                 `/cards/${card._id}/new-description`,
                 JSON.stringify({ description }),
             );
@@ -299,7 +299,7 @@ const CardDetail = ({
         }
 
         try {
-            await axiosPrivate.put(
+            await axiosPrivate.patch(
                 `/cards/${card._id}/new-title`,
                 JSON.stringify({ title: e.target.value.trim() }),
             );

@@ -17,9 +17,9 @@ router.route("/:id")
     .delete(removeInvitation)
 
 router.route("/:id/accept")
-    .put(acceptInvitation)
+    .patch(acceptInvitation)
 
 router.route("/:id/reject")
-    .put(rejectInvitation)
+    .patch(rejectInvitation)
 
 module.exports = router;

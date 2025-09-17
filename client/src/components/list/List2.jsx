@@ -46,7 +46,7 @@ const List = ({ index, list, cards }) => {
         titleRef.current.classList.remove("hidden");
 
         try {
-            await axiosPrivate.put(
+            await axiosPrivate.patch(
                 `/lists/${list._id}/new-title`,
                 JSON.stringify({ title: textAreaRef.current.value }),
             );

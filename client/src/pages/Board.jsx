@@ -257,7 +257,7 @@ const Board = () => {
         }
 
         try {
-            const response = await axiosPrivate.put(
+            const response = await axiosPrivate.patch(
                 `/boards/${boardState.board._id}/new-title`,
                 JSON.stringify({ title: value }),
             );
@@ -285,7 +285,7 @@ const Board = () => {
         if (e.button !== 0) return;
 
         try {
-            await axiosPrivate.put(`/boards/${boardState.board._id}/pinned/`);
+            await axiosPrivate.patch(`/boards/${boardState.board._id}/pinned/`);
             await currentUserQuery.refetch();
         } catch (err) {
             console.log(err);
@@ -332,7 +332,7 @@ const Board = () => {
                     throw new Error("Failed to reorder card");
                 }
 
-                const response = await axiosPrivate.put(
+                const response = await axiosPrivate.patch(
                     `/cards/${cardId}/reorder`,
                     JSON.stringify({
                         rank,
@@ -440,7 +440,7 @@ const Board = () => {
                     };
                 });
 
-                await axiosPrivate.put(
+                await axiosPrivate.patch(
                     `/cards/${card._id}/reorder`,
                     JSON.stringify({
                         rank,

@@ -27,7 +27,7 @@ const BoardMenu = ({
 
     const handleLeaveBoard = async () => {
         try {
-            await axiosPrivate.put(
+            await axiosPrivate.patch(
                 `/boards/${boardState.board._id}/members/leave`,
             );
             removeMemberFromBoard(currentUser.username);
@@ -57,7 +57,7 @@ const BoardMenu = ({
     const handleUpdateDescription = async (e) => {
         if (e.target.value.trim() === boardState.board.description) return;
         try {
-            await axiosPrivate.put(
+            await axiosPrivate.patch(
                 `/boards/${boardState.board._id}/new-description`,
                 JSON.stringify({ description: e.target.value.trim() }),
             );

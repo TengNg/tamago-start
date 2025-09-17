@@ -21,10 +21,10 @@ router.route("/:requestId")
     .delete(removeRequest)
 
 router.route("/:requestId/accept")
-    .put(acceptRequest)
+    .patch(acceptRequest)
 
 router.route("/:requestId/reject")
-    .put(rejectRequest)
+    .patch(rejectRequest)
 
 module.exports = router;
 

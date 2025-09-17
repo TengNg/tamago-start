@@ -21,15 +21,15 @@ router.route("/")
 router.route("/:writedownId")
     .get(getWritedown)
     .delete(deleteWritedown)
-    .put(saveWritedown)
+    .patch(saveWritedown)
 
 router.route("/:writedownId/pin")
-    .put(pinWritedown)
+    .patch(pinWritedown)
 
 router.route("/:writedownId/reorder")
-    .put(reorder)
+    .patch(reorder)
 
 router.route("/:writedownId/update-title")
-    .put(updateTitle);
+    .patch(updateTitle);
 
 module.exports = router;

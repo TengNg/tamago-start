@@ -109,7 +109,7 @@ const InvitationForm = ({ open, setOpen }) => {
     const handleRemoveMemberFromBoard = async (memberName) => {
         try {
             setLoading(true);
-            await axiosPrivate.put(
+            await axiosPrivate.patch(
                 `/boards/${boardState.board._id}/members/${memberName}`,
             );
             removeMemberFromBoard(memberName);

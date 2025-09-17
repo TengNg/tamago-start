@@ -63,31 +63,31 @@ router.route("/:id")
     .delete(deleteCard)
 
 router.route("/:id/reorder")
-    .put(reorder)
+    .patch(reorder)
 
 router.route("/:id/new-title")
-    .put(updateTitle)
+    .patch(updateTitle)
 
 router.route("/:id/new-description")
-    .put(updateDescription)
+    .patch(updateDescription)
 
 router.route("/:id/new-highlight")
-    .put(updateHighlight)
+    .patch(updateHighlight)
 
 router.route("/:id/copy")
     .post(withLock("copy", copyCard))
 
 router.route("/:id/member/update")
-    .put(updateOwner)
+    .patch(updateOwner)
 
 router.route("/:id/priority/update")
-    .put(updatePriorityLevel)
+    .patch(updatePriorityLevel)
 
 router.route("/:id/toggle-verified")
-    .put(withLock("toggleVerified", toggleVerified))
+    .patch(withLock("toggleVerified", toggleVerified))
 
 router.route("/:id/due-date/update")
-    .put(updateDueDate)
+    .patch(updateDueDate)
 
 // Comments
 router.route("/:cardId/comments")

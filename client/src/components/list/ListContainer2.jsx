@@ -74,7 +74,7 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
                     return { ...prev, lists: newLists };
                 });
 
-                await axiosPrivate.put(
+                await axiosPrivate.patch(
                     `/lists/${removedId}/reorder`,
                     JSON.stringify({
                         rank,
@@ -156,7 +156,7 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
                 return { ...prev, lists: currentLists };
             });
 
-            const response = await axiosPrivate.put(
+            const response = await axiosPrivate.patch(
                 `/cards/${removedId}/reorder`,
                 JSON.stringify({
                     rank,
