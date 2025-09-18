@@ -74,7 +74,7 @@ app.use(errorHandler);
 
 // Init socket =================================================================
 
-const { initSocket } = require('./socket.js');
+const { initSocket } = require('./socket');
 const { createServer } = require('http');
 const server = createServer(app);
 initSocket(server);

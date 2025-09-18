@@ -6,6 +6,11 @@ declare global {
         username: string;
         refreshTokenVersion?: number;
     }
+
+    type SocketSharedState = {
+        boardIdMap: Map<string, string>;
+        usernameMap: { [socketId: string]: string };
+    }
 }
 
 /**
