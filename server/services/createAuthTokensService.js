@@ -1,9 +1,8 @@
-const express = require('express');
 const jwt = require('jsonwebtoken');
 
 const __prod__ = process.env.MODE === 'production';
 
-/** @type express.CookieOptions */
+/** @type import('express').CookieOptions */
 const aCookieOpts = {
     httpOnly: true,
     sameSite: __prod__ ? 'lax' : 'none',
@@ -11,7 +10,7 @@ const aCookieOpts = {
     maxAge: 15 * 60 * 1000 // 15 mins
 };
 
-/** @type express.CookieOptions */
+/** @type import('express').CookieOptions */
 const rCookieOpts = {
     httpOnly: true,
     sameSite: __prod__ ? 'lax' : 'none',
@@ -26,7 +25,7 @@ const aTokenName = process.env.ACCESS_TOKEN_COOKIE_NAME;
 const rTokenName = process.env.REFRESH_TOKEN_COOKIE_NAME;
 
 /**
- * @param {UserPayload} user
+ * @param {import('express').Request["user"]} user
  */
 const createAccessToken = (user) => {
     const { userId, username } = user;
@@ -39,7 +38,7 @@ const createAccessToken = (user) => {
 };
 
 /**
- * @param {UserPayload} user
+ * @param {import('express').Request["user"]} user
  */
 const createRefreshToken = (user) => {
     const { userId, username, refreshTokenVersion } = user;
@@ -52,7 +51,7 @@ const createRefreshToken = (user) => {
 };
 
 /**
- * @param {UserPayload} user
+ * @param {import('express').Request["user"]} user
  */
 const createAuthTokens = (user) => {
     const accessToken = createAccessToken(user);
@@ -61,7 +60,7 @@ const createAuthTokens = (user) => {
 };
 
 /**
- * @param {express.Response} res
+ * @param {import('express').Response} res
  * @param {string} accessToken
  */
 const sendAccessTokenCookie = (res, accessToken) => {
@@ -69,7 +68,7 @@ const sendAccessTokenCookie = (res, accessToken) => {
 };
 
 /**
- * @param {express.Response} res
+ * @param {import('express').Response} res
  * @param {string} refreshToken
  */
 const sendRefreshTokenCookie = (res, refreshToken) => {
@@ -77,8 +76,8 @@ const sendRefreshTokenCookie = (res, refreshToken) => {
 };
 
 /**
- * @param {express.Response} res
- * @param {UserPayload} user
+ * @param {import('express').Response} res
+ * @param {import('express').Request["user"]} user
  */
 const sendAuthCookies = (res, user) => {
     const { accessToken, refreshToken } = createAuthTokens(user);
@@ -87,7 +86,7 @@ const sendAuthCookies = (res, user) => {
 };
 
 /**
- * @param {express.Response} res
+ * @param {import('express').Response} res
  */
 const clearAuthCookies = (res) => {
     res.clearCookie(rTokenName, rCookieOpts);

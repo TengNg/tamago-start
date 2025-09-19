@@ -1,6 +1,10 @@
 const Board = require("../models/Board");
 const BoardMembership = require("../models/BoardMembership");
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const getBoardMemberships = async (req, res) => {
     const { boardId } = req.params;
     const foundBoard = await Board.findById(boardId);

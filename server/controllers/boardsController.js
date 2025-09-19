@@ -10,6 +10,10 @@ const { userByUsername: getUser } = require('../services/userService');
 
 const saveBoardActivity = require('../services/saveBoardActivity');
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const getBoards = async (req, res) => {
     const { userId } = req.user;
     const { filter } = req.query;
@@ -70,12 +74,20 @@ const getBoards = async (req, res) => {
     });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const getOwnedBoards = async (req, res) => {
     const { userId } = req.user;
     const boards = await Board.find({ createdBy: userId }).lean();
     return res.json({ boards });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const getBoard = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
@@ -181,6 +193,10 @@ const getBoard = async (req, res) => {
     });
 }
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const getBoardStats = async (req, res) => {
     const { id } = req.params;
     const { userId } = req.user;
@@ -244,6 +260,10 @@ const getBoardStats = async (req, res) => {
     res.status(200).json({ board: foundBoard, priorityLevelStats, staleCardCount });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const createBoard = async (req, res) => {
     const { userId } = req.user;
     const { title, description } = req.body;
@@ -256,6 +276,10 @@ const createBoard = async (req, res) => {
     return res.status(201).json({ msg: 'new board created', newBoard });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const updateTitle = async (req, res) => {
     const { id } = req.params;
     const { title } = req.body;
@@ -282,6 +306,10 @@ const updateTitle = async (req, res) => {
     return res.status(200).json({ msg: 'board updated', newBoard: board });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const updateDescription = async (req, res) => {
     const { id } = req.params;
     const { description } = req.body;
@@ -309,6 +337,10 @@ const updateDescription = async (req, res) => {
     return res.status(200).json({ msg: 'board updated', newBoard: board });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const updateVisibility = async (req, res) => {
     const { id } = req.params;
     const { visibility } = req.body;
@@ -323,6 +355,10 @@ const updateVisibility = async (req, res) => {
     return res.status(200).json({ msg: 'board updated', newBoard: board });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const leaveBoard = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
@@ -347,6 +383,10 @@ const leaveBoard = async (req, res) => {
     res.status(200).json({ msg: 'Member removed from the board successfully' });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const removeMemberFromBoard = async (req, res) => {
     const { userId } = req.user;
     const { id, memberName } = req.params;
@@ -378,6 +418,10 @@ const removeMemberFromBoard = async (req, res) => {
     res.status(200).json({ msg: 'Member removed from the board successfully' });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const closeBoard = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -405,6 +449,10 @@ const closeBoard = async (req, res) => {
     }
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const copyBoard = async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -474,6 +522,10 @@ const copyBoard = async (req, res) => {
     }
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const togglePinBoard = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
@@ -505,6 +557,10 @@ const togglePinBoard = async (req, res) => {
     return res.status(200).json({ result });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const deletePinnedBoard = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
@@ -526,6 +582,10 @@ const deletePinnedBoard = async (req, res) => {
     return res.status(404).json({ msg: 'pinned board not found' });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const updatePinnedBoardsCollection = async (req, res) => {
     const { userId } = req.user;
     const { pinnedBoards } = req.body;
@@ -546,6 +606,10 @@ const updatePinnedBoardsCollection = async (req, res) => {
     return res.status(200).json({ result });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const cleanPinnedBoardsCollection = async (req, res) => {
     const { userId } = req.user;
     const result = await User.findOneAndUpdate(

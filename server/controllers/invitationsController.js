@@ -10,11 +10,15 @@ const getUser = (username) => {
     return foundUser;
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const getInvitations = async (req, res) => {
     const { userId } = req.user;
     const perPage = MAX_INVITATION_PAGE;
     let { page } = req.query;
-    page = +page || 1;
+    const pageNum = Number(Array.isArray(page) ? page[0] : page) || 1;
 
     const invitations = await Invitation
         .find({ invitedUserId: userId })
@@ -27,13 +31,17 @@ const getInvitations = async (req, res) => {
             select: 'username profileImage createdAt'
         })
         .sort({ createdAt: -1 })
-        .skip((page - 1) * perPage)
+        .skip((pageNum - 1) * perPage)
         .limit(perPage)
         .lean();
 
     res.status(200).json({ invitations });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const sendInvitation = async (req, res) => {
     const { username } = req.user;
     const sender = await getUser(username);
@@ -70,6 +78,10 @@ const sendInvitation = async (req, res) => {
     res.status(201).json(invitation);
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const acceptInvitation = async (req, res) => {
     const { id } = req.params;
 
@@ -122,6 +134,10 @@ const rejectInvitation = async (req, res) => {
     res.json({ invitation });
 }
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const removeInvitation = async (req, res) => {
     const { id } = req.params;
 

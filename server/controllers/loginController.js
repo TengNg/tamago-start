@@ -2,6 +2,10 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const { sendAuthCookies } = require('../services/createAuthTokensService');
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const handleLogin = async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {

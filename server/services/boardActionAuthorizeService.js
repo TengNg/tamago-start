@@ -1,4 +1,3 @@
-const { Types } = require('mongoose');
 const Board = require('../models/Board');
 
 /**
@@ -8,7 +7,7 @@ const Board = require('../models/Board');
  */
 
 /**
- * @param {Types.ObjectId | string} boardId
+ * @param {import('mongoose').Types.ObjectId | string} boardId
  * @param {string} userId
  * @param {{ ownerOnly?: boolean }} [opt]
  * @returns {Promise<AuthorizationResult>}

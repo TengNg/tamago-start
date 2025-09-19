@@ -12,7 +12,7 @@ const rTokenName = process.env.REFRESH_TOKEN_COOKIE_NAME;
 /**
  * @param {string} accessToken
  * @param {string} refreshToken
- * @returns {Promise<UserPayload>}
+ * @returns {Promise<import('express').Request["user"]>}
  */
 const checkTokens = async (accessToken, refreshToken) => {
     try {

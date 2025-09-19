@@ -1,24 +1,19 @@
 export { };
 
 declare global {
-    type UserPayload = {
-        userId: string;
-        username: string;
-        refreshTokenVersion?: number;
-    }
-
     type SocketSharedState = {
         boardIdMap: Map<string, string>;
         usernameMap: { [socketId: string]: string };
     }
 }
 
-/**
- * Extends Express Request to include user property
- */
 declare module 'express' {
     interface Request {
-        user?: UserPayload;
+        user?: {
+            userId: string;
+            username: string;
+            refreshTokenVersion?: number;
+        };
     }
 }
 

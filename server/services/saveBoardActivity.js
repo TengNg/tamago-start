@@ -1,12 +1,11 @@
-const { Types } = require('mongoose');
 const BoardActivity = require('../models/BoardActivity');
 
 /**
  * @typedef {object} Params
  * @property {string} userId
- * @property {string | Types.ObjectId} boardId
- * @property {string | Types.ObjectId} [listId]
- * @property {string | Types.ObjectId} [cardId]
+ * @property {string | import('mongoose').Types.ObjectId} boardId
+ * @property {string | import('mongoose').Types.ObjectId} [listId]
+ * @property {string | import('mongoose').Types.ObjectId} [cardId]
  * @property {Date | NativeDate | undefined} [createdAt]
  * @property {string} [description]
  * @property {string} action

@@ -3,6 +3,10 @@ const router = express.Router();
 const User = require('../../models/User.js');
 const { sanitizeUser } = require('../../services/userService.js');
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const getCurrentUser = async (req, res) => {
     const { userId } = req.user;
     const user = await User.findById(userId).select('-password -refreshTokenVersion');

@@ -3,18 +3,24 @@ const mongoose = require('mongoose');
 const Chat = require("../models/Chat");
 const Board = require("../models/Board");
 
+/**
+ * @param {string} boardId
+ */
 const boardById = (boardId) => {
     const foundBoard = Board.findById(boardId).lean();
     return foundBoard;
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const getMessages = async (req, res) => {
     const { boardId } = req.params;
 
-    let { perPage, page } = req.query;
-
-    perPage = +perPage || 10;
-    page = +page || 1;
+    const { perPage, page } = req.query;
+    const perPageNum = typeof perPage === 'string' ? parseInt(perPage, 10) : 10;
+    const pageNum = typeof page === 'string' ? parseInt(page, 10) : 1;
 
     const foundBoard = await boardById(boardId);
     if (!foundBoard) return res.status(400).json({ msg: "cannot fetch chat, board not found" });
@@ -22,8 +28,8 @@ const getMessages = async (req, res) => {
     const messages = await Chat
         .find({ boardId })
         .sort({ createdAt: 'desc' })
-        .skip((page - 1) * perPage)
-        .limit(perPage)
+        .skip((pageNum - 1) * perPageNum)
+        .limit(perPageNum)
         .populate({
             path: 'sentBy',
             select: 'username'
@@ -32,6 +38,10 @@ const getMessages = async (req, res) => {
     res.json({ messages });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const sendMessage = async (req, res) => {
     const { userId } = req.user;
     const { content, trackedId } = req.body;
@@ -59,12 +69,20 @@ const sendMessage = async (req, res) => {
     res.status(200).json({ msg: "message is sent", chat });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const deleteMessage = async (req, res) => {
     const { trackedId } = req.params;
     const deletedMessage = await Chat.findOneAndDelete({ trackedId });
     res.status(200).json({ msg: "message deleted", deletedMessage });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const clearMessages = async (req, res) => {
     const { userId } = req.user;
     const { boardId } = req.params;

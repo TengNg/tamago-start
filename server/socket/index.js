@@ -1,8 +1,7 @@
 require('dotenv').config();
 
 const jwt = require('jsonwebtoken');
-const { Server: HttpServer } = require('http');
-const { Server: SocketServer } = require("socket.io");
+const { Server } = require("socket.io");
 const state = require('./state');
 
 const __prod__ = process.env.MODE === "production";
@@ -32,10 +31,10 @@ const registerHandlers = (socket) => {
 
 /**
  * Initialize socket-server
- * @param {HttpServer} server
+ * @param {import('http').Server} server
  */
 const initSocket = (server) => {
-    const io = new SocketServer(server, opts);
+    const io = new Server(server, opts);
 
     io.use(async (socket, next) => {
         const cookies = socket.handshake.headers.cookie;
@@ -67,7 +66,7 @@ const initSocket = (server) => {
         }
 
         try {
-            /** @type UserPayload */
+            /** @type import('express').Request["user"] */
             const decoded = jwt.verify(accessToken, accessTokenSecret);
 
             if (process.env.MODE === "development") {

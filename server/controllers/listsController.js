@@ -8,6 +8,10 @@ const { saveList } = require('../services/listService');
 const { isActionAuthorized } = require('../services/boardActionAuthorizeService');
 const saveBoardActivity = require('../services/saveBoardActivity');
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const getListCount = async (req, res) => {
     const { boardId } = req.params;
 
@@ -20,6 +24,10 @@ const getListCount = async (req, res) => {
     return res.status(200).json({ count });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const addList = async (req, res) => {
     const { userId } = req.user;
     const { title, order, boardId } = req.body;
@@ -47,6 +55,10 @@ const addList = async (req, res) => {
     return res.status(201).json({ msg: 'new list created', newList });
 }
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const reorder = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
@@ -82,6 +94,10 @@ const reorder = async (req, res) => {
     res.status(200).json({ message: 'list updated', newList: foundList });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const updateTitle = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
@@ -100,6 +116,10 @@ const updateTitle = async (req, res) => {
     res.status(200).json({ message: 'list updated', newList: foundList });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const deleteList = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
@@ -124,6 +144,10 @@ const deleteList = async (req, res) => {
     res.status(200).json({ message: 'list deleted' });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const copyList = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
@@ -180,6 +204,10 @@ const copyList = async (req, res) => {
     res.status(200).json({ list, cards: newCards, message: 'list copied' });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const moveList = async (req, res) => {
     const { userId } = req.user;
     const { id, boardId, index } = req.params;

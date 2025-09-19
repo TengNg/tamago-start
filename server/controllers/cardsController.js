@@ -7,6 +7,10 @@ const saveBoardActivity = require('../services/saveBoardActivity');
 const { listById } = require('../services/listService');
 const { cardById } = require('../services/cardService');
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const getCard = async (req, res) => {
     const { id } = req.params;
     const foundCard = await cardById(id);
@@ -17,6 +21,10 @@ const getCard = async (req, res) => {
     return res.status(201).json({ card: foundCard });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const addCard = async (req, res) => {
     const { userId } = req.user;
     const { trackedId, title, order, listId } = req.body;
@@ -52,6 +60,10 @@ const addCard = async (req, res) => {
     return res.status(201).json({ newCard });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const reorder = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
@@ -109,6 +121,10 @@ const reorder = async (req, res) => {
     });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const updateTitle = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
@@ -127,6 +143,10 @@ const updateTitle = async (req, res) => {
     res.status(200).json({ message: 'card updated', newCard: foundCard });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const updateDescription = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
@@ -145,6 +165,10 @@ const updateDescription = async (req, res) => {
     res.status(200).json({ newCard: foundCard });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const updateHighlight = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
@@ -163,6 +187,10 @@ const updateHighlight = async (req, res) => {
     res.status(200).json({ newCard: foundCard });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const updatePriorityLevel = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
@@ -193,6 +221,10 @@ const updatePriorityLevel = async (req, res) => {
     res.status(200).json({ newCard: foundCard });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const deleteCard = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
@@ -217,6 +249,10 @@ const deleteCard = async (req, res) => {
     res.status(200).json({ message: 'Card removed successfully' });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const copyCard = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
@@ -249,6 +285,10 @@ const copyCard = async (req, res) => {
     return res.status(200).json({ newCard });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const updateOwner = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
@@ -267,6 +307,10 @@ const updateOwner = async (req, res) => {
     res.status(200).json({ newCard: foundCard });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const toggleVerified = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
@@ -295,6 +339,10 @@ const toggleVerified = async (req, res) => {
     res.status(200).json({ verified: foundCard.verified });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const updateDueDate = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;

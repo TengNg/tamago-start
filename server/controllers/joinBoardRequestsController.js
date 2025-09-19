@@ -68,6 +68,10 @@ const getAllRequests = async (req, res) => {
     return res.json({ joinRequests });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const getBoardRequests = async (req, res) => {
     const { foundUser: _foundUser, foundBoard } = await findUserAndBoard(req, res);
     const joinRequests = await JoinBoardRequest.find({ boardId: foundBoard._id }).populate('requester').lean();
@@ -124,6 +128,10 @@ const acceptRequest = async (req, res) => {
     return res.json({ msg: 'request accepted' });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const rejectRequest = async (req, res) => {
     const { foundUser: _foundUser, foundBoard } = await findUserAndBoard(req, res);
 
@@ -142,6 +150,10 @@ const rejectRequest = async (req, res) => {
     return res.json({ msg: 'request rejected' });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const removeRequest = async (req, res) => {
     const removedRequest = await findRequest(req, res);
     if (!removedRequest) return res.status(403).json({ msg: "request not found" });

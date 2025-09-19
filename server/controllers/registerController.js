@@ -3,6 +3,10 @@ const bcrypt = require('bcryptjs');
 
 const { usernameRegex } = require('../data/regex');
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const handleRegister = async (req, res) => {
     const { username, password, confirmedPassword } = req.body;
     if (!username || !password) {

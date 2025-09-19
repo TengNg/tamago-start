@@ -2,6 +2,10 @@ const User = require('../models/User.js');
 const bcrypt = require('bcryptjs');
 const { usernameRegex } = require('../data/regex');
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const updateUsername = async (req, res) => {
     const { userId } = req.user;
     const { newUsername } = req.body;
@@ -26,6 +30,10 @@ const updateUsername = async (req, res) => {
     res.sendStatus(204);
 }
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const updatePassword = async (req, res) => {
     const { userId } = req.user;
     const { currentPassword, newPassword } = req.body;

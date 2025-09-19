@@ -3,6 +3,10 @@ const jwt = require('jsonwebtoken');
 
 const { rTokenName, clearAuthCookies } = require('../services/createAuthTokensService');
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const handleLogout = async (req, res) => {
     const cookies = req.cookies;
     if (!cookies || !cookies[rTokenName]) return res.sendStatus(204);
@@ -12,6 +16,10 @@ const handleLogout = async (req, res) => {
     res.sendStatus(204);
 }
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const handleLogoutOfAllDevices = async (req, res) => {
     const cookies = req.cookies;
     if (!cookies || !cookies[rTokenName]) return res.sendStatus(204);

@@ -90,7 +90,7 @@ router.get("/auth/discord/callback", async (req, res) => {
             }
         }
 
-        /** @type UserPayload */
+        /** @type import('express').Request["user"] */
         const payload = {
             userId: user.id,
             username: user.username,

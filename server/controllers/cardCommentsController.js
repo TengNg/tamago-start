@@ -4,6 +4,14 @@ const saveBoardActivity = require('../services/saveBoardActivity');
 
 const COMMENTS_PER_PAGE = 20;
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const getCardComments = async (req, res) => {
     const { cardId } = req.params;
     const foundCard = await cardById(cardId, { lean: true });
@@ -12,22 +20,26 @@ const getCardComments = async (req, res) => {
     }
 
     let { perPage, page } = req.query;
-    perPage = +perPage || COMMENTS_PER_PAGE;
-    page = +page || 1;
+    const perPageNum = Number(Array.isArray(perPage) ? perPage[0] : perPage) || COMMENTS_PER_PAGE;
+    const pageNum = Number(Array.isArray(page) ? page[0] : page) || 1;
 
     const comments = await CardComment
         .find({ cardId: foundCard._id })
-        .skip((page - 1) * perPage)
-        .limit(perPage)
+        .skip((pageNum - 1) * perPageNum)
+        .limit(perPageNum)
         .populate('userId', '_id username')
         .sort({ createdAt: -1 })
         .select('_id content createdAt')
         .lean();
 
-    const nextPage = comments.length < perPage ? null : page + 1;
+    const nextPage = comments.length < perPageNum ? null : pageNum + 1;
     res.status(200).json({ comments, nextPage });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const getCardComment = async (req, res) => {
     const { cardId, commentId } = req.params;
     const foundCard = await cardById(cardId, { lean: true });
@@ -58,6 +70,10 @@ const getCardComment = async (req, res) => {
     res.status(200).json({ comment });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const createCardComment = async (req, res) => {
     const { cardId } = req.params;
     const { userId } = req.user;
@@ -96,6 +112,10 @@ const createCardComment = async (req, res) => {
     res.status(200).json({ comment: commentWithUser });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const deleteCardComment = async (req, res) => {
     const { userId } = req.user;
     const { commentId } = req.params;

@@ -17,6 +17,10 @@ const getWritedown = async (req, res) => {
     return res.status(200).json({ writedown });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const createWritedown = async (req, res) => {
     const { userId } = req.user;
     const { rank } = req.body;
@@ -24,6 +28,10 @@ const createWritedown = async (req, res) => {
     return res.status(200).json({ msg: 'new writedown added', newWritedown });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const saveWritedown = async (req, res) => {
     const { writedown } = await handleAuthorizationAndGetWritedown(req, res);
     const { content } = req.body;
@@ -58,6 +66,10 @@ const deleteWritedown = async (req, res) => {
     return res.status(200).json({ message: 'writedown deleted' });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const deleteAllWritedowns = async (req, res) => {
     await Writedown.deleteMany({ owner: req.user.userId });
     return res.status(200).json({ message: 'all writedowns deleted' });
