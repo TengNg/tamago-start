@@ -245,10 +245,7 @@ const Profile = () => {
                 <div className="mx-auto sm:w-3/4 w-[90%] flex flex-col items-center">
                     <span className="text-gray-600">information</span>
 
-                    <div
-                        className="box--style border-[2px] border-gray-700 shadow-gray-700 sm:p-4 p-3 lg:w-[450px] sm:w-[400px] w-full"
-                        style={{ backgroundColor: "rgba(241, 241, 241, 0.25)" }}
-                    >
+                    <div className="box--style border-[2px] border-gray-700 shadow-gray-700 sm:p-4 p-3 lg:w-[450px] sm:w-[400px] w-full bg-gray-100/20">
                         <div className="font-medium text-gray-700">
                             {currentUser.username}
                         </div>
@@ -407,10 +404,7 @@ const Profile = () => {
                 <div className="mx-auto sm:w-3/4 w-[90%] flex flex-col items-center mt-6">
                     <span className="text-gray-600">owned boards</span>
 
-                    <div
-                        className="box--style relative border-[2px] border-gray-700 shadow-gray-700 sm:p-4 p-3 lg:w-[450px] sm:w-[400px] w-full"
-                        style={{ backgroundColor: "rgba(241, 241, 241, 0.25)" }}
-                    >
+                    <div className="box--style relative border-[2px] border-gray-700 shadow-gray-700 sm:p-4 p-3 lg:w-[450px] sm:w-[400px] w-full !bg-gray-100/20">
                         <div className="flex flex-col items-center mt-3 gap-4 pb-4 px-4 lg:px-2 max-h-[450px] overflow-auto">
                             {ownedBoardsQuery.isPending ||
                             ownedBoardsQuery.isError ? (

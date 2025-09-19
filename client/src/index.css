@@ -10,7 +10,7 @@
   }
 
   [data-theme="mist"] {
-    --card-item-bg: 225, 225, 225;
+    --card-item-bg: 220, 220, 220;
     --past-due-card-bg: 255, 194, 231;
     --card-item-focused-bg: 173, 216, 230;
   }
@@ -86,7 +86,7 @@
     }
 
     .key {
-        @apply bg-gray-100 border-[1.5px] border-gray-600 shadow-[0_2px_0_0] shadow-gray-600 p-1 px-2 text-[10px] text-gray-600 font-medium hover:bg-slate-400 hover:text-white select-none
+        @apply bg-gray-100/30 border-[1.5px] border-gray-600 shadow-[0_2px_0_0] shadow-gray-600 p-1 px-2 text-[10px] text-gray-600 font-medium hover:bg-gray-400 hover:text-white select-none
     }
 
     .card--details--button {
@@ -108,7 +108,7 @@
         background: rgb(var(--card-item-focused-bg)) !important;
     }
 
-    .list__item {
+    .list__item, .list__menu, .account__menu {
         @apply text-gray-800 dark:text-white;
         background: rgb(var(--card-item-bg));
     }

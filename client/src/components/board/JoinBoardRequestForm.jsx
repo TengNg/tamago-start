@@ -97,7 +97,7 @@ const JoinBoardRequestForm = ({ open, setOpen }) => {
                             type="text"
                             name="boardCode"
                             ref={boardCodeInput}
-                            className={`p-3 w-full overflow-hidden shadow-[0_3px_0_0] shadow-gray-600 whitespace-nowrap text-ellipsis border-[2px] bg-gray-100 border-gray-600 text-gray-600 font-bold select-none font-mono focus:outline-none`}
+                            className={`p-3 w-full overflow-hidden shadow-[0_3px_0_0] shadow-gray-600 whitespace-nowrap text-ellipsis border-[2px] bg-gray-100 border-gray-600 text-gray-600 select-none font-mono focus:outline-none`}
                             placeholder="enter board code..."
                         />
                     </div>

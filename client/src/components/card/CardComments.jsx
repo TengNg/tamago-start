@@ -189,7 +189,7 @@ const CardComments = ({ card }) => {
     }
 
     return (
-        <div className="relative flex flex-col gap-4 text-[0.65rem] sm:text-[0.8rem] text-gray-700 px-4 pt-4 pb-6 mb-4 border-[1px] border-gray-700">
+        <div className="relative flex flex-col gap-4 text-sm text-gray-700 px-4 pt-4 pb-6 mb-4 border-[1px] border-gray-700">
             <div className="w-full flex justify-start items-start gap-1">
                 <textarea
                     maxLength={1000}
@@ -204,7 +204,7 @@ const CardComments = ({ card }) => {
                     <button
                         disabled={addCommentQuery.isPending}
                         onClick={handleAddNewComment}
-                        className="bg-gray-500 hover:bg-gray-400 py-2 text-gray-50 w-[60px] select-none font-medium"
+                        className="bg-gray-500 hover:bg-gray-400 py-2 text-[12px] text-gray-50 w-[60px] select-none font-medium"
                     >
                         {addCommentQuery.isPending ? "..." : "send"}
                     </button>
@@ -311,7 +311,7 @@ const CardComments = ({ card }) => {
                                         : null
                                 }
                                 key={comment._id}
-                                className={`${linkedComment?._id === comment._id ? "bg-indigo-200/50 border-l-[3px] border-indigo-500" : "hover:bg-gray-300/50"} group px-1 py-1 pb-2`}
+                                className={`${linkedComment?._id === comment._id ? "bg-indigo-200/50 border-l-[3px] border-indigo-500" : "hover:bg-gray-300"} group px-1 py-1 pb-2`}
                             >
                                 <div className="flex flex-col">
                                     <div className="h-6 flex items-center justify-between">
@@ -369,7 +369,7 @@ const CardComments = ({ card }) => {
                                             )}
                                         </div>
                                     </div>
-                                    <div className="text-sm text-gray-700 flex flex-row justify-start items-start gap-1">
+                                    <div className="text-sm text-gray-700 flex sm:flex-row flex-col justify-start items-start gap-1">
                                         <div className="flex items-center gap-1">
                                             {comment.userId._id ===
                                                 currentUser._id && (
@@ -405,7 +405,7 @@ const CardComments = ({ card }) => {
                         >
                             {commentsQuery.isFetchingNextPage
                                 ? "loading..."
-                                : "load more comments"}
+                                : "load more"}
                         </button>
                     )}
                 </div>

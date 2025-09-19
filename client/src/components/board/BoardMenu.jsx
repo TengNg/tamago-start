@@ -84,16 +84,16 @@ const BoardMenu = ({
                 id="board-menu"
                 tabIndex={-1}
                 onBlur={handleCloseMenuOnBlur}
-                className="cursor-auto absolute outline-none bottom-0 right-0 overflow-x-hidden flex flex-col min-w-[300px] min-h-[200px] box--style shadow-gray-600 border-[2px] border-gray-600 p-3 select-none gap-2 bg-gray-100 translate-y-[105%]"
+                className="bg-[rgb(var(--card-item-bg))] cursor-auto absolute outline-none bottom-0 right-0 overflow-x-hidden flex flex-col min-w-[300px] min-h-[200px] box--style shadow-gray-600 border-[2px] border-gray-600 p-3 select-none gap-2 translate-y-[105%]"
             >
                 <div className="font-medium text-gray-600 flex-1 flex--center border-b-[1px] border-black pb-1 mb-1">
-                    actions menu
+                    options menu
                 </div>
 
                 <div className="flex justify-start">
                     <button
                         onClick={() => setShowDescription(true)}
-                        className="button--style--dark flex gap-2 ps-20 text-[0.75rem] font-medium text-start text-gray-200 w-full"
+                        className="button--style--dark flex items-center gap-2 ps-20 text-[0.75rem] font-medium text-start text-gray-200 w-full"
                     >
                         <Icon className="w-4 h-4" name="lightbulb" />
                         information
@@ -103,7 +103,7 @@ const BoardMenu = ({
                 <div className="flex justify-start">
                     <button
                         onClick={() => setOpenCopyBoardForm(true)}
-                        className="button--style--dark flex gap-2 ps-20 text-[0.75rem] font-medium text-start text-gray-200 w-full"
+                        className="button--style--dark flex items-center gap-2 ps-20 text-[0.75rem] font-medium text-start text-gray-200 w-full"
                     >
                         <Icon className="w-4 h-4" name="copy" />
                         create a copy
@@ -113,7 +113,7 @@ const BoardMenu = ({
                 <div className="flex justify-start">
                     <button
                         onClick={() => setOpenBoardConfiguration(true)}
-                        className="button--style--dark flex gap-2 ps-20 text-[0.75rem] font-medium text-start text-gray-200 w-full"
+                        className="button--style--dark flex items-center gap-2 ps-20 text-[0.75rem] font-medium text-start text-gray-200 w-full"
                     >
                         <Icon className="w-4 h-4" name="gear" />
                         configuration
@@ -123,7 +123,7 @@ const BoardMenu = ({
                 <div className="flex justify-start">
                     <button
                         onClick={() => setOpenBoardActivities(true)}
-                        className="button--style--dark flex gap-2 ps-20 text-[0.75rem] font-medium text-start text-gray-200 w-full"
+                        className="button--style--dark flex items-center gap-2 ps-20 text-[0.75rem] font-medium text-start text-gray-200 w-full"
                     >
                         <Icon className="w-4 h-4" name="clock-rotate-left" />
                         activities
@@ -135,10 +135,10 @@ const BoardMenu = ({
                     <div className="flex justify-start">
                         <button
                             onClick={() => handleCloseBoard()}
-                            className="button--style--dark flex gap-2 ps-20 text-[0.75rem] font-medium text-start text-gray-200 w-full"
+                            className="button--style--dark bg-rose-800 hover:bg-rose-700 flex gap-2 ps-20 text-[0.75rem] font-medium text-start text-gray-200 w-full"
                         >
                             <Icon className="w-4 h-4" name="circle-xmark" />
-                            close board
+                            delete board
                         </button>
                     </div>
                 ) : (
@@ -158,7 +158,7 @@ const BoardMenu = ({
                 >
                     <button
                         onClick={() => setShowDescription(false)}
-                        className="absolute top-3.5 left-5 text-gray-600"
+                        className="absolute top-4 left-5 text-gray-600"
                     >
                         <Icon className="w-4 h-4" name="arrow" />
                     </button>

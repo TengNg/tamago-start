@@ -20,7 +20,7 @@ const Home = () => {
                             <div className="underline mb-2">
                                 About this project:
                             </div>
-                            <ul className="flex flex-col gap-3 ms-4">
+                            <ul className="flex flex-col gap-2 ms-2">
                                 <li>
                                     - Created from my own personal interest, and
                                     from everyday-workflow.
@@ -42,8 +42,7 @@ const Home = () => {
                         <br />
 
                         <div className="mb-1 w-full text-gray-700">
-                            * Notes: Using keybinds for better workflow (Desktop
-                            users only)
+                            * Tips: Speed up your work with keyboard shortcuts!
                         </div>
                         <div className="border-[2px] border-dashed border-gray-700 md:p-6 p-3">
                             <div className="flex flex-wrap gap-6 lg:gap-12">
@@ -110,13 +109,9 @@ const Home = () => {
                                             <span className="key">Ctrl</span> +
                                             key combinations for better workflow
                                         </li>
-                                        <li>...</li>
                                         <li>
-                                            See{" "}
-                                            <span className="font-medium">
-                                                Help
-                                            </span>{" "}
-                                            in Board for better understanding :)
+                                            <span className="key">...</span> and
+                                            more
                                         </li>
                                     </ul>
                                 </div>
@@ -127,15 +122,6 @@ const Home = () => {
                     </div>
                 </section>
             </div>
-
-            <a
-                href="https://github.com/TengNg/task-manager"
-                className="fixed left-4 bottom-4 text-gray-700 text-[0.75rem] underline"
-                target="_blank"
-                rel="noreferer"
-            >
-                Github
-            </a>
         </section>
     );
 };

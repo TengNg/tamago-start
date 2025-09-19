@@ -23,15 +23,6 @@ const BoardsHelp = ({ open, setOpen }) => {
                         <span className="key">;</span> open create-board form
                     </li>
                 </ul>
-
-                <div className="mt-6">
-                    <span className="underline">tips</span>
-                    <span>{": "}</span>
-                    <span>
-                        using key shortcuts will make your workflow so much
-                        faster.
-                    </span>
-                </div>
             </div>
         </ModalDialog>
     );

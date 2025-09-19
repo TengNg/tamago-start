@@ -2,7 +2,6 @@ import { useSortable } from "@dnd-kit/sortable";
 import useBoardState from "../../hooks/useBoardState";
 import dateFormatter, { dateToCompare } from "../../utils/dateFormatter";
 import PRIORITY_LEVELS from "../../data/priorityLevels";
-import { highlightColorsRGBA } from "../../data/highlights";
 import { useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import Icon from "../shared/Icon";
@@ -68,7 +67,7 @@ export default function Card({ card }) {
             <div
                 className={`card__item ${card.hiddenByFilter && "hidden"} relative d-flex justify-center items-center text-[0.75rem] text-gray-500 w-full h-[110px] border-[2px] border-gray-600 px-2 py-4 flex flex-col shadow-[0_2px_0_0] shadow-gray-600 cursor-not-allowed`}
             >
-                <p className="w-full h-full bg-inherit font-medium text-gray-600 rounded-md py-1 px-2 focus:outline-none text-sm break-words whitespace-pre-line">
+                <p className="w-full h-full bg-inherit font-medium text-gray-600 py-1 px-2 focus:outline-none text-sm break-words whitespace-pre-line">
                     {card.title}
                 </p>
 
@@ -119,11 +118,11 @@ export default function Card({ card }) {
             }}
             onClick={handleOpenCardDetail}
         >
-            <p className="w-full h-full bg-transparent font-medium text-gray-700 hover:text-gray-900 focus:outline-none text-sm break-words whitespace-pre-line">
+            <p className="w-full h-full bg-transparent font-medium text-gray-700 focus:outline-none text-sm break-words whitespace-pre-line">
                 {card.title}
             </p>
 
-            <div className="flex justify-start items-center text-gray-500 gap-1">
+            <div className="w-full flex justify-start items-start text-gray-500 gap-1">
                 {card.verified && (
                     <div className="bg-green-800/45 p-2 grid place-items-center text-white rounded-full">
                         <Icon name="complete" className="w-2.5 h-2.5" />
@@ -132,7 +131,7 @@ export default function Card({ card }) {
 
                 {card.priorityLevel && card.priorityLevel !== "none" && (
                     <div
-                        className="text-[10px] py-[6px] px-2 bg-gray-200 flex justify-center items-center rounded-sm"
+                        className="text-[10px] py-[6px] px-2 bg-gray-200 flex justify-center items-center"
                         style={{
                             backgroundColor:
                                 PRIORITY_LEVELS[`${card.priorityLevel}`]?.color
@@ -146,16 +145,12 @@ export default function Card({ card }) {
                 )}
 
                 {card.owner && (
-                    <div
-                        className="text-[10px] py-[6px] px-2 bg-gray-200 flex justify-center items-center rounded-sm"
-                        style={{
-                            backgroundColor:
-                                highlightColorsRGBA[`${card.highlight}`],
-                        }}
-                    >
-                        <span className="text-gray-600 font-medium">
-                            {card.owner}
-                        </span>
+                    <div className="flex items-center gap-1 text-[10px] w-fit max-w-full py-[5px] font-medium px-1.5 text-gray-700 border-[1px] border-gray-700 overflow-hidden whitespace-nowrap text-ellipsis">
+                        <Icon
+                            name="profile"
+                            className="text-gray-600 w-3.5 h-3.5"
+                        />
+                        {card.owner}
                     </div>
                 )}
             </div>
@@ -196,9 +191,9 @@ export default function Card({ card }) {
                     onClick={(e) => {
                         handleOpenQuickEditor(e);
                     }}
-                    className="absolute hidden sm:block right-1 top-1 font-bold text-[12px] pb-1 text-transparent hover:bg-gray-500/10 group-hover:text-gray-600 w-[25px] h-[25px] d-flex justify-center items-center rounded-md"
+                    className="absolute right-1 top-1 font-bold text-[12px] text-transparent hover:bg-gray-500/10 group-hover:text-gray-600 flex justify-center items-center py-0.5 px-1.5"
                 >
-                    ...
+                    <Icon name="three-dots" width="16" height="16" />
                 </button>
             )}
 

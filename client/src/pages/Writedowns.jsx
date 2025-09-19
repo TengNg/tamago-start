@@ -4,7 +4,7 @@ import Editor from "../components/writedown/Editor";
 
 import WritedownItem from "../components/writedown/WritedownItem";
 
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { closestCenter, DndContext, DragOverlay } from "@dnd-kit/core";
 import { rectSwappingStrategy, SortableContext } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
@@ -170,9 +170,12 @@ const Writedown = () => {
 
     async function handleUpdateWritedownTitle(id, newTitle) {
         try {
-            await axiosPrivate.patch(`/personal_writedowns/${id}/update-title`, {
-                title: newTitle,
-            });
+            await axiosPrivate.patch(
+                `/personal_writedowns/${id}/update-title`,
+                {
+                    title: newTitle,
+                },
+            );
         } catch (err) {
             console.log(err);
             alert("Failed to delete writedown");

@@ -175,13 +175,13 @@ const CardComposer = ({ list, open, setOpen }) => {
             <div className="flex gap-1 w-full">
                 <button
                     onClick={handleAddCard}
-                    className="button--style--dark grid place-items-center w-1/2 font-medium text-[0.8rem]"
+                    className="button--style--dark grid place-items-center w-1/2 font-medium text-sm"
                 >
                     + add
                 </button>
                 <button
                     onClick={() => setOpen(false)}
-                    className="button--style grid place-items-center text-[0.8rem] w-1/2 font-medium text-gray-600 border-gray-600 hover:underline"
+                    className="button--style grid place-items-center text-sm w-1/2 font-medium text-gray-600 border-gray-600 hover:underline"
                 >
                     cancel
                 </button>

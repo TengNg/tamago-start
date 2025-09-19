@@ -63,7 +63,7 @@ const UserAccount = () => {
                 <div
                     onClick={() => setCollapse((collapse) => !collapse)}
                     ref={userProfileImageRef}
-                    className={`${currentUser.loginWithDiscord ? "bg-indigo-600 border-[3px] border-indigo-400" : "bg-blue-500"} text-white flex--center ms-auto text-[0.8rem] w-[35px] h-[35px] sm:w-[40px] sm:h-[40px] rounded-full bg-center bg-cover overflow-hidden cursor-pointer hover:opacity-90`}
+                    className={`${currentUser.loginWithDiscord ? "bg-indigo-600 border-[3px] border-indigo-400" : "bg-sky-700"} text-white flex--center ms-auto text-[0.8rem] w-8 h-8 rounded-full bg-center bg-cover overflow-hidden cursor-pointer hover:opacity-90`}
                 >
                     <div className="font-bold flex--center select-none">
                         {currentUser.username.charAt(0).toUpperCase()}
@@ -73,19 +73,26 @@ const UserAccount = () => {
                 {collapse === false && (
                     <div
                         ref={userInfoRef}
-                        className="absolute bottom-0 right-0 translate-y-[105%] flex flex-col box--style shadow-gray-700 border-[2px] border-gray-700 p-3 select-none gap-4 bg-gray-100 min-w-[220px]"
+                        className="account__menu absolute bottom-0 right-0 translate-y-[105%] flex flex-col box--style shadow-gray-700 border-[2px] border-gray-700 p-3 select-none gap-4 min-w-[220px]"
                     >
                         {currentUser && (
                             <>
-                                <button
-                                    className="absolute right-2 top-2 text-gray-600 p-1.5 rounded-sm hover:bg-gray-200"
-                                    onClick={() => setCollapse(true)}
-                                >
-                                    <Icon className="w-3 h-3" name="xmark" />
-                                </button>
-                                <div className="font-medium text-[0.8rem] text-gray-400">
-                                    Account
+                                <div className="flex items-center justify-between">
+                                    <div className="font-medium text-[0.8rem] text-gray-400">
+                                        Account
+                                    </div>
+                                    <button
+                                        className="text-gray-400"
+                                        onClick={() => setCollapse(true)}
+                                    >
+                                        <Icon
+                                            className="w-4 h-4"
+                                            name="xmark"
+                                        />
+                                    </button>
                                 </div>
+
+                                <div className="h-px w-full bg-gray-400"></div>
 
                                 <div className="select-none font-medium text-[0.8rem] max-w-[200px] overflow-hidden whitespace-nowrap text-ellipsis text-gray-700">
                                     username: {currentUser.username}

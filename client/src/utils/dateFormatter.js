@@ -22,7 +22,7 @@ export default function dateFormatter(
         const minutes = String(date.getMinutes()).padStart(2, "0");
         const time = hours + ":" + minutes;
 
-        return `${formattedDate}, ${time}`;
+        return `${formattedDate} ${time}`;
     }
 
     const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -50,8 +50,8 @@ export default function dateFormatter(
     const seconds = String(date.getSeconds()).padStart(2, "0");
 
     return option.withTime
-        ? `${weekday[wday]}, ${day} ${month[m]} ${year} - ${hours}:${minutes}:${seconds}`
-        : `${weekday[wday]}, ${month[m]} ${day}, ${year}`;
+        ? `${weekday[wday]}, ${month[m]} ${day} ${year} ${hours}:${minutes}:${seconds}`
+        : `${weekday[wday]}, ${month[m]} ${day} ${year}`;
 }
 
 export const formatDateToYYYYMMDD = (

@@ -110,15 +110,11 @@ const KeyBindings = ({ open, setOpen }) => {
                         <span className="py-1 px-2 bg-gray-500 rounded text-gray-50">
                             !c [card_code] [?message]
                         </span>
-                        <span> </span>
-                        <span>card code format</span>
                     </li>
                     <li className="font-medium">
                         <span className="py-1 px-2 bg-gray-500 rounded text-gray-50">
                             !b [board_code] [?message]
                         </span>
-                        <span> </span>
-                        <span>board code format</span>
                     </li>
                 </ul>
             </div>

@@ -104,7 +104,7 @@ const AddList = ({ open, setOpen }) => {
         >
             {open === false && (
                 <button
-                    className="w-full h-full text-start p-3 flex gap-2 text-sm group-hover:bg-gray-500/10"
+                    className="w-full h-full text-start p-3 flex gap-2 text-sm hover:bg-gray-500/10"
                     onClick={handleOpenAddListForm}
                 >
                     + new list
@@ -128,13 +128,13 @@ const AddList = ({ open, setOpen }) => {
                 <div className="flex gap-1 w-full">
                     <button
                         onClick={handleAddList}
-                        className="button--style--dark w-1/2"
+                        className="button--style--dark grid place-items-center w-1/2 font-medium text-sm"
                     >
                         {!addingList ? "+ add" : "adding..."}
                     </button>
                     <button
                         onClick={() => setOpen(false)}
-                        className="button--style w-1/2 border-gray-500 border-[2px] hover:underline"
+                        className="button--style grid place-items-center text-sm w-1/2 font-medium text-gray-600 border-gray-600 hover:underline"
                     >
                         cancel
                     </button>

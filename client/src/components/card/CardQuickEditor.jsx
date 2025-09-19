@@ -23,8 +23,6 @@ const CardQuickEditor = ({
     const [openHighlightPicker, setOpenHighlightPicker] = useState(true);
     const [isVerifying, setIsVerifying] = useState(false);
 
-    const cardVerifiedStatus = card.verified;
-
     const textAreaRef = useRef();
     const quickEditorRef = useRef();
 
@@ -128,7 +126,6 @@ const CardQuickEditor = ({
             alert("Failed to toggle verified");
         } finally {
             setIsVerifying(false);
-            setOpenedCardQuickEditor(false);
         }
     };
 
@@ -260,12 +257,12 @@ const CardQuickEditor = ({
 
                     <button
                         onClick={handleVerifyButtonOnClick}
-                        className="w-[110px] text-[0.75rem] text-white hover:bg-teal-700 bg-teal-800 px-4 py-2 flex--center opacity-80 z-0"
+                        className={`${card.verified ? "bg-rose-800" : "bg-teal-800"} w-[110px] text-[0.75rem] text-white px-4 py-2 flex--center opacity-90 hover:opacity-80 z-0`}
                     >
                         {isVerifying
                             ? "..."
-                            : cardVerifiedStatus
-                              ? "verified"
+                            : card.verified
+                              ? "unverify"
                               : "verify"}
                     </button>
                 </div>

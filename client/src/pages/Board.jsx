@@ -749,7 +749,7 @@ const Board = () => {
                         <div>
                             <div
                                 onClick={() => setOpenChatBox((prev) => !prev)}
-                                className={`h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-[80px] px-4 bg-sky-100 border-[2px] text-[0.75rem] text-gray-600 font-medium
+                                className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-[80px] px-4 border-[2px] text-[0.75rem] text-gray-600 font-medium
                                         ${openChatBox || openFloatingChat ? "shadow-[0_1px_0_0] mt-[2px]" : "shadow-[0_3px_0_0]"}`}
                             >
                                 chat
@@ -759,7 +759,7 @@ const Board = () => {
                         <div>
                             <div
                                 onClick={() => setOpenFilter((prev) => !prev)}
-                                className={`h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-[80px] px-4 bg-sky-100 border-[2px] text-[0.75rem] text-gray-600 font-medium
+                                className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-[80px] px-4 border-[2px] text-[0.75rem] text-gray-600 font-medium
                                         ${openFilter ? "shadow-[0_1px_0_0] mt-[2px]" : "shadow-[0_3px_0_0]"} ${hasFilter ? "text-white bg-teal-600" : ""}`}
                             >
                                 filter
@@ -769,7 +769,7 @@ const Board = () => {
                         <div>
                             <div
                                 onClick={() => setOpenInvitationForm(true)}
-                                className={`h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-[80px] px-4 bg-sky-100 border-[2px] text-[0.75rem] text-gray-600 font-medium
+                                className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-[80px] px-4 border-[2px] text-[0.75rem] text-gray-600 font-medium
                                         ${openInvitationForm ? "shadow-[0_1px_0_0] mt-[2px]" : "shadow-[0_3px_0_0]"}`}
                             >
                                 invite
@@ -783,7 +783,7 @@ const Board = () => {
                                         setOpenBoardMenu((prev) => !prev);
                                     }
                                 }}
-                                className={`flex--center cursor-pointer select-none h-full border-gray-600 w-[80px] shadow-gray-600 px-4 bg-sky-100 border-[2px] text-[0.75rem] text-gray-600 font-medium
+                                className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-[80px] px-4 border-[2px] text-[0.75rem] text-gray-600 font-medium
                                     ${openBoardMenu ? "shadow-[0_1px_0_0] mt-[2px]" : "shadow-[0_3px_0_0]"}`}
                             >
                                 options
@@ -822,7 +822,7 @@ const Board = () => {
                 <button
                     className={`
                         w-[100px] ${openMembers ? "mt-1 text-gray-100 shadow-[0_1px_0_0]" : "shadow-gray-600 shadow-[0_3px_0_0]"}
-                        bg-gray-50 border-[2px] border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium
+                        bg-[rgb(var(--card-item-bg))] border-[2px] border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium
                     `}
                     onClick={() => {
                         setOpenMembers((prev) => !prev);
@@ -835,7 +835,7 @@ const Board = () => {
                     onClick={handlePinBoard}
                     className={`
                         w-[100px] ${currentUser.pinnedBoardIdCollection?.hasOwnProperty(boardId) ? "mt-1 text-gray-100 shadow-[0_1px_0_0]" : "shadow-gray-600 shadow-[0_3px_0_0]"}
-                        bg-gray-50 border-[2px] border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium
+                        bg-[rgb(var(--card-item-bg))] border-[2px] border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium
                     `}
                 >
                     {currentUser.pinnedBoardIdCollection?.hasOwnProperty(
@@ -855,7 +855,7 @@ const Board = () => {
                     onClick={() => setOpenVisibilityConfig((prev) => !prev)}
                     className={`
                         w-fit ${openVisibilityConfig ? "mt-1 text-gray-100 shadow-[0_1px_0_0]" : "shadow-gray-600 shadow-[0_3px_0_0]"}
-                        bg-gray-50 border-[2px] border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium
+                        bg-[rgb(var(--card-item-bg))] border-[2px] border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium
                     `}
                 >
                     visibility:

@@ -24,7 +24,7 @@ export default function Invitations({
             <div
                 className={`mx-auto lg:w-1/2 md:w-3/4 w-[90%] ${show ? "" : "hidden"}`}
             >
-                <div className="relative box--style border-[2px] border-gray-600 shadow-gray-600 mx-auto overflow-auto p-4 md:p-8 bg-gray-100/75 flex flex-col gap-4">
+                <div className="relative box--style border-[2px] border-gray-600 shadow-gray-600 mx-auto overflow-auto p-4 md:p-8 bg-gray-100/30 flex flex-col gap-4">
                     <div className="text-gray-500 text-center text-[0.85rem]">
                         failed to load invitations, please try again.
                     </div>
@@ -54,7 +54,7 @@ export default function Invitations({
                     </button>
                 </div>
 
-                <div className="relative box--style border-[2px] border-gray-600 shadow-gray-600 h-[350px] mx-auto overflow-auto p-4 md:p-8 bg-gray-100/50 flex flex-col gap-4">
+                <div className="relative box--style border-[2px] border-gray-600 shadow-gray-600 h-[350px] mx-auto overflow-auto p-4 md:p-8 bg-gray-100/30 flex flex-col gap-4">
                     {invitations.length === 0 && (
                         <div className="text-gray-500 text-center text-[0.85rem] mt-[7.5rem]">
                             no invitations found.
@@ -73,7 +73,7 @@ export default function Invitations({
                             <div
                                 key={index}
                                 className={`button--style--rounded rounded-none border-gray-700 shadow-gray-700 flex justify-between flex-wrap sm:flex-nowrap items-center p-4
-                                                        ${status === "accepted" ? "bg-blue-100 cursor-pointer" : status === "rejected" ? "bg-red-100" : "bg-transparent"}`}
+                                           ${status === "accepted" ? "bg-blue-100 cursor-pointer" : status === "rejected" ? "bg-red-200" : "bg-gray-100/30"}`}
                                 onClick={() =>
                                     status === "accepted" &&
                                     navigate(`/b/${boardId}`)

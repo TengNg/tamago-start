@@ -1,4 +1,4 @@
-import { useReducer, useState, useEffect, useMemo } from "react";
+import { useReducer, useState, useMemo } from "react";
 import Title from "../components/ui/Title";
 import Invitations from "../components/invitation/Invitations";
 import JoinBoardRequests from "../components/join-board-request/JoinRequests";
@@ -330,7 +330,7 @@ const Activities = () => {
                     <div className="h-[35px]">
                         <button
                             title='press "i" to open'
-                            className={`w-fit ${showInvitations ? "mt-[0.15rem] text-gray-100 shadow-[0_1px_0_0]" : "shadow-gray-600 shadow-[0_3px_0_0]"} bg-gray-100 bg-opacity-45 border-[2px] border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium`}
+                            className={`w-fit ${showInvitations ? "mt-[0.15rem] text-gray-100 shadow-[0_1px_0_0]" : "shadow-gray-600 shadow-[0_3px_0_0]"} bg-gray-100/30 border-[2px] border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium`}
                             onClick={handleToggleInvitationsSection}
                         >
                             inivitations
@@ -340,7 +340,7 @@ const Activities = () => {
                     <div className="h-[35px]">
                         <button
                             title='press "o" to open'
-                            className={`w-[100px] ${showJoinBoardRequests ? "mt-[0.15rem] text-gray-100 shadow-[0_1px_0_0]" : "shadow-gray-600 shadow-[0_3px_0_0]"} bg-gray-100 bg-opacity-45 border-[2px] border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium`}
+                            className={`w-[100px] ${showJoinBoardRequests ? "mt-[0.15rem] text-gray-100 shadow-[0_1px_0_0]" : "shadow-gray-600 shadow-[0_3px_0_0]"} bg-gray-100/30 border-[2px] border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium`}
                             onClick={handleToggleBoardRequestsSection}
                         >
                             requests

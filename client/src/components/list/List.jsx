@@ -7,6 +7,7 @@ import CardComposer from "../card/CardComposer";
 import ListMenu from "./ListMenu";
 import { lexorank } from "../../utils/class/Lexorank";
 import { axiosPrivate } from "../../api/axios";
+import Icon from "../shared/Icon";
 
 const List = ({ index, list, cards }) => {
     const {
@@ -197,10 +198,10 @@ const List = ({ index, list, cards }) => {
                 className="select-none w-[4rem] h-[20rem] bg-transparent touch-none"
             >
                 <div
-                    className={`${theme.itemTheme == "rounded" ? "rounded shadow-[0_3px_0_0]" : "shadow-[3px_4px_0_0]"} border-[2px] border-gray-700 shadow-gray-700 p-2 relative`}
+                    className={`list__item ${theme.itemTheme == "rounded" ? "rounded shadow-[0_3px_0_0]" : "shadow-[3px_4px_0_0]"} border-[2px] border-gray-700 shadow-gray-700 p-2 relative`}
                 >
                     <div
-                        className="text-center bg-gray-400 p-2 text-[10px] hover:bg-gray-400/75 grid place-items-center rounded-sm"
+                        className="text-center bg-gray-400 p-2 text-[10px] hover:bg-gray-400/75 grid place-items-center rounded-sm cursor-pointer"
                         onClick={() => {
                             collapseList(list._id, false);
                         }}
@@ -270,12 +271,12 @@ const List = ({ index, list, cards }) => {
                     />
 
                     <button
-                        className="text-sm text-gray-600 font-bold text-center rotate-180 mb-auto pb-2 px-1 hover:bg-gray-500/10 rounded-md"
+                        className="text-sm text-gray-600 font-bold text-center rotate-180 mb-auto"
                         onClick={() => {
                             setOpenListMenu((prev) => !prev);
                         }}
                     >
-                        ...
+                        <Icon name="three-dots" />
                     </button>
                 </div>
 

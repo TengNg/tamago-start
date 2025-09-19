@@ -42,7 +42,7 @@ const WritedownItem = ({ writedown, open, remove, pin }) => {
             ref={setNodeRef}
             {...attributes}
             style={style}
-            className={`${(hasPinnedFilter && pinned) || !hasPinnedFilter ? "flex" : "hidden"} relative flex flex-col w-[250px] h-[220px] border-[2px] px-3 pb-3 pt-2 border-gray-700 border-dashed text-gray-700 text-[0.85rem] bg-white/20`}
+            className={`${(hasPinnedFilter && pinned) || !hasPinnedFilter ? "flex" : "hidden"} relative flex flex-col w-[250px] h-[220px] border-[2px] px-3 pb-3 pt-2 border-gray-700 border-dashed text-gray-700 text-[0.85rem] bg-gray-100/30`}
         >
             <Loading
                 loading={isPinning}

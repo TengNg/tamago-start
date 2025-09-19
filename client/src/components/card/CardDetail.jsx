@@ -40,8 +40,10 @@ const CardDetail = ({
     const [isVerifying, setIsVerifying] = useState(false);
     const [openCardDeleteConfirm, setOpenCardDeleteConfirm] = useState(false);
     const [isSavingDescription, setIsSavingDescription] = useState(false);
+    const [isScrolledDown, setIsScrolledDown] = useState(false);
 
     const dialog = useRef();
+    const cardTitleInput = useRef();
     const cardDescriptionInput = useRef();
 
     const [searchParams, setSearchParams] = useSearchParams();
@@ -55,11 +57,7 @@ const CardDetail = ({
             dialog.current.showModal();
             dialog.current.focus();
 
-            // const textarea = dialog.current.querySelector('#card__title__textarea')
-            // if (textarea) {
-            //     textarea.blur();
-            // }
-
+            setIsScrolledDown(false);
             setOpenCardDeleteConfirm(false);
 
             setTitle(card?.title);
@@ -100,15 +98,36 @@ const CardDetail = ({
                 document.title = boardState?.board?.title || "tamago-start";
             };
 
-            dialog.current.addEventListener("close", handleOnClose);
-            dialog.current.addEventListener("keydown", handleKeyDown);
+            const handleScroll = () => {
+                if (dialog.current) {
+                    setIsScrolledDown(dialog.current.scrollTop > 0);
+                }
+            };
+
+            dialog.current.addEventListener("close", handleOnClose, {
+                signal: abortController.signal,
+            });
+
+            dialog.current.addEventListener("keydown", handleKeyDown, {
+                signal: abortController.signal,
+            });
+
+            dialog.current.addEventListener("scroll", handleScroll, {
+                signal: abortController.signal,
+            });
 
             () => {
-                dialog.current.removeEventListener("close", handleOnClose);
-                dialog.current.removeEventListener("keydown", handleKeyDown);
+                abortController.abort();
             };
         }
     }, [open, card]);
+
+    useEffect(() => {
+        if (open && cardTitleInput.current && card?.title) {
+            cardTitleInput.current.style.height = "auto";
+            cardTitleInput.current.style.height = `${cardTitleInput.current.scrollHeight}px`;
+        }
+    }, [open, title, card?.title]);
 
     const listSelectOptions = useMemo(() => {
         return (
@@ -368,22 +387,15 @@ const CardDetail = ({
         <>
             <dialog
                 ref={dialog}
-                className="full-in-small-screen backdrop:bg-black/15 overflow-y-auto overflow-x-hidden box--style p-3 gap-3 pb-4 min-w-[350px] w-[90%] xl:w-[800px] md:w-[80%] h-fit max-h-[90%]"
+                className="full-in-small-screen backdrop:bg-black/15 overflow-y-auto overflow-x-hidden box--style gap-3 min-w-[350px] w-[90%] xl:w-[800px] md:w-[80%] h-fit max-h-[90%] "
                 style={{
-                    background: "rgb(235, 235, 235)",
-                    boxShadow:
-                        card.highlight == null
-                            ? "6px 8px 0 0 #4b5563"
-                            : `6px 8px 0 0 ${card.highlight}`,
-                    border:
-                        card.highlight == null
-                            ? "3px solid #4b5563"
-                            : `3px solid ${card.highlight}`,
+                    boxShadow: "6px 8px 0 0 #4b5563",
+                    border: "3px solid #4b5563",
                 }}
                 onClick={handleClick}
                 onCancel={handleCancel}
             >
-                <div className="relative w-full h-full flex flex-col gap-3 min-h-[38rem] md:min-h-[44rem]">
+                <div className="bg-[rgb(var(--card-item-bg))] relative w-full h-fit flex flex-col min-h-[38rem] md:min-h-[44rem]">
                     <Loading
                         position={"absolute"}
                         fontSize={"1rem"}
@@ -395,17 +407,27 @@ const CardDetail = ({
                         withLoader={true}
                     />
 
-                    <div className="flex justify-start items start">
+                    <div
+                        className="bg-[rgb(var(--card-item-bg))] sticky z-30 top-0 flex justify-start items-start p-3"
+                        style={{
+                            boxShadow: isScrolledDown
+                                ? "0 2px 4px 0 rgba(0, 0, 0, 0.1)"
+                                : "none",
+                        }}
+                    >
                         <div className="flex flex-col flex-1">
                             <textarea
+                                ref={cardTitleInput}
                                 rows="1"
-                                className="card__title__textarea font-medium p-1 w-[90%] md:w-[95%] text-gray-600 bg-transparent leading-normal resize-none focus:bg-gray-100"
+                                className="card__title__textarea font-medium text-gray-600 bg-transparent leading-normal resize-none"
                                 value={title}
                                 onKeyDown={(e) => {
                                     if (e.key == "Enter") {
-                                        confirmTitle(e);
                                         e.target.blur();
                                     }
+                                }}
+                                onBlur={(e) => {
+                                    confirmTitle(e);
                                 }}
                                 onFocus={(e) => {
                                     e.target.style.height = "auto";
@@ -413,235 +435,249 @@ const CardDetail = ({
                                 }}
                                 onChange={(e) => {
                                     setTitle(e.target.value);
-                                    //e.target.style.height = 'auto';
-                                    //e.target.style.height = `${e.target.scrollHeight}px`;
+                                    e.target.style.height = "auto";
+                                    e.target.style.height = `${e.target.scrollHeight}px`;
                                 }}
                                 maxLength={200}
                             />
+                            {card.highlight && (
+                                <div
+                                    className={`mt-2 h-2 w-1/4 bg-[${card.highlight}]`}
+                                    style={{ background: card.highlight }}
+                                ></div>
+                            )}
                         </div>
 
                         <button
                             onClick={handleCancel}
                             style={{
-                                color:
-                                    card.highlight == null
-                                        ? "#4b5563"
-                                        : `${card.highlight}`,
-                                opacity: card.highlight == null ? 1 : 0.75,
+                                color: "#4b5563",
                             }}
-                            className="text-[0.75rem] grid place-items-center rounded-sm absolute top-0 right-0 p-1 hover:bg-gray-400/20"
+                            className="text-[0.75rem] grid place-items-center"
                         >
                             <Icon className="w-5 h-5" name="xmark" />
                         </button>
                     </div>
 
-                    <div className="flex gap-2 md:w-[60%] w-full justify-between items-center">
-                        <div className="flex flex-1 gap-2">
-                            <select
-                                className={`shadow-[0_2px_0_0] shadow-gray-600 bg-gray-100 appearance-none cursor-pointer hover:bg-gray-200 truncate border-[2px] border-gray-600 text-[0.75rem] font-medium w-3/4 py-2 px-4 text-gray-600 ${listSelectOptions.length === 0 ? "bg-gray-400" : ""}`}
-                                value={card.listId}
-                                onChange={(e) => {
-                                    handleMoveCardOnListOptionChanged(e);
-                                }}
-                            >
-                                {listSelectOptions.map((option, index) => {
-                                    const { value, title } = option;
-                                    return (
-                                        <option key={index} value={value}>
-                                            {title}
-                                        </option>
-                                    );
-                                })}
-                            </select>
-
-                            <select
-                                className={`shadow-[0_2px_0_0] shadow-gray-600 bg-gray-100 appearance-none cursor-pointer hover:bg-gray-200 truncate border-[2px] border-gray-600 text-[0.75rem] font-medium w-fit py-2 px-4 text-gray-600 ${listSelectOptions.length === 0 ? "bg-gray-400" : ""}`}
-                                value={position}
-                                onChange={(e) => {
-                                    moveByIndex(e);
-                                }}
-                            >
-                                {Array.from(Array(cardCount).keys()).map(
-                                    (count) => {
+                    <div className="p-3 pt-0 flex flex-col gap-3">
+                        <div className="flex gap-2 md:w-[60%] w-full justify-between items-center">
+                            <div className="flex flex-1 gap-2">
+                                <select
+                                    className={`shadow-[0_2px_0_0] shadow-gray-600 bg-gray-100 appearance-none cursor-pointer hover:bg-gray-200 truncate border-[2px] border-gray-600 text-[0.75rem] font-medium w-3/4 py-2 px-4 text-gray-600 ${listSelectOptions.length === 0 ? "bg-gray-400" : ""}`}
+                                    value={card.listId}
+                                    onChange={(e) => {
+                                        handleMoveCardOnListOptionChanged(e);
+                                    }}
+                                >
+                                    {listSelectOptions.map((option, index) => {
+                                        const { value, title } = option;
                                         return (
-                                            <option key={count} value={count}>
-                                                {count + 1}
+                                            <option key={index} value={value}>
+                                                {title}
                                             </option>
                                         );
-                                    },
-                                )}
-                            </select>
+                                    })}
+                                </select>
+
+                                <select
+                                    className={`shadow-[0_2px_0_0] shadow-gray-600 bg-gray-100 appearance-none cursor-pointer hover:bg-gray-200 truncate border-[2px] border-gray-600 text-[0.75rem] font-medium w-fit py-2 px-4 text-gray-600 ${listSelectOptions.length === 0 ? "bg-gray-400" : ""}`}
+                                    value={position}
+                                    onChange={(e) => {
+                                        moveByIndex(e);
+                                    }}
+                                >
+                                    {Array.from(Array(cardCount).keys()).map(
+                                        (count) => {
+                                            return (
+                                                <option
+                                                    key={count}
+                                                    value={count}
+                                                >
+                                                    {count + 1}
+                                                </option>
+                                            );
+                                        },
+                                    )}
+                                </select>
+                            </div>
                         </div>
-                    </div>
 
-                    <div className="w-full flex flex-wrap border-b-[1px] border-t-[1px] py-4 gap-3 border-black z-20">
-                        <div className="relative w-full">
-                            <Loading
-                                position={"absolute"}
-                                fontSize={"0.85rem"}
-                                loading={!card && !cardDescriptionInput.current}
-                                displayText={"loading..."}
-                            />
+                        <div className="w-full flex flex-wrap border-b-[1px] border-t-[1px] py-4 gap-3 border-black z-20">
+                            <div className="relative w-full">
+                                <Loading
+                                    position={"absolute"}
+                                    fontSize={"0.85rem"}
+                                    loading={
+                                        !card && !cardDescriptionInput.current
+                                    }
+                                    displayText={"loading..."}
+                                />
 
-                            <textarea
-                                ref={cardDescriptionInput}
-                                id="card__detail__description__textarea"
-                                className="overflow-y-auto border-[2px] shadow-[0_2px_0_0] border-gray-600 shadow-gray-600 min-h-[250px] break-words box-border text-sm py-2 px-3 w-full text-gray-600 bg-gray-100 leading-normal font-medium placeholder-gray-400 focus:outline-none"
-                                autoFocus={true}
-                                placeholder={"add description..."}
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                            />
-                        </div>
-
-                        <div className="relative flex flex-row justify-between w-full gap-3">
-                            <div className="flex items-center gap-2">
-                                <div className="h-[40px]">
-                                    <button
-                                        disabled={isSavingDescription}
-                                        title={`${card?.description == description ? "nothing to save" : "save description"}`}
-                                        onClick={confirmDescription}
-                                        className={`card--details--button border-gray-600 text-gray-600 px-2 w-[6rem] sm:w-[7.5rem] ${card?.description == description ? "opacity-60" : ""}`}
-                                    >
-                                        {isSavingDescription
-                                            ? "saving..."
-                                            : "save"}
-                                    </button>
-                                </div>
-                                {card?.description != description && (
-                                    <p className="text-[0.75rem] text-gray-400">
-                                        unsaved
-                                    </p>
-                                )}
+                                <textarea
+                                    ref={cardDescriptionInput}
+                                    id="card__detail__description__textarea"
+                                    className="overflow-y-auto border-[2px] shadow-[0_2px_0_0] border-gray-600 shadow-gray-600 min-h-[250px] break-words box-border text-sm py-2 px-3 w-full text-gray-600 bg-gray-100 leading-normal font-medium placeholder-gray-400 focus:outline-none"
+                                    autoFocus={true}
+                                    placeholder={"add description..."}
+                                    value={description}
+                                    onChange={(e) =>
+                                        setDescription(e.target.value)
+                                    }
+                                />
                             </div>
 
-                            <div className="flex gap-3">
-                                {/* change highlight button */}
-                                <div className="relative h-[40px]">
-                                    <button
-                                        title="change highlight color"
-                                        onClick={() =>
-                                            setOpenHighlightPicker(
-                                                (prev) => !prev,
-                                            )
-                                        }
-                                        className={`card--details--button border-gray-600 text-gray-600 ${openHighlightPicker && "bg-slate-500 shadow-black text-white"}`}
-                                    >
-                                        <Icon
-                                            className="w-3 h-3"
-                                            name="droplet"
-                                        />
-                                        <span className="hidden sm:inline-block">
-                                            highlight
-                                        </span>
-                                    </button>
-
-                                    {openHighlightPicker && (
-                                        <HighlightPicker
-                                            setOpen={setOpenHighlightPicker}
-                                            card={card}
-                                        />
-                                    )}
-                                </div>
-
-                                <div className="h-[40px]">
-                                    <button
-                                        title="create a copy of this card"
-                                        onClick={copyCard}
-                                        className={`card--details--button border-gray-600 text-gray-600`}
-                                    >
-                                        <Icon className="w-3 h-3" name="copy" />
-                                        <span className="hidden sm:inline-block">
-                                            duplicate
-                                        </span>
-                                    </button>
-                                </div>
-
-                                <div className="h-[40px]">
-                                    <button
-                                        className={`card--details--button border-green-700 w-fit text-green-700 ${card.verified ? "bg-teal-100" : ""}`}
-                                        onClick={handleToggleVerified}
-                                        title={
-                                            card.verified
-                                                ? "click to unverify"
-                                                : "click to verify"
-                                        }
-                                    >
-                                        <Icon
-                                            className="w-3 h-3"
-                                            name="complete"
-                                        />
-                                        <span className="hidden sm:inline-block">
-                                            {isVerifying
-                                                ? "..."
-                                                : card.verified
-                                                  ? "verified"
-                                                  : "verify"}
-                                        </span>
-                                    </button>
-                                </div>
-
-                                <div className="relative h-[40px]">
-                                    <button
-                                        title="delete this card"
-                                        onClick={() =>
-                                            setOpenCardDeleteConfirm(
-                                                (prev) => !prev,
-                                            )
-                                        }
-                                        className={`card--details--button border-rose-700 text-rose-700 ${openCardDeleteConfirm && "bg-rose-100"}`}
-                                    >
-                                        <Icon
-                                            className="w-2.5 h-2.5"
-                                            name="minus"
-                                        />
-                                        <span className="hidden sm:inline-block">
-                                            delete
-                                        </span>
-                                    </button>
-
-                                    {openCardDeleteConfirm && (
-                                        <div
-                                            id="card__detail__delete__confirm"
-                                            className="bg-gray-100 border-[2px] shadow-[0_3px_0_0] border-gray-600 shadow-gray-600 absolute text-sm w-[200px] right-0 top-[120%] p-2"
+                            <div className="relative flex flex-row justify-between w-full gap-3">
+                                <div className="flex items-center gap-2">
+                                    <div className="h-[40px]">
+                                        <button
+                                            disabled={isSavingDescription}
+                                            title="save description"
+                                            onClick={confirmDescription}
+                                            className={`card--details--button border-gray-600 text-gray-600 px-2 w-[6rem] sm:w-[7.5rem] ${card?.description == description ? "opacity-60" : ""}`}
                                         >
-                                            This action cannot be undone. Are
-                                            you sure you want to delete this
-                                            card?
-                                            <button
-                                                className="bg-rose-800 text-white font-medium p-2 w-full mt-1 hover:bg-rose-700"
-                                                onClick={deleteCard}
-                                            >
-                                                confirm delete
-                                            </button>
-                                            <button
-                                                className="bg-gray-600 text-white font-medium p-2 w-full mt-1 hover:bg-gray-500"
-                                                onClick={() =>
-                                                    setOpenCardDeleteConfirm(
-                                                        false,
-                                                    )
-                                                }
-                                            >
-                                                cancel
-                                            </button>
-                                        </div>
+                                            {isSavingDescription
+                                                ? "saving..."
+                                                : "save"}
+                                        </button>
+                                    </div>
+                                    {card?.description != description && (
+                                        <p className="text-[0.75rem] text-gray-400">
+                                            unsaved
+                                        </p>
                                     )}
+                                </div>
+
+                                <div className="flex gap-3">
+                                    {/* change highlight button */}
+                                    <div className="relative h-[40px]">
+                                        <button
+                                            title="change highlight color"
+                                            onClick={() =>
+                                                setOpenHighlightPicker(
+                                                    (prev) => !prev,
+                                                )
+                                            }
+                                            className={`card--details--button border-gray-600 text-gray-600 ${openHighlightPicker && "bg-slate-500 shadow-black text-white"}`}
+                                        >
+                                            <Icon
+                                                className="w-3 h-3"
+                                                name="droplet"
+                                            />
+                                            <span className="hidden sm:inline-block">
+                                                highlight
+                                            </span>
+                                        </button>
+
+                                        {openHighlightPicker && (
+                                            <HighlightPicker
+                                                setOpen={setOpenHighlightPicker}
+                                                card={card}
+                                            />
+                                        )}
+                                    </div>
+
+                                    <div className="h-[40px]">
+                                        <button
+                                            title="create a copy of this card"
+                                            onClick={copyCard}
+                                            className={`card--details--button border-gray-600 text-gray-600`}
+                                        >
+                                            <Icon
+                                                className="w-3 h-3"
+                                                name="copy"
+                                            />
+                                            <span className="hidden sm:inline-block">
+                                                duplicate
+                                            </span>
+                                        </button>
+                                    </div>
+
+                                    <div className="h-[40px]">
+                                        <button
+                                            className={`card--details--button border-green-700 w-fit text-green-700 ${card.verified ? "bg-teal-100" : ""}`}
+                                            onClick={handleToggleVerified}
+                                            title={
+                                                card.verified
+                                                    ? "click to unverify"
+                                                    : "click to verify"
+                                            }
+                                        >
+                                            <Icon
+                                                className="w-3 h-3"
+                                                name="complete"
+                                            />
+                                            <span className="hidden sm:inline-block">
+                                                {isVerifying
+                                                    ? "..."
+                                                    : card.verified
+                                                      ? "verified"
+                                                      : "verify"}
+                                            </span>
+                                        </button>
+                                    </div>
+
+                                    <div className="relative h-[40px]">
+                                        <button
+                                            title="delete this card"
+                                            onClick={() =>
+                                                setOpenCardDeleteConfirm(
+                                                    (prev) => !prev,
+                                                )
+                                            }
+                                            className={`card--details--button border-rose-700 text-rose-700 ${openCardDeleteConfirm && "bg-rose-100"}`}
+                                        >
+                                            <Icon
+                                                className="w-2.5 h-2.5"
+                                                name="minus"
+                                            />
+                                            <span className="hidden sm:inline-block">
+                                                delete
+                                            </span>
+                                        </button>
+
+                                        {openCardDeleteConfirm && (
+                                            <div
+                                                id="card__detail__delete__confirm"
+                                                className="bg-gray-100 border-[2px] shadow-[0_3px_0_0] border-gray-600 shadow-gray-600 absolute text-sm w-[200px] right-0 top-[120%] p-2"
+                                            >
+                                                This action cannot be undone.
+                                                Are you sure you want to delete
+                                                this card?
+                                                <button
+                                                    className="bg-rose-800 text-white font-medium p-2 w-full mt-1 hover:bg-rose-700"
+                                                    onClick={deleteCard}
+                                                >
+                                                    confirm delete
+                                                </button>
+                                                <button
+                                                    className="bg-gray-600 text-white font-medium p-2 w-full mt-1 hover:bg-gray-500"
+                                                    onClick={() =>
+                                                        setOpenCardDeleteConfirm(
+                                                            false,
+                                                        )
+                                                    }
+                                                >
+                                                    cancel
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
+                        <CardDetailInfo
+                            card={card}
+                            listSelectOptions={listSelectOptions}
+                            handleCardOwnerChange={handleCardOwnerChange}
+                            handleCardPriorityLevelChange={
+                                handleCardPriorityLevelChange
+                            }
+                            handleChangeDueDate={handleChangeDueDate}
+                        />
+
+                        <CardComments card={card} />
                     </div>
-
-                    <CardDetailInfo
-                        card={card}
-                        listSelectOptions={listSelectOptions}
-                        handleCardOwnerChange={handleCardOwnerChange}
-                        handleCardPriorityLevelChange={
-                            handleCardPriorityLevelChange
-                        }
-                        handleChangeDueDate={handleChangeDueDate}
-                    />
-
-                    {card && <CardComments card={card} />}
                 </div>
             </dialog>
         </>

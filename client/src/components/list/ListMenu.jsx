@@ -1,6 +1,7 @@
 import { useRef, useEffect } from "react";
 import dateFormatter from "../../utils/dateFormatter";
 import useBoardState from "../../hooks/useBoardState";
+import Icon from "../shared/Icon";
 
 export default function ListMenu({
     list,
@@ -73,22 +74,27 @@ export default function ListMenu({
 
     return (
         <div
-            autoFocus
             ref={containerRef}
-            className={`absolute top-0 left-0 outline-none z-10 bg-gray-200 border-gray-600 border-[2px] shadow-gray-600 box--style w-full p-3 ${theme.itemTheme == "rounded" ? "rounded-md shadow-[0_4px_0_0]" : "shadow-[4px_6px_0_0]"}`}
+            className={`list__menu absolute top-0 left-0 outline-none z-10 border-gray-700 border-[2px] w-full py-2 px-3 ${theme.itemTheme == "rounded" ? "rounded-md" : ""}`}
         >
-            <div className="border-b-[1px] border-b-black pb-2">
-                <div className="text-[12px] sm:text-sm">
-                    title: <span className="font-medium">{list.title}</span>
+            <button
+                className="absolute right-3 top-2.5 text-gray-600 flex justify-center items-center"
+                onClick={() => setOpen(false)}
+            >
+                <Icon className="w-4 h-4" name="xmark" />
+            </button>
+            <div className="border-b-[1px] border-b-black pb-2 text-gray-700">
+                <div className="text-[12px] sm:text-base">
+                    <span className="font-medium">{list.title}</span>
                 </div>
-                <div className="text-[12px] sm:text-sm mt-1">
+                <div className="text-[12px] mt-1 opacity-80">
                     created:{" "}
                     <span className="font-medium">
                         {dateFormatter(list.createdAt, { weekdayFormat: true })}
                     </span>
                 </div>
 
-                <div className="text-[12px] sm:text-sm mt-1">
+                <div className="text-[12px] mt-1 opacity-80">
                     cards:{" "}
                     <span className="font-medium">{list.cards.length}</span>
                 </div>
@@ -115,15 +121,9 @@ export default function ListMenu({
                 </button>
                 <button
                     onClick={del}
-                    className="text-[14px] sm:text-[0.75rem] text-white bg-gray-600 px-1 py-2 hover:bg-gray-500"
+                    className="text-[14px] sm:text-[0.75rem] text-white bg-rose-800 px-1 py-2 hover:bg-rose-700"
                 >
                     delete
-                </button>
-                <button
-                    onClick={close}
-                    className="text-[14px] sm:text-[0.75rem] text-white bg-gray-600 px-1 py-2 hover:bg-gray-500"
-                >
-                    close
                 </button>
             </div>
         </div>

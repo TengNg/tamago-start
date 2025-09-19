@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Loading from "../ui/Loading";
 import {
@@ -8,13 +8,13 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
-    closestCenter,
     DndContext,
     DragOverlay,
     PointerSensor,
     TouchSensor,
     useSensor,
     useSensors,
+    pointerWithin,
 } from "@dnd-kit/core";
 import { createPortal } from "react-dom";
 import Icon from "../shared/Icon";
@@ -55,14 +55,14 @@ const Pinned = ({
             style={style}
             {...attributes}
             {...listeners}
-            className={`${isDeleting ? "opacity-20 bg-red-200 line-through" : ""} touch-none flex items-center justify-between relative max-w-[300px] overflow-hidden whitespace-nowrap text-ellipsis top-left-auto board--style--sm bg-gray-50 text-[0.75rem] flex-1 border-[2px] border-gray-700 shadow-gray-700 p-3`}
+            className={`${isDeleting ? "opacity-20 bg-red-200 line-through" : ""} touch-none flex items-center justify-between relative max-w-[300px] overflow-hidden whitespace-nowrap text-ellipsis top-left-auto board--style--sm bg-gray-100 text-[0.75rem] flex-1 border-[2px] border-gray-700 shadow-gray-700 p-3`}
             onClick={() => handleOpenBoard(boardId)}
         >
             <p>{title}</p>
             <button
                 onClick={(e) => handleDeletePinnedBoard(e, boardId)}
                 disabled={isDeleting}
-                className="button--style--sm text-gray-400 hover:bg-red-300 hover:text-white p-1 rounded-sm"
+                className="button--style--sm text-gray-400 hover:bg-red-300 hover:text-white p-1"
             >
                 <Icon className="w-4 h-4" name="xmark" />
             </button>
@@ -71,8 +71,9 @@ const Pinned = ({
 };
 
 const PinnedBoards = ({ setOpen }) => {
-    const { currentUser } = useCurrentUserContext();
+    const { currentUser, currentUserQuery } = useCurrentUserContext();
 
+    const [pinnedBoards, setPinnedBoards] = useState([]);
     const [activeItem, setActiveItem] = useState(null);
     const [cleaned, setCleaned] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -80,19 +81,17 @@ const PinnedBoards = ({ setOpen }) => {
 
     const navigate = useNavigate();
 
-    const pinnedBoards = useMemo(() => {
-        const boards = currentUser.pinnedBoardIdCollection;
-        if (boards) {
-            const entries = Object.entries(boards).map((entry, _) => {
+    useEffect(() => {
+        const idCollection = currentUser.pinnedBoardIdCollection;
+        if (idCollection) {
+            const entries = Object.entries(idCollection).map((entry, _) => {
                 const [boardId, obj] = entry;
                 return [boardId, obj.title];
             });
 
-            return entries;
+            setPinnedBoards(entries);
         }
-
-        return [];
-    }, [currentUser.pinnedBoardIdCollection]);
+    }, [currentUser?.pinnedBoardIdCollection]);
 
     const handleClose = () => {
         setOpen(false);
@@ -108,9 +107,8 @@ const PinnedBoards = ({ setOpen }) => {
         try {
             setDeletingBoardId(boardId);
 
-            const response = await axiosPrivate.delete(
-                `/boards/${boardId}/pinned`,
-            );
+            await axiosPrivate.delete(`/boards/${boardId}/pinned`);
+            await currentUserQuery.refetch();
         } catch (err) {
             console.log(err);
             alert("Failed to removed this board");
@@ -148,10 +146,6 @@ const PinnedBoards = ({ setOpen }) => {
             return;
         }
 
-        if (active.id === over.id) {
-            return;
-        }
-
         const activeIndex = pinnedBoards.findIndex((item) => {
             const [id, _title] = item;
             return id === active.id;
@@ -167,12 +161,22 @@ const PinnedBoards = ({ setOpen }) => {
         }
 
         try {
+            const mappedPinnedBoards = [...pinnedBoards].reduce(
+                (obj, board) => {
+                    const [boardId, boardTitle] = board;
+                    obj[boardId] ||= {};
+                    obj[boardId]["title"] = boardTitle;
+                    return obj;
+                },
+                {},
+            );
             await axiosPrivate.patch(
                 `/boards/pinned/update`,
                 JSON.stringify({
-                    pinnedBoards: auth.user.pinnedBoardIdCollection,
+                    pinnedBoards: mappedPinnedBoards,
                 }),
             );
+            await currentUserQuery.refetch();
         } catch (err) {
             console.log(err);
         }
@@ -198,21 +202,14 @@ const PinnedBoards = ({ setOpen }) => {
             return id === over.id;
         });
 
-        if (activeIndex === overIndex) {
+        if (overIndex === -1 || activeIndex === overIndex) {
             return;
         }
 
         const newPinnedBoards = [...pinnedBoards];
         const [removed] = newPinnedBoards.splice(activeIndex, 1);
         newPinnedBoards.splice(overIndex, 0, removed);
-
-        const mapped = {};
-        newPinnedBoards.forEach((board) => {
-            const [boardId, boardTitle] = board;
-            mapped[boardId] = { title: boardTitle };
-        });
-
-        return;
+        setPinnedBoards(newPinnedBoards);
     };
 
     const sensors = useSensors(
@@ -232,10 +229,10 @@ const PinnedBoards = ({ setOpen }) => {
         <>
             <div
                 onClick={handleClose}
-                className="fixed box-border top-0 left-0 text-gray-600 font-bold h-[100vh] text-[1.25rem] w-full bg-gray-500 opacity-40 z-50 cursor-auto"
+                className="select-none fixed box-border top-0 left-0 text-gray-600 font-bold h-[100vh] text-[1.25rem] w-full bg-gray-500 opacity-40 z-50 cursor-auto"
             ></div>
 
-            <div className="fixed box--style flex flex-col gap-4 items-start p-3 top-[5rem] right-0 left-[50%] -translate-x-[50%] w-fit min-w-[300px] max-h-[30rem] max-w-[400px] border-black border-[2px] z-50 cursor-auto bg-gray-200">
+            <div className="fixed box--style flex flex-col gap-4 items-start p-3 top-1/2 right-1/2 left-[50%] -translate-x-[50%] -translate-y-1/2 w-fit min-w-[300px] max-h-[30rem] max-w-[400px] border-black border-[2px] z-50 cursor-auto bg-gray-200">
                 <Loading
                     loading={loading}
                     position={"absolute"}
@@ -252,7 +249,7 @@ const PinnedBoards = ({ setOpen }) => {
                         {pinnedBoards.length > 0 && (
                             <button
                                 onClick={handleCleanPinnedBoards}
-                                className={`button--style--sm text-[0.75rem] px-1 underline hover:bg-pink-200 rounded ${cleaned ? "text-blue-600" : "text-pink-600"}`}
+                                className={`button--style--sm text-[0.75rem] px-1 underline hover:bg-pink-200 ${cleaned ? "text-blue-600" : "text-pink-600"}`}
                             >
                                 clean
                             </button>
@@ -268,7 +265,7 @@ const PinnedBoards = ({ setOpen }) => {
                 </div>
 
                 <DndContext
-                    collisionDetection={closestCenter}
+                    collisionDetection={pointerWithin}
                     onDragStart={handleOnDragStart}
                     onDragOver={handleOnDragOver}
                     onDragEnd={handleOnDragEnd}
