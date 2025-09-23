@@ -174,6 +174,30 @@ const Icon = ({ name, className, width = 18, height = 18 }) => {
                     ></path>
                 </svg>
             );
+        case "profile2":
+            return (
+                <svg
+                    width={width}
+                    height={height}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className={className}
+                >
+                    <circle
+                        cx="12"
+                        cy="8"
+                        r="4"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                    />
+                    <path
+                        d="M5 20C5 16.134 8.134 13 12 13s7 3.134 7 7"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                    />
+                </svg>
+            );
         case "grip-lines":
             return (
                 <svg

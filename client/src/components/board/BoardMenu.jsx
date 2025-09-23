@@ -154,7 +154,7 @@ const BoardMenu = ({
                 )}
 
                 <div
-                    className={`absolute w-full h-fit min-h-full bg-gray-50 pb-4 top-0 right-0 flex flex-col px-5 transition-all ${showDescription === true ? "translate-x-0" : "-translate-x-[100%]"}`}
+                    className={`bg-[rgb(var(--card-item-bg))] absolute w-full h-fit min-h-full pb-4 top-0 right-0 flex flex-col px-5 transition-all ${showDescription === true ? "translate-x-0" : "-translate-x-[100%]"}`}
                 >
                     <button
                         onClick={() => setShowDescription(false)}

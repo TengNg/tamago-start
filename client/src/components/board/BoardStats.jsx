@@ -187,10 +187,7 @@ const BoardStats = ({ boardStatsModal, setBoardStatsModal }) => {
                                     key={_id}
                                     className="w-full p-1 px-3 text-gray-50 font-semibold cursor-pointer rounded-sm hover:opacity-80"
                                     style={{
-                                        backgroundColor:
-                                            PRIORITY_LEVELS[`${_id}`]?.color
-                                                ?.rgba ||
-                                            "rgba(133, 149, 173, 0.8)",
+                                        backgroundColor: PRIORITY_LEVELS[`${_id}`]?.color || "rgba(133, 149, 173, 0.8)",
                                     }}
                                     onClick={() => {
                                         navigate({

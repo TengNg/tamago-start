@@ -65,7 +65,7 @@ export default function Card({ card }) {
     if (card.onLoading === true) {
         return (
             <div
-                className={`card__item ${card.hiddenByFilter && "hidden"} relative d-flex justify-center items-center text-[0.75rem] text-gray-500 w-full h-[110px] border-[2px] border-gray-600 px-2 py-4 flex flex-col shadow-[0_2px_0_0] shadow-gray-600 cursor-not-allowed`}
+                className={`card__item ${card.hiddenByFilter && "hidden"} relative d-flex justify-center items-center text-[0.75rem] text-gray-500 w-full h-[110px] border-[2px] border-b-[4px] border-gray-600 px-2 py-4 flex flex-col shadow-gray-600 cursor-not-allowed`}
             >
                 <p className="w-full h-full bg-inherit font-medium text-gray-600 py-1 px-2 focus:outline-none text-sm break-words whitespace-pre-line">
                     {card.title}
@@ -122,38 +122,31 @@ export default function Card({ card }) {
                 {card.title}
             </p>
 
-            <div className="w-full flex justify-start items-start text-gray-500 gap-1">
-                {card.verified && (
-                    <div className="bg-green-800/45 p-2 grid place-items-center text-white rounded-full">
-                        <Icon name="complete" className="w-2.5 h-2.5" />
-                    </div>
-                )}
+            {card.verified && (
+                <div className="h-1 flex gap-[2px] items-center">
+                    <div className="bg-green-800/60 w-1 h-1"></div>
+                    <div className="bg-green-800/60 w-8 h-1"></div>
+                    <div className="bg-green-800/60 w-8 h-1"></div>
+                </div>
+            )}
 
-                {card.priorityLevel && card.priorityLevel !== "none" && (
-                    <div
-                        className="text-[10px] py-[6px] px-2 bg-gray-200 flex justify-center items-center"
-                        style={{
-                            backgroundColor:
-                                PRIORITY_LEVELS[`${card.priorityLevel}`]?.color
-                                    ?.rgba,
-                        }}
-                    >
-                        <span className="text-gray-50 font-medium tracking-wider">
-                            {card.priorityLevel.toUpperCase()}
-                        </span>
-                    </div>
-                )}
+            {card?.priorityLevel != "none" && (
+                <div className="h-1 flex gap-[2px] items-center">
+                    <div style={{ backgroundColor: PRIORITY_LEVELS[card.priorityLevel].color }} className="w-1 h-1"></div>
+                    <div style={{ backgroundColor: PRIORITY_LEVELS[card.priorityLevel].color }} className="w-8 h-1"></div>
+                    <div style={{ backgroundColor: PRIORITY_LEVELS[card.priorityLevel].color }} className="w-8 h-1"></div>
+                </div>
+            )}
 
-                {card.owner && (
-                    <div className="flex items-center gap-1 text-[10px] w-fit max-w-full py-[5px] font-medium px-1.5 text-gray-700 border-[1px] border-gray-700 overflow-hidden whitespace-nowrap text-ellipsis">
-                        <Icon
-                            name="profile"
-                            className="text-gray-600 w-3.5 h-3.5"
-                        />
-                        {card.owner}
-                    </div>
-                )}
-            </div>
+            {card.owner && (
+                <div className="flex items-center gap-1 text-[12px] w-fit max-w-full font-medium text-gray-700 overflow-hidden whitespace-nowrap text-ellipsis">
+                    <Icon
+                        name="profile"
+                        className="text-gray-600 w-3.5 h-3.5"
+                    />
+                    {card.owner}
+                </div>
+            )}
 
             <div className="flex flex-col gap-1">
                 <div className="text-[12px] text-gray-700 font-medium">

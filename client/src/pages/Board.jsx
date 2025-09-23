@@ -807,7 +807,7 @@ const Board = () => {
                     </div>
                 </div>
 
-                <div className="w-[100vw] overflow-x-auto">
+                <div className="w-[100vw]">
                     <ListContainer
                         openAddList={openAddList}
                         setOpenAddList={setOpenAddList}

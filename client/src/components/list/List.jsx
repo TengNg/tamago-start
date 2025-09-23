@@ -10,20 +10,14 @@ import { axiosPrivate } from "../../api/axios";
 import Icon from "../shared/Icon";
 
 const List = ({ index, list, cards }) => {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({
-        id: list._id,
-        data: {
-            type: "list",
-            list,
-        },
-    });
+    const { attributes, listeners, setNodeRef, transform, isDragging } =
+        useSortable({
+            id: list._id,
+            data: {
+                type: "list",
+                list,
+            },
+        });
 
     const {
         boardState,
@@ -183,7 +177,7 @@ const List = ({ index, list, cards }) => {
 
     const style = {
         transform: transform ? CSS.Translate.toString(transform) : undefined,
-        transition,
+        transition: null,
         cursor: "auto",
         opacity: isDragging ? 0.25 : 1,
     };

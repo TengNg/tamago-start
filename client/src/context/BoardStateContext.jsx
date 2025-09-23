@@ -320,6 +320,12 @@ export const BoardStateContextProvider = ({ children }) => {
 
         socket.on("receiveMessage", (data) => {
             setChats((prev) => [...prev, data]);
+
+            // donnot notify message from self
+            if (currentUser.username === data.sentBy.user) {
+                return;
+            }
+
             notify({
                 from: { username: data.sentBy.username },
                 message: data.content,

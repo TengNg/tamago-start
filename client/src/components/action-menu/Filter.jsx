@@ -168,7 +168,7 @@ const Filter = ({ open, setOpen }) => {
                                         });
                                     }}
                                     style={{
-                                        backgroundColor: color.rgba,
+                                        backgroundColor: color,
                                         textDecoration:
                                             searchParams.get("priority") ===
                                             value

@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import Loading from "../ui/Loading";
 import {
     SortableContext,
@@ -14,7 +14,7 @@ import {
     TouchSensor,
     useSensor,
     useSensors,
-    pointerWithin,
+    closestCorners,
 } from "@dnd-kit/core";
 import { createPortal } from "react-dom";
 import Icon from "../shared/Icon";
@@ -28,26 +28,26 @@ const Pinned = ({
     handleDeletePinnedBoard,
     isDeleting,
 }) => {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({
-        id: boardId,
-        data: {
-            boardId,
-            title,
-        },
-    });
+    const { attributes, listeners, setNodeRef, transform, isDragging } =
+        useSortable({
+            id: boardId,
+            data: {
+                boardId,
+                title,
+            },
+        });
 
     const style = {
         transform: transform ? CSS.Translate.toString(transform) : undefined,
-        transition,
+        transition: null,
         opacity: isDragging ? 0.2 : 1,
     };
+
+    const location = useLocation();
+    const isInCurrentBoard = useMemo(() => {
+        const parts = location.pathname.split("/");
+        return parts[1] === "b" && parts[2] === boardId;
+    }, [location]);
 
     return (
         <div
@@ -55,16 +55,18 @@ const Pinned = ({
             style={style}
             {...attributes}
             {...listeners}
-            className={`${isDeleting ? "opacity-20 bg-red-200 line-through" : ""} touch-none flex items-center justify-between relative max-w-[300px] overflow-hidden whitespace-nowrap text-ellipsis top-left-auto board--style--sm bg-gray-100 text-[0.75rem] flex-1 border-[2px] border-gray-700 shadow-gray-700 p-3`}
+            className={`${isInCurrentBoard ? "underline" : ""} ${isDeleting ? "opacity-20 bg-red-200 line-through" : ""} select-none touch-none flex items-center justify-between relative max-w-[300px] overflow-hidden whitespace-nowrap text-ellipsis top-left-auto bg-gray-200 text-[0.75rem] flex-1 border-[2px] border-b-[4px] border-gray-700 shadow-gray-700 p-3`}
             onClick={() => handleOpenBoard(boardId)}
         >
-            <p>{title}</p>
+            <p>
+                {title}
+            </p>
             <button
                 onClick={(e) => handleDeletePinnedBoard(e, boardId)}
                 disabled={isDeleting}
-                className="button--style--sm text-gray-400 hover:bg-red-300 hover:text-white p-1"
+                className="text-gray-400 hover:bg-red-300 hover:text-white p-1 grid place-items-center"
             >
-                <Icon className="w-4 h-4" name="xmark" />
+                <Icon className="w-3 h-3" name="xmark" />
             </button>
         </div>
     );
@@ -98,7 +100,6 @@ const PinnedBoards = ({ setOpen }) => {
     };
 
     const handleOpenBoard = (boardId) => {
-        setOpen(false);
         navigate(`/b/${boardId}`);
     };
 
@@ -161,7 +162,12 @@ const PinnedBoards = ({ setOpen }) => {
         }
 
         try {
-            const mappedPinnedBoards = [...pinnedBoards].reduce(
+            const newPinnedBoards = [...pinnedBoards];
+            const [removed] = newPinnedBoards.splice(activeIndex, 1);
+            newPinnedBoards.splice(overIndex, 0, removed);
+            setPinnedBoards(newPinnedBoards);
+
+            const mappedPinnedBoards = [...newPinnedBoards].reduce(
                 (obj, board) => {
                     const [boardId, boardTitle] = board;
                     obj[boardId] ||= {};
@@ -176,41 +182,15 @@ const PinnedBoards = ({ setOpen }) => {
                     pinnedBoards: mappedPinnedBoards,
                 }),
             );
-            await currentUserQuery.refetch();
+            currentUserQuery.refetch();
         } catch (err) {
             console.log(err);
         }
     };
 
-    const handleOnDragOver = (e) => {
-        const { active, over } = e;
-        if (!over) {
-            return;
-        }
-
-        if (active.id === over.id) {
-            return;
-        }
-
-        const activeIndex = pinnedBoards.findIndex((item) => {
-            const [id, _title] = item;
-            return id === active.id;
-        });
-
-        const overIndex = pinnedBoards.findIndex((item) => {
-            const [id, _title] = item;
-            return id === over.id;
-        });
-
-        if (overIndex === -1 || activeIndex === overIndex) {
-            return;
-        }
-
-        const newPinnedBoards = [...pinnedBoards];
-        const [removed] = newPinnedBoards.splice(activeIndex, 1);
-        newPinnedBoards.splice(overIndex, 0, removed);
-        setPinnedBoards(newPinnedBoards);
-    };
+    const boardIds = useMemo(() => {
+        return pinnedBoards.map(([boardId, _title]) => boardId);
+    }, [pinnedBoards]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -265,15 +245,14 @@ const PinnedBoards = ({ setOpen }) => {
                 </div>
 
                 <DndContext
-                    collisionDetection={pointerWithin}
+                    collisionDetection={closestCorners}
                     onDragStart={handleOnDragStart}
-                    onDragOver={handleOnDragOver}
                     onDragEnd={handleOnDragEnd}
                     sensors={sensors}
                 >
                     <div className="h-full w-full flex flex-col gap-3 pb-3 overflow-auto">
                         <SortableContext
-                            items={pinnedBoards.map((_el, index) => index)}
+                            items={boardIds}
                             strategy={verticalListSortingStrategy}
                         >
                             {pinnedBoards.map(([id, title], index) => (

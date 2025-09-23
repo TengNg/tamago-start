@@ -6,6 +6,7 @@ import PRIORITY_LEVELS from "../../data/priorityLevels";
 import { formatDateToYYYYMMDD } from "../../utils/dateFormatter";
 
 import { dateToCompare } from "../../utils/dateFormatter";
+import Icon from "../shared/Icon";
 
 const CardDetailInfo = ({
     card,
@@ -47,8 +48,7 @@ const CardDetailInfo = ({
                         className="h-2.5 w-2.5"
                         style={{
                             background:
-                                PRIORITY_LEVELS[`${priorityLevel}`]?.color
-                                    ?.rgba || "gray",
+                                PRIORITY_LEVELS[`${priorityLevel}`]?.color || "gray",
                             filter: "brightness(0.8)",
                         }}
                     ></div>
@@ -61,8 +61,7 @@ const CardDetailInfo = ({
                     className="font-medium max-w-[10rem] px-1 cursor-pointer appearance-none bg-transparent"
                     style={{
                         color:
-                            PRIORITY_LEVELS[`${priorityLevel}`]?.color?.rgba ||
-                            "gray",
+                            PRIORITY_LEVELS[`${priorityLevel}`]?.color || "gray",
                         filter: "brightness(0.8)",
                     }}
                 >
@@ -78,10 +77,18 @@ const CardDetailInfo = ({
 
             <div className="flex flex-start items-center w-fit max-w-[30rem]">
                 <span className="me-2">owner:</span>
+                {card.owner && (
+                    <Icon
+                        name="profile2"
+                        className="text-gray-700 me-0.5"
+                        width={18}
+                        height={18}
+                    />
+                )}
                 <select
                     value={card.owner}
                     onChange={(e) => handleCardOwnerChange(e.target.value)}
-                    className="max-w-[10rem] px-1 cursor-pointer appearance-none bg-transparent text-gray-800 font-medium"
+                    className="max-w-[10rem] cursor-pointer appearance-none bg-transparent text-gray-800 font-medium"
                 >
                     <option value={""}>...</option>
                     {memberNames.map((memberName) => {
@@ -95,7 +102,7 @@ const CardDetailInfo = ({
             </div>
 
             <div className={`${dateToCompare(dueDate) && "text-red-700"}`}>
-                <span className="me-1">due date: </span>
+                <span>due date: </span>
                 <input
                     className="bg-transparent"
                     type="date"

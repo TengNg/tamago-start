@@ -215,7 +215,7 @@ const CardComments = ({ card }) => {
             </div>
 
             {comments.length === 0 ? (
-                <div className="text-[10px] text-gray-400 p-1">
+                <div className="text-sm text-gray-400 p-1">
                     no comments for this card
                 </div>
             ) : (

@@ -153,7 +153,7 @@ const CardQuickEditor = ({
 
     const handleVerifyButtonOnClick = () => {
         handleToggleVerified();
-        // close();
+        close();
     };
 
     const handleOpenCardDetail = () => {

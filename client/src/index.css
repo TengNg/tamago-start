@@ -22,7 +22,7 @@
     }
 
     .badge {
-        @apply text-[0.75rem] py-1 px-2 rounded hover:brightness-105 font-medium
+        @apply text-[0.75rem] py-1 px-2 hover:brightness-105 font-medium
     }
 
     .underline--style {

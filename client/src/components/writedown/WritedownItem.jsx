@@ -9,25 +9,19 @@ import { useMemo } from "react";
 const WritedownItem = ({ writedown, open, remove, pin }) => {
     const { _id: id, title, content, isPinning, pinned, createdAt } = writedown;
 
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({
-        id: writedown._id,
-        data: {
-            type: "writedown",
-            writedown,
-        },
-    });
+    const { attributes, listeners, setNodeRef, transform, isDragging } =
+        useSortable({
+            id: writedown._id,
+            data: {
+                type: "writedown",
+                writedown,
+            },
+        });
 
     const [searchParams, _] = useSearchParams();
 
     const style = {
-        transition: transition || undefined,
+        transition: null,
         transform: CSS.Transform.toString(transform),
         opacity: isDragging ? 0.2 : 1,
         cursor: "auto",
@@ -42,7 +36,7 @@ const WritedownItem = ({ writedown, open, remove, pin }) => {
             ref={setNodeRef}
             {...attributes}
             style={style}
-            className={`${(hasPinnedFilter && pinned) || !hasPinnedFilter ? "flex" : "hidden"} relative flex flex-col w-[250px] h-[220px] border-[2px] px-3 pb-3 pt-2 border-gray-700 border-dashed text-gray-700 text-[0.85rem] bg-gray-100/30`}
+            className={`${(hasPinnedFilter && pinned) || !hasPinnedFilter ? "flex" : "hidden"} relative flex flex-col w-[250px] h-[220px] border-[2px] px-3 pb-3 pt-2 border-gray-700 border-dashed text-gray-700 text-[0.85rem] bg-gray-100/20`}
         >
             <Loading
                 loading={isPinning}
@@ -61,7 +55,7 @@ const WritedownItem = ({ writedown, open, remove, pin }) => {
                 <button
                     {...listeners}
                     title="drag"
-                    className="touch-none w-1/2 grid place-items-center text-gray-500 rounded-md hover hover:bg-gray-400/20"
+                    className="touch-none w-1/2 grid place-items-center text-gray-500 hover hover:bg-gray-400/20"
                 >
                     <Icon className="w-4 h-4" name="grip-lines" />
                 </button>
@@ -92,7 +86,7 @@ const WritedownItem = ({ writedown, open, remove, pin }) => {
                     </p>
                 ) : (
                     <div
-                        className="p-2 flex justify-center items-center rounded bg-gray-500/20 opacity-45 cursor-pointer"
+                        className="p-2 flex justify-center items-center bg-gray-500/20 opacity-45 cursor-pointer"
                         onClick={() => open(id)}
                     >
                         <span className="text-[0.75rem] text-gray-600 font-medium tracking-wider">
@@ -101,7 +95,7 @@ const WritedownItem = ({ writedown, open, remove, pin }) => {
                     </div>
                 )}
 
-                <div className="mt-auto p-2 flex justify-center items-center rounded bg-gray-400">
+                <div className="mt-auto p-2 flex justify-center items-center bg-gray-400">
                     <span className="text-sm text-gray-50 font-medium tracking-wider">
                         {dateFormatter(createdAt, { weekdayFormat: true })}
                     </span>
