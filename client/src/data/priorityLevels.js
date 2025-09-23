@@ -3,7 +3,7 @@ const OPACITY = 1;
 const PRIORITY_LEVELS = Object.freeze({
     none: {
         value: "none",
-        title: "...",
+        title: "NONE",
         color: {
             rgba: `rgba(55, 65, 81, ${OPACITY})`,
         },

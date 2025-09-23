@@ -69,7 +69,7 @@ const CardDetailInfo = ({
                     {Object.values(PRIORITY_LEVELS).map((el, _) => {
                         return (
                             <option value={el.value} key={el.value}>
-                                {el.title}
+                                {el.title === "NONE" ? "..." : el.title}
                             </option>
                         );
                     })}

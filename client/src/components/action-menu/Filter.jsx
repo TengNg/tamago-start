@@ -155,30 +155,12 @@ const Filter = ({ open, setOpen }) => {
                     <div className="h-[1px] bg-gray-700 w-full"></div>
 
                     <div className="w-full flex flex-col gap-2">
-                        <div
-                            className="text-[0.75rem] cursor-pointer w-full p-1 px-3 text-gray-50 font-medium bg-gray-400 rounded-sm hover:brightness-105"
-                            style={{
-                                textDecoration:
-                                    searchParams.get("priority") === "none"
-                                        ? "underline"
-                                        : "none",
-                            }}
-                            onClick={() => {
-                                searchParams.set("priority", "none");
-                                setSearchParams(searchParams, {
-                                    replace: true,
-                                });
-                            }}
-                        >
-                            NONE
-                        </div>
-
                         {Object.values(PRIORITY_LEVELS).map((item) => {
                             const { title, value, color } = item;
                             return (
                                 <div
                                     key={title}
-                                    className="text-[0.75rem] cursor-pointer w-full p-1 px-3 text-gray-50 font-medium uppercase rounded-sm hover:brightness-105"
+                                    className="text-[0.75rem] cursor-pointer w-full p-1 px-3 text-gray-50 font-medium uppercase hover:brightness-105"
                                     onClick={() => {
                                         searchParams.set("priority", value);
                                         setSearchParams(searchParams, {
