@@ -3,18 +3,16 @@
  * @param {SocketSharedState} state
  */
 function registerBoardHandlers(socket, state) {
-    const { boardIdMap, usernameMap } = state;
+    const { boardIdMap } = state;
 
     socket.on("joinBoard", (data) => {
         const { boardId } = data;
         boardIdMap.set(socket.id, boardId);
 
-        const username = socket.user.username;
-        usernameMap[socket.id] = username;
-        socket.join(boardId);
+socket.join(boardId);
 
         if (process.env.MODE === "development") {
-            console.log(`User [username: ${username}] [socket_id: ${socket.id}] joins board with id ${boardId}`);
+            console.log(`User[id=${socket.user.id}][username=${socket.user.username}][socket_id=${socket.id}] joins board with id ${boardId}`);
         }
     });
 
@@ -22,19 +20,18 @@ function registerBoardHandlers(socket, state) {
         const boardId = boardIdMap.get(socket.id);
         if (!boardId) return;
 
-        const username = socket.user.username;
-        socket.to(boardId).emit("memberLeaved", { username });
+        const user = socket.user;
+        socket.to(boardId).emit("memberLeaved", { username: user.username });
     });
 
     socket.on("kickMember", (memberName) => {
         const boardId = boardIdMap.get(socket.id);
         if (!boardId) return;
 
-        const userEntry = Object.entries(usernameMap).find(([_userId, username]) => username === memberName);
-        if (!userEntry) return;
-
-        const userSocketId = userEntry[0];
-        socket.to(boardId).emit("memberKicked", { userSocketId });
+        const io = socket.server;
+        const targetSocket = Array.from(io.sockets.sockets.values()).find(s => s.user && s.user.username === memberName);
+        if (!targetSocket) return;
+        socket.to(boardId).emit("memberKicked", { userSocketId: targetSocket.id });
     });
 
     socket.on("closeBoard", (_) => {

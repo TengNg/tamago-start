@@ -98,17 +98,16 @@ const initSocket = (server) => {
         registerHandlers(socket);
 
         socket.on("disconnectFromBoard", () => {
-            const { boardIdMap, usernameMap } = state;
+            const { boardIdMap } = state;
             const boardId = boardIdMap.get(socket.id);
             if (boardId) {
                 socket.leave(boardId);
                 boardIdMap.delete(socket.id);
-                delete usernameMap[socket.id];
             }
         });
 
         socket.on("disconnect", (reason, details) => {
-            const { boardIdMap, usernameMap } = state;
+            const { boardIdMap } = state;
             console.log('DisconnectReason', reason);
             console.log('DisconnectDetails', details);
 
@@ -116,7 +115,6 @@ const initSocket = (server) => {
             if (boardId) {
                 socket.leave(boardId);
                 boardIdMap.delete(socket.id);
-                delete usernameMap[socket.id];
                 console.log(`User with socket ID ${socket.id} disconnected from board ${boardId}`);
             } else {
                 console.log(`User with socket ID ${socket.id} disconnected without joining a board`);

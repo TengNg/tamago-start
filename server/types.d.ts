@@ -3,7 +3,6 @@ export { };
 declare global {
     type SocketSharedState = {
         boardIdMap: Map<string, string>;
-        usernameMap: { [socketId: string]: string };
     }
 }
 
