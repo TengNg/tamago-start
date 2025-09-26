@@ -1,23 +1,16 @@
 import socket from "../services/socket";
 
-import { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useState, useCallback } from "react";
 
 import useLocalStorage from "../hooks/useLocalStorage";
 import LOCAL_STORAGE_KEYS from "../data/localStorageKeys";
 import dateFormatter from "../utils/dateFormatter";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import useWindowSize from "../hooks/useWindowSize";
 import { useQueryClient } from "@tanstack/react-query";
 import useCurrentUserContext from "../hooks/useCurrentUserContext";
 
 const BoardStateContext = createContext({});
-
-const filterParams = () => {
-    const url = new URL(location.href);
-    const filter = url.searchParams.get("filter");
-    const priority = url.searchParams.get("priority");
-    return { filter, priority };
-};
 
 export const BoardStateContextProvider = ({ children }) => {
     const { currentUser } = useCurrentUserContext();
@@ -27,6 +20,8 @@ export const BoardStateContextProvider = ({ children }) => {
     const isLargeScreen = windowWidth >= 769;
 
     const { boardId } = useParams();
+    const [searchParams] = useSearchParams();
+
     const [boardState, setBoardState] = useState({});
     const [chats, setChats] = useState([]);
     const [isRemoved, setIsRemoved] = useState(false);
@@ -63,6 +58,13 @@ export const BoardStateContextProvider = ({ children }) => {
     const notify = ({ message, timeSent, duration, from }) => {
         setToast({ open: true, message, timeSent, duration, from });
     };
+
+    const filterParams = useCallback(() => {
+        const filter = searchParams.get("filter");
+        const priority = searchParams.get("priority");
+        const owner = searchParams.get("owner");
+        return { filter, priority, owner };
+    }, [searchParams]);
 
     useEffect(() => {
         const onConnect = async () => {
@@ -175,7 +177,7 @@ export const BoardStateContextProvider = ({ children }) => {
         });
 
         socket.on("newCard", (data) => {
-            const { filter, priority } = filterParams();
+            const { filter, priority, owner } = filterParams();
 
             const card = data;
 
@@ -188,6 +190,11 @@ export const BoardStateContextProvider = ({ children }) => {
 
             if (priority) {
                 const includesFilter = card.priorityLevel === priority;
+                card["hiddenByFilter"] = !includesFilter;
+            }
+
+            if (owner) {
+                const includesFilter = card.owner === owner;
                 card["hiddenByFilter"] = !includesFilter;
             }
 
@@ -219,7 +226,7 @@ export const BoardStateContextProvider = ({ children }) => {
         });
 
         socket.on("cardMoved", (data) => {
-            const { filter, priority } = filterParams();
+            const { filter, priority, owner } = filterParams();
 
             const { oldListId, newListId, cardId, newCard: card } = data;
 
@@ -235,12 +242,17 @@ export const BoardStateContextProvider = ({ children }) => {
                 card["hiddenByFilter"] = !includesFilter;
             }
 
+            if (owner) {
+                const includesFilter = card.owner === owner;
+                card["hiddenByFilter"] = !includesFilter;
+            }
+
             deleteCard(oldListId, cardId);
             addCardToList(newListId, card);
         });
 
         socket.on("cardMovedByIndex", (data) => {
-            const { filter, priority } = filterParams();
+            const { filter, priority, owner } = filterParams();
 
             let { cards, listId } = data;
 
@@ -262,6 +274,14 @@ export const BoardStateContextProvider = ({ children }) => {
                 });
             }
 
+            if (owner) {
+                cards = cards.map((card) => {
+                    const includesFilter = card.priorityLevel === priority;
+                    card["hiddenByFilter"] = !includesFilter;
+                    return card;
+                });
+            }
+
             setBoardState((prev) => {
                 return {
                     ...prev,
@@ -273,7 +293,7 @@ export const BoardStateContextProvider = ({ children }) => {
         });
 
         socket.on("cardMovedToList", (data) => {
-            const { filter, priority } = filterParams();
+            const { filter, priority, owner } = filterParams();
 
             const { oldListId, newListId, insertedIndex, card } = data;
 
@@ -286,6 +306,11 @@ export const BoardStateContextProvider = ({ children }) => {
 
             if (priority) {
                 const includesFilter = card.priorityLevel === priority;
+                card["hiddenByFilter"] = !includesFilter;
+            }
+
+            if (owner) {
+                const includesFilter = card.owner === owner;
                 card["hiddenByFilter"] = !includesFilter;
             }
 

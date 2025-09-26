@@ -48,7 +48,8 @@ const CardDetailInfo = ({
                         className="h-2.5 w-2.5"
                         style={{
                             background:
-                                PRIORITY_LEVELS[`${priorityLevel}`]?.color || "gray",
+                                PRIORITY_LEVELS[`${priorityLevel}`]?.color ||
+                                "gray",
                             filter: "brightness(0.8)",
                         }}
                     ></div>
@@ -61,7 +62,8 @@ const CardDetailInfo = ({
                     className="font-medium max-w-[10rem] px-1 cursor-pointer appearance-none bg-transparent"
                     style={{
                         color:
-                            PRIORITY_LEVELS[`${priorityLevel}`]?.color || "gray",
+                            PRIORITY_LEVELS[`${priorityLevel}`]?.color ||
+                            "gray",
                         filter: "brightness(0.8)",
                     }}
                 >

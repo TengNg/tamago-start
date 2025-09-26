@@ -132,9 +132,27 @@ export default function Card({ card }) {
 
             {card?.priorityLevel != "none" && (
                 <div className="h-1 flex gap-[2px] items-center">
-                    <div style={{ backgroundColor: PRIORITY_LEVELS[card.priorityLevel].color }} className="w-1 h-1"></div>
-                    <div style={{ backgroundColor: PRIORITY_LEVELS[card.priorityLevel].color }} className="w-8 h-1"></div>
-                    <div style={{ backgroundColor: PRIORITY_LEVELS[card.priorityLevel].color }} className="w-8 h-1"></div>
+                    <div
+                        style={{
+                            backgroundColor:
+                                PRIORITY_LEVELS[card.priorityLevel].color,
+                        }}
+                        className="w-1 h-1"
+                    ></div>
+                    <div
+                        style={{
+                            backgroundColor:
+                                PRIORITY_LEVELS[card.priorityLevel].color,
+                        }}
+                        className="w-8 h-1"
+                    ></div>
+                    <div
+                        style={{
+                            backgroundColor:
+                                PRIORITY_LEVELS[card.priorityLevel].color,
+                        }}
+                        className="w-8 h-1"
+                    ></div>
                 </div>
             )}
 

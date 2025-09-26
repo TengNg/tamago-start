@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import useBoardState from "../../hooks/useBoardState";
 import { useSearchParams } from "react-router-dom";
 
@@ -7,24 +7,12 @@ import PRIORITY_LEVELS from "../../data/priorityLevels";
 import Icon from "../shared/Icon";
 
 const Filter = ({ open, setOpen }) => {
-    const { setBoardState, setHasFilter } = useBoardState();
+    const { boardState, setBoardState, setHasFilter } = useBoardState();
 
     const [searchParams, setSearchParams] = useSearchParams();
 
     const dialog = useRef();
     const cardTitleInput = useRef();
-
-    useEffect(() => {
-        if (
-            searchParams.get("filter") ||
-            searchParams.get("priority") ||
-            searchParams.get("stale")
-        ) {
-            setHasFilter(true);
-        } else {
-            setHasFilter(false);
-        }
-    }, [searchParams]);
 
     useEffect(() => {
         if (open) {
@@ -55,16 +43,27 @@ const Filter = ({ open, setOpen }) => {
     }, [open]);
 
     useEffect(() => {
+        if (
+            searchParams.get("filter") ||
+            searchParams.get("priority") ||
+            searchParams.get("stale")
+        ) {
+            setHasFilter(true);
+        } else {
+            setHasFilter(false);
+        }
+
         const searchValue = searchParams.get("filter");
         const priorityValue = searchParams.get("priority");
         const stale = searchParams.get("stale");
+        const owner = searchParams.get("owner");
 
         setBoardState((prev) => {
             return {
                 ...prev,
                 lists: prev.lists.map((list) => {
                     const newCards = [...list.cards].map((card) => {
-                        if (!searchValue && !priorityValue && !stale)
+                        if (!searchValue && !priorityValue && !owner && !stale)
                             return { ...card, hiddenByFilter: false };
 
                         const isFilteredByTitle =
@@ -77,6 +76,8 @@ const Filter = ({ open, setOpen }) => {
                         const isFilteredByPriority =
                             card.priorityLevel === priorityValue;
                         const isFilteredByStale = dateToCompare(card.dueDate);
+                        const isFilteredByOwner =
+                            card.owner?.toLowerCase() === owner?.toLowerCase();
 
                         let hiddenByFilter = true;
 
@@ -92,13 +93,31 @@ const Filter = ({ open, setOpen }) => {
                             hiddenByFilter = false;
                         }
 
+                        if (owner && isFilteredByOwner) {
+                            hiddenByFilter = false;
+                        }
+
                         return { ...card, hiddenByFilter };
                     });
+
                     return { ...list, cards: newCards };
                 }),
             };
         });
     }, [searchParams]);
+
+    const boardMembers = useMemo(() => {
+        if (Object.keys(boardState).length === 0) {
+            return {};
+        }
+
+        const map = {};
+        const createdBy = boardState.board.createdBy;
+        const members = boardState.board.members;
+        map[createdBy._id] = createdBy.username;
+        members.forEach((m) => (map[m._id] = m.username));
+        return map;
+    }, [boardState]);
 
     const handleCloseOnOutsideClick = (e) => {
         if (e.target === dialog.current) {
@@ -126,10 +145,43 @@ const Filter = ({ open, setOpen }) => {
         setSearchParams(searchParams, { replace: true });
     };
 
+    const handleFilterByCardPriority = (value) => {
+        if (value === searchParams.get("priority")) {
+            searchParams.delete("priority");
+            setSearchParams(searchParams, { replace: true });
+            return;
+        }
+
+        searchParams.set("priority", value);
+        setSearchParams(searchParams, { replace: true });
+    };
+
+    const handleFilterByStaleStatus = () => {
+        if (searchParams.get("stale") === "true") {
+            searchParams.delete("stale");
+            setSearchParams(searchParams, { replace: true });
+            return;
+        }
+
+        searchParams.set("stale", true);
+        setSearchParams(searchParams, { replace: true });
+    };
+
+    const handleFilterByOwner = (value) => {
+        if (value === searchParams.get("owner")) {
+            searchParams.delete("owner");
+            setSearchParams(searchParams, { replace: true });
+            return;
+        }
+
+        searchParams.set("owner", value);
+        setSearchParams(searchParams, { replace: true });
+    };
+
     return (
         <dialog
             ref={dialog}
-            className="z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 h-fit min-w-[350px] max-h-[500px] border-black border-[2px] bg-gray-200"
+            className="z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 h-fit min-w-[350px] h-fit border-black border-[2px] bg-gray-200"
             onClick={handleCloseOnOutsideClick}
         >
             <div className="flex w-full justify-between items-center border-b-[1px] border-black pb-3">
@@ -147,9 +199,39 @@ const Filter = ({ open, setOpen }) => {
                     <div className="w-full flex gap-2">
                         <input
                             ref={cardTitleInput}
-                            className={`p-3 w-full overflow-hidden shadow-[0_3px_0_0] shadow-gray-600 sm:text-[0.75rem] whitespace-nowrap text-ellipsis border-[2px] bg-gray-100 border-gray-600 text-gray-600 font-bold select-none font-mono focus:outline-none`}
+                            className={`p-3 w-full overflow-hidden shadow-[0_3px_0_0] shadow-gray-600 text-sm whitespace-nowrap text-ellipsis font-medium border-[2px] bg-gray-100 border-gray-600 text-gray-600 font-medium select-none focus:outline-none`}
                             placeholder="search for cards..."
                         />
+                    </div>
+
+                    <div className="h-[1px] bg-gray-700 w-full"></div>
+
+                    <div className="w-full flex gap-2">
+                        {Object.entries(boardMembers).map((m) => {
+                            const [id, username] = m;
+                            return (
+                                <div
+                                    key={id}
+                                    className="select-none flex items-center gap-1 text-[0.75rem] cursor-pointer w-fit p-1 px-2 text-gray-700 font-medium hover:brightness-105 border-[1px] border-gray-700"
+                                    onClick={() =>
+                                        handleFilterByOwner(username)
+                                    }
+                                    style={{
+                                        textDecoration:
+                                            searchParams.get("owner") ===
+                                            username
+                                                ? "underline"
+                                                : "none",
+                                    }}
+                                >
+                                    <Icon
+                                        name="profile"
+                                        className="text-gray-700 w-3.5 h-3.5"
+                                    />
+                                    {username}
+                                </div>
+                            );
+                        })}
                     </div>
 
                     <div className="h-[1px] bg-gray-700 w-full"></div>
@@ -161,12 +243,9 @@ const Filter = ({ open, setOpen }) => {
                                 <div
                                     key={title}
                                     className="text-[0.75rem] cursor-pointer w-full p-1 px-3 text-gray-50 font-medium uppercase hover:brightness-105"
-                                    onClick={() => {
-                                        searchParams.set("priority", value);
-                                        setSearchParams(searchParams, {
-                                            replace: true,
-                                        });
-                                    }}
+                                    onClick={() =>
+                                        handleFilterByCardPriority(value)
+                                    }
                                     style={{
                                         backgroundColor: color,
                                         textDecoration:
@@ -192,12 +271,9 @@ const Filter = ({ open, setOpen }) => {
                                     ? "underline"
                                     : "none",
                         }}
-                        onClick={() => {
-                            searchParams.set("stale", true);
-                            setSearchParams(searchParams, { replace: true });
-                        }}
+                        onClick={handleFilterByStaleStatus}
                     >
-                        Stale Cards
+                        STALE
                     </div>
 
                     {(searchParams.get("filter") ||

@@ -58,9 +58,7 @@ const Pinned = ({
             className={`${isInCurrentBoard ? "underline" : ""} ${isDeleting ? "opacity-20 bg-red-200 line-through" : ""} select-none touch-none flex items-center justify-between relative max-w-[300px] overflow-hidden whitespace-nowrap text-ellipsis top-left-auto bg-gray-200 text-[0.75rem] flex-1 border-[2px] border-b-[4px] border-gray-700 shadow-gray-700 p-3`}
             onClick={() => handleOpenBoard(boardId)}
         >
-            <p>
-                {title}
-            </p>
+            <p>{title}</p>
             <button
                 onClick={(e) => handleDeletePinnedBoard(e, boardId)}
                 disabled={isDeleting}
