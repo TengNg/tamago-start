@@ -8,8 +8,6 @@ import { useSearchParams } from "react-router-dom";
 import Icon from "../shared/Icon";
 import CardComments from "./CardComments";
 import { axiosPrivate } from "../../api/axios";
-import AttachmentUploader from "../attachment/AttachmentUploader";
-import AttachmentPreviewer from "../attachment/AttachmentPreviewer";
 
 const CardDetail = ({
     open,

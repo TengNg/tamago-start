@@ -14,22 +14,6 @@ const opts = __prod__ ? {} : {
 };
 
 /**
- * @param {import("socket.io").Socket} socket
- */
-const registerHandlers = (socket) => {
-    const registerBoardHandlers = require('./handlers/board');
-    const registerListHandlers = require('./handlers/list');
-    const registerCardHandlers = require('./handlers/card');
-    const registerChatHandlers = require('./handlers/chat');
-    const registerCardCommentHandlers = require('./handlers/cardComment');
-    registerBoardHandlers(socket, state);
-    registerListHandlers(socket, state);
-    registerCardHandlers(socket, state);
-    registerChatHandlers(socket, state);
-    registerCardCommentHandlers(socket, state);
-};
-
-/**
  * Initialize socket-server
  * @param {import('http').Server} server
  */
@@ -95,7 +79,16 @@ const initSocket = (server) => {
 
     io.on('connection', (socket) => {
         // register all feature handlers
-        registerHandlers(socket);
+        const registerBoardHandlers = require('./handlers/board');
+        const registerListHandlers = require('./handlers/list');
+        const registerCardHandlers = require('./handlers/card');
+        const registerChatHandlers = require('./handlers/chat');
+        const registerCardCommentHandlers = require('./handlers/cardComment');
+        registerBoardHandlers(io, socket, state);
+        registerListHandlers(socket, state);
+        registerCardHandlers(socket, state);
+        registerChatHandlers(socket, state);
+        registerCardCommentHandlers(socket, state);
 
         socket.on("disconnectFromBoard", () => {
             const { boardIdMap } = state;
