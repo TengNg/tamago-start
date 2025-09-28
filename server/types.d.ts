@@ -13,6 +13,7 @@ declare module 'express' {
             username: string;
             refreshTokenVersion?: number;
         };
+        file?: Express.Multer.File;
     }
 }
 

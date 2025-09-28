@@ -58,6 +58,7 @@ apiRouter.use("/join_board_requests", require("./routes/api/joinBoardRequests"))
 apiRouter.use("/account", require("./routes/api/account"));
 apiRouter.use("/personal_writedowns", require("./routes/api/writedowns"));
 apiRouter.use("/board_activities", require("./routes/api/boardActivities"));
+apiRouter.use("/attachments", require("./routes/api/attachments"));
 
 // (mount api-routers)
 app.use("/api", apiRouter);
