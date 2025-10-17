@@ -1,5 +1,7 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import useBoardState from "../../hooks/useBoardState";
+import { axiosPrivate } from "../../api/axios";
 import dateFormatter from "../../utils/dateFormatter";
 import PRIORITY_LEVELS from "../../data/priorityLevels";
 
@@ -16,6 +18,34 @@ const CardDetailInfo = ({
 }) => {
     const { boardState } = useBoardState();
 
+    const queryClient = useQueryClient();
+
+    const fileInputRef = useRef();
+
+    const fileUploadMutation = useMutation({
+        mutationFn: async (formData) => {
+            return await axiosPrivate.post("/attachments/upload", formData, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries(["attachments", card._id]);
+        },
+    });
+
+    const {
+        data: attachments = [],
+        isLoading: isAttachmentsLoading,
+        isError: isAttachmentsError,
+    } = useQuery({
+        queryKey: ["attachments", card._id],
+        queryFn: async () => {
+            const res = await axiosPrivate.get(`/attachments/${card._id}/card`);
+            return res.data;
+        },
+        enabled: !!card?._id,
+    });
+
     const priorityLevel = card?.priorityLevel;
     const dueDate = card?.dueDate ? formatDateToYYYYMMDD(card.dueDate) : "";
 
@@ -24,6 +54,41 @@ const CardDetailInfo = ({
         const memberNames = boardState.board.members.map((m) => m.username);
         return [ownerName, ...memberNames];
     }, [boardState?.board]);
+
+    const [viewedAttachment, setViewedAttachment] = useState(null);
+    const [imageDataUrl, setImageDataUrl] = useState(null);
+    const [loadingImage, setLoadingImage] = useState(false);
+    const [imageError, setImageError] = useState(null);
+
+    // When viewedAttachment changes and is an image, fetch as blob and convert to data URL
+    useEffect(() => {
+        if (viewedAttachment && viewedAttachment.mimetype.startsWith("image/")) {
+            setLoadingImage(true);
+            setImageError(null);
+            setImageDataUrl(null);
+            axiosPrivate.get(`/attachments/${viewedAttachment.id}`, { responseType: "blob" })
+                .then(res => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        setImageDataUrl(reader.result);
+                        setLoadingImage(false);
+                    };
+                    reader.onerror = () => {
+                        setImageError("Failed to load image");
+                        setLoadingImage(false);
+                    };
+                    reader.readAsDataURL(res.data);
+                })
+                .catch(() => {
+                    setImageError("Failed to load image");
+                    setLoadingImage(false);
+                });
+        } else {
+            setImageDataUrl(null);
+            setLoadingImage(false);
+            setImageError(null);
+        }
+    }, [viewedAttachment]);
 
     return (
         <div className="relative flex flex-col gap-5 text-sm text-gray-700 p-4 border-[1px] border-gray-700">
@@ -125,6 +190,97 @@ const CardDetailInfo = ({
                 <span>updated: </span>
                 {card.updatedAt ? dateFormatter(card.updatedAt) : "not found"}
             </div>
+
+            {/* Attachment List */}
+            <div className="mt-4">
+                <div className="font-semibold mb-2">Attachments</div>
+                {isAttachmentsLoading ? (
+                    <div>Loading attachments...</div>
+                ) : isAttachmentsError ? (
+                    <div className="text-red-600">Failed to load attachments</div>
+                ) : attachments.length === 0 ? (
+                    <div className="text-gray-400">No attachments</div>
+                ) : (
+                    <ul className="space-y-1">
+                        {attachments.map(att => (
+                            <li key={att.id} className="flex items-center gap-2">
+                                <span className="truncate max-w-[12rem]" title={att.originalname}>{att.originalname}</span>
+                                <button
+                                    className="text-blue-600 underline text-xs px-2 py-1 border border-blue-200"
+                                    onClick={() => setViewedAttachment(att)}
+                                >
+                                    View
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+
+            {/* Attachment Uploader */}
+            <div>
+                <form
+                    onSubmit={e => {
+                        e.preventDefault();
+                        if (!fileInputRef.current.files[0]) return;
+                        const formData = new FormData();
+                        formData.append("attachment", fileInputRef.current.files[0]);
+                        formData.append("type", "card");
+                        formData.append("refId", card._id);
+                        fileUploadMutation.mutate(formData);
+                    }}
+                >
+                    <input type="file" name="attachment" accept="*" ref={fileInputRef} />
+                    <button type="submit" disabled={fileUploadMutation.isPending} className="ml-2 border px-2 py-1">
+                        {fileUploadMutation.isPending ? "Uploading..." : "Upload"}
+                    </button>
+                    {fileUploadMutation.isSuccess && <span className="ml-2 text-green-600">Uploaded!</span>}
+                    {fileUploadMutation.isError && <span className="ml-2 text-red-600">Upload failed</span>}
+                </form>
+            </div>
+
+            {/* Attachment Viewer Dialog */}
+            {viewedAttachment && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+                    <div className="bg-white shadow-lg p-4 max-w-[90vw] max-h-[90vh] flex flex-col items-center">
+                        <div className="flex w-full justify-between items-center mb-2">
+                            <span className="font-semibold text-gray-700 truncate max-w-[60vw]" title={viewedAttachment.originalname}>{viewedAttachment.originalname}</span>
+                            <button
+                                className="ml-4 px-2 py-1 border border-gray-400 text-gray-600 hover:bg-gray-100"
+                                onClick={() => setViewedAttachment(null)}
+                            >
+                                Close
+                            </button>
+                        </div>
+                        {viewedAttachment.mimetype.startsWith("image/") ? (
+                            loadingImage ? (
+                                <div className="p-8">Loading image...</div>
+                            ) : imageError ? (
+                                <div className="text-red-600 p-8">{imageError}</div>
+                            ) : imageDataUrl ? (
+                                <img
+                                    src={imageDataUrl}
+                                    alt={viewedAttachment.originalname}
+                                    className="max-w-[80vw] max-h-[70vh] border"
+                                />
+                            ) : null
+                        ) : (
+                            <div className="flex flex-col items-center mt-4">
+                                <span className="mb-2">No preview available.</span>
+                                <a
+                                    href={`/api/attachments/${viewedAttachment.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 underline border px-2 py-1"
+                                    download={viewedAttachment.originalname}
+                                >
+                                    Download
+                                </a>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
