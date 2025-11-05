@@ -1,7 +1,0 @@
-#!/bin/bash
-
-BEARER_TOKEN="$1"
-
-curl -i https://task-manager-1-server.onrender.com/personal_writedowns/ \
-  -H "Accept: application/json" \
-  -H "Authorization: Bearer $BEARER_TOKEN"
