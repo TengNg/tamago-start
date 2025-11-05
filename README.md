@@ -1,71 +1,84 @@
-## task-manager (v0.1.1)
+## tamago start v2
 
-Task Manager application built with MERN stack and Socket.io (come with drag and drop lists/cards, chats, notes, history tracking, and simple keybindings...).
+My personal task manager built with the MERN stack and Socket.io. It includes features such as drag-and-drop lists and cards, real-time chat, notes, activity history, and keyboard shortcuts (including vim-like navigation).
 
-> Inspired by Trello - my favorite tool for daily work & side projects.
+This project is inspired by Trello, with some customizations to better fit personal workflow preferences.
 
-> I want to build something like it but modify some stuff to fit my taste.
+![Board Screenshot](./media/v2/boards.png)
+![Card Details Screenshot](./media/v2/board2.png)
+![Writedown Screenshot](./media/v2/writedowns.png)
+![Board Activities Screenshot](./media/v2/activities.png)
+![Profile Screenshot](./media/v2/profile.png)
 
-![Board Screenshot](./media/screenshot1.png)
-![Card Details Screenshot](./media/screenshot5.webp)
-![Writedown Screenshot](./media/screenshot2.png)
-![Board Activities Screenshot](./media/screenshot3.png)
-![Board Stats Screenshot](./media/screenshot4.png)
+### Video Showcase
+See the app in action: drag-and-drop, real-time chat, notes, activities, and more.
+![showcase.mp4](https://github.com/user-attachments/assets/d5efa3ed-2379-47b2-84df-4ee8c2eb051d)
 
 ---
 
-Demo: [https://task-manager-1-server.onrender.com/](https://task-manager-1-server.onrender.com/)
+### Live Demo
 
-> Currently free-tier hosting service, so connecting to the board (including the socket service) might take a while sometimes :)
+A demo is available at: [https://task-manager-1-server.onrender.com/](https://task-manager-1-server.onrender.com/)
+
+Note: The application is hosted on a free-tier service, so initial connections (including socket services) may take a few moments to establish.
 
 ---
 
 ### Quickstart
 
-> Dependencies: node version >= 21.x
+Requirements: Node.js v21.x or higher
 
-1. Clone this repo
-2. Create database in mongodb (with your_database_name)
-3. At `server` folder - create `.env` file with content like the example below,
-   [follow this example](./server/.env.example)
-    ```
-    PORT=3001
-    ACCESS_TOKEN=secretaccesstoken
-    REFRESH_TOKEN=secretrefreshtoken
+1. Clone this repository
 
-    # make sure <your_database_name> matches your database name in mongodb
-    DB_CONNECTION=mongodb://127.0.0.1:27017/<your_database_name>
-    ```
-4. Install packages & Start
+2. Set up a MongoDB database. You can choose any database name.
+
+3. Configure environment variables:
+   In the `server` folder, create a `.env` file. Refer to [`server/.env.example`](./server/.env.example) for guidance:
+
+   ```
+   PORT=3001
+   ACCESS_TOKEN=secretaccesstoken
+   REFRESH_TOKEN=secretrefreshtoken
+
+   # Ensure <your_database_name> matches your MongoDB database name
+   DB_CONNECTION=mongodb://127.0.0.1:27017/<your_database_name>
+   ```
+
+4. Install dependencies and start the services:
+
    ```bash
-   # cd server
+   # In the server folder
    npm install
    npm run dev
 
-   # cd client
+   # In the client folder
    npm install
    npm run dev
 
-   # cd socket
+   # In the socket folder
    npm install
    npm run dev
 
-   # bascripts (optional, run this without previous commands)
+   # Alternatively, use the provided bash scripts to start all services
    bin/dev
    # or
    bin/dev2
    ```
-5. Open `http://localhost:5173/`
-   (If running `bin/dev2`): Open `http://localhost:3001/`
+
+5. Open the application in your browser:
+   - Default: [http://localhost:5173/](http://localhost:5173/)
+   - If using `bin/dev2`: [http://localhost:3001/](http://localhost:3001/)
 
 ---
 
-#### Run Tests
+### Running Tests (deprecated)
 
-> Tests are currently deprecated, 'cause some big updates
+Tests are currently disabled due to ongoing updates.
 
 ```bash
 cd server && npm test
 ```
 
-For tests coverage visualization, run: `cd server && npm test -- --coverage`, then open `server/coverage/lcov-report/index.html`
+For test coverage reports:
+`cd server && npm test -- --coverage`
+Then open `server/coverage/lcov-report/index.html` in your browser.
