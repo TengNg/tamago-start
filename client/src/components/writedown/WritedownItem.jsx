@@ -48,7 +48,7 @@ const WritedownItem = ({ writedown, open, remove, pin }) => {
             <div className="flex w-full justify-between items-center border-b-[1px] border-black pb-2 mb-2 gap-2">
                 <button
                     title="pin"
-                    className={`${pinned ? "bg-amber-600/40" : "bg-gray-400"} w-[10px] h-[10px] rounded-full hover:bg-amber-600/40`}
+                    className={`${pinned ? "bg-amber-600/40" : "bg-gray-400"} w-[10px] h-[10px] rounded-full`}
                     onClick={() => pin(id)}
                 ></button>
 
