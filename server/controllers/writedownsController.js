@@ -6,12 +6,20 @@ const {
     handleAuthorizationAndGetWritedown,
 } = require('../services/writedownService');
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const getWritedowns = async (req, res) => {
     const { userId } = req.user;
     const writedowns = await writedownsByUserId(userId);
     return res.status(200).json({ writedowns });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const getWritedown = async (req, res) => {
     const { writedown } = await handleAuthorizationAndGetWritedown(req, res);
     return res.status(200).json({ writedown });

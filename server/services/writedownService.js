@@ -1,5 +1,8 @@
 const Writedown = require('../models/Writedown');
 
+/**
+ * @param {string|import('mongoose').Types.ObjectId} writedownId
+ */
 const isActionAuthorized = async (writedownId) => {
     const foundWritedown = await findWritedown(writedownId, { lean: false });
     if (!foundWritedown) {
@@ -12,11 +15,19 @@ const isActionAuthorized = async (writedownId) => {
     }
 };
 
+/**
+ * @param {Object} writedownData
+ * @param {string|import('mongoose').Types.ObjectId} writedownData.owner
+ * @param {string} writedownData.order
+ */
 const saveNewWritedown = async (writedownData) => {
     const newWritedown = new Writedown(writedownData);
     return await newWritedown.save();
 };
 
+/**
+ * @param {string|import('mongoose').Types.ObjectId} userId
+ */
 const writedownsByUserId = async (userId) => {
     const result = await Writedown
         .find({ owner: userId })
@@ -25,6 +36,11 @@ const writedownsByUserId = async (userId) => {
     return result;
 };
 
+/**
+ * @param {string|import('mongoose').Types.ObjectId} writedownId
+ * @param {Object} [option={ lean: true }]
+ * @param {boolean} [option.lean=true]
+ */
 const findWritedown = async (writedownId, option = { lean: true }) => {
     const foundWritedown = Writedown.findById(writedownId);
     if (option.lean) foundWritedown.lean();
@@ -41,7 +57,7 @@ const handleAuthorizationAndGetWritedown = async (req, res) => {
     if (!authorized) {
         return res.status(403).json({ msg: error || "unauthorized" });
     }
-    return { writedown };
+    return res.status(200).json({ writedown });
 };
 
 module.exports = {
