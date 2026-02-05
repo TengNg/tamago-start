@@ -90,7 +90,6 @@ export default function Register() {
                         type="text"
                         id="username"
                         autoComplete="off"
-                        autoFocus={true}
                         ref={usernameInputEl}
                         onChange={(e) => setUsername(e.target.value)}
                         value={username}

@@ -2,24 +2,14 @@ import { useEffect } from "react";
 import { useNavigate, useLocation, NavLink } from "react-router-dom";
 import UserAccount from "./UserAccount";
 
-import PAGES from "../../data/pages";
+import {
+    AUTHORIZED_NAV_PAGES,
+    UNAUTHORIZED_NAV_PAGES,
+    AUTHORIZED_KEYS,
+    UNAUTHORIZED_KEYS,
+} from "../../data/pages";
 import Icon from "../shared/Icon";
 import useCurrentUserContext from "../../hooks/useCurrentUserContext";
-
-const NAV_PAGES = [
-    PAGES.BOARDS,
-    PAGES.WRITEDOWNS,
-    PAGES.ACTIVITIES,
-    PAGES.PROFILE,
-];
-
-const KEYS = Object.freeze({
-    0: PAGES.ABOUT,
-    1: PAGES.BOARDS,
-    2: PAGES.WRITEDOWNS,
-    3: PAGES.ACTIVITIES,
-    4: PAGES.PROFILE,
-});
 
 const NavBar = ({ setOpenPinnedBoards }) => {
     const { currentUser } = useCurrentUserContext();
@@ -30,10 +20,6 @@ const NavBar = ({ setOpenPinnedBoards }) => {
     const isBoardPath = pathname.startsWith("/b/");
 
     useEffect(() => {
-        if (!currentUser) {
-            return;
-        }
-
         const handleOnKeyDown = (e) => {
             const isTextFieldFocused = document.querySelector(
                 "input:focus, textarea:focus",
@@ -55,7 +41,8 @@ const NavBar = ({ setOpenPinnedBoards }) => {
                 return;
             }
 
-            const path = KEYS[e.key]?.path;
+            const keys = !currentUser ? UNAUTHORIZED_KEYS : AUTHORIZED_KEYS;
+            const path = keys[e.key]?.path;
             if (!path) return;
 
             navigate(path, { state: { from: path } });
@@ -76,50 +63,24 @@ const NavBar = ({ setOpenPinnedBoards }) => {
             >
                 <nav className="h-full top-4 m-auto border-gray-700 border-[2px] bg-transparent px-2 z-30 drop-shadow-sm">
                     <ul className="w-[100%] h-[100%] flex justify-around items-center sm:gap-4 gap-2">
-                        <li className="w-[80px]">
-                            <NavLink
-                                to={"/about"}
-                                className={({ isActive }) =>
-                                    isActive || pathname === "/"
-                                        ? "anchor--style--selected"
-                                        : "anchor--style"
-                                }
-                            >
-                                <div className="md:text-[0.8rem] text-[0.65rem]">
-                                    about
-                                </div>
-                            </NavLink>
-                        </li>
-
-                        <li className="w-[80px]">
-                            <NavLink
-                                to={"/login"}
-                                className={({ isActive }) =>
-                                    isActive
-                                        ? "anchor--style--selected"
-                                        : "anchor--style"
-                                }
-                            >
-                                <div className="md:text-[0.8rem] text-[0.65rem]">
-                                    login
-                                </div>
-                            </NavLink>
-                        </li>
-
-                        <li className="w-[80px]">
-                            <NavLink
-                                to={"/register"}
-                                className={({ isActive }) =>
-                                    isActive
-                                        ? "anchor--style--selected"
-                                        : "anchor--style"
-                                }
-                            >
-                                <div className="md:text-[0.8rem] text-[0.65rem]">
-                                    register
-                                </div>
-                            </NavLink>
-                        </li>
+                        {UNAUTHORIZED_NAV_PAGES.map((page, index) => {
+                            return (
+                                <li key={page.title} className="w-fit">
+                                    <NavLink
+                                        to={page.path}
+                                        className={({ isActive }) =>
+                                            isActive || pathname === page.path
+                                                ? "anchor--style--selected"
+                                                : "anchor--style"
+                                        }
+                                    >
+                                        <div className="md:text-[0.8rem] text-[0.65rem]">
+                                            {`0${index} ${page.title}`}
+                                        </div>
+                                    </NavLink>
+                                </li>
+                            );
+                        })}
                     </ul>
                 </nav>
             </section>
@@ -172,7 +133,7 @@ const NavBar = ({ setOpenPinnedBoards }) => {
 
                 <nav className="h-full top-4 m-auto border-gray-700 border-[1px] bg-transparent px-2 z-30 drop-shadow-sm">
                     <ul className="w-[100%] h-[100%] flex justify-around items-center sm:gap-4 gap-2">
-                        {NAV_PAGES.map((el, index) => {
+                        {AUTHORIZED_NAV_PAGES.map((el, index) => {
                             const { path, title } = el;
                             const num = `0${index + 1}`;
                             return (
