@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import dateFormatter from "../../utils/dateFormatter";
 
-const Toast = ({
+const ChatMessageToast = ({
     toast,
     setToast,
     isChatOpen,
@@ -90,4 +90,4 @@ const Toast = ({
     );
 };
 
-export default Toast;
+export default ChatMessageToast;

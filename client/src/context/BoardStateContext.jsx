@@ -45,7 +45,7 @@ export const BoardStateContextProvider = ({ children }) => {
 
     const [hasReceivedNewMessage, setHasReceivedNewMessage] = useState(true);
     const [isAtBottomOfChat, setIsAtBottomOfChat] = useState(true);
-    const [toast, setToast] = useState({
+    const [chatMessageToast, setChatMessageToast] = useState({
         open: false,
         message: "",
         duration: null,
@@ -56,7 +56,7 @@ export const BoardStateContextProvider = ({ children }) => {
     const [isConnected, setIsConnected] = useState(false);
 
     const notify = ({ message, timeSent, duration, from }) => {
-        setToast({ open: true, message, timeSent, duration, from });
+        setChatMessageToast({ open: true, message, timeSent, duration, from });
     };
 
     const filterParams = useCallback(() => {
@@ -835,8 +835,8 @@ export const BoardStateContextProvider = ({ children }) => {
                 isConnected,
                 setIsConnected,
 
-                toast,
-                setToast,
+                chatMessageToast,
+                setChatMessageToast,
 
                 hasReceivedNewMessage,
                 setHasReceivedNewMessage,

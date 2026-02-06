@@ -55,7 +55,7 @@ const CardDetailInfo = ({
         enabled: !!card?._id,
     });
 
-    const priorityLevel = card?.priorityLevel;
+    const priorityLevel = card?.priorityLevel || "";
     const dueDate = card?.dueDate ? formatDateToYYYYMMDD(card.dueDate) : "";
 
     const memberNames = useMemo(() => {
@@ -168,7 +168,7 @@ const CardDetailInfo = ({
                     />
                 )}
                 <select
-                    value={card.owner}
+                    value={card.owner || ""}
                     onChange={(e) => handleCardOwnerChange(e.target.value)}
                     className="max-w-[10rem] cursor-pointer appearance-none bg-transparent text-gray-800 font-medium"
                 >
@@ -212,7 +212,7 @@ const CardDetailInfo = ({
             <div>
                 <div className="font-semibold mb-2">Attachments</div>
                 {isAttachmentsLoading ? (
-                    <div>Loading attachments...</div>
+                    <div className="text-gray-400">Loading attachments...</div>
                 ) : isAttachmentsError ? (
                     <div className="text-red-600">
                         Failed to load attachments
@@ -290,7 +290,7 @@ const CardDetailInfo = ({
                     <button
                         type="submit"
                         disabled={fileUploadMutation.isPending}
-                        className="ml-2 border border-gray-500 px-2 py-1"
+                        className="ml-2 underline text-sm"
                     >
                         {fileUploadMutation.isPending
                             ? "uploading..."

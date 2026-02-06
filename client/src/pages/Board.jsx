@@ -20,7 +20,7 @@ import Filter from "../components/action-menu/Filter";
 import VisibilityConfig from "../components/board/VisibilityConfig";
 import KeyBindings from "../components/ui/KeyBindings";
 import BoardActivities from "../components/activity-history/BoardActivities";
-import Toast from "../components/ui/Toast";
+import ChatMessageToast from "../components/ui/ChatMessageToast";
 import VISIBILITY_MAP from "../data/visibility";
 import useCurrentUserContext from "../hooks/useCurrentUserContext";
 import { axiosPrivate } from "../api/axios";
@@ -71,8 +71,8 @@ const Board = () => {
         // socket connection state
         isConnected,
 
-        toast,
-        setToast,
+        chatMessageToast,
+        setChatMessageToast,
 
         setIsAtBottomOfChat,
 
@@ -879,9 +879,9 @@ const Board = () => {
                 </div>
             </div>
 
-            <Toast
-                toast={toast}
-                setToast={setToast}
+            <ChatMessageToast
+                toast={chatMessageToast}
+                setToast={setChatMessageToast}
                 isChatOpen={openFloatingChat}
                 setOpenChatBox={setOpenChatBox}
                 setOpenFloatingChat={setOpenFloatingChat}
