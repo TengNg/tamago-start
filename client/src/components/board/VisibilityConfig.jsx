@@ -4,6 +4,7 @@ import VISIBILITY_MAP from "../../data/visibility";
 import useBoardState from "../../hooks/useBoardState";
 import Icon from "../shared/Icon";
 import { axiosPrivate } from "../../api/axios";
+import useToast from "../../hooks/useToast";
 
 const VisibilityConfig = ({ open, setOpen }) => {
     const { boardState, setBoardVisibility } = useBoardState();
@@ -14,6 +15,8 @@ const VisibilityConfig = ({ open, setOpen }) => {
 
     const dialog = useRef();
     const visiblityOptions = Object.keys(VISIBILITY_MAP);
+
+    const toast = useToast();
 
     useEffect(() => {
         if (open) {
@@ -46,9 +49,8 @@ const VisibilityConfig = ({ open, setOpen }) => {
             setBoardVisibility(newBoard?.visibility);
             setUpdating(false);
         } catch (err) {
-            console.log(err);
             setUpdating(false);
-            alert("Failed to update board visibility");
+            toast.error("Failed to update board visibility");
         }
     };
 

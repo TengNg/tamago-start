@@ -10,6 +10,7 @@ import { rectSwappingStrategy, SortableContext } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
 import { lexorank } from "../utils/class/Lexorank";
 import { axiosPrivate } from "../api/axios";
+import useToast from "../hooks/useToast";
 
 const Writedown = () => {
     const [activeWritedown, setActiveWritedown] = useState(null);
@@ -26,6 +27,8 @@ const Writedown = () => {
     const [isCreatingWritedown, setIsCreatingWritedown] = useState(false);
 
     const [searchParams, setSearchParams] = useSearchParams();
+
+    const toast = useToast();
 
     useEffect(() => {
         fetchWritedowns();
@@ -48,7 +51,7 @@ const Writedown = () => {
             const response = await axiosPrivate.get("/personal_writedowns");
             setWritedowns(response.data.writedowns);
         } catch (err) {
-            alert("Failed to get writedowns. Please try again.");
+            toast.error("Failed to get writedowns. Please try again");
         } finally {
             setIsDataLoaded(true);
         }
@@ -69,13 +72,13 @@ const Writedown = () => {
                 loading: false,
             });
         } catch (err) {
+            toast.error("Can't load writedown");
+
             setWritedown({
                 open: false,
                 error: true,
                 loading: false,
             });
-
-            alert("Can't load writedown");
         }
     }
 
@@ -98,7 +101,7 @@ const Writedown = () => {
                 return [...prev, newWritedown];
             });
         } catch (err) {
-            alert("Failed to create writedown");
+            toast.error("Failed to create writedown");
         } finally {
             setIsCreatingWritedown(false);
         }
@@ -130,8 +133,7 @@ const Writedown = () => {
                 );
             });
         } catch (err) {
-            console.log(err);
-            alert("Failed to save writedown");
+            toast.error("Failed to save writedown");
         } finally {
             setWritedown((prev) => {
                 return { ...prev, loading: false, open: false };
@@ -153,7 +155,7 @@ const Writedown = () => {
                 return prev.filter((writedown) => writedown._id !== id);
             });
         } catch (err) {
-            alert("Failed to delete writedown");
+            toast.error("Failed to delete writedown");
         }
     }
 
@@ -164,7 +166,7 @@ const Writedown = () => {
             await axiosPrivate.delete(`/personal_writedowns/`);
             setWritedowns([]);
         } catch (err) {
-            alert("Failed to delete writedowns");
+            toast.error("Failed to delete writedowns");
         }
     }
 
@@ -177,8 +179,7 @@ const Writedown = () => {
                 },
             );
         } catch (err) {
-            console.log(err);
-            alert("Failed to delete writedown");
+            toast.error("Failed to delete writedown");
         }
     }
 
@@ -211,7 +212,7 @@ const Writedown = () => {
                 return newWritedowns;
             });
         } catch (err) {
-            alert("Failed to pin writedown");
+            toast.error("Failed to pin writedown");
         }
     }
 
@@ -238,7 +239,7 @@ const Writedown = () => {
 
             let [rank, ok] = lexorank.insert(prevRank, nextRank);
             if (!ok) {
-                alert(
+                toast.error(
                     "invalid order, please try to drag this writedown to other position",
                 );
                 setClonedWritedowns(clonedWritedowns);
@@ -253,7 +254,7 @@ const Writedown = () => {
                 JSON.stringify({ rank }),
             );
         } catch (err) {
-            alert("something went wrong, please try again");
+            toast.error("something went wrong, please try again");
             setClonedWritedowns(clonedWritedowns);
         } finally {
             setActiveWritedown(null);

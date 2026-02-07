@@ -2,12 +2,15 @@ import { useState, forwardRef } from "react";
 import { axiosPrivate } from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
+import useToast from "../../hooks/useToast";
 
 const BoardForm = forwardRef(({}, ref) => {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
 
     const navigate = useNavigate();
+
+    const toast = useToast();
 
     const { mutate, isLoading } = useMutation({
         mutationFn: () => createBoard(),
@@ -17,7 +20,7 @@ const BoardForm = forwardRef(({}, ref) => {
         onError: (err, _, _context) => {
             const errMsg =
                 err?.response?.data?.msg || "Failed to create new board";
-            alert(errMsg);
+            toast.error(errMsg);
         },
     });
 

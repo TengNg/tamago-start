@@ -20,6 +20,7 @@ import { createPortal } from "react-dom";
 import Icon from "../shared/Icon";
 import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 import { axiosPrivate } from "../../api/axios";
+import useToast from "../../hooks/useToast";
 
 const Pinned = ({
     boardId,
@@ -81,6 +82,8 @@ const PinnedBoards = ({ setOpen }) => {
 
     const navigate = useNavigate();
 
+    const toast = useToast();
+
     useEffect(() => {
         const idCollection = currentUser.pinnedBoardIdCollection;
         if (idCollection) {
@@ -109,8 +112,7 @@ const PinnedBoards = ({ setOpen }) => {
             await axiosPrivate.delete(`/boards/${boardId}/pinned`);
             await currentUserQuery.refetch();
         } catch (err) {
-            console.log(err);
-            alert("Failed to removed this board");
+            toast.error("Failed to remove this board");
         } finally {
             setDeletingBoardId(null);
         }
@@ -126,9 +128,8 @@ const PinnedBoards = ({ setOpen }) => {
             setLoading(false);
             setCleaned(true);
         } catch (err) {
-            console.log(err);
             setLoading(false);
-            alert("Failed to clean");
+            toast.error("Failed to clean");
         }
     };
 

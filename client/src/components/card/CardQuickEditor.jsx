@@ -3,6 +3,7 @@ import useBoardState from "../../hooks/useBoardState";
 import QuickEditorHighlightPicker from "./QuickEditorHighlightPicker";
 import { axiosPrivate } from "../../api/axios";
 import { useSearchParams } from "react-router-dom";
+import useToast from "../../hooks/useToast";
 
 const CardQuickEditor = ({
     open,
@@ -27,6 +28,8 @@ const CardQuickEditor = ({
     const quickEditorRef = useRef();
 
     const [searchParams, setSearchParams] = useSearchParams();
+
+    const toast = useToast();
 
     useEffect(() => {
         if (quickEditorRef.current && textAreaRef.current && open === true) {
@@ -122,8 +125,7 @@ const CardQuickEditor = ({
                 verified,
             });
         } catch (err) {
-            console.log(err);
-            alert("Failed to toggle verified");
+            toast.error("Failed to toggle verified");
         } finally {
             setIsVerifying(false);
         }

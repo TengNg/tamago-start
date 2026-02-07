@@ -9,6 +9,7 @@ import { formatDateToYYYYMMDD } from "../../utils/dateFormatter";
 
 import { dateToCompare } from "../../utils/dateFormatter";
 import Icon from "../shared/Icon";
+import useToast from "../../hooks/useToast";
 
 const CardDetailInfo = ({
     card,
@@ -18,9 +19,18 @@ const CardDetailInfo = ({
 }) => {
     const { boardState } = useBoardState();
 
+    const toast = useToast();
+
     const queryClient = useQueryClient();
 
     const fileInputRef = useRef();
+
+    const [viewedAttachment, setViewedAttachment] = useState(null);
+    const [imageDataUrl, setImageDataUrl] = useState(null);
+    const [loadingImage, setLoadingImage] = useState(false);
+    const [imageError, setImageError] = useState(null);
+    const [deletingAttachmentId, setDeletingAttachmentId] = useState(null);
+    const [selectedFileName, setSelectedFileName] = useState("");
 
     const fileUploadMutation = useMutation({
         mutationFn: async (formData) => {
@@ -30,15 +40,32 @@ const CardDetailInfo = ({
         },
         onSuccess: () => {
             queryClient.invalidateQueries(["attachments", card._id]);
+            toast.success("Attachment uploaded");
+            fileInputRef.current.value = "";
+        },
+        onError: (err, _, _context) => {
+            const errMsg =
+                err.response?.data?.message || "Failed to upload attachment";
+            toast.error(errMsg);
+            fileInputRef.current.value = "";
         },
     });
 
     const deleteAttachmentMutation = useMutation({
         mutationFn: async (attachmentId) => {
+            setDeletingAttachmentId(attachmentId);
             return await axiosPrivate.delete(`/attachments/${attachmentId}`);
         },
         onSuccess: () => {
             queryClient.invalidateQueries(["attachments", card._id]);
+            toast.success("Attachment deleted");
+            setDeletingAttachmentId(null);
+        },
+        onError: () => {
+            const errMsg =
+                err.response?.data?.message || "Failed to delete attachment";
+            toast.error(errMsg);
+            setDeletingAttachmentId(null);
         },
     });
 
@@ -63,11 +90,6 @@ const CardDetailInfo = ({
         const memberNames = boardState.board.members.map((m) => m.username);
         return [ownerName, ...memberNames];
     }, [boardState?.board]);
-
-    const [viewedAttachment, setViewedAttachment] = useState(null);
-    const [imageDataUrl, setImageDataUrl] = useState(null);
-    const [loadingImage, setLoadingImage] = useState(false);
-    const [imageError, setImageError] = useState(null);
 
     // When viewedAttachment changes and is an image, fetch as blob and convert to data URL
     useEffect(() => {
@@ -105,17 +127,16 @@ const CardDetailInfo = ({
         }
     }, [viewedAttachment]);
 
+    function handleCopyCardCode(e) {
+        e.preventDefault();
+        toast.success("Code copied to clipboard");
+    }
+
     return (
         <div className="relative flex flex-col gap-5 text-sm text-gray-700 p-4 border-[1px] border-gray-700">
             <button
                 className="absolute top-2 right-2 border-[1px] border-slate-600 border-dashed py-1 px-2 text-slate-500 text-[9px] sm:text-[12px] hover:underline"
-                onClick={(e) => {
-                    const button = e.currentTarget;
-                    if (button.textContent === "✓ copied") return;
-                    navigator.clipboard.writeText(card?._id).then(() => {
-                        button.textContent = "✓ copied";
-                    });
-                }}
+                onClick={handleCopyCardCode}
                 title="copy card code"
             >
                 code
@@ -227,21 +248,15 @@ const CardDetailInfo = ({
                                 className="flex items-center gap-2"
                             >
                                 <span
-                                    className="truncate max-w-[12rem]"
+                                    className={`${deletingAttachmentId === att.id && deleteAttachmentMutation.isPending ? "text-red-400 line-through" : ""} cursor-pointer hover:underline`}
+                                    onClick={() => setViewedAttachment(att)}
                                     title={att.originalname}
                                 >
                                     {att.originalname}
                                 </span>
                                 <button
-                                    title="view"
-                                    className="text-blue-600 underline text-xs p-1 border border-gray-400"
-                                    onClick={() => setViewedAttachment(att)}
-                                >
-                                    <div className="w-[10px] h-[10px] bg-gray-400"></div>
-                                </button>
-                                <button
                                     title="delete"
-                                    className="text-red-600 underline text-xs p-1 border border-gray-400 disabled:opacity-50"
+                                    className="text-red-700 text-xs ms-1 disabled:opacity-50"
                                     onClick={() =>
                                         deleteAttachmentMutation.mutate(att.id)
                                     }
@@ -249,10 +264,7 @@ const CardDetailInfo = ({
                                         deleteAttachmentMutation.isPending
                                     }
                                 >
-                                    <Icon
-                                        name="xmark"
-                                        className="w-[10px] h-[10px]"
-                                    />
+                                    <Icon name="xmark" className="w-3 h-3" />
                                 </button>
                             </li>
                         ))}
@@ -265,12 +277,14 @@ const CardDetailInfo = ({
                 )}
             </div>
 
-            {/* Attachment Uploader */}
-            <div>
+            <div className="flex flex-col gap-2">
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
-                        if (!fileInputRef.current.files[0]) return;
+                        if (!fileInputRef.current.files[0]) {
+                            toast.error("No file selected");
+                            return;
+                        }
                         const formData = new FormData();
                         formData.append(
                             "attachment",
@@ -279,28 +293,66 @@ const CardDetailInfo = ({
                         formData.append("type", "card");
                         formData.append("refId", card._id);
                         fileUploadMutation.mutate(formData);
+                        setSelectedFileName("");
                     }}
+                    className="flex items-center gap-2"
                 >
-                    <input
-                        type="file"
-                        name="attachment"
-                        accept="*"
-                        ref={fileInputRef}
-                    />
-                    <button
-                        type="submit"
-                        disabled={fileUploadMutation.isPending}
-                        className="ml-2 underline text-sm"
+                    <label
+                        htmlFor="attachment-upload"
+                        className="m-0 cursor-pointer text-sm text-gray-600 font-medium underline"
                     >
-                        {fileUploadMutation.isPending
-                            ? "uploading..."
-                            : "upload"}
-                    </button>
-                    {fileUploadMutation.isSuccess && (
-                        <span className="ml-2 text-green-600">uploaded</span>
+                        Browse
+                        <input
+                            id="attachment-upload"
+                            type="file"
+                            name="attachment"
+                            accept="*"
+                            ref={fileInputRef}
+                            className="hidden"
+                            onChange={(e) => {
+                                const file = e.target.files[0];
+                                setSelectedFileName(file ? file.name : "");
+                            }}
+                        />
+                    </label>
+                    {selectedFileName ? (
+                        <span
+                            className="text-gray-600 truncate max-w-[12rem]"
+                            title={selectedFileName}
+                        >
+                            {selectedFileName}
+                        </span>
+                    ) : (
+                        <span className="text-gray-400 text-sm truncate max-w-[12rem]">
+                            (maximum 5MB)
+                        </span>
                     )}
-                    {fileUploadMutation.isError && (
-                        <span className="ml-2 text-red-600">upload failed</span>
+
+                    {selectedFileName && (
+                        <div className="flex ms-2 gap-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setSelectedFileName("");
+                                    fileInputRef.current.value = "";
+                                }}
+                                className="text-red-800 underline text-sm font-medium transition-colors"
+                            >
+                                remove
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={
+                                    fileUploadMutation.isPending ||
+                                    !selectedFileName
+                                }
+                                className="text-sm font-medium underline text-gray-600"
+                            >
+                                {fileUploadMutation.isPending
+                                    ? "uploading..."
+                                    : "upload"}
+                            </button>
+                        </div>
                     )}
                 </form>
             </div>
@@ -311,7 +363,10 @@ const CardDetailInfo = ({
                     className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"
                     onClick={() => setViewedAttachment(null)}
                 >
-                    <div className="bg-gray-100 shadow-lg p-4 max-w-[90vw] max-h-[90vh] flex flex-col items-center">
+                    <div
+                        className="bg-gray-200 p-4 max-w-[90vw] max-h-[90vh] flex flex-col items-center"
+                        onClick={(e) => e.stopPropagation()}
+                    >
                         <div className="flex w-full justify-between items-center mb-2">
                             <span
                                 className="font-semibold text-gray-700 truncate max-w-[60vw]"
@@ -349,7 +404,7 @@ const CardDetailInfo = ({
                                     href={`/api/attachments/${viewedAttachment.id}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-blue-600 underline border px-2 py-1"
+                                    className="text-blue-800 underline border px-2 py-1"
                                     download={viewedAttachment.originalname}
                                 >
                                     Download

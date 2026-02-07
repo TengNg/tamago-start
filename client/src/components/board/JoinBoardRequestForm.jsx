@@ -1,12 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import Icon from "../shared/Icon";
 import { axiosPrivate } from "../../api/axios";
+import useToast from "../../hooks/useToast";
 
 const JoinBoardRequestForm = ({ open, setOpen }) => {
     const dialog = useRef();
     const boardCodeInput = useRef();
 
     const [success, setSuccess] = useState(false);
+
+    const toast = useToast();
 
     useEffect(() => {
         if (open) {
@@ -67,7 +70,7 @@ const JoinBoardRequestForm = ({ open, setOpen }) => {
         } catch (err) {
             const errMsg =
                 err?.response?.data?.msg || "Failed to send join request";
-            alert(errMsg);
+            toast.error(errMsg);
             setSuccess(false);
         }
     };

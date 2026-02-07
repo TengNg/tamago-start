@@ -77,6 +77,7 @@ const Filter = ({ open, setOpen }) => {
                             card.priorityLevel === priorityValue;
                         const isFilteredByStale = dateToCompare(card.dueDate);
                         const isFilteredByOwner =
+                            (owner == "unassigned" && !card.owner) ||
                             card.owner?.toLowerCase() === owner?.toLowerCase();
 
                         let hiddenByFilter = true;
@@ -181,7 +182,7 @@ const Filter = ({ open, setOpen }) => {
     return (
         <dialog
             ref={dialog}
-            className="z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 h-fit min-w-[350px] h-fit border-black border-[2px] bg-gray-200"
+            className="z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 min-w-[350px] h-fit border-black border-[2px] bg-gray-200"
             onClick={handleCloseOnOutsideClick}
         >
             <div className="flex w-full justify-between items-center border-b-[1px] border-black pb-3">
@@ -199,7 +200,7 @@ const Filter = ({ open, setOpen }) => {
                     <div className="w-full flex gap-2">
                         <input
                             ref={cardTitleInput}
-                            className={`p-3 w-full overflow-hidden shadow-[0_3px_0_0] shadow-gray-600 text-sm whitespace-nowrap text-ellipsis font-medium border-[2px] bg-gray-100 border-gray-600 text-gray-600 font-medium select-none focus:outline-none`}
+                            className={`p-3 w-full overflow-hidden shadow-[0_3px_0_0] shadow-gray-600 text-sm whitespace-nowrap text-ellipsis border-[2px] bg-gray-100 border-gray-600 text-gray-600 font-medium select-none focus:outline-none`}
                             placeholder="search for cards..."
                         />
                     </div>
@@ -207,6 +208,23 @@ const Filter = ({ open, setOpen }) => {
                     <div className="h-[1px] bg-gray-700 w-full"></div>
 
                     <div className="w-full flex gap-2">
+                        <div
+                            className="select-none flex items-center gap-1 text-[0.75rem] cursor-pointer w-fit p-1 px-2 text-gray-700 font-medium hover:brightness-105 border-[1px] border-gray-700"
+                            onClick={() => handleFilterByOwner("unassigned")}
+                            style={{
+                                textDecoration:
+                                    searchParams.get("owner") === "unassigned"
+                                        ? "underline"
+                                        : "none",
+                            }}
+                        >
+                            <Icon
+                                name="xmark"
+                                className="text-gray-700 w-3.5 h-3.5"
+                            />
+                            unassigned
+                        </div>
+
                         {Object.entries(boardMembers).map((m) => {
                             const [id, username] = m;
                             return (

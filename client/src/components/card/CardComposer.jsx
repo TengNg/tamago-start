@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import useBoardState from "../../hooks/useBoardState";
 import { lexorank } from "../../utils/class/Lexorank";
 import { axiosPrivate } from "../../api/axios";
+import useToast from "../../hooks/useToast";
 
 const CardComposer = ({ list, open, setOpen }) => {
     const [text, setText] = useState("");
@@ -18,6 +19,8 @@ const CardComposer = ({ list, open, setOpen }) => {
     const [isAddingCard, setIsAddingCard] = useState(false);
 
     const boardId = boardState?.board?._id;
+
+    const toast = useToast();
 
     useEffect(() => {
         const closeOnEscape = (e) => {
@@ -146,9 +149,8 @@ const CardComposer = ({ list, open, setOpen }) => {
             setOpen(true);
             socket.emit("addCard", newCard);
         } catch (err) {
-            console.log(err);
             const errMsg = err?.response?.data?.msg || "Failed to add new card";
-            alert(errMsg);
+            toast.error(errMsg);
             setBoardState((prev) => {
                 return { ...prev, lists: tempLists };
             });

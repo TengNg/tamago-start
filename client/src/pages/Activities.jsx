@@ -10,6 +10,7 @@ import {
     useMutation,
     useQueryClient,
 } from "@tanstack/react-query";
+import useToast from "../hooks/useToast";
 
 const ACTIONS = Object.freeze({
     TOGGLE_INVITATIONS_SECTION: "toggle_invitation_section",
@@ -44,6 +45,8 @@ const Activities = () => {
     const { showInvitations, showJoinBoardRequests } = state;
 
     const [openHelp, setOpenHelp] = useState(false);
+
+    const toast = useToast();
 
     const {
         data: invitationData,
@@ -103,7 +106,7 @@ const Activities = () => {
         onError: (err, _, _context) => {
             const errMsg =
                 err.response?.data?.msg || "Failed to accept this invitation";
-            alert(errMsg);
+            toast.error(errMsg);
         },
     });
 
@@ -127,7 +130,7 @@ const Activities = () => {
         onError: (err, _, _context) => {
             const errMsg =
                 err.response?.data?.msg || "Failed to accept this invitation";
-            alert(errMsg);
+            toast.error(errMsg);
         },
     });
 
@@ -149,7 +152,7 @@ const Activities = () => {
         onError: (err, _, _context) => {
             const errMsg =
                 err.response?.data?.msg || "Failed to accept this invitation";
-            alert(errMsg);
+            toast.error(errMsg);
         },
     });
 
@@ -177,7 +180,7 @@ const Activities = () => {
         onError: (err, _, _context) => {
             const errMsg =
                 err.response?.data?.msg || "Failed to accept this invitation";
-            alert(errMsg);
+            toast.error(errMsg);
         },
     });
 
@@ -203,7 +206,7 @@ const Activities = () => {
         onError: (err, _, _context) => {
             const errMsg =
                 err.response?.data?.msg || "Failed to accept this invitation";
-            alert(errMsg);
+            toast.error(errMsg);
         },
     });
 
@@ -227,7 +230,7 @@ const Activities = () => {
         onError: (err, _, _context) => {
             const errMsg =
                 err.response?.data?.msg || "Failed to accept this invitation";
-            alert(errMsg);
+            toast.error(errMsg);
         },
     });
 
