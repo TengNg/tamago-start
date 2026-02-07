@@ -8,6 +8,7 @@ import { useSearchParams } from "react-router-dom";
 import Icon from "../shared/Icon";
 import CardComments from "./CardComments";
 import { axiosPrivate } from "../../api/axios";
+import useToast from "../../hooks/useToast";
 
 const CardDetail = ({
     open,
@@ -47,6 +48,8 @@ const CardDetail = ({
     const cardDescriptionInput = useRef();
 
     const [searchParams, setSearchParams] = useSearchParams();
+
+    const toast = useToast();
 
     useEffect(() => {
         if (open && card && cardDescriptionInput.current) {
@@ -226,8 +229,7 @@ const CardDetail = ({
                 verified,
             });
         } catch (err) {
-            console.log(err);
-            alert("Failed to toggle verified");
+            toast.error("Failed to toggle verified");
         } finally {
             setIsVerifying(false);
         }
@@ -254,8 +256,7 @@ const CardDetail = ({
                 dueDate,
             });
         } catch (err) {
-            console.log(err);
-            alert("Failed to toggle verified");
+            toast.error("Failed to toggle verified");
         } finally {
             setIsVerifying(false);
         }
@@ -283,8 +284,7 @@ const CardDetail = ({
                 return { ...prev, description };
             });
         } catch (err) {
-            console.log(err);
-            alert("Failed to save description");
+            toast.error("Failed to save description");
         } finally {
             setIsSavingDescription(false);
         }

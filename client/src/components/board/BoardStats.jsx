@@ -4,12 +4,15 @@ import Loading from "../ui/Loading";
 import dateFormatter from "../../utils/dateFormatter";
 import PRIORITY_LEVELS from "../../data/priorityLevels";
 import Icon from "../shared/Icon";
+import useToast from "../../hooks/useToast";
 
 const BoardStats = ({ boardStatsModal, setBoardStatsModal }) => {
     const dialog = useRef();
 
     const close = () => setBoardStatsModal({ ...boardStatsModal, open: false });
     // const open = () => setBoardStatsModal({ ...boardStatsModal, open: true });
+
+    const toast = useToast();
 
     const navigate = useNavigate();
 
@@ -77,7 +80,7 @@ const BoardStats = ({ boardStatsModal, setBoardStatsModal }) => {
                                     navigator.clipboard.writeText(
                                         boardStatsModal?.board?._id,
                                     );
-                                    alert("code copied to clipboard");
+                                    toast.success("code copied to clipboard");
                                 }
                             }}
                         >
@@ -148,7 +151,7 @@ const BoardStats = ({ boardStatsModal, setBoardStatsModal }) => {
                                     navigator.clipboard
                                         .writeText(json)
                                         .then(() => {
-                                            alert(
+                                            toast.success(
                                                 "stats copied to clipboard (as json format)",
                                             );
                                         });
@@ -169,7 +172,7 @@ const BoardStats = ({ boardStatsModal, setBoardStatsModal }) => {
                                     navigator.clipboard
                                         .writeText(str)
                                         .then(() => {
-                                            alert("stats copied to clipboard");
+                                            toast.success("stats copied to clipboard");
                                         });
                                 }}
                                 title="copy board stats (text)"

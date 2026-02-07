@@ -8,6 +8,7 @@ import ListMenu from "./ListMenu";
 import { lexorank } from "../../utils/class/Lexorank";
 import { axiosPrivate } from "../../api/axios";
 import Icon from "../shared/Icon";
+import useToast from "../../hooks/useToast";
 
 const List = ({ index, list, cards }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } =
@@ -42,6 +43,8 @@ const List = ({ index, list, cards }) => {
 
     const textAreaRef = useRef(null);
     const titleRef = useRef(null);
+
+    const toast = useToast();
 
     const onInputConfirm = async () => {
         if (textAreaRef.current.value.trim() === "") {
@@ -108,7 +111,7 @@ const List = ({ index, list, cards }) => {
                 deleteList(list._id);
                 socket.emit("deleteList", list._id);
             } catch (err) {
-                alert("Failed to delete list");
+                toast.error("Failed to delete list");
             }
         }
     };
@@ -135,7 +138,7 @@ const List = ({ index, list, cards }) => {
             );
 
             if (!ok) {
-                alert("Failed to create a copy of this list");
+                toast.error("Failed to create a copy of this list");
                 return;
             }
 
@@ -157,9 +160,7 @@ const List = ({ index, list, cards }) => {
 
             socket.emit("updateLists", lists);
         } catch (err) {
-            console.log(err);
-
-            alert(
+            toast.error(
                 "Failed to create a copy of this list, action cannot be performed at this time, please try again",
             );
 

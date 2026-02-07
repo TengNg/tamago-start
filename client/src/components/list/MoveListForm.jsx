@@ -4,6 +4,7 @@ import { lexorank } from "../../utils/class/Lexorank";
 import Loading from "../ui/Loading";
 import Icon from "../shared/Icon";
 import { axiosPrivate } from "../../api/axios";
+import useToast from "../../hooks/useToast";
 
 const MoveListForm = () => {
     const [boards, setBoards] = useState([]);
@@ -24,9 +25,11 @@ const MoveListForm = () => {
 
     const dialog = useRef();
 
+    const toast = useToast();
+
     const getBoardListCount = async (boardId) => {
         if (!boardId) {
-            alert("Please select a board");
+            toast.error("Please select a board");
             return;
         }
 
@@ -54,8 +57,7 @@ const MoveListForm = () => {
             };
 
             getBoards().catch((err) => {
-                console.log(err);
-                alert(`Failed to get board options`);
+                toast.error(`Failed to get board options`);
             });
 
             dialog.current.addEventListener("close", handleOnClose);
@@ -89,8 +91,7 @@ const MoveListForm = () => {
             setSelectedBoardId(boardId);
             getBoardListCount(boardId);
         } catch (err) {
-            console.log(err);
-            alert("Failed to select board, please try again");
+            toast.error("Failed to select board, please try again");
         }
     };
 
@@ -129,10 +130,9 @@ const MoveListForm = () => {
                 setOpen(false);
                 setListToMove(undefined);
             } catch (err) {
-                console.log(err);
                 setOpen(false);
                 setListToMove(undefined);
-                alert("Failed to move list");
+                toast.error("Failed to move list");
             }
 
             setLoading(false);
@@ -172,7 +172,7 @@ const MoveListForm = () => {
 
             // failed to reorder
             if (!ok) {
-                alert(
+                toast.error(
                     "Cannot move this list in current board, try again or enable #debug_mode to see what happened",
                 );
                 return;
@@ -199,8 +199,7 @@ const MoveListForm = () => {
                 toIndex: +selectedIndex,
             });
         } catch (err) {
-            console.log(err);
-            alert(
+            toast.error(
                 "Cannot move this list in current board, try again or enable #debug_mode to see what happened",
             );
         }

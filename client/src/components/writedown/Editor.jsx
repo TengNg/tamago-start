@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Loading from "../ui/Loading";
 
 import dateFormatter from "../../utils/dateFormatter";
+import useToast from "../../hooks/useToast";
 
 const Editor = ({ writedown, setWritedown, saveWritedown, updateTitle }) => {
     const dialog = useRef();
@@ -11,6 +12,8 @@ const Editor = ({ writedown, setWritedown, saveWritedown, updateTitle }) => {
 
     const { title, content, createdAt, updatedAt } = writedown?.data;
     const [writedownTitle, setWritedownTitle] = useState(title);
+
+    const toast = useToast();
 
     useEffect(() => {
         if (writedown.open) {
@@ -57,7 +60,7 @@ const Editor = ({ writedown, setWritedown, saveWritedown, updateTitle }) => {
         try {
             saveWritedown(_id, textarea.current.value);
         } catch (err) {
-            alert("Failed to save writedown");
+            toast.error("Failed to save writedown");
         }
     };
 

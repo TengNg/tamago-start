@@ -3,6 +3,7 @@ import useBoardState from "../../hooks/useBoardState";
 import { axiosPrivate } from "../../api/axios";
 import Loading from "../ui/Loading";
 import Icon from "../shared/Icon";
+import useToast from "../../hooks/useToast";
 
 const CopyBoardForm = ({ setOpen }) => {
     const { boardState } = useBoardState();
@@ -14,13 +15,15 @@ const CopyBoardForm = ({ setOpen }) => {
     );
     const [desciption, setDescription] = useState("");
 
+    const toast = useToast();
+
     const handleClose = () => {
         setOpen(false);
     };
 
     const handleCreate = async () => {
         if (!title) {
-            alert("Title is required");
+            toast.error("Title is required");
             return;
         }
 
@@ -31,11 +34,10 @@ const CopyBoardForm = ({ setOpen }) => {
                     `/boards/copy/${boardState.board._id}`,
                     JSON.stringify({ title: title, desciption }),
                 );
-                alert("Board copied successfully");
+                toast.success("Board copied successfully");
                 setOpen(false);
             } catch (err) {
-                console.log(err);
-                alert("Failed to copy this board");
+                toast.error("Failed to copy this board");
             }
             setLoading(false);
         }

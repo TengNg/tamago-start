@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import useBoardState from "../../hooks/useBoardState";
 import { lexorank } from "../../utils/class/Lexorank";
 import { axiosPrivate } from "../../api/axios";
+import useToast from "../../hooks/useToast";
 
 const AddList = ({ open, setOpen }) => {
     const [listTitle, setListTitle] = useState("");
@@ -10,6 +11,8 @@ const AddList = ({ open, setOpen }) => {
     const containerRef = useRef();
 
     const { theme, boardState, addListToBoard, socket } = useBoardState();
+
+    const toast = useToast();
 
     useEffect(() => {
         const closeOnEscape = (e) => {
@@ -74,7 +77,7 @@ const AddList = ({ open, setOpen }) => {
             titleInputRef.current.focus();
         } catch (err) {
             const errMsg = err?.response?.data?.msg || "Failed to add new list";
-            alert(errMsg);
+            toast.error(errMsg);
         } finally {
             setAddingList(false);
         }

@@ -6,6 +6,7 @@ import useBoardState from "../../hooks/useBoardState";
 import Icon from "../shared/Icon";
 import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 import { axiosPrivate } from "../../api/axios";
+import useToast from "../../hooks/useToast";
 
 const ACTIVITIES_PER_PAGE = 50;
 
@@ -19,6 +20,8 @@ const BoardActivities = ({ open, setOpen }) => {
     const [allActivitiesFetched, setAllActivitiesFetched] = useState(false);
 
     const dialog = useRef();
+
+    const toast = useToast();
 
     useEffect(() => {
         if (open) {
@@ -72,8 +75,7 @@ const BoardActivities = ({ open, setOpen }) => {
                 return prevPage + 1;
             });
         } catch (err) {
-            console.log(err);
-            alert("Failed to fetch history");
+            toast.error("Failed to fetch history");
         } finally {
             setLoading(false);
         }
@@ -90,8 +92,7 @@ const BoardActivities = ({ open, setOpen }) => {
                 setActivities([]);
             }
         } catch (err) {
-            console.log(err);
-            alert("Failed to clear activities");
+            toast.error("Failed to clear activities");
         }
     };
 

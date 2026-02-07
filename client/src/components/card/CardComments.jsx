@@ -10,19 +10,24 @@ import Icon from "../shared/Icon";
 import { useSearchParams } from "react-router-dom";
 import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 import { axiosPrivate } from "../../api/axios";
+import useToast from "../../hooks/useToast";
 
 const CardComments = ({ card }) => {
     const queryClient = useQueryClient();
     const { socket } = useBoardState();
     const { currentUser } = useCurrentUserContext();
+
     const commentTextareaRef = useRef();
-    const linkedCommentRef = useRef();
+    const focusedCommentRef = useRef();
+
     const [content, setContent] = useState("");
     const [focusedComment, setFocusedComment] = useState(null);
     const [searchParams, _setSearchParams] = useSearchParams();
 
+    const toast = useToast();
+
     useEffect(() => {
-        const fetchLinkedComment = async (id) => {
+        const fetchFocusedComment = async (id) => {
             try {
                 const response = await axiosPrivate.get(
                     `/cards/${card._id}/comments/${id}`,
@@ -33,21 +38,22 @@ const CardComments = ({ card }) => {
                 });
             } catch (err) {
                 console.log(err);
+                toast.error("Failed to load focused comment")
             }
         };
 
         if (searchParams.get("focusedComment")) {
-            fetchLinkedComment(searchParams.get("focusedComment"));
+            fetchFocusedComment(searchParams.get("focusedComment"));
         }
     }, [searchParams]);
 
     useEffect(() => {
-        if (focusedComment && linkedCommentRef && linkedCommentRef.current) {
-            linkedCommentRef.current.scrollIntoView({
+        if (focusedComment && focusedCommentRef && focusedCommentRef.current) {
+            focusedCommentRef.current.scrollIntoView({
                 block: "center",
             });
         }
-    }, [focusedComment, linkedCommentRef]);
+    }, [focusedComment, focusedCommentRef]);
 
     const fetchComments = async ({ page = 1 }) => {
         const response = await axiosPrivate.get(
@@ -74,12 +80,12 @@ const CardComments = ({ card }) => {
     const copyCommentLink = (id) => {
         const url = `${window.location.origin}/b/${card.boardId}?card=${card._id}&focusedComment=${id}`;
         navigator.clipboard.writeText(url);
-        alert("Link copied to clipboard");
+        toast.success("Link copied to clipboard");
     };
 
     const copyCommentContent = (content) => {
         navigator.clipboard.writeText(content).then(() => {
-            alert("Content copied to clipboard");
+            toast.success("Content copied to clipboard");
         });
     };
 
@@ -100,7 +106,7 @@ const CardComments = ({ card }) => {
             socket.emit("addCardComment", { comment: data });
         },
         onError: (_err) => {
-            alert("Failed to add new comment, please try again.");
+            toast.error("Failed to add new comment, please try again.");
         },
     });
 
@@ -113,7 +119,7 @@ const CardComments = ({ card }) => {
             socket.emit("deleteCardComment", { commentId, cardId: card._id });
         },
         onError: (_err) => {
-            alert(`Failed to delete comment, please try again.`);
+            toast.error(`Failed to delete comment, please try again.`);
         },
     });
 
@@ -221,7 +227,7 @@ const CardComments = ({ card }) => {
             ) : (
                 <div className="flex flex-col gap-1">
                     {focusedComment && !focusedComment.onFirstPage && (
-                        <div ref={linkedCommentRef}>
+                        <div ref={focusedCommentRef}>
                             <div className="bg-indigo-200/50 border-[1px] border-b-[4px] border-indigo-500 px-2 py-1 pb-2">
                                 <div className="flex flex-col">
                                     <div className="h-6 flex items-center justify-between">
@@ -312,7 +318,7 @@ const CardComments = ({ card }) => {
                             <div
                                 ref={
                                     comment._id === focusedComment?._id
-                                        ? linkedCommentRef
+                                        ? focusedCommentRef
                                         : null
                                 }
                                 key={comment._id}

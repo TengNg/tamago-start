@@ -199,7 +199,7 @@ const Filter = ({ open, setOpen }) => {
                     <div className="w-full flex gap-2">
                         <input
                             ref={cardTitleInput}
-                            className={`p-3 w-full overflow-hidden shadow-[0_3px_0_0] shadow-gray-600 text-sm whitespace-nowrap text-ellipsis font-medium border-[2px] bg-gray-100 border-gray-600 text-gray-600 font-medium select-none focus:outline-none`}
+                            className={`p-3 w-full overflow-hidden shadow-[0_3px_0_0] shadow-gray-600 text-sm whitespace-nowrap text-ellipsis border-[2px] bg-gray-100 border-gray-600 text-gray-600 font-medium select-none focus:outline-none`}
                             placeholder="search for cards..."
                         />
                     </div>

@@ -9,6 +9,7 @@ import { formatDateToYYYYMMDD } from "../../utils/dateFormatter";
 
 import { dateToCompare } from "../../utils/dateFormatter";
 import Icon from "../shared/Icon";
+import useToast from "../../hooks/useToast";
 
 const CardDetailInfo = ({
     card,
@@ -17,6 +18,8 @@ const CardDetailInfo = ({
     handleChangeDueDate,
 }) => {
     const { boardState } = useBoardState();
+
+    const toast = useToast();
 
     const queryClient = useQueryClient();
 
@@ -30,6 +33,8 @@ const CardDetailInfo = ({
         },
         onSuccess: () => {
             queryClient.invalidateQueries(["attachments", card._id]);
+            fileInputRef.current.value = "";
+            toast.success("Attachment uploaded");
         },
     });
 
@@ -39,6 +44,7 @@ const CardDetailInfo = ({
         },
         onSuccess: () => {
             queryClient.invalidateQueries(["attachments", card._id]);
+            toast.success("Attachment deleted");
         },
     });
 
@@ -105,17 +111,16 @@ const CardDetailInfo = ({
         }
     }, [viewedAttachment]);
 
+    function handleCopyCardCode(e) {
+        e.preventDefault();
+        toast.success("Code copied to clipboard");
+    }
+
     return (
         <div className="relative flex flex-col gap-5 text-sm text-gray-700 p-4 border-[1px] border-gray-700">
             <button
                 className="absolute top-2 right-2 border-[1px] border-slate-600 border-dashed py-1 px-2 text-slate-500 text-[9px] sm:text-[12px] hover:underline"
-                onClick={(e) => {
-                    const button = e.currentTarget;
-                    if (button.textContent === "✓ copied") return;
-                    navigator.clipboard.writeText(card?._id).then(() => {
-                        button.textContent = "✓ copied";
-                    });
-                }}
+                onClick={handleCopyCardCode}
                 title="copy card code"
             >
                 code
@@ -234,14 +239,14 @@ const CardDetailInfo = ({
                                 </span>
                                 <button
                                     title="view"
-                                    className="text-blue-600 underline text-xs p-1 border border-gray-400"
+                                    className="text-blue-700 underline text-xs p-1 border border-blue-700"
                                     onClick={() => setViewedAttachment(att)}
                                 >
-                                    <div className="w-[10px] h-[10px] bg-gray-400"></div>
+                                    <div className="w-[10px] h-[10px] bg-blue-700"></div>
                                 </button>
                                 <button
                                     title="delete"
-                                    className="text-red-600 underline text-xs p-1 border border-gray-400 disabled:opacity-50"
+                                    className="text-red-700 underline text-xs p-1 border border-red-700 disabled:opacity-50"
                                     onClick={() =>
                                         deleteAttachmentMutation.mutate(att.id)
                                     }
@@ -296,12 +301,6 @@ const CardDetailInfo = ({
                             ? "uploading..."
                             : "upload"}
                     </button>
-                    {fileUploadMutation.isSuccess && (
-                        <span className="ml-2 text-green-600">uploaded</span>
-                    )}
-                    {fileUploadMutation.isError && (
-                        <span className="ml-2 text-red-600">upload failed</span>
-                    )}
                 </form>
             </div>
 

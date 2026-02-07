@@ -5,6 +5,7 @@ import { formatDateToYYYYMMDD } from "../../utils/dateFormatter";
 import Icon from "../shared/Icon";
 import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 import { axiosPrivate } from "../../api/axios";
+import useToast from "../../hooks/useToast";
 
 const BoardMenu = ({
     setOpen,
@@ -20,6 +21,8 @@ const BoardMenu = ({
     const navigate = useNavigate();
 
     const containerRef = useRef();
+
+    const toast = useToast();
 
     useEffect(() => {
         containerRef.current.focus();
@@ -48,8 +51,7 @@ const BoardMenu = ({
                 socket.emit("closeBoard");
                 navigate("/boards");
             } catch (err) {
-                console.log(err);
-                alert("Failed to close this board, something went wrong");
+                toast.error("Failed to close this board, something went wrong");
             }
         }
     };
@@ -185,7 +187,7 @@ const BoardMenu = ({
                             navigator.clipboard
                                 .writeText(boardState?.board?._id)
                                 .then(() => {
-                                    alert("copied board code to clipboard");
+                                    toast.success("board code copied to clipboard");
                                 });
                         }}
                     >

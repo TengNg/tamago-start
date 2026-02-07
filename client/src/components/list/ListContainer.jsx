@@ -20,6 +20,7 @@ import Card from "../card/Card";
 import { useMouseDragScroll } from "../../hooks/useMouseDragScroll";
 import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 import { axiosPrivate } from "../../api/axios";
+import useToast from "../../hooks/useToast";
 
 const ListContainer = ({ openAddList, setOpenAddList }) => {
     const { currentUser } = useCurrentUserContext();
@@ -29,6 +30,8 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
 
     const [activeList, setActiveList] = useState(undefined);
     const [activeCard, setActiveCard] = useState(undefined);
+
+    const toast = useToast();
 
     const listContainerRef = useMouseDragScroll();
 
@@ -47,7 +50,7 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
                 .map((member) => member._id)
                 .includes(currentUser._id)
         ) {
-            alert("You don't have permission, please join the board first");
+            toast.error("You don't have permission, please join the board first");
             return;
         }
     }
@@ -125,7 +128,7 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
                     toIndex: destIndex,
                 });
             } catch (err) {
-                alert("Failed to reorder list");
+                toast.error("Failed to reorder list");
                 setBoardState((prev) => {
                     return { ...prev, lists: initialLists };
                 });
@@ -155,7 +158,7 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
 
         const [rank, ok] = lexorank.insert(prevOrder, nextOrder);
         if (!ok) {
-            alert("Failed to reorder card. Error: invalid order");
+            toast.error("Failed to reorder card. Error: invalid order");
             setBoardState(clonedBoardState);
             return;
         }
@@ -208,8 +211,7 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
                 card: newCard,
             });
         } catch (err) {
-            console.log(err);
-            alert("Failed to reorder card");
+            toast.error("Failed to reorder card");
             setBoardState(clonedBoardState);
         }
     }

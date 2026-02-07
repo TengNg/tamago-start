@@ -10,6 +10,7 @@ import useCurrentUserContext from "../hooks/useCurrentUserContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getOwnedBoards } from "../api/boardApi";
 import { updatePassword, updateUsername } from "../api/accountApi";
+import useToast from "../hooks/useToast";
 
 const Profile = () => {
     const queryClient = useQueryClient();
@@ -20,6 +21,8 @@ const Profile = () => {
     const [password, setPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmedPassword, setConfirmedPassword] = useState("");
+
+    const toast = useToast();
 
     const [boardStatsModal, setBoardStatsModal] = useState({
         stats: [],
@@ -57,6 +60,7 @@ const Profile = () => {
         onSuccess: (_data, _variables, _context) => {
             queryClient.invalidateQueries({ queryKey: ["me"], exact: true });
             usernameInputRef.current.value = "";
+            toast.success("Username updated");
         },
         onError: (err) => {
             const { status } = err?.response;
@@ -170,8 +174,7 @@ const Profile = () => {
             await logout();
             navigate("/login");
         } catch (err) {
-            console.log(err);
-            alert("Failed to logout. Please try again.");
+            toast.error("Failed to logout. Please try again.");
         }
     };
 
@@ -185,8 +188,7 @@ const Profile = () => {
             await logout({ allDevices: true });
             navigate("/login");
         } catch (err) {
-            console.log(err);
-            alert("Failed to logout. Please try again.");
+            toast.error("Failed to logout. Please try again.");
         }
     };
 
