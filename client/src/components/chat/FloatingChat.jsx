@@ -1,6 +1,6 @@
 import { useRef, useEffect } from "react";
 import useBoardState from "../../hooks/useBoardState";
-import Chat from "./Chat";
+import ChatMessage from "./ChatMessage";
 import ChatInput from "./ChatInput";
 import Loading from "../ui/Loading";
 import Icon from "../shared/Icon";
@@ -136,13 +136,13 @@ const FloatingChat = ({
                             item?.content.length >= 20 &&
                             item?.content.length <= 30;
                         return (
-                            <Chat
+                            <ChatMessage
                                 isCard={isCard}
                                 padding={{ x: "none", y: "none" }}
                                 withUserIcon={true}
                                 withSeparator={true}
                                 key={index}
-                                chat={item}
+                                chatMessage={item}
                                 deleteMessage={deleteMessage}
                             />
                         );

@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import useBoardState from "../../hooks/useBoardState";
-import Chat from "./Chat";
+import ChatMessage from "./ChatMessage";
 import ChatInput from "./ChatInput";
 import Loading from "../ui/Loading";
 import Icon from "../shared/Icon";
@@ -151,9 +151,9 @@ const ChatBox = ({
 
                 {chats.map((item, index) => {
                     return (
-                        <Chat
+                        <ChatMessage
                             key={index}
-                            chat={item}
+                            chatMessage={item}
                             deleteMessage={deleteMessage}
                             highlightOwnMessages={true}
                             inMiniChat={true}
