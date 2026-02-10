@@ -57,9 +57,9 @@ export const AUTHORIZED_KEYS = Object.freeze({
 });
 
 export const UNAUTHORIZED_KEYS = Object.freeze({
-    0: PAGES.ABOUT,
-    1: PAGES.LOGIN,
-    2: PAGES.REGISTER,
+    1: PAGES.ABOUT,
+    2: PAGES.LOGIN,
+    3: PAGES.REGISTER,
 });
 
 export default {

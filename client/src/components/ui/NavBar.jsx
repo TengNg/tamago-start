@@ -61,21 +61,29 @@ const NavBar = ({ setOpenPinnedBoards }) => {
                 id="header-section"
                 className="w-full flex--center relative gap-2 py-3 px-2 sm:px-4"
             >
-                <nav className="h-full top-4 m-auto border-gray-700 border-[2px] bg-transparent px-2 z-30 drop-shadow-sm">
-                    <ul className="w-[100%] h-[100%] flex justify-around items-center sm:gap-4 gap-2">
-                        {UNAUTHORIZED_NAV_PAGES.map((page, index) => {
+                <nav className="unauthorized h-full top-4 m-auto border-gray-700 border-[2px] bg-transparent px-2 z-30 drop-shadow-sm">
+                    <ul className="w-full h-full flex justify-around items-center sm:gap-4 gap-2">
+                        {UNAUTHORIZED_NAV_PAGES.map((el, index) => {
+                            const { path, title } = el;
+                            const num = `0${index + 1}`;
                             return (
-                                <li key={page.title} className="w-fit">
+                                <li key={title} className="w-fit">
                                     <NavLink
-                                        to={page.path}
+                                        to={path}
                                         className={({ isActive }) =>
-                                            isActive || pathname === page.path
-                                                ? "anchor--style--selected"
-                                                : "anchor--style"
+                                            isActive || pathname === path
+                                                ? "anchor--style--selected sm:px-4"
+                                                : "anchor--style sm:px-4"
                                         }
                                     >
                                         <div className="md:text-[0.8rem] text-[0.65rem]">
-                                            {`0${index} ${page.title}`}
+                                            <span className="md:inline hidden">
+                                                {num}
+                                            </span>
+                                            <span className="md:inline hidden">
+                                                {" "}
+                                            </span>
+                                            <span>{title}</span>
                                         </div>
                                     </NavLink>
                                 </li>

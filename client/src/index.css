@@ -267,7 +267,7 @@ dialog button:focus {
         padding: 0.5rem 1rem;
     }
 
-    #header-section > nav {
+    #header-section > nav:not(.unauthorized) {
         width: 100%;
     }
 
