@@ -122,14 +122,6 @@ export default function Card({ card }) {
                 {card.title}
             </p>
 
-            {card.verified && (
-                <div className="h-1 flex gap-[2px] items-center">
-                    <div className="bg-green-800/60 w-1 h-1"></div>
-                    <div className="bg-green-800/60 w-8 h-1"></div>
-                    <div className="bg-green-800/60 w-8 h-1"></div>
-                </div>
-            )}
-
             {card?.priorityLevel != "none" && (
                 <div className="h-1 flex gap-[2px] items-center">
                     <div
@@ -153,6 +145,29 @@ export default function Card({ card }) {
                         }}
                         className="w-8 h-1"
                     ></div>
+                    {card.priorityLevel === "critical" && (
+                        <div
+                            style={{
+                                backgroundColor:
+                                    PRIORITY_LEVELS[card.priorityLevel].color,
+                            }}
+                            className="w-8 h-1"
+                        ></div>
+                    )}
+                </div>
+            )}
+
+            {card.priorityLevel === "critical" && (
+                <div className="absolute bottom-0.5 right-1.5 text-lg font-bold text-red-800">
+                    !
+                </div>
+            )}
+
+            {card.verified && (
+                <div className="h-1 flex gap-[2px] items-center">
+                    <div className="bg-green-800/60 w-1 h-1"></div>
+                    <div className="bg-green-800/60 w-8 h-1"></div>
+                    <div className="bg-green-800/60 w-8 h-1"></div>
                 </div>
             )}
 
