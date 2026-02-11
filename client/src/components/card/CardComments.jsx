@@ -63,6 +63,7 @@ const CardComments = ({ card }) => {
     };
 
     const addComment = async (content) => {
+        await new Promise((r) => setTimeout(r, 3000));
         const response = await axiosPrivate.post(
             `/cards/${card._id}/comments`,
             JSON.stringify({ content }),
@@ -220,10 +221,24 @@ const CardComments = ({ card }) => {
                 </div>
             </div>
 
-            {comments.length === 0 ? (
-                <div className="text-sm text-gray-400 p-1">
-                    no comments for this card
+            {addCommentQuery.isPending && (
+                <div className="px-1 pt-2 opacity-50">
+                    <div className="flex gap-1">
+                        <div className="flex items-center gap-1">
+                            <div className="font-medium mx-auto">
+                                <Icon className="w-3.5 h-3.5" name="profile" />
+                            </div>
+                            <div className="font-medium">
+                                {currentUser.username}:
+                            </div>
+                        </div>
+                        <div>...</div>
+                    </div>
                 </div>
+            )}
+
+            {comments.length === 0 && !addCommentQuery.isPending ? (
+                <div className="text-sm text-gray-400 px-1">No comments</div>
             ) : (
                 <div className="flex flex-col gap-1">
                     {focusedComment && !focusedComment.onFirstPage && (
