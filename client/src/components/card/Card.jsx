@@ -122,7 +122,7 @@ export default function Card({ card }) {
                 {card.title}
             </p>
 
-            {card?.priorityLevel != "none" && (
+            {card?.priorityLevel && card?.priorityLevel != "none" && (
                 <div className="h-1 flex gap-[2px] items-center">
                     <div
                         style={{
