@@ -12,7 +12,7 @@ import ChatBox from "../components/chat/ChatBox";
 import CopyBoardForm from "../components/board/CopyBoardForm";
 import FloatingChat from "../components/chat/FloatingChat";
 import MoveListForm from "../components/list/MoveListForm";
-import CardDetail from "../components/card/CardDetail";
+import CardModal from "../components/card/CardModal";
 import CardQuickEditor from "../components/card/CardQuickEditor";
 import Members from "../components/board/Members";
 import Configuration from "../components/board/Configuration";
@@ -621,7 +621,7 @@ const Board = () => {
 
     return (
         <>
-            <CardDetail
+            <CardModal
                 abortController={cardDetailAbortController}
                 open={openCardDetail}
                 setOpen={setOpenCardDetail}

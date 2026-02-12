@@ -12,7 +12,7 @@ import { lexorank } from "../utils/class/Lexorank";
 import { axiosPrivate } from "../api/axios";
 import useToast from "../hooks/useToast";
 
-const Writedown = () => {
+const Writedowns = () => {
     const [activeWritedown, setActiveWritedown] = useState(null);
     const [writedowns, setWritedowns] = useState([]);
     const [clonedWritedowns, setClonedWritedowns] = useState([]);
@@ -400,4 +400,4 @@ const Writedown = () => {
     );
 };
 
-export default Writedown;
+export default Writedowns;

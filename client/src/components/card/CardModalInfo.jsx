@@ -11,7 +11,7 @@ import { dateToCompare } from "../../utils/dateFormatter";
 import Icon from "../shared/Icon";
 import useToast from "../../hooks/useToast";
 
-const CardDetailInfo = ({
+const CardModalInfo = ({
     card,
     handleCardOwnerChange,
     handleCardPriorityLevelChange,
@@ -418,4 +418,4 @@ const CardDetailInfo = ({
     );
 };
 
-export default CardDetailInfo;
+export default CardModalInfo;

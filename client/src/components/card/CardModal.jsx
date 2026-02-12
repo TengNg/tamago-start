@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import useBoardState from "../../hooks/useBoardState";
 import HighlightPicker from "./HighlightPicker";
-import CardDetailInfo from "./CardDetailInfo";
+import CardModalInfo from "./CardModalInfo";
 import Loading from "../ui/Loading";
 
 import { useSearchParams } from "react-router-dom";
@@ -10,7 +10,7 @@ import CardComments from "./CardComments";
 import { axiosPrivate } from "../../api/axios";
 import useToast from "../../hooks/useToast";
 
-const CardDetail = ({
+const CardModal = ({
     open,
     setOpen,
     processingCard,
@@ -670,7 +670,7 @@ const CardDetail = ({
                             </div>
                         </div>
 
-                        <CardDetailInfo
+                        <CardModalInfo
                             card={card}
                             listSelectOptions={listSelectOptions}
                             handleCardOwnerChange={handleCardOwnerChange}
@@ -688,4 +688,4 @@ const CardDetail = ({
     );
 };
 
-export default CardDetail;
+export default CardModal;
