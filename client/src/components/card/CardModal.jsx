@@ -271,6 +271,13 @@ const CardModal = ({
             return;
         }
 
+        if (description.length > 2_000) {
+            toast.error(
+                `Too long to save. Description is ${description.length} characters - maximum 2000 characters`,
+            );
+            return;
+        }
+
         setIsSavingDescription(true);
         try {
             await axiosPrivate.patch(
