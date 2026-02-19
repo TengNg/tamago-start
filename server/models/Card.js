@@ -29,6 +29,8 @@ const cardSchema = new mongoose.Schema({
     description: {
         type: String,
         default: "",
+        minLength: 1,
+        maxLength: 2000,
     },
 
     order: {
@@ -71,24 +73,6 @@ const cardSchema = new mongoose.Schema({
         required: true,
         default: Date.now,
     },
-
-    // labels: [{
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: 'Label',
-    // }],
-    //
-    // comments: [{
-    //     text: String,
-    //     userId: {
-    //         type: mongoose.Schema.Types.ObjectId,
-    //         ref: 'User',
-    //     },
-    // }],
-    //
-    // attachments: [{
-    //     filename: String,
-    //     url: String,
-    // }],
 });
 
 cardSchema.index({ boardId: 1, order: 1 });
