@@ -1,7 +1,7 @@
 import { createContext, useCallback, useState } from "react";
 import Toast from "../components/shared/Toast";
 
-const DURATION = 2500;
+const DURATION = 3000;
 const AUTOCLOSE = true;
 
 export const ToastContext = createContext({});
