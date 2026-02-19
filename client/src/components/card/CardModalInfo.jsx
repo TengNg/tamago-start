@@ -128,7 +128,15 @@ const CardModalInfo = ({
     }, [viewedAttachment]);
 
     function handleCopyCardCode(e) {
-        e.preventDefault();
+        const button = e.currentTarget;
+        if (button.textContent === "✓ copied") {
+            return;
+        }
+
+        navigator.clipboard.writeText(card?._id).then(() => {
+            button.textContent = "✓ copied";
+        });
+
         toast.success("Code copied to clipboard");
     }
 

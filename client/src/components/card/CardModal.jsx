@@ -262,6 +262,10 @@ const CardModal = ({
         }
     };
 
+    const handleOpenCardInNewTab = () => {
+        window.open(`/b/${boardState.board._id}?card=${card._id}`, "_blank");
+    };
+
     const confirmDescription = async () => {
         if (card?.description == description) {
             return;
@@ -446,11 +450,18 @@ const CardModal = ({
                         </div>
 
                         <button
+                            onClick={handleOpenCardInNewTab}
+                            className="text-[0.75rem] grid text-gray-400 hover:text-gray-600 place-items-center"
+                        >
+                            <Icon
+                                className="w-5 h-5 me-1"
+                                name="arrow-up-right-from-square"
+                            />
+                        </button>
+
+                        <button
                             onClick={handleCancel}
-                            style={{
-                                color: "#4b5563",
-                            }}
-                            className="text-[0.75rem] grid place-items-center"
+                            className="text-[0.75rem] grid text-gray-400 hover:text-gray-600 place-items-center"
                         >
                             <Icon className="w-5 h-5" name="xmark" />
                         </button>

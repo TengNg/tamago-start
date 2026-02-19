@@ -18,6 +18,7 @@ const CardQuickEditor = ({
         setCardVerifiedStatus,
         theme,
         socket,
+        boardId,
     } = useBoardState();
 
     const [initialTitle, setInitialTitle] = useState(card.title);
@@ -158,10 +159,14 @@ const CardQuickEditor = ({
         close();
     };
 
-    const handleOpenCardDetail = () => {
+    const handleOpenCardModal = () => {
         searchParams.set("card", card._id);
         setSearchParams(searchParams, { replace: true });
         close();
+    };
+
+    const handleOpenCardInNewTab = () => {
+        window.open(`/b/${card.boardId}?card=${card._id}`, "_blank");
     };
 
     const handleToggleHighlightPicker = () => {
@@ -213,28 +218,35 @@ const CardQuickEditor = ({
                         )}
 
                         <button
-                            onClick={() => handleOpenCardDetail()}
+                            onClick={handleOpenCardModal}
                             className="hover:ms-1 transition-all text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80"
                         >
                             open
                         </button>
 
                         <button
-                            onClick={() => handleToggleHighlightPicker()}
+                            onClick={handleOpenCardInNewTab}
+                            className="hover:ms-1 transition-all text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80"
+                        >
+                            open in new tab
+                        </button>
+
+                        <button
+                            onClick={handleToggleHighlightPicker}
                             className={`${openHighlightPicker ? "bg-gray-600" : "bg-gray-800"} hover:ms-1 transition-all text-[0.75rem] text-white px-3 py-1 flex--center opacity-80 z-30`}
                         >
                             highlight
                         </button>
 
                         <button
-                            onClick={() => copyCard()}
+                            onClick={copyCard}
                             className="hover:ms-1 transition-all text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80"
                         >
                             duplicate
                         </button>
 
                         <button
-                            onClick={() => deleteCard()}
+                            onClick={deleteCard}
                             className="hover:ms-1 transition-all text-[0.75rem] relative text-white bg-gray-800 px-3 py-1 flex--center opacity-80 z-30"
                         >
                             delete
