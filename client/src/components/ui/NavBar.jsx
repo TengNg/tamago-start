@@ -71,7 +71,7 @@ const NavBar = ({ setOpenPinnedBoards }) => {
                                     <NavLink
                                         to={path}
                                         className={({ isActive }) =>
-                                            isActive || pathname === path
+                                            isActive || pathname === path || (pathname === "/" && path === "/about")
                                                 ? "anchor--style--selected sm:px-4"
                                                 : "anchor--style sm:px-4"
                                         }
