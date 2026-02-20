@@ -213,7 +213,7 @@ const CardModalInfo = ({
             </div>
 
             <div className={`${dateToCompare(dueDate) && "text-red-700"}`}>
-                <span>due date: </span>
+                <span>due: </span>
                 <input
                     className="bg-transparent"
                     type="date"

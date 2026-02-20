@@ -181,17 +181,25 @@ export default function Card({ card }) {
                 </div>
             )}
 
-            {
-                card.description && (
-                    <div className="flex flex-col gap-0.5 w-fit max-w-full">
-                        <div className="h-0.5 w-4 bg-gray-500"></div>
-                        <div className="h-0.5 w-4 bg-gray-500"></div>
-                        <div className="h-0.5 w-3 bg-gray-500"></div>
-                    </div>
-                )
-            }
+            {card.description && (
+                <div className="flex flex-col gap-0.5 w-fit max-w-full">
+                    <div className="h-0.5 w-4 bg-gray-500"></div>
+                    <div className="h-0.5 w-4 bg-gray-500"></div>
+                    <div className="h-0.5 w-3 bg-gray-500"></div>
+                </div>
+            )}
 
             <div className="flex flex-col gap-1">
+                {card?.dueDate && (
+                    <div className="text-[12px] text-gray-700 font-medium">
+                        due:{" "}
+                        {dateFormatter(card.dueDate, {
+                            weekdayFormat: true,
+                            withTime: false,
+                        })}
+                    </div>
+                )}
+
                 <div className="text-[12px] text-gray-700 font-medium">
                     {card.createdAt ? (
                         <span>
@@ -202,18 +210,9 @@ export default function Card({ card }) {
                             })}
                         </span>
                     ) : (
-                        <span className="text-red-600">error</span>
+                        <span className="text-[12px] text-red-600">error</span>
                     )}
                 </div>
-
-                {card?.dueDate && (
-                    <div className="text-[12px] text-gray-700 font-medium">
-                        due date:{" "}
-                        {dateFormatter(card?.dueDate, {
-                            weekdayFormat: true,
-                        })}
-                    </div>
-                )}
 
                 {debugModeEnabled.enabled && (
                     <div className="text-[12px] text-gray-700 font-medium">

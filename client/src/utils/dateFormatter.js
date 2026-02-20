@@ -22,7 +22,11 @@ export default function dateFormatter(
         const minutes = String(date.getMinutes()).padStart(2, "0");
         const time = hours + ":" + minutes;
 
-        return `${formattedDate} ${time}`;
+        if (option.withTime) {
+            return `${formattedDate} ${time}`;
+        }
+
+        return `${formattedDate}`;
     }
 
     const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
