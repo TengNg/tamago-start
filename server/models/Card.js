@@ -29,7 +29,6 @@ const cardSchema = new mongoose.Schema({
     description: {
         type: String,
         default: "",
-        minLength: 1,
         maxLength: 2000,
     },
 
