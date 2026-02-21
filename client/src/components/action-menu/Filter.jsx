@@ -46,24 +46,34 @@ const Filter = ({ open, setOpen }) => {
         if (
             searchParams.get("filter") ||
             searchParams.get("priority") ||
-            searchParams.get("stale")
+            searchParams.get("stale") ||
+            searchParams.get("verified")
         ) {
             setHasFilter(true);
         } else {
             setHasFilter(false);
         }
 
+        console.log(searchParams.get("verified"));
+
         const searchValue = searchParams.get("filter");
         const priorityValue = searchParams.get("priority");
         const stale = searchParams.get("stale");
         const owner = searchParams.get("owner");
+        const verified = searchParams.get("verified");
 
         setBoardState((prev) => {
             return {
                 ...prev,
                 lists: prev.lists.map((list) => {
                     const newCards = [...list.cards].map((card) => {
-                        if (!searchValue && !priorityValue && !owner && !stale)
+                        if (
+                            !searchValue &&
+                            !priorityValue &&
+                            !owner &&
+                            !stale &&
+                            !verified
+                        )
                             return { ...card, hiddenByFilter: false };
 
                         const isFilteredByTitle =
@@ -73,12 +83,18 @@ const Filter = ({ open, setOpen }) => {
                             card._id
                                 .toLowerCase()
                                 .includes(searchValue?.toLowerCase());
+
                         const isFilteredByPriority =
                             card.priorityLevel === priorityValue;
+
                         const isFilteredByStale = dateToCompare(card.dueDate);
+
                         const isFilteredByOwner =
                             (owner == "unassigned" && !card.owner) ||
                             card.owner?.toLowerCase() === owner?.toLowerCase();
+
+                        const isFilteredByVerified = card.verified === true;
+                        console.log(card.verified);
 
                         let hiddenByFilter = true;
 
@@ -95,6 +111,10 @@ const Filter = ({ open, setOpen }) => {
                         }
 
                         if (owner && isFilteredByOwner) {
+                            hiddenByFilter = false;
+                        }
+
+                        if (verified && isFilteredByVerified) {
                             hiddenByFilter = false;
                         }
 
@@ -176,6 +196,17 @@ const Filter = ({ open, setOpen }) => {
         }
 
         searchParams.set("owner", value);
+        setSearchParams(searchParams, { replace: true });
+    };
+
+    const handleFilterByVerified = () => {
+        if (searchParams.get("verified") === "true") {
+            searchParams.delete("verified");
+            setSearchParams(searchParams, { replace: true });
+            return;
+        }
+
+        searchParams.set("verified", true);
         setSearchParams(searchParams, { replace: true });
     };
 
@@ -277,6 +308,21 @@ const Filter = ({ open, setOpen }) => {
                                 </div>
                             );
                         })}
+                    </div>
+
+                    <div className="h-[1px] bg-black w-full"></div>
+
+                    <div
+                        className="text-[0.75rem] cursor-pointer w-full py-1 px-3 text-green-800 font-medium bg-green-100 border-[2px] border-green-800 hover:brightness-105"
+                        style={{
+                            textDecoration:
+                                searchParams.get("verified") === "true"
+                                    ? "underline"
+                                    : "none",
+                        }}
+                        onClick={handleFilterByVerified}
+                    >
+                        VERIFIED
                     </div>
 
                     <div className="h-[1px] bg-black w-full"></div>
