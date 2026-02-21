@@ -37,7 +37,6 @@ const CardComments = ({ card }) => {
                     collapsed: false,
                 });
             } catch (err) {
-                console.log(err);
                 toast.error("Failed to load focused comment");
             }
         };

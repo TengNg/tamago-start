@@ -102,7 +102,6 @@ const Profile = () => {
             queryClient.invalidateQueries({ queryKey: ["me"], exact: true });
         },
         onError: (err) => {
-            console.log(err);
             const errMsg =
                 err?.response?.status === 400
                     ? "Current password is incorrect"
@@ -230,7 +229,7 @@ const Profile = () => {
                 };
             });
         } catch (err) {
-            console.log(err);
+            toast.error("Failed to load this board-stat");
         }
     };
 

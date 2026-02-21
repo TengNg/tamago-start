@@ -67,7 +67,7 @@ const List = ({ index, list, cards }) => {
                 title: textAreaRef.current.value,
             });
         } catch (err) {
-            console.log(err);
+            toast.error("Failed to update title");
         }
     };
 

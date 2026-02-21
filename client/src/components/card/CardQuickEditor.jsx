@@ -18,7 +18,6 @@ const CardQuickEditor = ({
         setCardVerifiedStatus,
         theme,
         socket,
-        boardId,
     } = useBoardState();
 
     const [initialTitle, setInitialTitle] = useState(card.title);
@@ -103,7 +102,7 @@ const CardQuickEditor = ({
                 title: newTitle,
             });
         } catch (err) {
-            console.log(err);
+            toast.error("Failed to update title");
         }
     };
 

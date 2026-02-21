@@ -171,7 +171,7 @@ const CardModal = ({
                 username: cardOwner,
             });
         } catch (err) {
-            console.log(err);
+            toast.error("Failed to update owner");
         }
     };
 
@@ -195,7 +195,7 @@ const CardModal = ({
                 priorityLevel,
             });
         } catch (err) {
-            console.log(err);
+            toast.error("Failed to update priority-level");
         }
     };
 
@@ -323,7 +323,7 @@ const CardModal = ({
                 title: e.target.value.trim(),
             });
         } catch (err) {
-            console.log(err);
+            toast.error("Failed to update title");
         }
     };
 

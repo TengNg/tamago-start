@@ -2,10 +2,13 @@ import highlightColors from "../../data/highlights";
 import useBoardState from "../../hooks/useBoardState";
 import Icon from "../shared/Icon";
 import { axiosPrivate } from "../../api/axios";
+import useToast from "../../hooks/useToast";
 
 const HighlightPicker = ({ setOpen, card }) => {
     const { setCardDetailHighlight, setCardHighlight, socket } =
         useBoardState();
+
+    const toast = useToast();
 
     const handleSetCardHighlight = async (value) => {
         if (value == null) {
@@ -26,7 +29,7 @@ const HighlightPicker = ({ setOpen, card }) => {
                 highlight: value,
             });
         } catch (err) {
-            console.log(err);
+            toast.error("Failed to change highlight");
         }
     };
 

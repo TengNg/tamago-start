@@ -183,7 +183,7 @@ const PinnedBoards = ({ setOpen }) => {
             );
             currentUserQuery.refetch();
         } catch (err) {
-            console.log(err);
+            toast.error("Failed to update pinned boards");
         }
     };
 

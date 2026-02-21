@@ -37,7 +37,7 @@ const BoardMenu = ({
             socket.emit("leaveBoard");
             navigate("/boards");
         } catch (err) {
-            console.log(err);
+            toast.error("Failed to leave this board");
             navigate("/boards");
         }
     };
@@ -65,7 +65,7 @@ const BoardMenu = ({
             );
             socket.emit("updateBoardDescription", e.target.value.trim());
         } catch (err) {
-            console.log(err);
+            toast.error("Failed to update description");
         }
     };
 

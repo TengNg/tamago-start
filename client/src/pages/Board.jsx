@@ -495,8 +495,6 @@ const Board = () => {
             });
             setHasReceivedNewMessage(true);
         } catch (err) {
-            console.log(err);
-
             setChats((prev) => {
                 return prev.map((chat) =>
                     chat.trackedId === msgTrackedId
