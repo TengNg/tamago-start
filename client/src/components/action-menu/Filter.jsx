@@ -33,7 +33,7 @@ const Filter = ({ open, setOpen }) => {
             dialog.current.addEventListener("close", handleOnClose);
             dialog.current.addEventListener("keydown", handleKeyDown);
 
-            () => {
+            return () => {
                 dialog.current.removeEventListener("close", handleOnClose);
                 dialog.current.removeEventListener("keydown", handleKeyDown);
             };
@@ -44,22 +44,25 @@ const Filter = ({ open, setOpen }) => {
 
     useEffect(() => {
         if (
-            searchParams.get("filter") ||
-            searchParams.get("priority") ||
+            searchParams.get("search") ||
+            searchParams.get("priorities") ||
             searchParams.get("stale") ||
-            searchParams.get("verified")
+            searchParams.get("verified") ||
+            searchParams.get("owners")
         ) {
             setHasFilter(true);
         } else {
             setHasFilter(false);
         }
 
-        console.log(searchParams.get("verified"));
-
-        const searchValue = searchParams.get("filter");
-        const priorityValue = searchParams.get("priority");
+        const searchValue = searchParams.get("search");
+        const prioritiesStr = searchParams.get("priorities");
+        const priorities = prioritiesStr ? prioritiesStr.split(",") : [];
         const stale = searchParams.get("stale");
-        const owner = searchParams.get("owner");
+        const ownersStr = searchParams.get("owners");
+        const owners = ownersStr
+            ? ownersStr.split(",").map((o) => o.toLowerCase())
+            : [];
         const verified = searchParams.get("verified");
 
         setBoardState((prev) => {
@@ -67,55 +70,56 @@ const Filter = ({ open, setOpen }) => {
                 ...prev,
                 lists: prev.lists.map((list) => {
                     const newCards = [...list.cards].map((card) => {
-                        if (
-                            !searchValue &&
-                            !priorityValue &&
-                            !owner &&
-                            !stale &&
-                            !verified
-                        )
-                            return { ...card, hiddenByFilter: false };
+                        let hiddenByFilter = true;
 
                         const isFilteredByTitle =
                             card.title
                                 .toLowerCase()
-                                .includes(searchValue?.toLowerCase()) ||
+                                .includes(searchValue?.toLowerCase() || "") ||
                             card._id
                                 .toLowerCase()
-                                .includes(searchValue?.toLowerCase());
+                                .includes(searchValue?.toLowerCase() || "");
 
-                        const isFilteredByPriority =
-                            card.priorityLevel === priorityValue;
+                        const isFilteredByPriority = priorities.includes(
+                            card.priorityLevel,
+                        );
 
                         const isFilteredByStale = dateToCompare(card.dueDate);
 
+                        const lowerOwner = card.owner
+                            ? card.owner.toLowerCase()
+                            : null;
                         const isFilteredByOwner =
-                            (owner == "unassigned" && !card.owner) ||
-                            card.owner?.toLowerCase() === owner?.toLowerCase();
+                            (owners.includes("unassigned") && !lowerOwner) ||
+                            (lowerOwner && owners.includes(lowerOwner));
 
-                        const isFilteredByVerified = card.verified === true;
-                        console.log(card.verified);
+                        const isFilteredByVerified = card.verified;
 
-                        let hiddenByFilter = true;
+                        const hasActiveFilter =
+                            searchValue ||
+                            priorities.length > 0 ||
+                            stale === "true" ||
+                            owners.length > 0 ||
+                            verified === "true";
 
-                        if (searchValue && isFilteredByTitle) {
+                        if (!hasActiveFilter) {
                             hiddenByFilter = false;
-                        }
-
-                        if (priorityValue && isFilteredByPriority) {
-                            hiddenByFilter = false;
-                        }
-
-                        if (stale && isFilteredByStale) {
-                            hiddenByFilter = false;
-                        }
-
-                        if (owner && isFilteredByOwner) {
-                            hiddenByFilter = false;
-                        }
-
-                        if (verified && isFilteredByVerified) {
-                            hiddenByFilter = false;
+                        } else {
+                            if (searchValue && isFilteredByTitle) {
+                                hiddenByFilter = false;
+                            }
+                            if (priorities.length > 0 && isFilteredByPriority) {
+                                hiddenByFilter = false;
+                            }
+                            if (stale === "true" && isFilteredByStale) {
+                                hiddenByFilter = false;
+                            }
+                            if (owners.length > 0 && isFilteredByOwner) {
+                                hiddenByFilter = false;
+                            }
+                            if (verified === "true" && isFilteredByVerified) {
+                                hiddenByFilter = false;
+                            }
                         }
 
                         return { ...card, hiddenByFilter };
@@ -155,11 +159,9 @@ const Filter = ({ open, setOpen }) => {
 
         const searchValue = cardTitleInput.current.value.trim();
         if (!searchValue) {
-            if (searchParams.has("filter")) {
-                searchParams.delete("filter");
-                setSearchParams(searchParams, { replace: true });
-                return;
-            }
+            searchParams.delete("filter");
+            setSearchParams(searchParams, { replace: true });
+            return;
         }
 
         searchParams.set("filter", searchValue);
@@ -167,48 +169,64 @@ const Filter = ({ open, setOpen }) => {
     };
 
     const handleFilterByCardPriority = (value) => {
-        if (value === searchParams.get("priority")) {
-            searchParams.delete("priority");
-            setSearchParams(searchParams, { replace: true });
-            return;
+        let prioritiesStr = searchParams.get("priorities");
+        let priorities = prioritiesStr ? prioritiesStr.split(",") : [];
+
+        if (priorities.includes(value)) {
+            priorities = priorities.filter((p) => p !== value);
+        } else {
+            priorities.push(value);
         }
 
-        searchParams.set("priority", value);
+        if (priorities.length === 0) {
+            searchParams.delete("priorities");
+        } else {
+            searchParams.set("priorities", priorities.join(","));
+        }
+
         setSearchParams(searchParams, { replace: true });
     };
 
     const handleFilterByStaleStatus = () => {
         if (searchParams.get("stale") === "true") {
             searchParams.delete("stale");
-            setSearchParams(searchParams, { replace: true });
-            return;
+        } else {
+            searchParams.set("stale", "true");
         }
-
-        searchParams.set("stale", true);
         setSearchParams(searchParams, { replace: true });
     };
 
     const handleFilterByOwner = (value) => {
-        if (value === searchParams.get("owner")) {
-            searchParams.delete("owner");
-            setSearchParams(searchParams, { replace: true });
-            return;
+        let ownersStr = searchParams.get("owners");
+        let owners = ownersStr ? ownersStr.split(",") : [];
+
+        const lowerValue = value.toLowerCase();
+        if (owners.includes(lowerValue)) {
+            owners = owners.filter((o) => o !== lowerValue);
+        } else {
+            owners.push(lowerValue);
         }
 
-        searchParams.set("owner", value);
+        if (owners.length === 0) {
+            searchParams.delete("owners");
+        } else {
+            searchParams.set("owners", owners.join(","));
+        }
+
         setSearchParams(searchParams, { replace: true });
     };
 
     const handleFilterByVerified = () => {
         if (searchParams.get("verified") === "true") {
             searchParams.delete("verified");
-            setSearchParams(searchParams, { replace: true });
-            return;
+        } else {
+            searchParams.set("verified", "true");
         }
-
-        searchParams.set("verified", true);
         setSearchParams(searchParams, { replace: true });
     };
+
+    const currentPriorities = searchParams.get("priorities")?.split(",") || [];
+    const currentOwners = searchParams.get("owners")?.split(",") || [];
 
     return (
         <dialog
@@ -233,20 +251,22 @@ const Filter = ({ open, setOpen }) => {
                             ref={cardTitleInput}
                             className={`p-3 w-full overflow-hidden shadow-[0_3px_0_0] shadow-gray-600 text-sm whitespace-nowrap text-ellipsis border-[2px] bg-gray-100 border-gray-600 text-gray-600 font-medium select-none focus:outline-none`}
                             placeholder="search for cards..."
+                            defaultValue={searchParams.get("filter") || ""}
                         />
                     </div>
 
                     <div className="h-[1px] bg-gray-700 w-full"></div>
 
-                    <div className="w-full flex gap-2">
+                    <div className="w-full flex gap-2 flex-wrap">
                         <div
                             className="select-none flex items-center gap-1 text-[0.75rem] cursor-pointer w-fit p-1 px-2 text-gray-700 font-medium hover:brightness-105 border-[1px] border-gray-700"
                             onClick={() => handleFilterByOwner("unassigned")}
                             style={{
-                                textDecoration:
-                                    searchParams.get("owner") === "unassigned"
-                                        ? "underline"
-                                        : "none",
+                                textDecoration: currentOwners.includes(
+                                    "unassigned",
+                                )
+                                    ? "underline"
+                                    : "none",
                             }}
                         >
                             <Icon
@@ -266,11 +286,11 @@ const Filter = ({ open, setOpen }) => {
                                         handleFilterByOwner(username)
                                     }
                                     style={{
-                                        textDecoration:
-                                            searchParams.get("owner") ===
-                                            username
-                                                ? "underline"
-                                                : "none",
+                                        textDecoration: currentOwners.includes(
+                                            username.toLowerCase(),
+                                        )
+                                            ? "underline"
+                                            : "none",
                                     }}
                                 >
                                     <Icon
@@ -298,8 +318,7 @@ const Filter = ({ open, setOpen }) => {
                                     style={{
                                         backgroundColor: color,
                                         textDecoration:
-                                            searchParams.get("priority") ===
-                                            value
+                                            currentPriorities.includes(value)
                                                 ? "underline"
                                                 : "none",
                                     }}
@@ -340,9 +359,11 @@ const Filter = ({ open, setOpen }) => {
                         STALE
                     </div>
 
-                    {(searchParams.get("filter") ||
-                        searchParams.get("priority") ||
-                        searchParams.get("stale")) && (
+                    {(searchParams.get("search") ||
+                        searchParams.get("priorities") ||
+                        searchParams.get("stale") ||
+                        searchParams.get("owners") ||
+                        searchParams.get("verified")) && (
                         <>
                             <div className="h-[1px] bg-black w-full"></div>
                             <button
