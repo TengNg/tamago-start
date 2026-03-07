@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import dateFormatter from "../../utils/dateFormatter";
 import Icon from "../shared/Icon";
 import useCurrentUserContext from "../../hooks/useCurrentUserContext";
@@ -10,6 +10,9 @@ const UserAccount = () => {
     const [collapse, setCollapse] = useState(true);
 
     const navigate = useNavigate();
+
+    const location = useLocation();
+    const { pathname } = location;
 
     const userProfileImageRef = useRef();
     const userInfoRef = useRef();
@@ -112,7 +115,11 @@ const UserAccount = () => {
                                         to={`/profile`}
                                         className="p-2 bg-violet-800 text-gray-50 text-[0.75rem] font-medium hover:bg-violet-700 grid place-items-center"
                                     >
-                                        Profile
+                                        <span
+                                            className={`${pathname.includes("/profile") ? "underline" : ""}`}
+                                        >
+                                            Profile
+                                        </span>
                                     </Link>
                                     <button
                                         onClick={handleLogout}
