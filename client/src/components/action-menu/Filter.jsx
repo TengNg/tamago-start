@@ -1,10 +1,12 @@
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import useBoardState from "../../hooks/useBoardState";
 import { useSearchParams } from "react-router-dom";
 
 import { dateToCompare } from "../../utils/dateFormatter";
 import PRIORITY_LEVELS from "../../data/priorityLevels";
 import Icon from "../shared/Icon";
+
+const SEARCH_DEBOUNCE_MS = 300;
 
 const Filter = ({ open, setOpen }) => {
     const { boardState, setBoardState, setHasFilter } = useBoardState();
@@ -13,6 +15,19 @@ const Filter = ({ open, setOpen }) => {
 
     const dialog = useRef();
     const cardTitleInput = useRef();
+
+    const [searchInputValue, setSearchInputValue] = useState(() => searchParams.get("search") || "");
+    const [debouncedSearchValue, setDebouncedSearchValue] = useState(() => searchParams.get("search") || "");
+
+    useEffect(() => {
+        const id = setTimeout(() => {
+            setDebouncedSearchValue(searchInputValue.trim());
+        }, SEARCH_DEBOUNCE_MS);
+
+        return () => {
+            clearTimeout(id);
+        };
+    }, [searchInputValue]);
 
     useEffect(() => {
         if (open) {
@@ -44,7 +59,7 @@ const Filter = ({ open, setOpen }) => {
 
     useEffect(() => {
         if (
-            searchParams.get("search") ||
+            debouncedSearchValue ||
             searchParams.get("priorities") ||
             searchParams.get("stale") ||
             searchParams.get("verified") ||
@@ -55,7 +70,7 @@ const Filter = ({ open, setOpen }) => {
             setHasFilter(false);
         }
 
-        const searchValue = searchParams.get("search");
+        const searchValue = debouncedSearchValue;
         const prioritiesStr = searchParams.get("priorities");
         const priorities = prioritiesStr ? prioritiesStr.split(",") : [];
         const stale = searchParams.get("stale");
@@ -129,7 +144,7 @@ const Filter = ({ open, setOpen }) => {
                 }),
             };
         });
-    }, [searchParams]);
+    }, [searchParams, debouncedSearchValue]);
 
     const boardMembers = useMemo(() => {
         if (Object.keys(boardState).length === 0) {
@@ -152,20 +167,6 @@ const Filter = ({ open, setOpen }) => {
 
     const handleClose = () => {
         dialog.current.close();
-    };
-
-    const handleFilterByCardTitle = (e) => {
-        e.preventDefault();
-
-        const searchValue = cardTitleInput.current.value.trim();
-        if (!searchValue) {
-            searchParams.delete("filter");
-            setSearchParams(searchParams, { replace: true });
-            return;
-        }
-
-        searchParams.set("filter", searchValue);
-        setSearchParams(searchParams, { replace: true });
     };
 
     const handleFilterByCardPriority = (value) => {
@@ -244,14 +245,15 @@ const Filter = ({ open, setOpen }) => {
                 </div>
             </div>
 
-            <form onSubmit={handleFilterByCardTitle}>
+            <form onSubmit={(e) => e.preventDefault()}>
                 <div className="w-full relative flex flex-col items-start gap-4 py-2 mt-2">
                     <div className="w-full flex gap-2">
                         <input
                             ref={cardTitleInput}
                             className={`p-3 w-full overflow-hidden shadow-[0_3px_0_0] shadow-gray-600 text-sm whitespace-nowrap text-ellipsis border-[2px] bg-gray-100 border-gray-600 text-gray-600 font-medium select-none focus:outline-none`}
-                            placeholder="search for cards..."
-                            defaultValue={searchParams.get("filter") || ""}
+                            placeholder="card title"
+                            value={searchInputValue}
+                            onChange={(e) => setSearchInputValue(e.target.value)}
                         />
                     </div>
 
@@ -359,7 +361,7 @@ const Filter = ({ open, setOpen }) => {
                         STALE
                     </div>
 
-                    {(searchParams.get("search") ||
+                    {(debouncedSearchValue ||
                         searchParams.get("priorities") ||
                         searchParams.get("stale") ||
                         searchParams.get("owners") ||
@@ -370,6 +372,7 @@ const Filter = ({ open, setOpen }) => {
                                 type="button"
                                 className="mx-auto w-full button--style border-[2px] py-2 text-[0.75rem] transition-all shadow-[0_3px_0_0] shadow-gray-600 bg-gray-100"
                                 onClick={() => {
+                                    setSearchInputValue("");
                                     setSearchParams({}, { replace: true });
                                 }}
                             >

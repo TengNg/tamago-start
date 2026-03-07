@@ -59,11 +59,11 @@ export const BoardStateContextProvider = ({ children }) => {
         setChatMessageToast({ open: true, message, timeSent, duration, from });
     };
 
-    const filterParams = useCallback(() => {
-        const filter = searchParams.get("filter");
+    const searchParamsFn = useCallback(() => {
+        const search = searchParams.get("search");
         const priority = searchParams.get("priority");
         const owner = searchParams.get("owner");
-        return { filter, priority, owner };
+        return { search, priority, owner };
     }, [searchParams]);
 
     useEffect(() => {
@@ -177,15 +177,15 @@ export const BoardStateContextProvider = ({ children }) => {
         });
 
         socket.on("newCard", (data) => {
-            const { filter, priority, owner } = filterParams();
+            const { search, priority, owner } = searchParamsFn();
 
             const card = data;
 
-            if (filter) {
-                const includesFilter = card.title
+            if (search) {
+                const includesSearch = card.title
                     .toLowerCase()
-                    .includes(filter.toLowerCase());
-                card["hiddenByFilter"] = !includesFilter;
+                    .includes(search.toLowerCase());
+                card["hiddenByFilter"] = !includesSearch;
             }
 
             if (priority) {
@@ -202,15 +202,15 @@ export const BoardStateContextProvider = ({ children }) => {
         });
 
         socket.on("copyCard", (data) => {
-            const { filter, priority } = filterParams();
+            const { search, priority } = searchParamsFn();
 
             const { card, index } = data;
 
-            if (filter) {
-                const includesFilter = card.title
+            if (search) {
+                const includesSearch = card.title
                     .toLowerCase()
-                    .includes(filter.toLowerCase());
-                card["hiddenByFilter"] = !includesFilter;
+                    .includes(search.toLowerCase());
+                card["hiddenByFilter"] = !includesSearch;
             }
 
             if (priority) {
@@ -226,15 +226,15 @@ export const BoardStateContextProvider = ({ children }) => {
         });
 
         socket.on("cardMoved", (data) => {
-            const { filter, priority, owner } = filterParams();
+            const { search, priority, owner } = searchParamsFn();
 
             const { oldListId, newListId, cardId, newCard: card } = data;
 
-            if (filter) {
-                const includesFilter = card.title
+            if (search) {
+                const includesSearch = card.title
                     .toLowerCase()
-                    .includes(filter.toLowerCase());
-                card["hiddenByFilter"] = !includesFilter;
+                    .includes(search.toLowerCase());
+                card["hiddenByFilter"] = !includesSearch;
             }
 
             if (priority) {
@@ -252,16 +252,16 @@ export const BoardStateContextProvider = ({ children }) => {
         });
 
         socket.on("cardMovedByIndex", (data) => {
-            const { filter, priority, owner } = filterParams();
+            const { search, priority, owner } = searchParamsFn();
 
             let { cards, listId } = data;
 
-            if (filter) {
+            if (search) {
                 cards = cards.map((card) => {
-                    const includesFilter = card.title
+                    const includesSearch = card.title
                         .toLowerCase()
-                        .includes(filter.toLowerCase());
-                    card["hiddenByFilter"] = !includesFilter;
+                        .includes(search.toLowerCase());
+                    card["hiddenByFilter"] = !includesSearch;
                     return card;
                 });
             }
@@ -276,7 +276,7 @@ export const BoardStateContextProvider = ({ children }) => {
 
             if (owner) {
                 cards = cards.map((card) => {
-                    const includesFilter = card.priorityLevel === priority;
+                    const includesFilter = card.owner === owner;
                     card["hiddenByFilter"] = !includesFilter;
                     return card;
                 });
@@ -293,15 +293,15 @@ export const BoardStateContextProvider = ({ children }) => {
         });
 
         socket.on("cardMovedToList", (data) => {
-            const { filter, priority, owner } = filterParams();
+            const { search, priority, owner } = searchParamsFn();
 
             const { oldListId, newListId, insertedIndex, card } = data;
 
-            if (filter) {
-                const includesFilter = card.title
+            if (search) {
+                const includesSearch = card.title
                     .toLowerCase()
-                    .includes(filter.toLowerCase());
-                card["hiddenByFilter"] = !includesFilter;
+                    .includes(search.toLowerCase());
+                card["hiddenByFilter"] = !includesSearch;
             }
 
             if (priority) {
