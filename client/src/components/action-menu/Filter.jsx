@@ -5,6 +5,7 @@ import { useSearchParams } from "react-router-dom";
 import { dateToCompare } from "../../utils/dateFormatter";
 import PRIORITY_LEVELS from "../../data/priorityLevels";
 import Icon from "../shared/Icon";
+import useToast from "../../hooks/useToast";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -16,8 +17,14 @@ const Filter = ({ open, setOpen }) => {
     const dialog = useRef();
     const cardTitleInput = useRef();
 
-    const [searchInputValue, setSearchInputValue] = useState(() => searchParams.get("search") || "");
-    const [debouncedSearchValue, setDebouncedSearchValue] = useState(() => searchParams.get("search") || "");
+    const [searchInputValue, setSearchInputValue] = useState(
+        () => searchParams.get("search") || "",
+    );
+    const [debouncedSearchValue, setDebouncedSearchValue] = useState(
+        () => searchParams.get("search") || "",
+    );
+
+    const toast = useToast();
 
     useEffect(() => {
         const id = setTimeout(() => {
@@ -226,8 +233,34 @@ const Filter = ({ open, setOpen }) => {
         setSearchParams(searchParams, { replace: true });
     };
 
+    const handleCopyFilterLink = async () => {
+        const params = new URLSearchParams(searchParams);
+        if (debouncedSearchValue.trim()) {
+            params.set("search", debouncedSearchValue.trim());
+        } else {
+            params.delete("search");
+        }
+
+        const filterUrl = `${window.location.origin}${window.location.pathname}${
+            params.toString() ? `?${params.toString()}` : ""
+        }`;
+
+        try {
+            await navigator.clipboard.writeText(filterUrl);
+            toast.success("Link copied");
+        } catch (err) {
+            toast.error("Failed to copy filter link:", err);
+        }
+    };
+
     const currentPriorities = searchParams.get("priorities")?.split(",") || [];
     const currentOwners = searchParams.get("owners")?.split(",") || [];
+    const hasFilter =
+        debouncedSearchValue ||
+        searchParams.get("priorities") ||
+        searchParams.get("stale") ||
+        searchParams.get("owners") ||
+        searchParams.get("verified");
 
     return (
         <dialog
@@ -236,7 +269,22 @@ const Filter = ({ open, setOpen }) => {
             onClick={handleCloseOnOutsideClick}
         >
             <div className="flex w-full justify-between items-center border-b-[1px] border-black pb-3">
-                <p className="font-normal text-[1rem] text-gray-700">filter</p>
+                <div className="flex gap-2">
+                    <p className="font-normal text-[1rem] text-gray-700">
+                        filter
+                    </p>
+                    {hasFilter && (
+                        <button
+                            onClick={handleCopyFilterLink}
+                            title="copy filter link"
+                        >
+                            <Icon
+                                name="link"
+                                className="w-4 h-4 text-gray-600 hover:text-gray-800"
+                            />
+                        </button>
+                    )}
+                </div>
                 <div onClick={handleClose}>
                     <Icon
                         name="xmark"
@@ -253,7 +301,9 @@ const Filter = ({ open, setOpen }) => {
                             className={`p-3 w-full overflow-hidden shadow-[0_3px_0_0] shadow-gray-600 text-sm whitespace-nowrap text-ellipsis border-[2px] bg-gray-100 border-gray-600 text-gray-600 font-medium select-none focus:outline-none`}
                             placeholder="card title"
                             value={searchInputValue}
-                            onChange={(e) => setSearchInputValue(e.target.value)}
+                            onChange={(e) =>
+                                setSearchInputValue(e.target.value)
+                            }
                         />
                     </div>
 
@@ -361,16 +411,12 @@ const Filter = ({ open, setOpen }) => {
                         STALE
                     </div>
 
-                    {(debouncedSearchValue ||
-                        searchParams.get("priorities") ||
-                        searchParams.get("stale") ||
-                        searchParams.get("owners") ||
-                        searchParams.get("verified")) && (
+                    {hasFilter && (
                         <>
                             <div className="h-[1px] bg-black w-full"></div>
                             <button
                                 type="button"
-                                className="mx-auto w-full button--style border-[2px] py-2 text-[0.75rem] transition-all shadow-[0_3px_0_0] shadow-gray-600 bg-gray-100"
+                                className="hover:bg-gray-200 mx-auto w-full button--style border-[2px] py-2 text-[0.75rem] shadow-[0_3px_0_0] shadow-gray-600 bg-gray-100"
                                 onClick={() => {
                                     setSearchInputValue("");
                                     setSearchParams({}, { replace: true });
