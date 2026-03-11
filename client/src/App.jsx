@@ -27,6 +27,7 @@ import PAGES from "./data/pages";
 import LOCAL_STORAGE_KEYS from "./data/localStorageKeys";
 import Icon from "./components/shared/Icon";
 import PinnedBoards from "./components/board/PinnedBoards";
+import Public from "./components/auth/Public";
 
 const titleMap = Object.values(PAGES).reduce((obj, p, index) => {
     const title = `0${index} ${p.title}`;
@@ -92,8 +93,11 @@ function App() {
                 <Routes>
                     <Route path="/" element={<About />} />
                     <Route path="/about" element={<About />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
+
+                    <Route element={<Public />}>
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/register" element={<Register />} />
+                    </Route>
 
                     <Route element={<RequireAuth />}>
                         <Route path="/boards" element={<Boards />} />
