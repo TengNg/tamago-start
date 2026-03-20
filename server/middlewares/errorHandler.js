@@ -1,9 +1,20 @@
+/**
+ * @param {Error} err
+ * @param {import('express').Request} _req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} _next
+ */
 const errorHandler = (err, _req, res, _next) => {
-    if (process.env.MODE === 'production') {
-        res.status(500).json({ message: 'Internal server error' });
-    } else {
-        res.status(500).json({ message: err.message, stack: err.stack });
-    }
-}
+    const message = (err && typeof err.message === 'string' && err.message.trim())
+        ? err.message.trim()
+        : 'Internal server error';
+
+    const isProd = process.env.MODE === 'production';
+
+    res.status(500).json({
+        message,
+        ...(isProd ? {} : { stack: err?.stack })
+    });
+};
 
 module.exports = errorHandler;

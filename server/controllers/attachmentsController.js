@@ -11,11 +11,19 @@ exports.uploadAttachment = async (req, res) => {
         typeof req.file.mimetype !== 'string' ||
         typeof req.file.originalname !== 'string') {
         const errMsg = 'Invalid or missing attachment file'
-        return res.status(400).json({ error: errMsg });
+        return res.status(400).json({ message: errMsg });
     }
+
+    const { fileTypeFromBuffer } = await import('file-type');
+    const detectedType = await fileTypeFromBuffer(req.file.buffer);
+    if (!detectedType) {
+        return res.status(400).json({ message: 'Could not determine file type (possibly corrupted or empty)' });
+    }
+
     if (!['card', 'writedown'].includes(type)) {
-        return res.status(400).json({ error: 'Invalid type' });
+        return res.status(400).json({ message: 'Invalid attachment-type (attachment should only for card or writedown)' });
     }
+
     const attachment = new Attachment({
         type,
         refId,
