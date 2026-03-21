@@ -24,12 +24,14 @@ const cardSchema = new mongoose.Schema({
     title: {
         type: String,
         required: true,
+        maxLength: 300,
+        trim: true,
     },
 
     description: {
         type: String,
         default: "",
-        maxLength: 2000,
+        maxLength: 10000,
     },
 
     order: {
@@ -40,6 +42,16 @@ const cardSchema = new mongoose.Schema({
     highlight: {
         type: String,
         default: null,
+        validate: {
+            validator: function(/** @type {string} */value) {
+                if (!value) {
+                    return true;
+                }
+
+                return /^#([A-Fa-f0-9]{3,4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$/.test(value);
+            },
+            message: 'must be a valid hex color (e.g., #FF5733, #F00, or #FF5733AA)'
+        }
     },
 
     priorityLevel: {

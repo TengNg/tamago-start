@@ -1,63 +1,94 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const app = require('../../../server');
+const app = require('../../../index');
+const {
+    createTestUser,
+    createTestBoard,
+    createTestList,
+    createTestCard,
+    initializeTestDocs
+} = require('../../helpers/generateDoc');
+const { objectId } = require('../../helpers/common');
 
-const { cardById } = require('../../../services/cardService');
-const { isActionAuthorized } = require('../../../services/boardActionAuthorizeService');
+describe('PATCH /cards/:id/new-title', () => {
+    let cookieName = process.env.ACCESS_TOKEN_COOKIE_NAME;
+    let accessToken;
+    let testUser;
+    let testBoard;
+    let testList;
+    let testCard;
+    let mockRequestBody;
 
-jest.mock('../../../models/Card');
-jest.mock('../../../services/cardService');
-jest.mock('../../../services/boardActionAuthorizeService');
-
-describe('PUT /cards/:id/title', () => {
-    let token;
-
-    beforeAll(() => {
-        token = jwt.sign({ username: 'testuser' }, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
+    beforeAll(async () => {
+        await mongoose.connect(global.__MONGO_URI__);
     });
 
-    afterEach(() => {
-        jest.clearAllMocks();
+    afterAll(async () => {
+        await mongoose.disconnect();
     });
 
-    it('should return 404 if card is not found', async () => {
-        cardById.mockResolvedValue(null);
+    beforeEach(async () => {
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            await collections[key].deleteMany({});
+        }
+        const { user, board, list, card } = await initializeTestDocs();
+        testUser = user;
+        testBoard = board;
+        testList = list;
+        testCard = card;
+        accessToken = jwt.sign(
+            {
+                userId: testUser._id.toString(),
+                username: testUser.username,
+                refreshTokenVersion: testUser.refreshTokenVersion || 0,
+            },
+            process.env.ACCESS_TOKEN_SECRET || 'testsecret',
+            { expiresIn: '1h' }
+        );
+
+        mockRequestBody = {
+            title: "hello world"
+        }
+    });
+
+    afterEach(async () => {
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            await collections[key].deleteMany({});
+        }
+    });
+
+    it('should return 404 if id not found', async () => {
+        const unknownId = objectId();
         const res = await request(app)
-            .put(`/cards/${new mongoose.Types.ObjectId().toString()}/new-title`)
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(404);
+            .patch(`/api/cards/${unknownId}/new-title`)
+            .set('Cookie', `${cookieName}=${accessToken}`)
+            .send(mockRequestBody)
+        expect(res.statusCode).toBe(404);
     });
 
-    it('should return 403 if user is not found', async () => {
-        const boardId = new mongoose.Types.ObjectId().toString();
-        const listId = new mongoose.Types.ObjectId().toString();
-        const mockCard = { _id: new mongoose.Types.ObjectId().toString(), boardId, listId, save: jest.fn() };
-        cardById.mockResolvedValue(mockCard);
-        isActionAuthorized.mockResolvedValue({ authorized: false, user: null });
+    it('should return 403 if user does not have access to board', async () => {
+        const anotherUser = await createTestUser();
+        const anotherBoard = await createTestBoard(anotherUser._id);
+        const anotherList = await createTestList(anotherBoard._id);
+        const anotherCard = await createTestCard(anotherBoard._id, anotherList._id);
         const res = await request(app)
-            .put(`/cards/${mockCard._id}/new-title`)
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(403);
+            .patch(`/api/cards/${anotherCard._id}/new-title`)
+            .set('Cookie', `${cookieName}=${accessToken}`)
+            .send(mockRequestBody)
+        expect(res.statusCode).toBe(403);
+        expect(res.body.message).toBe("You do not have permission to edit cards");
     });
 
-    it('should return 200 if card & user are found', async () => {
-        const boardId = new mongoose.Types.ObjectId().toString();
-        const listId = new mongoose.Types.ObjectId().toString();
-        const mockCard = { _id: new mongoose.Types.ObjectId().toString(), boardId, listId, save: jest.fn() };
-        const mockUser = { _id: new mongoose.Types.ObjectId().toString() };
-        cardById.mockResolvedValue(mockCard);
-        isActionAuthorized.mockResolvedValue({ authorized: true, user: mockUser });
+    it('should return 200 if id is found', async () => {
         const res = await request(app)
-            .put(`/cards/${mockCard._id}/new-title`)
-            .send({ title: "Test Card" })
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(200);
-        expect(res.body).toHaveProperty('newCard', {
-            title: "Test Card",
-            _id: mockCard._id,
-            boardId,
-            listId,
-        });
+            .patch(`/api/cards/${testCard._id}/new-title`)
+            .set('Cookie', `${cookieName}=${accessToken}`)
+            .send(mockRequestBody)
+        expect(res.statusCode).toBe(200);
+        expect(res.body.newCard.title).toBe(mockRequestBody.title);
     });
 });
+
