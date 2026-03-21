@@ -62,7 +62,6 @@ const CardComments = ({ card }) => {
     };
 
     const addComment = async (content) => {
-        await new Promise((r) => setTimeout(r, 3000));
         const response = await axiosPrivate.post(
             `/cards/${card._id}/comments`,
             JSON.stringify({ content }),
