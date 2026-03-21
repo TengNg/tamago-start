@@ -1,14 +1,15 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+    useMutation,
+    useMutationState,
+    useQuery,
+    useQueryClient,
+} from "@tanstack/react-query";
 import { axiosPrivate } from "../../../api/axios";
-import { useState } from "react";
 import Icon from "../../shared/Icon";
 import useToast from "../../../hooks/useToast";
 
 function Attachments({ card, setViewedAttachment }) {
     const queryClient = useQueryClient();
-
-    const [deletingAttachmentId, setDeletingAttachmentId] = useState("");
-
     const toast = useToast();
 
     const {
@@ -24,27 +25,31 @@ function Attachments({ card, setViewedAttachment }) {
     });
 
     const deleteAttachmentMutation = useMutation({
+        mutationKey: ["delete-attachment"],
         mutationFn: async (attachmentId) => {
-            setDeletingAttachmentId(attachmentId);
             return await axiosPrivate.delete(`/attachments/${attachmentId}`);
         },
         onSuccess: () => {
             queryClient.invalidateQueries(["attachments", card._id]);
             toast.success("Attachment deleted");
-            setDeletingAttachmentId(null);
         },
         onError: () => {
             const errMsg =
                 err.response?.data?.message || "Failed to delete attachment";
             toast.error(errMsg);
-            setDeletingAttachmentId(null);
         },
     });
 
-    const isStillFetchingAttachments = queryClient.isFetching({
-        queryKey: ["attachments", card._id],
-        exact: true,
+    const pendingDeleteIds = useMutationState({
+        filters: {
+            mutationKey: ["delete-attachment"],
+            status: "pending",
+        },
+        select: (mutation) => mutation.state.variables,
     });
+
+    const isDeleting = (attachmentId) =>
+        pendingDeleteIds.includes(attachmentId);
 
     if (!card) {
         return null;
@@ -61,27 +66,33 @@ function Attachments({ card, setViewedAttachment }) {
                 <div className="text-gray-400">No attachments</div>
             ) : (
                 <ul className="space-y-1">
-                    {attachments.map((att) => (
-                        <li key={att.id} className="flex items-center gap-2">
-                            <span
-                                className={`${deletingAttachmentId === att.id && deleteAttachmentMutation.isPending && isStillFetchingAttachments ? "text-red-400 line-through" : ""} cursor-pointer hover:underline`}
-                                onClick={() => setViewedAttachment(att)}
-                                title={att.originalname}
+                    {attachments.map((att) => {
+                        const deleting = isDeleting(att.id);
+                        return (
+                            <li
+                                key={att.id}
+                                className="flex items-center gap-2"
                             >
-                                {att.originalname}
-                            </span>
-                            <button
-                                title="delete"
-                                className="text-red-700 text-xs ms-1 disabled:opacity-50"
-                                onClick={() =>
-                                    deleteAttachmentMutation.mutate(att.id)
-                                }
-                                disabled={deleteAttachmentMutation.isPending}
-                            >
-                                <Icon name="xmark" className="w-3 h-3" />
-                            </button>
-                        </li>
-                    ))}
+                                <span
+                                    className={`${deleting ? "text-red-400 line-through" : ""} cursor-pointer hover:underline`}
+                                    onClick={() => setViewedAttachment(att)}
+                                    title={att.originalname}
+                                >
+                                    {att.originalname}
+                                </span>
+                                <button
+                                    title="delete"
+                                    className="text-red-700 text-xs ms-1 disabled:opacity-50"
+                                    onClick={() =>
+                                        deleteAttachmentMutation.mutate(att.id)
+                                    }
+                                    disabled={deleting}
+                                >
+                                    <Icon name="xmark" className="w-3 h-3" />
+                                </button>
+                            </li>
+                        );
+                    })}
                 </ul>
             )}
             {deleteAttachmentMutation.isError && (

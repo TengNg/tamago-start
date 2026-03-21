@@ -5,17 +5,18 @@ import useToast from "../../../hooks/useToast";
 
 function Uploader({ card }) {
     const queryClient = useQueryClient();
-
     const [selectedFileName, setSelectedFileName] = useState("");
-
     const fileInputRef = useRef();
-
+    const abortControllerRef = useRef(null);
     const toast = useToast();
 
     const fileUploadMutation = useMutation({
         mutationFn: async (formData) => {
+            abortControllerRef.current = new AbortController();
+            const abortSignal = abortControllerRef.current.signal;
             return await axiosPrivate.post("/attachments/upload", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
+                signal: abortSignal,
             });
         },
         onSuccess: () => {
@@ -25,6 +26,10 @@ function Uploader({ card }) {
             setSelectedFileName("");
         },
         onError: (err, _, _context) => {
+            if (err.name === "CanceledError" || err.name === "AbortError") {
+                return;
+            }
+
             const errMsg =
                 err.response?.data?.message || "Failed to upload attachment";
             toast.error(errMsg);
@@ -33,6 +38,23 @@ function Uploader({ card }) {
     });
 
     const isUploadingFile = fileUploadMutation.isPending || !selectedFileName;
+
+    const cleanupAfterUpload = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+        }
+
+        setSelectedFileName("");
+        abortControllerRef.current = null;
+    };
+
+    const handleRemoveFile = () => {
+        if (fileUploadMutation.isPending && abortControllerRef.current) {
+            abortControllerRef.current.abort();
+        }
+
+        cleanupAfterUpload();
+    };
 
     if (!card) {
         return null;
@@ -93,11 +115,8 @@ function Uploader({ card }) {
                     <div className="flex ms-2 gap-2">
                         <button
                             type="button"
-                            onClick={() => {
-                                setSelectedFileName("");
-                                fileInputRef.current.value = "";
-                            }}
-                            className="text-red-800 underline text-sm font-medium transition-colors"
+                            onClick={handleRemoveFile}
+                            className="text-red-800 underline text-sm font-medium"
                         >
                             remove
                         </button>
