@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Card = require('../models/Card.js');
+const Board = require('../models/Board.js');
 
 const { isActionAuthorized } = require('../services/boardActionAuthorizeService');
 const saveBoardActivity = require('../services/saveBoardActivity');
@@ -12,10 +13,17 @@ const { cardById } = require('../services/cardService');
  * @param {import('express').Response} res
  */
 const getCard = async (req, res) => {
+    const { userId } = req.user;
     const { id } = req.params;
+
     const foundCard = await cardById(id);
     if (!foundCard) {
         return res.status(403).json({ msg: "card not found" });
+    }
+
+    const { authorized } = await isActionAuthorized(foundCard.boardId, userId, { allowOnPublicAccess: true });
+    if (!authorized) {
+        return res.status(403).json({ msg: 'unauthorized' });
     }
 
     return res.status(201).json({ card: foundCard });
