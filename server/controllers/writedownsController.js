@@ -53,6 +53,10 @@ const saveWritedown = async (req, res) => {
     return res.status(200).json({ msg: 'writedown updated', updatedWritedown });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const pinWritedown = async (req, res) => {
     const { writedown } = await handleAuthorizationAndGetWritedown(req, res);
     writedown.pinned = !writedown.pinned;
@@ -60,6 +64,10 @@ const pinWritedown = async (req, res) => {
     return res.status(200).json({ message: 'writedown pinned', pinned: writedown.pinned });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const updateTitle = async (req, res) => {
     const { writedown } = await handleAuthorizationAndGetWritedown(req, res);
     const { title } = req.body;
@@ -68,6 +76,10 @@ const updateTitle = async (req, res) => {
     return res.status(200).json({ message: 'writedown updated', newTitle: writedown.title });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const deleteWritedown = async (req, res) => {
     const { writedown } = await handleAuthorizationAndGetWritedown(req, res);
     await Writedown.findByIdAndDelete(writedown._id);
@@ -83,6 +95,10 @@ const deleteAllWritedowns = async (req, res) => {
     return res.status(200).json({ message: 'all writedowns deleted' });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const reorder = async (req, res) => {
     const { writedown } = await handleAuthorizationAndGetWritedown(req, res);
     const { rank } = req.body;
