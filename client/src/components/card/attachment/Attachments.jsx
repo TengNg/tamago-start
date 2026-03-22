@@ -33,7 +33,7 @@ function Attachments({ card, setViewedAttachment }) {
             queryClient.invalidateQueries(["attachments", card._id]);
             toast.success("Attachment deleted");
         },
-        onError: () => {
+        onError: (err) => {
             const errMsg =
                 err.response?.data?.message || "Failed to delete attachment";
             toast.error(errMsg);
@@ -94,11 +94,6 @@ function Attachments({ card, setViewedAttachment }) {
                         );
                     })}
                 </ul>
-            )}
-            {deleteAttachmentMutation.isError && (
-                <div className="text-red-600 text-xs mt-2">
-                    Failed to delete attachment
-                </div>
             )}
         </div>
     );

@@ -33,7 +33,7 @@ function Uploader({ card }) {
             const errMsg =
                 err.response?.data?.message || "Failed to upload attachment";
             toast.error(errMsg);
-            fileInputRef.current.value = "";
+            cleanupAfterUpload();
         },
     });
 
