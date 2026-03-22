@@ -8,11 +8,15 @@ const Board = require('../models/Board');
 
 /**
  * @param {import('mongoose').Types.ObjectId | string} boardId
- * @param {string} userId
+ * @param {import('mongoose').Types.ObjectId | string} userId
  * @param {{ allowOnPublicAccess?: boolean, ownerOnly?: boolean }} [opt]
  * @returns {Promise<AuthorizationResult>}
  */
-const isActionAuthorized = async (boardId, userId, opt = { allowOnPublicAccess: false, ownerOnly: false }) => {
+const isActionAuthorized = async (
+    boardId,
+    userId,
+    opt = { allowOnPublicAccess: false, ownerOnly: false }
+) => {
     const { allowOnPublicAccess, ownerOnly } = opt;
 
     const board = await Board.findById(boardId);
@@ -28,8 +32,8 @@ const isActionAuthorized = async (boardId, userId, opt = { allowOnPublicAccess: 
         };
     }
 
-    const isOwner = board.createdBy.toString() === userId;
-    const isMember = board.members.map(id => id.toString()).includes(userId);
+    const isOwner = board.createdBy.toString() === userId.toString();
+    const isMember = board.members.map(id => id.toString()).includes(userId.toString());
     const haveAccess = isOwner || isMember;
 
     if (ownerOnly === false && haveAccess) {
