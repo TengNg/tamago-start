@@ -81,12 +81,12 @@ export default function Register() {
 
                 <form
                     onSubmit={handleSubmit}
-                    className="flex flex-col form--style p-4 pt-2 bg-gray-200 w-[325px]"
+                    className="flex flex-col form--style p-6 pt-2 bg-gray-200 w-[325px]"
                     style={{ backgroundColor: "rgba(241, 241, 241, 0.75)" }}
                 >
-                    <label htmlFor="username">Username</label>
+                    <label className="text-gray-700" htmlFor="username">Username</label>
                     <input
-                        className="border-[3px] border-black p-1 font-medium select-none"
+                        className="border-[2px] border-gray-700 text-gray-700 p-1 font-medium select-none"
                         type="text"
                         id="username"
                         autoComplete="off"
@@ -97,9 +97,9 @@ export default function Register() {
                         required
                     />
 
-                    <label htmlFor="password">Password</label>
+                    <label className="text-gray-700" htmlFor="password">Password</label>
                     <input
-                        className="border-[3px] border-black p-1 font-medium select-none"
+                        className="border-[2px] border-gray-700 text-gray-700 p-1 font-medium select-none"
                         type="password"
                         id="password"
                         autoComplete="off"
@@ -109,9 +109,9 @@ export default function Register() {
                         required
                     />
 
-                    <label htmlFor="password">Confirm Password</label>
+                    <label className="text-gray-700" htmlFor="password">Confirm Password</label>
                     <input
-                        className="border-[3px] border-black p-1 font-medium select-none"
+                        className="border-[2px] border-gray-700 text-gray-700 p-1 font-medium select-none"
                         type="password"
                         id="confirmed-password"
                         autoComplete="off"
@@ -145,9 +145,9 @@ export default function Register() {
                     </div>
                 </form>
 
-                <div className="flex flex-col p-4 select-none">
+                <div className="flex flex-col p-4 select-none text-gray-700">
                     <p> Already have an account? </p>
-                    <Link className="text-black hover:text-black" to="/login">
+                    <Link className="text-gray-700 hover:text-gray-700" to="/login">
                         <button className="button--style mt-1">Log in</button>
                     </Link>
                 </div>

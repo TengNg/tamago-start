@@ -20,20 +20,20 @@ const Home = () => {
                             <div className="underline mb-2">
                                 About this project:
                             </div>
-                            <ul className="flex flex-col gap-2 ms-2">
+                            <ul className="flex flex-col gap-2 ms-4 list-disc">
                                 <li>
-                                    - Created from my own personal interest, and
+                                    Created from my own personal interest, and
                                     from everyday-workflow.
                                 </li>
                                 <li>
-                                    - I want a task-management app with a simple
+                                    I want a task-management app with a simple
                                     notes system (+ keybinds).
                                 </li>
                                 <li>
-                                    - Easy to collaborate with your friends.
+                                    Easy to collaborate with your friends.
                                 </li>
                                 <li>
-                                    - Easy to track your progress &amp;
+                                    Easy to track your progress &amp;
                                     activities.
                                 </li>
                             </ul>

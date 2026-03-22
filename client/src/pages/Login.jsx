@@ -52,12 +52,12 @@ export default function Login() {
 
                 <form
                     onSubmit={handleSubmit}
-                    className="flex flex-col form--style p-4 pt-2 w-[325px]"
+                    className="flex flex-col form--style p-6 pt-2 w-[325px]"
                     style={{ backgroundColor: "rgba(241, 241, 241, 0.75)" }}
                 >
-                    <label htmlFor="username">Username</label>
+                    <label className="text-gray-700" htmlFor="username">Username</label>
                     <input
-                        className="border-[3px] border-black p-1 font-medium"
+                        className="border-[2px] border-gray-700 text-gray-700 p-1 font-medium"
                         type="text"
                         id="username"
                         autoComplete="off"
@@ -67,10 +67,10 @@ export default function Login() {
                         required
                     />
 
-                    <label htmlFor="password">Password</label>
+                    <label className="text-gray-700" htmlFor="password">Password</label>
                     <input
                         ref={passwordInputEl}
-                        className="border-[3px] border-black p-1 font-medium select-none"
+                        className="border-[2px] border-gray-700 text-gray-700 p-1 font-medium select-none"
                         type="password"
                         id="password"
                         onChange={(e) => setPassword(e.target.value)}
@@ -115,9 +115,9 @@ export default function Login() {
                     </div>
                 </form>
 
-                <div className="flex flex-col font-normal select-none mt-4">
+                <div className="flex flex-col font-normal select-none mt-4 text-gray-700">
                     Don&apos;t have an account?
-                    <Link className="text-black" to="/register">
+                    <Link className="text-gray-700" to="/register">
                         <button className="button--style mt-1">Sign up</button>
                     </Link>
                 </div>
