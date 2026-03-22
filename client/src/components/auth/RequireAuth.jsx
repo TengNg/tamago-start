@@ -1,9 +1,14 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import useCurrentUserContext from "../../hooks/useCurrentUserContext";
+import { useEffect } from "react";
 
 export default function RequireAuth() {
     const location = useLocation();
     const { currentUser, currentUserQuery } = useCurrentUserContext();
+
+    useEffect(() => {
+        currentUserQuery.refetch();
+    }, []);
 
     if (currentUserQuery.isPending) {
         return (
