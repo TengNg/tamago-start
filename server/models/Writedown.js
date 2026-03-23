@@ -44,7 +44,7 @@ const writedownSchema = new mongoose.Schema({
     },
 });
 
-writedownSchema.index({ userId: 1, order: 1 });
+writedownSchema.index({ owner: 1, order: 1 });
 
 writedownSchema.pre('save', function (next) {
     if (!this.isNew) {

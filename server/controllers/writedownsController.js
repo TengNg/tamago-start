@@ -3,7 +3,6 @@ const Writedown = require("../models/Writedown");
 const {
     saveNewWritedown,
     writedownsByUserId,
-    handleAuthorizationAndGetWritedown,
 } = require('../services/writedownService');
 
 /**
@@ -21,7 +20,14 @@ const getWritedowns = async (req, res) => {
  * @param {import('express').Response} res
  */
 const getWritedown = async (req, res) => {
-    const { writedown } = await handleAuthorizationAndGetWritedown(req, res);
+    const writedown = await Writedown.findOne({
+        _id: req.params.writedownId,
+        owner: req.user.userId
+    });
+    if (!writedown) {
+        return res.status(403);
+    }
+
     return res.status(200).json({ writedown });
 };
 
@@ -33,7 +39,7 @@ const createWritedown = async (req, res) => {
     const { userId } = req.user;
     const { rank } = req.body;
     const newWritedown = await saveNewWritedown({ owner: userId, order: rank });
-    return res.status(200).json({ msg: 'new writedown added', newWritedown });
+    return res.status(200).json({ newWritedown });
 };
 
 /**
@@ -41,16 +47,22 @@ const createWritedown = async (req, res) => {
  * @param {import('express').Response} res
  */
 const saveWritedown = async (req, res) => {
-    const { writedown } = await handleAuthorizationAndGetWritedown(req, res);
-    const { content } = req.body;
+    const writedown = await Writedown.findOne({
+        _id: req.params.writedownId,
+        owner: req.user.userId
+    });
+    if (!writedown) {
+        return res.status(403);
+    }
 
+    const { content } = req.body;
     writedown.content = content;
     await writedown.save();
 
     const { _id, title, createdAt } = writedown;
     const updatedWritedown = { _id, title, content, createdAt }
 
-    return res.status(200).json({ msg: 'writedown updated', updatedWritedown });
+    return res.status(200).json({ updatedWritedown });
 };
 
 /**
@@ -58,10 +70,17 @@ const saveWritedown = async (req, res) => {
  * @param {import('express').Response} res
  */
 const pinWritedown = async (req, res) => {
-    const { writedown } = await handleAuthorizationAndGetWritedown(req, res);
+    const writedown = await Writedown.findOne({
+        _id: req.params.writedownId,
+        owner: req.user.userId
+    });
+    if (!writedown) {
+        return res.status(403);
+    }
+
     writedown.pinned = !writedown.pinned;
     await writedown.save();
-    return res.status(200).json({ message: 'writedown pinned', pinned: writedown.pinned });
+    return res.status(200).json({ pinned: writedown.pinned });
 };
 
 /**
@@ -69,11 +88,18 @@ const pinWritedown = async (req, res) => {
  * @param {import('express').Response} res
  */
 const updateTitle = async (req, res) => {
-    const { writedown } = await handleAuthorizationAndGetWritedown(req, res);
+    const writedown = await Writedown.findOne({
+        _id: req.params.writedownId,
+        owner: req.user.userId
+    });
+    if (!writedown) {
+        return res.status(403);
+    }
+
     const { title } = req.body;
     writedown.title = title;
     await writedown.save();
-    return res.status(200).json({ message: 'writedown updated', newTitle: writedown.title });
+    return res.status(201);
 };
 
 /**
@@ -81,9 +107,16 @@ const updateTitle = async (req, res) => {
  * @param {import('express').Response} res
  */
 const deleteWritedown = async (req, res) => {
-    const { writedown } = await handleAuthorizationAndGetWritedown(req, res);
+    const writedown = await Writedown.findOne({
+        _id: req.params.writedownId,
+        owner: req.user.userId
+    });
+    if (!writedown) {
+        return res.status(403);
+    }
+
     await Writedown.findByIdAndDelete(writedown._id);
-    return res.status(200).json({ message: 'writedown deleted' });
+    return res.status(201);
 };
 
 /**
@@ -92,7 +125,7 @@ const deleteWritedown = async (req, res) => {
  */
 const deleteAllWritedowns = async (req, res) => {
     await Writedown.deleteMany({ owner: req.user.userId });
-    return res.status(200).json({ message: 'all writedowns deleted' });
+    return res.status(201);
 };
 
 /**
@@ -100,10 +133,17 @@ const deleteAllWritedowns = async (req, res) => {
  * @param {import('express').Response} res
  */
 const reorder = async (req, res) => {
-    const { writedown } = await handleAuthorizationAndGetWritedown(req, res);
+    const writedown = await Writedown.findOne({
+        _id: req.params.writedownId,
+        owner: req.user.userId
+    });
+    if (!writedown) {
+        return res.status(403);
+    }
+
     const { rank } = req.body;
     await Writedown.findOneAndUpdate({ _id: writedown._id }, { order: rank });
-    return res.status(200).json({ message: "writedown updated" });
+    return res.status(201);
 };
 
 module.exports = {
