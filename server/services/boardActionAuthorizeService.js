@@ -36,14 +36,14 @@ const isActionAuthorized = async (
     const isMember = board.members.map(id => id.toString()).includes(userId.toString());
     const haveAccess = isOwner || isMember;
 
-    if (ownerOnly === false && haveAccess) {
+    if (!ownerOnly && haveAccess) {
         return {
             board,
             authorized: true
         }
     }
 
-    if (ownerOnly === true && isOwner) {
+    if (ownerOnly && isOwner) {
         return {
             board,
             authorized: true
