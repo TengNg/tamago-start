@@ -1,4 +1,4 @@
-module.exports= {
+module.exports = {
     MAX_CARD_COUNT: 500,
     MAX_LIST_COUNT: 25,
     MAX_BOARD_COUNT: 10,

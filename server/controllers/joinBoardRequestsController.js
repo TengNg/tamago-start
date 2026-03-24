@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
 const Board = require("../models/Board");
+const BoardMembership = require("../models/BoardMembership");
 const JoinBoardRequest = require("../models/JoinBoardRequest");
 const { userByUsername: getUser } = require('../services/userService');
 
-const { MAX_BOARD_MEMBER_COUNT, MAX_REQUEST_PAGE } = require('../data/limits');
+const { MAX_REQUEST_PAGE } = require('../data/limits');
 
 const findUser = async (req, res) => {
     const { username } = req.user;
@@ -78,10 +79,15 @@ const getBoardRequests = async (req, res) => {
     return res.json({ joinRequests });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const sendRequest = async (req, res) => {
     const { foundUser, foundBoard } = await findUserAndBoard(req, res);
 
-    if (foundBoard.createdBy.toString() === foundUser._id.toString() || foundBoard.members.includes(foundUser._id)) {
+    const boardMembership = await BoardMembership.findOne({ boardId: foundBoard._id, foundUser: foundUser._id });
+    if (boardMembership) {
         return res.status(409).json({ msg: "you're already a member of this board" });
     }
 
@@ -102,28 +108,27 @@ const sendRequest = async (req, res) => {
     return res.status(201).json({ msg: 'join request sent' });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const acceptRequest = async (req, res) => {
-    const { foundUser: _foundUser, foundBoard } = await findUserAndBoard(req, res);
-
-    if (foundBoard.members.length >= MAX_BOARD_MEMBER_COUNT) {
-        return res.status(409).json({ error: 'Board is full' });
-    }
-
-    const { requesterName } = req.body;
+    const { boardId, requesterName } = req.body;
     const requester = await getUser(requesterName);
     if (!requester) return res.status(403).json({ msg: "requester not found" });
 
-    if (foundBoard.members.includes(requester._id)) return res.status(409).json({ msg: 'requester is already a member' });
+    const requesterBoardMembership = await BoardMembership.findOne({ boardId, userId: requester._id });
+    if (requesterBoardMembership) {
+        return res.status(409).json({ msg: 'requester is already a member' });
+    }
 
     const acceptedRequest = await findRequest(req, res);
-    if (!acceptedRequest) return res.status(403).json({ msg: "request not found" });
+    if (!acceptedRequest) {
+        return res.status(403).json({ msg: "request not found" });
+    }
 
     acceptedRequest.status = 'accepted';
     acceptedRequest.save();
-
-    // after accepting request, add requester to board members
-    foundBoard.members.push(requester._id);
-    foundBoard.save();
 
     return res.json({ msg: 'request accepted' });
 };
@@ -133,13 +138,15 @@ const acceptRequest = async (req, res) => {
  * @param {import('express').Response} res
  */
 const rejectRequest = async (req, res) => {
-    const { foundUser: _foundUser, foundBoard } = await findUserAndBoard(req, res);
-
-    const { requesterName } = req.body;
+    const { boardId, requesterName } = req.body;
     const requester = await getUser(requesterName);
     if (!requester) return res.status(403).json({ msg: "requester not found" });
 
-    if (foundBoard.members.includes(requester._id)) return res.status(409).json({ msg: 'requester is already a member' });
+
+    const requesterBoardMembership = await BoardMembership.findOne({ boardId, userId: requester._id });
+    if (requesterBoardMembership) {
+        return res.status(409).json({ msg: 'requester is already a member' });
+    }
 
     const rejectedRequest = await findRequest(req, res);
     if (!rejectedRequest) return res.status(403).json({ msg: "request not found" });

@@ -29,11 +29,6 @@ const boardSchema = new mongoose.Schema({
         default: 0
     },
 
-    members: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-    }],
-
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -47,23 +42,27 @@ const boardSchema = new mongoose.Schema({
     },
 });
 
-// update list count & save new board_membership
 boardSchema.pre('save', async function(next) {
     if (this.isNew) {
         const Board = mongoose.model('Board');
         const boardCount = await Board.countDocuments({ createdBy: this.createdBy });
-
         if (boardCount >= MAX_BOARD_COUNT) {
             const error = new Error(`Maximum board count reached (maximum: ${MAX_BOARD_COUNT})`);
             return next(error);
         }
+    }
+});
 
+boardSchema.post('save', async function(doc) {
+    try {
         const BoardMembership = mongoose.model('BoardMembership');
         await BoardMembership.create({
-            boardId: this._id,
-            userId: this.createdBy,
+            boardId: doc._id,
+            userId: doc.createdBy,
             role: 'owner',
         });
+    } catch (err) {
+        console.log("BoardMembership is not created for owner", err);
     }
 });
 

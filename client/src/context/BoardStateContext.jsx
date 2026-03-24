@@ -738,7 +738,7 @@ export const BoardStateContextProvider = ({ children }) => {
                 ...prev,
                 board: {
                     ...prev.board,
-                    members: prev.board.members.filter(
+                    members: prev.members.filter(
                         (member) => member.username !== memberName,
                     ),
                 },
@@ -753,7 +753,7 @@ export const BoardStateContextProvider = ({ children }) => {
                 board: {
                     ...prev.board,
                     members: [
-                        ...prev.board.members,
+                        ...prev.members,
                         {
                             username: member.username,
                             profileImage: member.profileImage,

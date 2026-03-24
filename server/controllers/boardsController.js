@@ -18,59 +18,62 @@ const getBoards = async (req, res) => {
     const { userId } = req.user;
     const { filter } = req.query;
 
-    const boards = await Board.find({
-        $or: [{ createdBy: userId }, { members: userId }]
-    }).sort({ title: 'asc' }).lean();
+    const userBoardIds = await BoardMembership.find({ userId })
+        .distinct('boardId');
 
-    const mapped = boards.map(board => {
-        const owned = board.createdBy.toString() === userId;
-        return {
-            ...board,
-            owned
-        }
-    });
-
-    const ownedBoardsCount = mapped.filter(b => b.owned === true).length;
-    const joinedBoardsCount = mapped.length - ownedBoardsCount;
-
-    let validStatus = "all";
-    if (typeof filter === "string") {
-        validStatus = filter;
-    } else if (Array.isArray(filter) && typeof filter[0] === "string") {
-        validStatus = filter[0];
-    }
-
-    let filtered = [...mapped];
-    if (validStatus === "owned") {
-        filtered = filtered.filter(b => b.owned);
-    } else if (validStatus === "joined") {
-        filtered = filtered.filter(b => !b.owned);
-    }
-
-    const foundUser = await User.findById(userId);
-    const foundRecentlyViewedBoard = await Board.findById(foundUser.recentlyViewedBoardId);
-    if (!foundRecentlyViewedBoard) {
+    if (userBoardIds.length === 0) {
         return res.json({
-            boards,
-            total: mapped.length,
-            totalOwned: ownedBoardsCount,
-            totalJoined: joinedBoardsCount
+            boards: [],
+            total: 0,
+            totalOwned: 0,
+            totalJoined: 0,
+            recentlyViewedBoard: null,
         });
     }
 
-    let recentlyViewedBoard = undefined;
-    const indexOfMember = foundRecentlyViewedBoard.members.indexOf(foundUser._id);
-    const isOwner = foundRecentlyViewedBoard.createdBy.toString() === foundUser._id.toString();
-    if (indexOfMember !== -1 || isOwner) {
-        recentlyViewedBoard = foundRecentlyViewedBoard;
-    }
+    const boards = await Board.find({ _id: { $in: userBoardIds } })
+        .sort({ title: 'asc' })
+        .lean();
+
+    const membershipCounts = await BoardMembership.aggregate([
+        { $match: { boardId: { $in: userBoardIds } } },
+        { $group: { _id: '$boardId', memberCount: { $sum: 1 } } }
+    ]);
+
+    const countMap = {};
+    membershipCounts.forEach(item => {
+        countMap[item._id.toString()] = item.memberCount;
+    });
+
+    const mapped = boards.map(board => ({
+        ...board,
+        owned: board.createdBy.toString() === userId.toString(),
+        memberCount: countMap[board._id.toString()] || 1,
+    }));
+
+    const ownedBoardsCount = mapped.filter(b => b.owned).length;
+    const joinedBoardsCount = mapped.length - ownedBoardsCount;
+
+    let filtered = [...mapped].filter(board => {
+        return filter === "joined"
+            ? !board.owned
+            : filter === "owned"
+                ? board.owned
+                : board
+    });
+
+    const foundUser = await User.findById(userId);
+    const recentlyViewedBoardMembership = await BoardMembership.findOne({
+        userId: foundUser?._id,
+        boardId: foundUser?.recentlyViewedBoardId,
+    }).populate({ path: 'boardId' });
 
     return res.json({
         boards: filtered,
         total: mapped.length,
         totalOwned: ownedBoardsCount,
         totalJoined: joinedBoardsCount,
-        recentlyViewedBoard,
+        recentlyViewedBoard: recentlyViewedBoardMembership?.boardId || null,
     });
 };
 
@@ -92,30 +95,20 @@ const getBoard = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ msg: 'invalid board-id' });
+    const board = await Board.findById(id).populate({
+        path: 'createdBy',
+        select: 'username createdAt'
+    });
+    if (!board) {
+        return res.status(404);
     }
 
-    const board = await Board
-        .findOne({
-            _id: id,
-            $or: [
-                { visibility: 'public' },
-                { createdBy: userId },
-                { members: userId },
-            ],
-        })
-        .populate({
-            path: 'createdBy',
-            select: 'username createdAt'
-        })
-        .populate({
-            path: 'members',
-            select: 'username createdAt'
-        })
-
-    if (!board) {
-        return res.status(400).json({ msg: 'board not found' });
+    const hasAccess = await BoardMembership.exists({ boardId: id, userId: userId });
+    const isPublic = board.visibility === 'public';
+    const isOwner = board.createdBy.toString() === userId.toString();
+    const canAccess = isPublic || isOwner || hasAccess;
+    if (!canAccess) {
+        return res.status(403).json({ message: 'You do not have permission to access this board' });
     }
 
     // sync list count
@@ -157,22 +150,6 @@ const getBoard = async (req, res) => {
         {
             $sort: { order: 1 }
         },
-        // {
-        //     $set: {
-        //         cards: {
-        //             $map: {
-        //                 input: '$cards',
-        //                 as: 'card',
-        //                 in: {
-        //                     $mergeObjects: [
-        //                         '$$card',
-        //                         { index: { $indexOfArray: ['$cards', '$$card'] } }
-        //                     ]
-        //                 }
-        //             }
-        //         }
-        //     }
-        // }
     ]);
 
     // update recently viewed board
@@ -184,12 +161,31 @@ const getBoard = async (req, res) => {
 
     const memberships = await BoardMembership
         .find({ boardId: board._id })
-        .lean();
+        .populate({
+            path: 'userId',
+            select: 'username role'
+        }).lean()
+
+    const ownerFound = memberships.find(m => m.role === "owner");
+    if (!ownerFound) {
+        return res.status(400).json({ msg: "abandoned board" });
+    }
+
+    const isMember = memberships.find(m => m.userId._id.toString() === userId);
+    if (board.visibility !== "public" && !isMember) {
+        return res.status(400).json({ msg: "your're not a member of this board" });
+    }
 
     return res.json({
         board,
         lists: listsWithCards,
-        memberships,
+        members: memberships.map((m) => {
+            return {
+                username: /** @type any */(m.userId).username,
+                role: m.role,
+                createdAt: m.createdAt,
+            }
+        }),
     });
 }
 
@@ -206,19 +202,16 @@ const getBoardStats = async (req, res) => {
             path: 'createdBy',
             select: '_id username'
         })
-        .populate({
-            path: 'members',
-            select: 'username'
-        })
         .lean();
 
     if (!foundBoard) {
         return res.status(403).json({ msg: "board not found" });
     }
 
+    const memberships = await BoardMembership.find({ boardId: foundBoard._id }).lean();
     const isOwner = foundBoard.createdBy._id.toString() === userId;
-    const isMember = foundBoard.members.some(member => {
-        return member._id.toString() === userId
+    const isMember = memberships.some(member => {
+        return member.userId.toString() === userId
     });
     if (!isOwner && !isMember) {
         return res.status(403).json({ msg: "unauthorized" });
@@ -366,20 +359,12 @@ const leaveBoard = async (req, res) => {
     const { board, authorized } = await isActionAuthorized(id, userId, { ownerOnly: false });
     if (!authorized) return res.status(403).json({ msg: "unauthorized" });
 
-    const memberIds = board.members.map(m => m.toString());
-    const indexOfMember = memberIds.indexOf(userId);
-    if (indexOfMember !== -1) {
-        board.members.splice(indexOfMember, 1);
-        await board.save();
-    } else {
+    const foundBoardMembership = await BoardMembership.findOne({ boardId: board._id, userId });
+    if (!foundBoardMembership) {
         return res.status(404).json({ error: 'Member not found' });
     }
 
-    const foundBoardMembership = await BoardMembership.findOne({ boardId: board._id, userId });
-    if (foundBoardMembership) {
-        await BoardMembership.deleteOne({ boardId: board._id, userId });
-    }
-
+    await BoardMembership.deleteOne({ boardId: board._id, userId });
     res.status(200).json({ msg: 'Member removed from the board successfully' });
 };
 
@@ -391,22 +376,16 @@ const removeMemberFromBoard = async (req, res) => {
     const { userId } = req.user;
     const { id, memberName } = req.params;
 
-    const { board, authorized } = await isActionAuthorized(id, userId, { ownerOnly: false });
-    if (!authorized) {
-        return res.status(403).json({ error: "unauthorized" });
+    const board = await Board.findById(id);
+    if (!board) {
+        return res.status(404);
     }
 
     const foundMember = await getUser(memberName);
-    if (!foundMember || board.createdBy.toString() === foundMember._id.toString()) {
+    const isNotOwner = board.createdBy.toString() !== userId;
+    const isRemovedMemberOwner = board.createdBy.toString() === foundMember._id.toString();
+    if (!foundMember || isNotOwner || isRemovedMemberOwner) {
         return res.status(401).json({ error: 'unauthorized' });
-    }
-
-    const indexOfMember = board.members.indexOf(foundMember._id);
-    if (indexOfMember !== -1) {
-        board.members.splice(indexOfMember, 1);
-        await board.save();
-    } else {
-        return res.status(404).json({ error: 'Member not found in the board' });
     }
 
     await BoardMembership.deleteOne({

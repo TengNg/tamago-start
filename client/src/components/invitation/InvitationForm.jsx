@@ -206,7 +206,7 @@ const InvitationForm = ({ open, setOpen }) => {
                         </div>
                     </div>
 
-                    {boardState.board.members.map((user, index) => {
+                    {boardState.members.map((user, index) => {
                         return (
                             <Member
                                 key={index}

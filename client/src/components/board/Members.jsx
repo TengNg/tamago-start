@@ -88,11 +88,7 @@ const Members = ({ open, setOpen }) => {
                         </div>
                     </div>
 
-                    {boardState.board.members.map((user, index) => {
-                        const joinedAt = boardState.memberships.find(
-                            (membership) => membership.userId === user._id,
-                        )?.createdAt;
-
+                    {boardState.members.map((user, index) => {
                         return (
                             <div
                                 key={index}
@@ -117,8 +113,8 @@ const Members = ({ open, setOpen }) => {
                                     </div>
                                     <div className="text-gray-500 text-[10px] sm:text-[0.65rem] font-medium">
                                         joined:{" "}
-                                        {joinedAt !== undefined
-                                            ? dateFormatter(joinedAt)
+                                        {user.createdAt !== undefined
+                                            ? dateFormatter(user.createdAt)
                                             : "(not found)"}
                                     </div>
                                 </div>

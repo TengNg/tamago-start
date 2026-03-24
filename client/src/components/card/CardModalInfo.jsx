@@ -29,7 +29,7 @@ const CardModalInfo = ({
 
     const memberNames = useMemo(() => {
         const ownerName = boardState.board.createdBy.username;
-        const memberNames = boardState.board.members.map((m) => m.username);
+        const memberNames = boardState.members.map((m) => m.username);
         return [ownerName, ...memberNames];
     }, [boardState?.board]);
 

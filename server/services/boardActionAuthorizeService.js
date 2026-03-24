@@ -1,4 +1,5 @@
 const Board = require('../models/Board');
+const BoardMembership = require('../models/BoardMembership');
 
 /**
  * @typedef {object} AuthorizationResult
@@ -33,7 +34,7 @@ const isActionAuthorized = async (
     }
 
     const isOwner = board.createdBy.toString() === userId.toString();
-    const isMember = board.members.map(id => id.toString()).includes(userId.toString());
+    const isMember = await BoardMembership.exists({ boardId, userId });
     const haveAccess = isOwner || isMember;
 
     if (!ownerOnly && haveAccess) {

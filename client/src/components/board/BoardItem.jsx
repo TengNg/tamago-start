@@ -6,7 +6,7 @@ import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 const BoardItem = ({ item }) => {
     const { currentUser } = useCurrentUserContext();
 
-    const { _id, title, description, members, createdBy, createdAt } = item;
+    const { _id, title, description, memberCount, createdBy, createdAt } = item;
 
     return (
         <Link
@@ -35,7 +35,7 @@ const BoardItem = ({ item }) => {
                 </p>
 
                 <div className="text-[9px] sm:text-[10px] font-normal">
-                    {pluralizeString(members.length + 1, "member")}
+                    {pluralizeString(memberCount, "member")}
                 </div>
             </div>
         </Link>

@@ -160,7 +160,7 @@ const Filter = ({ open, setOpen }) => {
 
         const map = {};
         const createdBy = boardState.board.createdBy;
-        const members = boardState.board.members;
+        const members = boardState.members;
         map[createdBy._id] = createdBy.username;
         members.forEach((m) => (map[m._id] = m.username));
         return map;
