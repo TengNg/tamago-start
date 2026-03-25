@@ -1,5 +1,5 @@
 const CardComment = require("../models/CardComment");
-const { isActionAuthorized } = require("../services/boardActionAuthorizeService");
+const { checkBoardPermission } = require('../services/boardPermissionService');
 const { cardById } = require("../services/cardService");
 const saveBoardActivity = require('../services/saveBoardActivity');
 
@@ -21,10 +21,12 @@ const getCardComments = async (req, res) => {
         return res.status(404).json({ error: 'Card not found' });
     }
 
-    const { authorized } = await isActionAuthorized(foundCard.boardId, userId, { allowOnPublicAccess: true });
-    if (!authorized) {
-        return res.status(403).json({ msg: 'unauthorized' });
-    }
+    await checkBoardPermission({
+        boardId: foundCard.boardId.toString(),
+        userId,
+        resource: "comment",
+        action: "view"
+    })
 
     let { perPage, page } = req.query;
     const perPageNum = Number(Array.isArray(perPage) ? perPage[0] : perPage) || COMMENTS_PER_PAGE;
@@ -55,10 +57,12 @@ const getCardComment = async (req, res) => {
         return res.status(404).json({ error: 'Card not found' });
     }
 
-    const { authorized } = await isActionAuthorized(foundCard.boardId, userId, { allowOnPublicAccess: true });
-    if (!authorized) {
-        return res.status(403).json({ msg: 'unauthorized' });
-    }
+    await checkBoardPermission({
+        boardId: foundCard.boardId.toString(),
+        userId,
+        resource: "comment",
+        action: "view"
+    })
 
     const foundComment = await CardComment.findOne({
         cardId: foundCard._id,
@@ -96,10 +100,12 @@ const createCardComment = async (req, res) => {
         return res.status(404).json({ error: 'Card not found' });
     }
 
-    const { authorized } = await isActionAuthorized(foundCard.boardId, userId, { allowOnPublicAccess: false });
-    if (!authorized) {
-        return res.status(403).json({ msg: 'unauthorized' });
-    }
+    await checkBoardPermission({
+        boardId: foundCard.boardId.toString(),
+        userId,
+        resource: "comment",
+        action: "create"
+    })
 
     const newComment = new CardComment({
         cardId: foundCard._id,
@@ -145,14 +151,15 @@ const deleteCardComment = async (req, res) => {
         return res.status(404).json({ error: 'Comment not found' });
     }
 
-    const populatedCard = /** @type {any} */(foundComment.cardId);
-    const { authorized } = await isActionAuthorized(populatedCard.boardId, userId, { allowOnPublicAccess: false });
-    if (!authorized) {
-        return res.status(403).json({ msg: 'unauthorized testing' });
-    }
+    await checkBoardPermission({
+        boardId: /** @type any */(foundComment.cardId).boardId.toString(),
+        userId,
+        resource: "comment",
+        action: "delete"
+    })
 
     if (foundComment.userId.toString() !== userId) {
-        return res.status(403).json({ msg: 'unauthorized' });
+        return res.status(403).json({ msg: "can't delete comments from others" });
     }
 
     await CardComment.findOneAndDelete({ _id: commentId });

@@ -43,6 +43,8 @@ const boardSchema = new mongoose.Schema({
 });
 
 boardSchema.pre('save', async function(next) {
+    this.$locals.wasNew = this.isNew;
+
     if (this.isNew) {
         const Board = mongoose.model('Board');
         const boardCount = await Board.countDocuments({ createdBy: this.createdBy });
@@ -54,6 +56,10 @@ boardSchema.pre('save', async function(next) {
 });
 
 boardSchema.post('save', async function(doc) {
+    if (!doc.$locals.wasNew) {
+        return;
+    }
+
     try {
         const BoardMembership = mongoose.model('BoardMembership');
         await BoardMembership.create({
@@ -62,7 +68,9 @@ boardSchema.post('save', async function(doc) {
             role: 'owner',
         });
     } catch (err) {
-        console.log("BoardMembership is not created for owner", err);
+        console.log("BoardMembership is not created for owner", err.message);
+    } finally {
+        delete doc.$locals.wasNew;
     }
 });
 

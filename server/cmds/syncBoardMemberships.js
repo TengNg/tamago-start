@@ -26,7 +26,7 @@ async function execute() {
         for (const board of boards) {
             const boardId = board._id;
             const ownerId = board.createdBy;
-            const oldMembers = board.members || [];
+            const oldMembers = /** @type any */(board).members || [];
 
             const ownerExists = await BoardMembership.exists({ boardId, userId: ownerId });
             if (!ownerExists) {

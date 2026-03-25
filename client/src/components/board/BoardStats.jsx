@@ -103,8 +103,8 @@ const BoardStats = ({ boardStatsModal, setBoardStatsModal }) => {
                     <div className="flex gap-2">
                         members:
                         <span className="font-medium">
-                            {boardStatsModal.board?.members?.length > 0
-                                ? boardStatsModal.board?.members
+                            {boardStatsModal.members.length > 0
+                                ? boardStatsModal.members
                                       ?.map((member) => member.username)
                                       .join(", ")
                                 : "<none>"}

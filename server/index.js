@@ -10,12 +10,10 @@ const express = require("express");
 const errorHandler = require('./middlewares/errorHandler');
 const notFoundHandler = require('./middlewares/notFoundHandler');
 const credentials = require('./middlewares/credentials');
-const rateLimiter = require('./middlewares/rateLimiter');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 
 const app = express();
-const apiRouter = express.Router();
 
 app.disable('x-powered-by');
 app.use((_req, res, next) => {
@@ -38,32 +36,11 @@ if (process.env.MODE !== "production") {
     }));
 }
 
-// (discord)
-apiRouter.use(require('./routes/api/discord'));
-
-// (auth)
-apiRouter.use("/register", rateLimiter, require("./routes/api/register"));
-apiRouter.use("/login", rateLimiter, require("./routes/api/login"));
-apiRouter.use("/logout", require("./routes/api/logout"));
-
-// (require-auth)
-apiRouter.use(require("./middlewares/authenticateToken"));
-apiRouter.use("/me", require("./routes/api/me"));
-apiRouter.use("/boards", require("./routes/api/boards"));
-apiRouter.use("/lists", require("./routes/api/lists"));
-apiRouter.use("/cards", require("./routes/api/cards"));
-apiRouter.use("/invitations", require("./routes/api/invitations"));
-apiRouter.use("/chats", require("./routes/api/chats"));
-apiRouter.use("/join_board_requests", require("./routes/api/joinBoardRequests"));
-apiRouter.use("/account", require("./routes/api/account"));
-apiRouter.use("/personal_writedowns", require("./routes/api/writedowns"));
-apiRouter.use("/board_activities", require("./routes/api/boardActivities"));
-apiRouter.use("/attachments", require("./routes/api/attachments"));
-
-// (mount api-routers)
+// api-router
+const apiRouter = require("./routes/api/index");
 app.use("/api", apiRouter);
 
-// (prod-setup)
+// prod-setup
 if (process.env.MODE === "production") {
     const path = require('path');
     const buildPath = path.join(__dirname, "../client/dist");
@@ -80,7 +57,7 @@ if (process.env.MODE === "production") {
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// Init socket =================================================================
+// init socket =================================================================
 
 const { initSocket } = require('./socket');
 const { createServer } = require('http');

@@ -1,28 +1,11 @@
 const mongoose = require('mongoose');
 const List = require('../models/List.js');
 const Card = require('../models/Card.js');
-const Board = require('../models/Board.js');
 const { lexorank } = require('../lib/lexorank.js');
 
 const { saveList } = require('../services/listService');
-const { isActionAuthorized } = require('../services/boardActionAuthorizeService');
 const saveBoardActivity = require('../services/saveBoardActivity');
-
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
-const getListCount = async (req, res) => {
-    const { boardId } = req.params;
-
-    const foundBoard = await Board.findById(boardId);
-    if (!foundBoard) {
-        return res.status(403).json({ msg: 'board not found' });
-    }
-
-    const count = await List.countDocuments({ boardId });
-    return res.status(200).json({ count });
-};
+const { checkBoardPermission } = require('../services/boardPermissionService.js');
 
 /**
  * @param {import('express').Request} req
@@ -32,8 +15,12 @@ const addList = async (req, res) => {
     const { userId } = req.user;
     const { title, order, boardId } = req.body;
 
-    const { authorized } = await isActionAuthorized(boardId, userId, { ownerOnly: false });
-    if (!authorized) return res.status(403).json({ msg: 'unauthorized' });
+    await checkBoardPermission({
+        boardId,
+        userId,
+        resource: "list",
+        action: "create"
+    })
 
     const newList = new List({
         title,
@@ -67,11 +54,12 @@ const reorder = async (req, res) => {
     const foundList = await List.findById(id);
     if (!foundList) return res.status(403).json({ msg: "list not found" });
 
-    const { boardId } = foundList;
-    const { authorized } = await isActionAuthorized(boardId, userId);
-    if (!authorized) {
-        return res.status(403).json({ msg: "unauthorized" });
-    }
+    await checkBoardPermission({
+        boardId: foundList.boardId.toString(),
+        userId,
+        resource: "list",
+        action: "edit"
+    })
 
     if (foundList.order === rank) {
         return res.status(200).json({
@@ -83,8 +71,8 @@ const reorder = async (req, res) => {
     foundList.save();
 
     await saveBoardActivity({
-        boardId,
         userId,
+        boardId: foundList.boardId,
         listId: foundList._id,
         action: "update list rank",
         type: "list",
@@ -106,9 +94,12 @@ const updateTitle = async (req, res) => {
     const foundList = await List.findById(id);
     if (!foundList) return res.status(403).json({ msg: "list not found" });
 
-    const { boardId } = foundList;
-    const { authorized } = await isActionAuthorized(boardId, userId);
-    if (!authorized) return res.status(403).json({ msg: "unauthorized" });
+    await checkBoardPermission({
+        boardId: foundList.boardId.toString(),
+        userId,
+        resource: "list",
+        action: "edit"
+    })
 
     foundList.title = title;
     foundList.save();
@@ -127,15 +118,18 @@ const deleteList = async (req, res) => {
     const foundList = await List.findById(id);
     if (!foundList) return res.status(403).json({ msg: "list not found" });
 
-    const { boardId } = foundList;
-    const { authorized } = await isActionAuthorized(boardId, userId, { ownerOnly: false });
-    if (!authorized) return res.status(403).json({ msg: 'unauthorized' });
+    await checkBoardPermission({
+        boardId: foundList.boardId.toString(),
+        userId,
+        resource: "list",
+        action: "delete"
+    })
 
     await List.findByIdAndDelete(id);
 
     await saveBoardActivity({
-        boardId,
         userId,
+        boardId: foundList.boardId,
         action: "delete list",
         type: "list",
         description: `list with title "${foundList.title}" deleted`,
@@ -154,14 +148,18 @@ const copyList = async (req, res) => {
     const { rank } = req.body;
 
     const foundList = await List.findById(id);
-
-    if (!foundList) return res.status(403).json({ msg: "List not found" });
+    if (!foundList) {
+        return res.status(403).json({ msg: "List not found" });
+    }
 
     const { title, boardId } = foundList;
-    const { authorized } = await isActionAuthorized(boardId, userId, { ownerOnly: false });
-    if (!authorized) {
-        return res.status(403).json({ msg: 'unauthorized' });
-    }
+
+    await checkBoardPermission({
+        boardId: foundList.boardId.toString(),
+        userId,
+        resource: "list",
+        action: "create"
+    })
 
     const newListId = new mongoose.Types.ObjectId();
 
@@ -213,14 +211,24 @@ const moveList = async (req, res) => {
     const { id, boardId, index } = req.params;
 
     const foundList = await List.findById(id);
-    if (!foundList) return res.status(403).json({ msg: "List not found" });
+    if (!foundList) {
+        return res.status(403).json({ msg: "List not found" });
+    }
 
-    const { board, authorized } = await isActionAuthorized(boardId, userId, { ownerOnly: false });
-    if (!authorized) return res.status(403).json({ msg: 'unauthorized' });
+    // it's about something like, move list to another board is like create a
+    // like to that board, so we need to check for both sides, move on current
+    // board or move to another board
+
+    const isMovedToDifferentBoard = foundList.boardId.toString() !== boardId;
+    const { board } = await checkBoardPermission({
+        boardId,
+        userId,
+        resource: "list",
+        action: isMovedToDifferentBoard ? "create" : "edit"
+    })
 
     const sortedLists = await List.find({ boardId }).sort({ order: 'asc' });
     const [newOrder, ok] = lexorank.insert(sortedLists[+index - 1]?.order, sortedLists[+index]?.order);
-
     if (!ok) {
         return res.status(403).send('Bad Request');
     }
@@ -236,7 +244,6 @@ const moveList = async (req, res) => {
 };
 
 module.exports = {
-    getListCount,
     addList,
     updateTitle,
     deleteList,

@@ -8,7 +8,6 @@ const {
     copyList,
     reorder,
     moveList,
-    getListCount,
 } = require('../../controllers/listsController');
 
 let listActionLocks = {};
@@ -42,9 +41,6 @@ const withLock = (action, fn) => async (req, res) => {
         }
     }
 };
-
-router.route("/b/:boardId/count")
-    .get(getListCount);
 
 router.route("/")
     .post(addList)

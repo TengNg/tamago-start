@@ -8,7 +8,7 @@ import { axiosPrivate } from "../api/axios";
 import dateFormatter from "../utils/dateFormatter";
 import useCurrentUserContext from "../hooks/useCurrentUserContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getOwnedBoards } from "../api/boardApi";
+import { getBoards } from "../api/boardApi";
 import { updatePassword, updateUsername } from "../api/accountApi";
 import useToast from "../hooks/useToast";
 
@@ -27,6 +27,7 @@ const Profile = () => {
     const [boardStatsModal, setBoardStatsModal] = useState({
         stats: [],
         board: {},
+        members: [],
         open: false,
         loadingData: false,
     });
@@ -52,7 +53,7 @@ const Profile = () => {
 
     const ownedBoardsQuery = useQuery({
         queryKey: ["boards", "owned"],
-        queryFn: () => getOwnedBoards(),
+        queryFn: () => getBoards({ filter: "owned" }),
     });
 
     const updateUsernameMutation = useMutation({
@@ -205,12 +206,13 @@ const Profile = () => {
             setBoardStatsModal({
                 board: {},
                 stats: [],
+                members: [],
                 open: true,
                 loadingData: true,
             });
 
             const response = await fetchBoardStats(boardId);
-            const { board, priorityLevelStats, staleCardCount } = response.data;
+            const { board, members, priorityLevelStats, staleCardCount } = response.data;
 
             const priorityOrder = ["none", "low", "medium", "high", "critical"];
             priorityLevelStats.sort((a, b) => {
@@ -223,6 +225,7 @@ const Profile = () => {
                 return {
                     ...prev,
                     board,
+                    members,
                     stats: priorityLevelStats,
                     staleCardCount,
                     loadingData: false,
@@ -420,7 +423,7 @@ const Profile = () => {
                                         _id,
                                         title,
                                         description: _description,
-                                        members,
+                                        memberCount,
                                         createdBy: _createdBy,
                                         createdAt,
                                     } = item;
@@ -445,7 +448,7 @@ const Profile = () => {
 
                                                 <p className="text-[11px] sm:text-[0.85rem] mt-1">
                                                     members:{" "}
-                                                    {members.length + 1}
+                                                    {memberCount}
                                                 </p>
 
                                                 <p className="text-[11px] sm:text-[0.85rem] mt-1">

@@ -28,10 +28,8 @@ const CardModalInfo = ({
     const dueDate = card?.dueDate ? formatDateToYYYYMMDD(card.dueDate) : "";
 
     const memberNames = useMemo(() => {
-        const ownerName = boardState.board.createdBy.username;
-        const memberNames = boardState.members.map((m) => m.username);
-        return [ownerName, ...memberNames];
-    }, [boardState?.board]);
+        return boardState.members.map((m) => m.username);
+    }, [boardState.members]);
 
     function handleCopyCardCode(e) {
         const button = e.currentTarget;

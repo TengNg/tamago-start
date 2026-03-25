@@ -3,7 +3,6 @@ const router = express.Router();
 
 const {
     getBoards,
-    getOwnedBoards,
     getBoardStats,
     createBoard,
     getBoard,
@@ -18,14 +17,12 @@ const {
     deletePinnedBoard,
     cleanPinnedBoardsCollection,
     updatePinnedBoardsCollection,
+    getListCount,
 } = require('../../controllers/boardsController');
 
 router.route("/")
     .get(getBoards)
     .post(createBoard)
-
-router.route("/owned")
-    .get(getOwnedBoards)
 
 router.route("/:id")
     .get(getBoard)
@@ -33,6 +30,9 @@ router.route("/:id")
 
 router.route("/:id/stats")
     .get(getBoardStats)
+
+router.route("/:id/list-count")
+    .get(getListCount)
 
 router.route("/:id/members/leave")
     .patch(leaveBoard)

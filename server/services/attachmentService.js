@@ -1,6 +1,6 @@
 const { cardById } = require('../services/cardService');
 const { findWritedown } = require('../services/writedownService');
-const { isActionAuthorized } = require('../services/boardActionAuthorizeService');
+const { checkBoardPermission } = require('./boardPermissionService');
 
 /**
  * @typedef {object} AuthorizationResult
@@ -8,51 +8,43 @@ const { isActionAuthorized } = require('../services/boardActionAuthorizeService'
  * @property {string} msg
  * @property {number} code
  */
-
 /**
- * @param {string} type
- * @param {import('mongoose').Types.ObjectId | string} userId
- * @param {import('mongoose').Types.ObjectId | string} refId
- * @param {boolean} allowOnPublicAccess
- * @returns {Promise<AuthorizationResult>}
+ * @param {Object} params
+ * @param {'card'|'writedown'} params.type
+ * @param {string} params.refId
+ * @param {string} params.userId
+ * @param {'list' | 'card' | 'comment' | 'attachment'} params.resource
+ * @param {'view' | 'create' | 'edit' | 'delete'} params.action
+ * @throws {{ status: number, message: string }}
  */
-async function authorize(userId, type, refId, allowOnPublicAccess) {
-    if (type === "card") {
-        const foundCard = await cardById(refId);
-        if (!foundCard) {
-            return {
-                authorized: false,
-                msg: "Card not found",
-                code: 400,
-            }
-        }
-
-        const { authorized } = await isActionAuthorized(foundCard.boardId, userId, { allowOnPublicAccess });
-        if (!authorized) {
-            return {
-                authorized: false,
-                msg: "unauthorized",
-                code: 403,
-            }
-        }
+async function authorize({ type, refId, userId, resource, action }) {
+    if (!type || !resource || !action) {
+        const message = "Missing required params for authorization";
+        throw { status: 403, message };
     }
 
     if (type === "writedown") {
-        const foundWritedown = await findWritedown(refId);
+        const foundWritedown = await findWritedown(refId.toString());
         if (!foundWritedown) {
-            return {
-                authorized: false,
-                msg: "Writedown not found",
-                code: 400,
-            }
+            const message = "Writedown not found";
+            throw { status: 403, message };
         }
+
+        return;
     }
 
-    return {
-        authorized: true,
-        msg: "",
-        code: 200,
+    const foundCard = await cardById(refId.toString());
+    if (!foundCard) {
+        const message = "Card not found";
+        throw { status: 403, message };
     }
+
+    await checkBoardPermission({
+        boardId: foundCard.boardId.toString(),
+        userId,
+        resource,
+        action,
+    })
 }
 
 module.exports = {

@@ -60,61 +60,33 @@ const Members = ({ open, setOpen }) => {
                 </div>
 
                 <div className="flex flex-col justify-start items-start gap-4 mt-4 pb-3 overflow-auto max-h-[600px] w-[90%] sm:w-[400px]">
-                    <div className="flex gap-2 items-center">
-                        <Avatar
-                            username={boardState.board.createdBy.username}
-                            profileImage={
-                                boardState.board.createdBy.profileImage
-                            }
-                            size="lg"
-                            withBorder={
-                                boardState.board.createdBy.username ===
-                                currentUser.username
-                            }
-                            isAdmin={true}
-                            clickable={false}
-                        />
-                        <div className="d-flex flex-col items-center">
-                            <div className="text-gray-600 font-medium text-[0.85rem]">
-                                {boardState.board.createdBy.username}
-                            </div>
-                            <div className="text-gray-500 text-[10px] sm:text-[0.65rem] font-medium">
-                                (owner)
-                            </div>
-                            <div className="text-gray-500 text-[10px] sm:text-[0.65rem] font-medium">
-                                joined:{" "}
-                                {dateFormatter(boardState.board.createdAt)}
-                            </div>
-                        </div>
-                    </div>
-
-                    {boardState.members.map((user, index) => {
+                    {boardState.members.map((m, index) => {
                         return (
                             <div
-                                key={index}
+                                key={m.username}
                                 className="flex gap-2 items-center"
                             >
                                 <Avatar
                                     key={index}
-                                    username={user.username}
-                                    profileImage={user.profileImage}
+                                    username={m.username}
+                                    profileImage={m.profileImage}
                                     withBorder={
-                                        user.username === currentUser.username
+                                        m.username === currentUser.username
                                     }
                                     size="lg"
                                     clickable={false}
                                 />
                                 <div className="d-flex flex-col items-center">
                                     <div className="text-gray-600 font-medium text-[0.85rem]">
-                                        {user.username}
+                                        {m.username}
                                     </div>
                                     <div className="text-gray-500 text-[10px] sm:text-[0.65rem] font-medium">
-                                        (member)
+                                        {m.role}
                                     </div>
                                     <div className="text-gray-500 text-[10px] sm:text-[0.65rem] font-medium">
                                         joined:{" "}
-                                        {user.createdAt !== undefined
-                                            ? dateFormatter(user.createdAt)
+                                        {m.createdAt !== undefined
+                                            ? dateFormatter(m.createdAt)
                                             : "(not found)"}
                                     </div>
                                 </div>

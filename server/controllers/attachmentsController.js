@@ -15,10 +15,13 @@ exports.uploadAttachment = async (req, res) => {
         return res.status(400).json({ message: errMsg });
     }
 
-    const { authorized, msg, code } = await authorize(userId, type, refId, false);
-    if (!authorized) {
-        return res.status(code).json({ message: msg });
-    }
+    await authorize({
+        type,
+        refId,
+        userId,
+        resource: "attachment",
+        action: "create",
+    });
 
     if (!req.file || typeof req.file !== 'object' ||
         typeof req.file.buffer === 'undefined' ||
@@ -57,10 +60,13 @@ exports.getAttachment = async (req, res) => {
             return res.status(404);
         }
 
-        const { authorized, msg, code } = await authorize(userId, attachment.type, attachment.refId, true);
-        if (!authorized) {
-            return res.status(code).json({ message: msg });
-        }
+        await authorize({
+            type: attachment.type,
+            refId: attachment.refId.toString(),
+            userId,
+            resource: "attachment",
+            action: "view",
+        });
 
         res.set('Content-Type', attachment.mimetype);
         res.send(attachment.data);
@@ -85,10 +91,13 @@ exports.listAttachments = async (req, res) => {
             return res.status(400).json({ error: 'Missing refId' });
         }
 
-        const { authorized, msg, code } = await authorize(userId, type, refId, true);
-        if (!authorized) {
-            return res.status(code).json({ error: msg });
-        }
+        await authorize({
+            type: /** @type ("card"|"writedown") */(type),
+            refId,
+            userId,
+            resource: "attachment",
+            action: "view",
+        });
 
         const attachments = await Attachment.find({ type, refId });
         res.json(attachments.map(a => ({
@@ -115,10 +124,13 @@ exports.deleteAttachment = async (req, res) => {
         return res.status(404);
     }
 
-    const { authorized, msg, code } = await authorize(userId, attachment.type, attachment.refId, false);
-    if (!authorized) {
-        return res.status(code).json({ message: msg });
-    }
+    await authorize({
+        type: attachment.type,
+        refId: attachment.refId.toString(),
+        userId,
+        resource: "attachment",
+        action: "view",
+    });
 
     const result = await Attachment.deleteOne({ _id: id });
     if (result.deletedCount === 0) {

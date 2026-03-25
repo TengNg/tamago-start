@@ -267,7 +267,9 @@ const Board = () => {
 
             socket.emit("updateBoardTitle", value);
         } catch (err) {
-            toast.error("Failed to update board title");
+            const errMsg = err.response?.data?.message || "Failed to update board title";
+            toast.error(errMsg);
+            setBoardTitle(title);
         }
     };
 

@@ -43,25 +43,9 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
         }),
     );
 
-    function validateBoardMember() {
-        if (
-            boardState?.board?.createdBy?._id !== currentUser._id &&
-            !boardState?.board?.members
-                .map((member) => member._id)
-                .includes(currentUser._id)
-        ) {
-            toast.error(
-                "You don't have permission, please join the board first",
-            );
-            return;
-        }
-    }
-
     async function handleOnDragEnd(e) {
         setActiveCard(null);
         setActiveList(null);
-
-        validateBoardMember();
 
         const { active, over } = e;
         if (!over) {
@@ -130,7 +114,8 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
                     toIndex: destIndex,
                 });
             } catch (err) {
-                toast.error("Failed to reorder list");
+                const errMsg = err.response.data.message || "Failed to reorder list"
+                toast.error(errMsg);
                 setBoardState((prev) => {
                     return { ...prev, lists: initialLists };
                 });
@@ -213,7 +198,8 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
                 card: newCard,
             });
         } catch (err) {
-            toast.error("Failed to reorder card");
+            const errMsg = err.response.data.message || "Failed to reorder card"
+            toast.error(errMsg);
             setBoardState(clonedBoardState);
         }
     }

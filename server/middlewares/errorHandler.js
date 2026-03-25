@@ -1,5 +1,5 @@
 /**
- * @param {Error} err
+ * @param {Error & { status: number }} err
  * @param {import('express').Request} _req
  * @param {import('express').Response} res
  * @param {import('express').NextFunction} _next
@@ -9,9 +9,13 @@ const errorHandler = (err, _req, res, _next) => {
         ? err.message.trim()
         : 'Internal server error';
 
+    const status = (err && typeof err.status === 'number')
+        ? err.status
+        : 500
+
     const isProd = process.env.MODE === 'production';
 
-    res.status(500).json({
+    res.status(status).json({
         message,
         ...(isProd ? {} : { stack: err?.stack })
     });

@@ -65,7 +65,8 @@ const BoardMenu = ({
             );
             socket.emit("updateBoardDescription", e.target.value.trim());
         } catch (err) {
-            toast.error("Failed to update description");
+            const errMsg = err.response?.data?.message || "Failed to update board title";
+            toast.error(errMsg);
         }
     };
 

@@ -117,8 +117,10 @@ const CardComments = ({ card }) => {
             });
             socket.emit("deleteCardComment", { commentId, cardId: card._id });
         },
-        onError: (_err) => {
-            toast.error(`Failed to delete comment, please try again.`);
+        onError: (err) => {
+            const errMsg =
+                err.response?.data?.message || err.message || "Failed to delete comment";
+            toast.error(errMsg);
         },
     });
 

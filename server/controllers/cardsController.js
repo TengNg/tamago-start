@@ -1,8 +1,7 @@
 const mongoose = require('mongoose');
 const Card = require('../models/Card.js');
-const Board = require('../models/Board.js');
 
-const { isActionAuthorized } = require('../services/boardActionAuthorizeService');
+const { checkBoardPermission } = require('../services/boardPermissionService');
 const saveBoardActivity = require('../services/saveBoardActivity');
 
 const { listById } = require('../services/listService');
@@ -21,10 +20,12 @@ const getCard = async (req, res) => {
         return res.status(403).json({ msg: "card not found" });
     }
 
-    const { authorized } = await isActionAuthorized(foundCard.boardId, userId, { allowOnPublicAccess: true });
-    if (!authorized) {
-        return res.status(403).json({ msg: 'unauthorized' });
-    }
+    await checkBoardPermission({
+        boardId: foundCard.boardId.toString(),
+        userId,
+        resource: "card",
+        action: "view"
+    })
 
     return res.status(201).json({ card: foundCard });
 };
@@ -40,23 +41,26 @@ const addCard = async (req, res) => {
     const foundList = await listById(listId);
     if (!foundList) return res.status(403).json({ msg: "list not found" });
 
-    const { boardId } = foundList;
-    const { authorized } = await isActionAuthorized(boardId, userId);
-    if (!authorized) return res.status(403).json({ msg: 'unauthorized' });
+    await checkBoardPermission({
+        boardId: foundList.boardId.toString(),
+        userId,
+        resource: "card",
+        action: "create"
+    });
 
     const newCard = new Card({
         trackedId,
         title,
         order,
         listId,
-        boardId,
+        boardId: foundList.boardId,
     });
 
     await newCard.save();
 
     await saveBoardActivity({
-        boardId,
         userId,
+        boardId: foundList.boardId,
         cardId: newCard._id,
         listId: foundList._id,
         action: "add new card",
@@ -79,25 +83,26 @@ const reorder = async (req, res) => {
 
     const foundCard = await Card.findById(id).populate({
         path: 'listId',
-        select: '_id title'
+        select: '_id title boardId'
     });
-
     if (!foundCard) {
-        return res.status(404).json({ error: 'Card not found' });
+        return res.status(404);
     }
+
+    await checkBoardPermission({
+        boardId: foundCard.boardId.toString(),
+        userId,
+        resource: "card",
+        action: "edit"
+    });
 
     const populatedList = /** @type {any} */(foundCard.listId);
     const currentListId = populatedList._id;
     const currentCardListTitle = populatedList.title;
 
     const foundList = await listById(listId);
-    if (!foundList) return res.status(404).json({ error: 'List not found' });
-    const updatedCardListTitle = foundList.title;
-
-    const { boardId } = foundList;
-    const { authorized } = await isActionAuthorized(boardId, userId);
-    if (!authorized) {
-        return res.status(403).json({ msg: 'unauthorized' });
+    if (!foundList) {
+        return res.status(404);
     }
 
     if (foundCard.order === rank) {
@@ -113,13 +118,13 @@ const reorder = async (req, res) => {
     await foundCard.save();
 
     await saveBoardActivity({
-        boardId,
         userId,
+        boardId: foundList.boardId,
         cardId: foundCard._id,
         listId: foundList._id,
         action: "update card position",
         type: "card",
-        description: `${currentCardListTitle} (${oldPos}) > ${updatedCardListTitle} (${newPos})`,
+        description: `${currentCardListTitle} (${oldPos}) > ${foundList.title} (${newPos})`,
         createdAt: foundCard.updatedAt,
     });
 
@@ -141,9 +146,12 @@ const updateTitle = async (req, res) => {
     const foundCard = await cardById(id, { lean: false });
     if (!foundCard) return res.status(404).json({ error: 'Card not found' });
 
-    const { boardId } = foundCard;
-    const { authorized } = await isActionAuthorized(boardId, userId);
-    if (!authorized) return res.status(403).json({ msg: 'unauthorized' });
+    await checkBoardPermission({
+        boardId: foundCard.boardId.toString(),
+        userId,
+        resource: "card",
+        action: "edit"
+    });
 
     foundCard.title = title.trim();
     await foundCard.save();
@@ -163,9 +171,12 @@ const updateDescription = async (req, res) => {
     const foundCard = await cardById(id, { lean: false });
     if (!foundCard) return res.status(404).json({ error: 'Card not found' });
 
-    const { boardId } = foundCard;
-    const { authorized } = await isActionAuthorized(boardId, userId);
-    if (!authorized) return res.status(403).json({ msg: 'unauthorized' });
+    await checkBoardPermission({
+        boardId: foundCard.boardId.toString(),
+        userId,
+        resource: "card",
+        action: "edit"
+    });
 
     foundCard.description = description;
     await foundCard.save();
@@ -185,9 +196,12 @@ const updateHighlight = async (req, res) => {
     const foundCard = await cardById(id, { lean: false });
     if (!foundCard) return res.status(404).json({ error: 'Card not found' });
 
-    const { boardId } = foundCard;
-    const { authorized } = await isActionAuthorized(boardId, userId);
-    if (!authorized) return res.status(403).json({ msg: 'unauthorized' });
+    await checkBoardPermission({
+        boardId: foundCard.boardId.toString(),
+        userId,
+        resource: "card",
+        action: "edit"
+    });
 
     foundCard.highlight = highlight;
     await foundCard.save();
@@ -209,16 +223,19 @@ const updatePriorityLevel = async (req, res) => {
 
     const currentPriorityLevel = foundCard.priorityLevel;
 
-    const { boardId } = foundCard;
-    const { authorized } = await isActionAuthorized(boardId, userId);
-    if (!authorized) return res.status(403).json({ msg: 'unauthorized' });
+    await checkBoardPermission({
+        boardId: foundCard.boardId.toString(),
+        userId,
+        resource: "card",
+        action: "edit"
+    });
 
     foundCard.priorityLevel = priorityLevel;
     await foundCard.save();
 
     await saveBoardActivity({
-        boardId,
         userId,
+        boardId: foundCard.boardId,
         cardId: foundCard._id,
         action: "update card priority level",
         type: "card",
@@ -240,15 +257,18 @@ const deleteCard = async (req, res) => {
     const foundCard = await cardById(id, { lean: true });
     if (!foundCard) return res.status(404).json({ error: 'Card not found' });
 
-    const { boardId } = foundCard;
-    const { authorized } = await isActionAuthorized(boardId, userId);
-    if (!authorized) return res.status(403).json({ msg: 'unauthorized' });
+    await checkBoardPermission({
+        boardId: foundCard.boardId.toString(),
+        userId,
+        resource: "card",
+        action: "delete"
+    });
 
     await Card.findOneAndDelete({ _id: id });
 
     await saveBoardActivity({
-        boardId,
         userId,
+        boardId: foundCard.boardId,
         action: "delete card",
         type: "card",
         description: `card with title "${foundCard.title}" deleted`,
@@ -269,9 +289,12 @@ const copyCard = async (req, res) => {
     const foundCard = await cardById(id, { lean: true });
     if (!foundCard) return res.status(404).json({ error: 'Card not found' });
 
-    const { boardId } = foundCard;
-    const { authorized } = await isActionAuthorized(boardId, userId);
-    if (!authorized) return res.status(403).json({ msg: 'unauthorized' });
+    await checkBoardPermission({
+        boardId: foundCard.boardId.toString(),
+        userId,
+        resource: "card",
+        action: "create"
+    });
 
     const newCard = new Card({
         ...foundCard,
@@ -282,7 +305,7 @@ const copyCard = async (req, res) => {
     await newCard.save();
 
     await saveBoardActivity({
-        boardId,
+        boardId: foundCard.boardId,
         userId,
         cardId: foundCard._id,
         action: "copy card",
@@ -305,9 +328,12 @@ const updateOwner = async (req, res) => {
     const foundCard = await cardById(id, { lean: false });
     if (!foundCard) return res.status(404).json({ error: 'Card not found' });
 
-    const { boardId } = foundCard;
-    const { authorized } = await isActionAuthorized(boardId, userId);
-    if (!authorized) return res.status(403).json({ msg: 'unauthorized' });
+    await checkBoardPermission({
+        boardId: foundCard.boardId.toString(),
+        userId,
+        resource: "card",
+        action: "edit"
+    });
 
     foundCard.owner = ownerName;
     await foundCard.save();
@@ -326,9 +352,12 @@ const toggleVerified = async (req, res) => {
     const foundCard = await cardById(id, { lean: false });
     if (!foundCard) return res.status(404).json({ error: 'Card not found' });
 
-    const { boardId } = foundCard;
-    const { authorized } = await isActionAuthorized(boardId, userId);
-    if (!authorized) return res.status(403).json({ msg: 'unauthorized' });
+    await checkBoardPermission({
+        boardId: foundCard.boardId.toString(),
+        userId,
+        resource: "card",
+        action: "edit"
+    });
 
     foundCard.verified = !foundCard.verified;
     await foundCard.save();
@@ -336,7 +365,7 @@ const toggleVerified = async (req, res) => {
     const action = foundCard.verified ? 'verify card' : 'unverified card';
 
     await saveBoardActivity({
-        boardId,
+        boardId: foundCard.boardId,
         userId,
         cardId: foundCard._id,
         action: action,
@@ -358,9 +387,12 @@ const updateDueDate = async (req, res) => {
     const foundCard = await cardById(id, { lean: false });
     if (!foundCard) return res.status(404).json({ error: 'Card not found' });
 
-    const { boardId } = foundCard;
-    const { authorized } = await isActionAuthorized(boardId, userId);
-    if (!authorized) return res.status(403).json({ msg: 'unauthorized' });
+    await checkBoardPermission({
+        boardId: foundCard.boardId.toString(),
+        userId,
+        resource: "card",
+        action: "edit"
+    });
 
     foundCard.dueDate = req.body.dueDate;
     await foundCard.save();

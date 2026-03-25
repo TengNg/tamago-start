@@ -5,10 +5,28 @@ const List = require("../models/List");
 const Card = require("../models/Card");
 const User = require("../models/User");
 
-const { isActionAuthorized } = require('../services/boardActionAuthorizeService');
 const { userByUsername: getUser } = require('../services/userService');
 
 const saveBoardActivity = require('../services/saveBoardActivity');
+
+/**
+ * @param {Object} params
+ * @param {("owner" | "member")[]} params.roles
+ * @param {string | import("mongoose").ObjectId} params.userId
+ * @param {string | import("mongoose").ObjectId} params.boardId
+ */
+const checkAllowedRoles = async ({ roles, userId, boardId }) => {
+    const allowed = await BoardMembership.findOne({
+        userId,
+        boardId,
+        role: { $in: roles }
+    });
+    if (!allowed) {
+        throw { status: 403, message: "unauthorized" }
+    }
+
+    return allowed;
+}
 
 /**
  * @param {import('express').Request} req
@@ -75,16 +93,6 @@ const getBoards = async (req, res) => {
         totalJoined: joinedBoardsCount,
         recentlyViewedBoard: recentlyViewedBoardMembership?.boardId || null,
     });
-};
-
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
-const getOwnedBoards = async (req, res) => {
-    const { userId } = req.user;
-    const boards = await Board.find({ createdBy: userId }).lean();
-    return res.json({ boards });
 };
 
 /**
@@ -208,12 +216,16 @@ const getBoardStats = async (req, res) => {
         return res.status(403).json({ msg: "board not found" });
     }
 
-    const memberships = await BoardMembership.find({ boardId: foundBoard._id }).lean();
-    const isOwner = foundBoard.createdBy._id.toString() === userId;
-    const isMember = memberships.some(member => {
-        return member.userId.toString() === userId
+    const memberships = await BoardMembership.find({ boardId: foundBoard._id })
+        .populate({
+            path: "userId",
+            select: "username"
+        })
+        .lean();
+    const isMember = memberships.some(m => {
+        return m.userId._id.toString() === userId
     });
-    if (!isOwner && !isMember) {
+    if (!isMember) {
         return res.status(403).json({ msg: "unauthorized" });
     }
 
@@ -250,7 +262,15 @@ const getBoardStats = async (req, res) => {
         dueDate: { $lt: today }
     });
 
-    res.status(200).json({ board: foundBoard, priorityLevelStats, staleCardCount });
+    res.status(200).json({
+        board: foundBoard,
+        members: memberships.map((m) => {
+            const username = /** @type any */(m.userId).username
+            return { username };
+        }),
+        priorityLevelStats,
+        staleCardCount
+    });
 };
 
 /**
@@ -278,11 +298,18 @@ const updateTitle = async (req, res) => {
     const { title } = req.body;
     const { userId } = req.user;
 
-    const { board, authorized } = await isActionAuthorized(id, userId);
-    if (!authorized) return res.status(403).json({ msg: "unauthorized" });
+    const board = await Board.findById(id);
+    if (!board) {
+        return res.status(404);
+    }
+
+    await checkAllowedRoles({
+        roles: ["owner"],
+        userId,
+        boardId: board._id.toString()
+    });
 
     const currentTitle = board.title;
-
     board.title = title;
     board.save();
 
@@ -308,12 +335,18 @@ const updateDescription = async (req, res) => {
     const { description } = req.body;
     const { userId } = req.user;
 
-    const { board, authorized } = await isActionAuthorized(id, userId);
+    const board = await Board.findById(id);
+    if (!board) {
+        return res.status(404);
+    }
 
-    if (!authorized) return res.status(403).json({ msg: "unauthorized" });
+    await checkAllowedRoles({
+        roles: ["owner"],
+        userId,
+        boardId: board._id.toString()
+    });
 
     const currentDescription = board.description;
-
     board.description = description;
     board.save();
 
@@ -339,8 +372,16 @@ const updateVisibility = async (req, res) => {
     const { visibility } = req.body;
     const { userId } = req.user;
 
-    const { board, authorized } = await isActionAuthorized(id, userId, { ownerOnly: true });
-    if (!authorized) return res.status(403).json({ msg: "unauthorized" });
+    const board = await Board.findById(id);
+    if (!board) {
+        return res.status(404);
+    }
+
+    await checkAllowedRoles({
+        roles: ["owner"],
+        userId,
+        boardId: board._id.toString()
+    });
 
     board.visibility = visibility;
     board.save();
@@ -356,8 +397,16 @@ const leaveBoard = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
 
-    const { board, authorized } = await isActionAuthorized(id, userId, { ownerOnly: false });
-    if (!authorized) return res.status(403).json({ msg: "unauthorized" });
+    const board = await Board.findById(id);
+    if (!board) {
+        return res.status(404);
+    }
+
+    await checkAllowedRoles({
+        roles: ["member"],
+        userId,
+        boardId: board._id.toString()
+    });
 
     const foundBoardMembership = await BoardMembership.findOne({ boardId: board._id, userId });
     if (!foundBoardMembership) {
@@ -381,11 +430,19 @@ const removeMemberFromBoard = async (req, res) => {
         return res.status(404);
     }
 
+    const membership = await checkAllowedRoles({
+        roles: ["owner"],
+        userId,
+        boardId: board._id.toString()
+    });
+
     const foundMember = await getUser(memberName);
-    const isNotOwner = board.createdBy.toString() !== userId;
-    const isRemovedMemberOwner = board.createdBy.toString() === foundMember._id.toString();
-    if (!foundMember || isNotOwner || isRemovedMemberOwner) {
-        return res.status(401).json({ error: 'unauthorized' });
+    if (!foundMember) {
+        return res.status(403).json({ error: 'member not found' });
+    }
+
+    if (foundMember._id === membership.userId) {
+        return res.status(403).json({ error: 'cannot remove yourself' });
     }
 
     await BoardMembership.deleteOne({
@@ -409,8 +466,16 @@ const closeBoard = async (req, res) => {
         const { userId } = req.user;
         const { id } = req.params;
 
-        const { board: _board, authorized } = await isActionAuthorized(id, userId, { ownerOnly: true });
-        if (!authorized) return res.status(403).json({ msg: "unauthorized" });
+        const board = await Board.findById(id);
+        if (!board) {
+            return res.status(404);
+        }
+
+        await checkAllowedRoles({
+            roles: ["member"],
+            userId,
+            boardId: board._id.toString()
+        });
 
         await Card.deleteMany({ boardId: id }, { session });
         await List.deleteMany({ boardId: id }, { session });
@@ -422,7 +487,8 @@ const closeBoard = async (req, res) => {
         res.status(200).json({ msg: 'board closed' });
     } catch (error) {
         await session.abortTransaction();
-        res.status(400).json({ error: error.message });
+        const status = error.status || 400;
+        res.status(status).json({ error: error.message });
     } finally {
         session.endSession();
     }
@@ -441,21 +507,27 @@ const copyBoard = async (req, res) => {
         const { title, description } = req.body;
         const { userId } = req.user
 
-        const {
-            board: foundBoard,
-            authorized,
-        } = await isActionAuthorized(id, userId, { ownerOnly: false });
-        if (!authorized) {
+        const board = await Board.findById(id);
+        if (!board) {
+            return res.status(404);
+        }
+
+        const allowed = await BoardMembership.exists({
+            userId,
+            boardId: board._id,
+            role: "owner",
+        });
+        if (!allowed) {
             return res.status(403).json({ msg: "unauthorized" });
         }
 
         const newBoardId = new mongoose.Types.ObjectId();
-        const lists = await List.find({ boardId: foundBoard.id });
+        const lists = await List.find({ boardId: board._id });
 
         const newBoard = new Board({
             _id: newBoardId,
-            title: title || foundBoard.title,
-            description: description || foundBoard.description,
+            title: title || board.title,
+            description: description || board.description,
             createdBy: userId,
         });
 
@@ -509,9 +581,9 @@ const togglePinBoard = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
 
-    const { board: foundBoard, authorized } = await isActionAuthorized(id, userId, { ownerOnly: false });
-    if (!authorized || !foundBoard) {
-        return res.status(403).json({ msg: "unauthorized" });
+    const foundBoard = await Board.findById(id);
+    if (!foundBoard) {
+        return res.status(404);
     }
 
     const foundUser = await User.findById(userId);
@@ -600,9 +672,31 @@ const cleanPinnedBoardsCollection = async (req, res) => {
     return res.status(200).json({ result });
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+const getListCount = async (req, res) => {
+    const { userId } = req.user;
+    const { boardId } = req.params;
+
+    const foundBoard = await Board.findById(boardId);
+    if (!foundBoard) {
+        return res.status(403).json({ msg: 'board not found' });
+    }
+
+    await checkAllowedRoles({
+        userId,
+        boardId,
+        roles: ["owner", "member"]
+    });
+
+    const count = await List.countDocuments({ boardId });
+    return res.status(200).json({ count });
+};
+
 module.exports = {
     getBoards,
-    getOwnedBoards,
     getBoardStats,
     createBoard,
     getBoard,
@@ -617,4 +711,5 @@ module.exports = {
     deletePinnedBoard,
     cleanPinnedBoardsCollection,
     updatePinnedBoardsCollection,
+    getListCount,
 };
