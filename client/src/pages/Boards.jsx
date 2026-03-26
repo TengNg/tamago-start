@@ -220,7 +220,7 @@ const Boards = () => {
                     </div>
 
                     {boardsQuery.data.recentlyViewedBoard && (
-                        <div className="w-full sm:w-fit sm:block flex justify-center mt-8">
+                        <div className="w-full sm:w-fit sm:block flex flex-col items-center mt-8">
                             <p className="text-gray-700 text-[0.75rem]">
                                 recently viewed board
                             </p>
