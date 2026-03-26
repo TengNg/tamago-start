@@ -19,7 +19,7 @@ const BoardForm = forwardRef(({}, ref) => {
         },
         onError: (err, _, _context) => {
             const errMsg =
-                err?.response?.data?.msg || "Failed to create new board";
+                err?.response?.data?.message || "Failed to create new board";
             toast.error(errMsg);
         },
     });

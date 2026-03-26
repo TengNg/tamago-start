@@ -69,7 +69,7 @@ const JoinBoardRequestForm = ({ open, setOpen }) => {
             setSuccess(true);
         } catch (err) {
             const errMsg =
-                err?.response?.data?.msg || "Failed to send join request";
+                err?.response?.data?.message || "Failed to send join request";
             toast.error(errMsg);
             setSuccess(false);
         }

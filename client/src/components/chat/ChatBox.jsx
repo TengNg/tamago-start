@@ -74,7 +74,7 @@ const ChatBox = ({
         }
     };
 
-    if (error.msg) {
+    if (error.message) {
         return (
             <div
                 id="chat-box"
@@ -98,7 +98,7 @@ const ChatBox = ({
 
                 <div className="relative flex-1 w-full border-red-100 flex flex-col gap-3 overflow-y-auto p-1 justify-center items-center">
                     <div className="text-gray-400 text-sm">
-                        {error.msg || "something went wrong :("}
+                        {error.message || "something went wrong :("}
                     </div>
                 </div>
             </div>

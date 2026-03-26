@@ -33,7 +33,8 @@ export default function Login() {
             passwordInputEl.current.readOnly = true;
         },
         onError: (err) => {
-            const errMsg = err?.response?.data?.msg || "Something went wrong";
+            const errMsg =
+                err?.response?.data?.message || "Something went wrong";
             usernameInputEl.current.readOnly = false;
             passwordInputEl.current.readOnly = false;
             setErrMsg(errMsg);
@@ -55,7 +56,9 @@ export default function Login() {
                     className="flex flex-col form--style p-6 pt-2 w-[325px]"
                     style={{ backgroundColor: "rgba(241, 241, 241, 0.75)" }}
                 >
-                    <label className="text-gray-700" htmlFor="username">Username</label>
+                    <label className="text-gray-700" htmlFor="username">
+                        Username
+                    </label>
                     <input
                         className="border-[2px] border-gray-700 text-gray-700 p-1 font-medium"
                         type="text"
@@ -67,7 +70,9 @@ export default function Login() {
                         required
                     />
 
-                    <label className="text-gray-700" htmlFor="password">Password</label>
+                    <label className="text-gray-700" htmlFor="password">
+                        Password
+                    </label>
                     <input
                         ref={passwordInputEl}
                         className="border-[2px] border-gray-700 text-gray-700 p-1 font-medium select-none"

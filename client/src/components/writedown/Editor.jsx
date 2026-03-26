@@ -60,7 +60,9 @@ const Editor = ({ writedown, setWritedown, saveWritedown, updateTitle }) => {
         try {
             saveWritedown(_id, textarea.current.value);
         } catch (err) {
-            toast.error("Failed to save writedown");
+            const errMsg =
+                err?.response?.data?.message || "Failed to save writedown";
+            toast.error(errMsg);
         }
     };
 

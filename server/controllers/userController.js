@@ -12,16 +12,16 @@ const updateUsername = async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) {
-        return res.status(403).json({ msg: "user not found" });
+        return res.status(403).json({ message: "User not found" });
     }
 
     const foundUser = await User.findOne({ username: newUsername })
     if (foundUser) {
-        return res.status(409).json({ msg: "Username is already exists" });
+        return res.status(409).json({ message: "Username is already exists" });
     }
 
     if (!usernameRegex.test(newUsername)) {
-        return res.status(400).json({ msg: "Username not valid" });
+        return res.status(400).json({ message: "Username not valid" });
     }
 
     user.username = newUsername;
@@ -41,28 +41,28 @@ const updatePassword = async (req, res) => {
     if (!newPassword) {
         return res.status(200).json({
             notice: 'PLEASE_PROVIDE_NEW_PASSWORD',
-            msg: 'Please provide new password',
+            message: 'Please provide new password',
         })
     }
 
     const foundUser = await User.findById(userId);
     if (!foundUser) {
-        return res.status(401).json({ msg: "Unauthorized" });
+        return res.status(401).json({ message: "Unauthorized" });
     }
 
     if (foundUser.discordId) {
-        return res.status(400).json({ msg: "Cannot change password" });
+        return res.status(400).json({ message: "Cannot change password" });
     }
 
     const validPwd = await bcrypt.compare(currentPassword, foundUser.password);
     if (!validPwd) {
-        return res.status(400).json({ msg: "Password is incorrect" });
+        return res.status(400).json({ message: "Password is incorrect" });
     }
 
     if (newPassword === currentPassword) {
         return res.status(200).json({
             notice: 'PASSWORD_NOT_CHANGED',
-            msg: "New password is the same as current password",
+            message: "New password is the same as current password",
         });
     }
 

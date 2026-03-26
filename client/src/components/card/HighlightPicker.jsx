@@ -29,7 +29,9 @@ const HighlightPicker = ({ setOpen, card }) => {
                 highlight: value,
             });
         } catch (err) {
-            toast.error("Failed to change highlight");
+            const errMsg =
+                err?.response?.data?.message || "Failed to change highlight";
+            toast.error(errMsg);
         }
     };
 

@@ -37,7 +37,9 @@ const CopyBoardForm = ({ setOpen }) => {
                 toast.success("Board copied successfully");
                 setOpen(false);
             } catch (err) {
-                toast.error("Failed to copy this board");
+                const errMsg =
+                    err?.response?.data?.message || "Failed to copy this board";
+                toast.error(errMsg);
             }
             setLoading(false);
         }

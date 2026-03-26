@@ -29,26 +29,30 @@ function Attachments({ card, setViewedAttachment }) {
     const deleteAttachmentMutation = useMutation({
         mutationKey: ["delete-card-attachment"],
         mutationFn: async (attachmentId) => {
-            const response = await axiosPrivate.delete(`/attachments/${attachmentId}`);
+            const response = await axiosPrivate.delete(
+                `/attachments/${attachmentId}`,
+            );
             return response.data;
         },
         onSuccess: (data) => {
-            queryClient.setQueryData(
-                ["card-attachments", card._id],
-                (old) => {
-                    if (!old) {
-                        return old;
-                    }
+            queryClient.setQueryData(["card-attachments", card._id], (old) => {
+                if (!old) {
+                    return old;
+                }
 
-                    const updated = [...old].filter(a => a._id != data.id);
-                    return updated;
-                },
-            );
-            socket.emit("deleteCardAttachment", { id: data.id, cardId: card._id });
+                const updated = [...old].filter((a) => a._id != data.id);
+                return updated;
+            });
+            socket.emit("deleteCardAttachment", {
+                id: data.id,
+                cardId: card._id,
+            });
         },
         onError: (err) => {
             const errMsg =
-                err.response?.data?.message || err.message || "Failed to delete attachment";
+                err.response?.data?.message ||
+                err.message ||
+                "Failed to delete attachment";
             toast.error(errMsg);
         },
     });

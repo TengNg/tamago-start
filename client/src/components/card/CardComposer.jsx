@@ -149,7 +149,8 @@ const CardComposer = ({ list, open, setOpen }) => {
             setOpen(true);
             socket.emit("addCard", newCard);
         } catch (err) {
-            const errMsg = err?.response?.data?.msg || "Failed to add new card";
+            const errMsg =
+                err?.response?.data?.message || "Failed to add new card";
             toast.error(errMsg);
             setBoardState((prev) => {
                 return { ...prev, lists: tempLists };

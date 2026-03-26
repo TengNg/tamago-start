@@ -17,7 +17,7 @@ const getCard = async (req, res) => {
 
     const foundCard = await cardById(id);
     if (!foundCard) {
-        return res.status(403).json({ msg: "card not found" });
+        return res.status(403).json({ message: "card not found" });
     }
 
     await checkBoardPermission({
@@ -39,7 +39,7 @@ const addCard = async (req, res) => {
     const { trackedId, title, order, listId } = req.body;
 
     const foundList = await listById(listId);
-    if (!foundList) return res.status(403).json({ msg: "list not found" });
+    if (!foundList) return res.status(403).json({ message: "list not found" });
 
     await checkBoardPermission({
         boardId: foundList.boardId.toString(),

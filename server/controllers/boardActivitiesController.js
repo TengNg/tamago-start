@@ -8,7 +8,7 @@ const BoardActivity = require("../models/BoardActivity");
 const getBoardActivities = async (req, res) => {
     const { boardId } = req.params;
     const foundBoard = await Board.findById(boardId).lean();
-    if (!foundBoard) return res.status(404).json({ msg: "board not found" });
+    if (!foundBoard) return res.status(404).json({ message: "board not found" });
 
     const { perPage, page } = req.query;
     const perPageNum = typeof perPage === 'string' ? parseInt(perPage, 10) : 10;
@@ -44,14 +44,14 @@ const deleteAllBoardActivities = async (req, res) => {
     const { userId } = req.user;
     const { boardId } = req.params;
     const foundBoard = await Board.findById(boardId);
-    if (!foundBoard) return res.status(404).json({ msg: "board not found" });
+    if (!foundBoard) return res.status(404).json({ message: "board not found" });
 
     if (foundBoard.createdBy.toString() !== userId) {
-        return res.status(401).json({ msg: 'Not authorize' });
+        return res.status(401).json({ message: 'Not authorize' });
     }
 
     await BoardActivity.deleteMany({ board: foundBoard._id });
-    return res.status(200).json({ msg: "activities removed" });
+    return res.status(200).json({ message: "activities removed" });
 };
 
 module.exports = {

@@ -29,9 +29,7 @@ const Home = () => {
                                     I want a task-management app with a simple
                                     notes system (+ keybinds).
                                 </li>
-                                <li>
-                                    Easy to collaborate with your friends.
-                                </li>
+                                <li>Easy to collaborate with your friends.</li>
                                 <li>
                                     Easy to track your progress &amp;
                                     activities.

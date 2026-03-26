@@ -105,7 +105,8 @@ const Activities = () => {
         },
         onError: (err, _, _context) => {
             const errMsg =
-                err.response?.data?.msg || "Failed to accept this invitation";
+                err.response?.data?.message ||
+                "Failed to accept this invitation";
             toast.error(errMsg);
         },
     });
@@ -129,7 +130,8 @@ const Activities = () => {
         },
         onError: (err, _, _context) => {
             const errMsg =
-                err.response?.data?.msg || "Failed to accept this invitation";
+                err.response?.data?.message ||
+                "Failed to accept this invitation";
             toast.error(errMsg);
         },
     });
@@ -151,7 +153,8 @@ const Activities = () => {
         },
         onError: (err, _, _context) => {
             const errMsg =
-                err.response?.data?.msg || "Failed to accept this invitation";
+                err.response?.data?.message ||
+                "Failed to accept this invitation";
             toast.error(errMsg);
         },
     });
@@ -179,7 +182,8 @@ const Activities = () => {
         },
         onError: (err, _, _context) => {
             const errMsg =
-                err.response?.data?.msg || "Failed to accept this invitation";
+                err.response?.data?.message ||
+                "Failed to accept this invitation";
             toast.error(errMsg);
         },
     });
@@ -205,7 +209,8 @@ const Activities = () => {
         },
         onError: (err, _, _context) => {
             const errMsg =
-                err.response?.data?.msg || "Failed to accept this invitation";
+                err.response?.data?.message ||
+                "Failed to accept this invitation";
             toast.error(errMsg);
         },
     });
@@ -229,7 +234,8 @@ const Activities = () => {
         },
         onError: (err, _, _context) => {
             const errMsg =
-                err.response?.data?.msg || "Failed to accept this invitation";
+                err.response?.data?.message ||
+                "Failed to accept this invitation";
             toast.error(errMsg);
         },
     });

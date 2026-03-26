@@ -112,7 +112,9 @@ const PinnedBoards = ({ setOpen }) => {
             await axiosPrivate.delete(`/boards/${boardId}/pinned`);
             await currentUserQuery.refetch();
         } catch (err) {
-            toast.error("Failed to remove this board");
+            const errMsg =
+                err?.response?.data?.message || "Failed to remove this board";
+            toast.error(errMsg);
         } finally {
             setDeletingBoardId(null);
         }
@@ -129,7 +131,8 @@ const PinnedBoards = ({ setOpen }) => {
             setCleaned(true);
         } catch (err) {
             setLoading(false);
-            toast.error("Failed to clean");
+            const errMsg = err?.response?.data?.message || "Failed to clean";
+            toast.error(errMsg);
         }
     };
 
@@ -183,7 +186,10 @@ const PinnedBoards = ({ setOpen }) => {
             );
             currentUserQuery.refetch();
         } catch (err) {
-            toast.error("Failed to update pinned boards");
+            const errMsg =
+                err?.response?.data?.message ||
+                "Failed to update pinned boards";
+            toast.error(errMsg);
         }
     };
 

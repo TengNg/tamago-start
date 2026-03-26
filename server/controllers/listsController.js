@@ -39,7 +39,7 @@ const addList = async (req, res) => {
         description: '',
     })
 
-    return res.status(201).json({ msg: 'new list created', newList });
+    return res.status(201).json({ message: 'new list created', newList });
 }
 
 /**
@@ -52,7 +52,7 @@ const reorder = async (req, res) => {
     const { rank, sourceIndex, destinationIndex } = req.body;
 
     const foundList = await List.findById(id);
-    if (!foundList) return res.status(403).json({ msg: "list not found" });
+    if (!foundList) return res.status(403).json({ message: "list not found" });
 
     await checkBoardPermission({
         boardId: foundList.boardId.toString(),
@@ -92,7 +92,7 @@ const updateTitle = async (req, res) => {
     const { title } = req.body;
 
     const foundList = await List.findById(id);
-    if (!foundList) return res.status(403).json({ msg: "list not found" });
+    if (!foundList) return res.status(403).json({ message: "list not found" });
 
     await checkBoardPermission({
         boardId: foundList.boardId.toString(),
@@ -116,7 +116,7 @@ const deleteList = async (req, res) => {
     const { id } = req.params;
 
     const foundList = await List.findById(id);
-    if (!foundList) return res.status(403).json({ msg: "list not found" });
+    if (!foundList) return res.status(403).json({ message: "list not found" });
 
     await checkBoardPermission({
         boardId: foundList.boardId.toString(),
@@ -149,7 +149,7 @@ const copyList = async (req, res) => {
 
     const foundList = await List.findById(id);
     if (!foundList) {
-        return res.status(403).json({ msg: "List not found" });
+        return res.status(403).json({ message: "List not found" });
     }
 
     const { title, boardId } = foundList;
@@ -212,7 +212,7 @@ const moveList = async (req, res) => {
 
     const foundList = await List.findById(id);
     if (!foundList) {
-        return res.status(403).json({ msg: "List not found" });
+        return res.status(403).json({ message: "List not found" });
     }
 
     // check for both sides, move on current board or move to another board

@@ -37,7 +37,10 @@ const CardComments = ({ card }) => {
                     collapsed: false,
                 });
             } catch (err) {
-                toast.error("Failed to load focused comment");
+                const errMsg =
+                    err?.response?.data?.message ||
+                    "Failed to load focused comment";
+                toast.error(errMsg);
             }
         };
 
@@ -104,8 +107,10 @@ const CardComments = ({ card }) => {
             });
             socket.emit("addCardComment", { comment: data });
         },
-        onError: (_err) => {
-            toast.error("Failed to add new comment, please try again.");
+        onError: (err) => {
+            const errMsg =
+                err.response?.data?.message || "Failed to add new comment";
+            toast.error(errMsg);
         },
     });
 
@@ -119,7 +124,9 @@ const CardComments = ({ card }) => {
         },
         onError: (err) => {
             const errMsg =
-                err.response?.data?.message || err.message || "Failed to delete comment";
+                err.response?.data?.message ||
+                err.message ||
+                "Failed to delete comment";
             toast.error(errMsg);
         },
     });

@@ -1,5 +1,10 @@
-const notFoundHandler = (req, res, next) => {
-    return res.status(404).json({ msg: "Resource not found" });
+/**
+ * @param {import('express').Request} _req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} _next
+ */
+const notFoundHandler = (_req, res, _next) => {
+    return res.status(404);
 }
 
 module.exports = notFoundHandler;

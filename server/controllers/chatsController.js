@@ -23,7 +23,7 @@ const getMessages = async (req, res) => {
     const pageNum = typeof page === 'string' ? parseInt(page, 10) : 1;
 
     const foundBoard = await boardById(boardId);
-    if (!foundBoard) return res.status(400).json({ msg: "cannot fetch chat, board not found" });
+    if (!foundBoard) return res.status(400).json({ message: "cannot fetch chat, board not found" });
 
     const messages = await Chat
         .find({ boardId })
@@ -48,7 +48,7 @@ const sendMessage = async (req, res) => {
     const { boardId } = req.params;
 
     const foundBoard = await boardById(boardId);
-    if (!foundBoard) return res.status(403).json({ msg: "cannot send message, board not found" });
+    if (!foundBoard) return res.status(403).json({ message: "cannot send message, board not found" });
 
     const chat = new Chat({
         sentBy: userId,
@@ -66,7 +66,7 @@ const sendMessage = async (req, res) => {
 
     await chat.save();
 
-    res.status(200).json({ msg: "message is sent", chat });
+    res.status(200).json({ message: "message is sent", chat });
 };
 
 /**
@@ -76,7 +76,7 @@ const sendMessage = async (req, res) => {
 const deleteMessage = async (req, res) => {
     const { trackedId } = req.params;
     const deletedMessage = await Chat.findOneAndDelete({ trackedId });
-    res.status(200).json({ msg: "message deleted", deletedMessage });
+    res.status(200).json({ message: "message deleted", deletedMessage });
 };
 
 /**
@@ -88,14 +88,14 @@ const clearMessages = async (req, res) => {
     const { boardId } = req.params;
 
     const foundBoard = await boardById(boardId);
-    if (!foundBoard) return res.status(403).json({ msg: "cannot send message, board not found" });
+    if (!foundBoard) return res.status(403).json({ message: "cannot send message, board not found" });
 
     if (foundBoard.createdBy.toString() !== userId) {
-        return res.status(401).json({ msg: 'Not authorize' });
+        return res.status(401).json({ message: 'Not authorize' });
     }
 
     await Chat.deleteMany({ boardId });
-    res.status(200).json({ msg: "messages deleted" });
+    res.status(200).json({ message: "messages deleted" });
 };
 
 module.exports = {

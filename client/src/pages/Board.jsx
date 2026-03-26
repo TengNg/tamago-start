@@ -185,13 +185,15 @@ const Board = () => {
         };
 
         fetchBoardData().catch((err) => {
-            const errMsg = err?.response?.data?.msg || "Failed to load Board";
+            const errMsg =
+                err?.response?.data?.message || "Failed to load Board";
             setError({ msg: errMsg });
             socket.emit("disconnectFromBoard");
         });
 
         fetchChat().catch((err) => {
-            const errMsg = err?.response?.data?.msg || "Failed to load Chat";
+            const errMsg =
+                err?.response?.data?.message || "Failed to load Chat";
             setChatError(errMsg);
         });
 
@@ -220,7 +222,9 @@ const Board = () => {
                 setChatsPage((prevPage) => prevPage + 1);
             }
         } catch (err) {
-            toast.error("Failed to load messages");
+            const errMsg =
+                err?.response?.data?.message || "Failed to load messages";
+            toast.error(errMsg);
             setIsFetchingMoreMessages(false);
         }
 
@@ -242,7 +246,8 @@ const Board = () => {
                     return { ...prev, processing: false };
                 });
             } catch (err) {
-                toast.error("Process failed");
+                const errMsg = err?.response?.data?.message || "Process failed";
+                toast.error(errMsg);
                 setProcessingCard({
                     msg: "",
                     processing: false,
@@ -267,7 +272,8 @@ const Board = () => {
 
             socket.emit("updateBoardTitle", value);
         } catch (err) {
-            const errMsg = err.response?.data?.message || "Failed to update board title";
+            const errMsg =
+                err.response?.data?.message || "Failed to update board title";
             toast.error(errMsg);
             setBoardTitle(title);
         }
@@ -290,7 +296,9 @@ const Board = () => {
             await axiosPrivate.patch(`/boards/${boardState.board._id}/pinned/`);
             await currentUserQuery.refetch();
         } catch (err) {
-            toast.error("Failed to pin board");
+            const errMsg =
+                err?.response?.data?.message || "Failed to pin board";
+            toast.error(errMsg);
         }
     };
 
@@ -303,7 +311,9 @@ const Board = () => {
                 cardId: card._id,
             });
         } catch (err) {
-            toast.error("Failed to delete card");
+            const errMsg =
+                err?.response?.data?.message || "Failed to delete card";
+            toast.error(errMsg);
         }
     });
 
@@ -357,7 +367,9 @@ const Board = () => {
                     newCard,
                 });
             } catch (err) {
-                toast.error("Failed to move card");
+                const errMsg =
+                    err?.response?.data?.message || "Failed to move card";
+                toast.error(errMsg);
             }
         },
     );
@@ -448,7 +460,9 @@ const Board = () => {
                 );
                 socket.emit("moveCardByIndex", { cards, listId: card.listId });
             } catch (err) {
-                toast.error("Failed to move this card");
+                const errMsg =
+                    err?.response?.data?.message || "Failed to move this card";
+                toast.error(errMsg);
             }
         },
     );
@@ -516,7 +530,10 @@ const Board = () => {
                 const deletedMessage = response.data?.deletedMessage;
 
                 if (!deletedMessage) {
-                    toast.error("Failed to delete this message");
+                    const errMsg =
+                        err?.response?.data?.message ||
+                        "Failed to delete this message";
+                    toast.error(errMsg);
                     return;
                 }
 
@@ -531,7 +548,9 @@ const Board = () => {
                 });
             }
         } catch (err) {
-            toast.error("Failed to delete this message");
+            const errMsg =
+                err?.response?.data?.message || "Failed to delete this message";
+            toast.error(errMsg);
         }
     };
 
@@ -543,7 +562,9 @@ const Board = () => {
                 setChats([]);
             }
         } catch (err) {
-            toast.error("Failed to clear chat messages");
+            const errMsg =
+                err?.response?.data?.message || "Failed to clear chat messages";
+            toast.error(errMsg);
         }
     };
 

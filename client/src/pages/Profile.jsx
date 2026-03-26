@@ -68,7 +68,7 @@ const Profile = () => {
             if (status === 409 || status === 400) {
                 setMsg({
                     error: true,
-                    content: err?.response?.data?.msg,
+                    content: err?.response?.data?.message,
                 });
             } else {
                 setMsg({
@@ -212,7 +212,8 @@ const Profile = () => {
             });
 
             const response = await fetchBoardStats(boardId);
-            const { board, members, priorityLevelStats, staleCardCount } = response.data;
+            const { board, members, priorityLevelStats, staleCardCount } =
+                response.data;
 
             const priorityOrder = ["none", "low", "medium", "high", "critical"];
             priorityLevelStats.sort((a, b) => {
@@ -447,8 +448,7 @@ const Profile = () => {
                                                 </p>
 
                                                 <p className="text-[11px] sm:text-[0.85rem] mt-1">
-                                                    members:{" "}
-                                                    {memberCount}
+                                                    members: {memberCount}
                                                 </p>
 
                                                 <p className="text-[11px] sm:text-[0.85rem] mt-1">

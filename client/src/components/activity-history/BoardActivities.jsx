@@ -75,7 +75,9 @@ const BoardActivities = ({ open, setOpen }) => {
                 return prevPage + 1;
             });
         } catch (err) {
-            toast.error("Failed to fetch history");
+            const errMsg =
+                err?.response?.data?.message || "Failed to fetch history";
+            toast.error(errMsg);
         } finally {
             setLoading(false);
         }
@@ -92,7 +94,9 @@ const BoardActivities = ({ open, setOpen }) => {
                 setActivities([]);
             }
         } catch (err) {
-            toast.error("Failed to clear activities");
+            const errMsg =
+                err?.response?.data?.message || "Failed to clear activities";
+            toast.error(errMsg);
         }
     };
 

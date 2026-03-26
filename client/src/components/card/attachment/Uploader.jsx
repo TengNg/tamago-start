@@ -16,24 +16,25 @@ function Uploader({ card }) {
         mutationFn: async (formData) => {
             abortControllerRef.current = new AbortController();
             const abortSignal = abortControllerRef.current.signal;
-            const response = await axiosPrivate.post("/attachments/upload", formData, {
-                headers: { "Content-Type": "multipart/form-data" },
-                signal: abortSignal,
-            });
+            const response = await axiosPrivate.post(
+                "/attachments/upload",
+                formData,
+                {
+                    headers: { "Content-Type": "multipart/form-data" },
+                    signal: abortSignal,
+                },
+            );
             return response.data;
         },
         onSuccess: (data) => {
-            queryClient.setQueryData(
-                ["card-attachments", card._id],
-                (old) => {
-                    if (!old) {
-                        return old;
-                    }
+            queryClient.setQueryData(["card-attachments", card._id], (old) => {
+                if (!old) {
+                    return old;
+                }
 
-                    const updated = [...old, data];
-                    return updated;
-                },
-            );
+                const updated = [...old, data];
+                return updated;
+            });
 
             toast.success("Attachment uploaded");
             fileInputRef.current.value = "";

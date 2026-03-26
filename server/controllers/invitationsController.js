@@ -51,21 +51,21 @@ const sendInvitation = async (req, res) => {
 
     const sender = await getUser(username);
     if (!sender) {
-        return res.status(403).json({ msg: "can't send invitation" });
+        return res.status(403).json({ message: "can't send invitation" });
     }
 
     const receiver = await getUser(receiverName);
     if (!receiver) {
-        return res.status(403).json({ msg: "username is not found" });
+        return res.status(403).json({ message: "username is not found" });
     }
 
     if (username === receiverName) {
-        return res.status(409).json({ msg: "can't send invitation" });
+        return res.status(409).json({ message: "can't send invitation" });
     }
 
     const receiverBoardMembership = await BoardMembership.findOne({ boardId, userId: receiver._id });
     if (receiverBoardMembership) {
-        return res.status(409).json({ msg: "this user is already in this board" });
+        return res.status(409).json({ message: "this user is already in this board" });
     }
 
     const foundInvitation = await Invitation
@@ -77,7 +77,7 @@ const sendInvitation = async (req, res) => {
         })
         .sort({ createdAt: -1 })
 
-    if (foundInvitation) return res.status(409).json({ msg: "invitation is already sent" }); // Conflict
+    if (foundInvitation) return res.status(409).json({ message: "invitation is already sent" }); // Conflict
 
     const invitation = new Invitation({
         boardId,
@@ -98,7 +98,7 @@ const acceptInvitation = async (req, res) => {
 
     let invitation = await Invitation.findById(id);
     if (!invitation) {
-        return res.status(404).json({ msg: 'Invitation not found' });
+        return res.status(404).json({ message: 'Invitation not found' });
     }
 
     const { boardId, invitedUserId } = invitation;
@@ -142,10 +142,10 @@ const removeInvitation = async (req, res) => {
     const removed = await Invitation.findByIdAndDelete(id);
 
     if (!removed) {
-        return res.status(404).json({ msg: 'Invitation not found' });
+        return res.status(404).json({ message: 'Invitation not found' });
     }
 
-    res.status(200).json({ msg: 'Invitation removed successfully' });
+    res.status(200).json({ message: 'Invitation removed successfully' });
 };
 
 module.exports = {

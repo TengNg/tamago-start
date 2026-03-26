@@ -456,17 +456,14 @@ export const BoardStateContextProvider = ({ children }) => {
 
         socket.on("cardAttachmentDeleted", (data) => {
             const { id, cardId } = data;
-            queryClient.setQueryData(
-                ["card-attachments", cardId],
-                (old) => {
-                    if (!old) {
-                        return old;
-                    }
+            queryClient.setQueryData(["card-attachments", cardId], (old) => {
+                if (!old) {
+                    return old;
+                }
 
-                    const updated = [...old].filter(a => a._id != id);
-                    return updated;
-                },
-            );
+                const updated = [...old].filter((a) => a._id != id);
+                return updated;
+            });
         });
 
         return () => {

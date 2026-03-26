@@ -102,7 +102,9 @@ const InvitationForm = ({ open, setOpen }) => {
             setSuccessMsg(`invitation sent to ${receiverName}`);
         } catch (err) {
             setLoading(false);
-            setErrMsg(err?.response?.data?.msg || "Failed to send invitation");
+            setErrMsg(
+                err?.response?.data?.message || "Failed to send invitation",
+            );
         }
     };
 

@@ -66,19 +66,17 @@ function ViewerDialog({ viewedAttachment, setViewedAttachment }) {
                         <Icon name="xmark" className="w-5 h-5" />
                     </button>
                 </div>
-                {
-                    loadingAttachment ? (
-                        <div className="p-8">Loading image...</div>
-                    ) : attachmentError ? (
-                        <div className="text-red-600 p-8">{attachmentError}</div>
-                    ) : attachmentDataUrl ? (
-                        <img
-                            src={attachmentDataUrl}
-                            alt={viewedAttachment.originalname}
-                            className="max-w-[80vw] max-h-[70vh] border"
-                        />
-                    ) : null
-                }
+                {loadingAttachment ? (
+                    <div className="p-8">Loading image...</div>
+                ) : attachmentError ? (
+                    <div className="text-red-600 p-8">{attachmentError}</div>
+                ) : attachmentDataUrl ? (
+                    <img
+                        src={attachmentDataUrl}
+                        alt={viewedAttachment.originalname}
+                        className="max-w-[80vw] max-h-[70vh] border"
+                    />
+                ) : null}
             </div>
         </div>
     );

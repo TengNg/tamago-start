@@ -9,17 +9,17 @@ const { sendAuthCookies } = require('../services/createAuthTokensService');
 const handleLogin = async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) {
-        return res.status(400).json({ msg: "Username and Password are required" });
+        return res.status(400).json({ message: "Username and Password are required" });
     }
 
     const foundUser = await User.findOne({ username });
     if (!foundUser) {
-        return res.status(401).json({ msg: "Username not found" });
+        return res.status(401).json({ message: "Username not found" });
     }
 
     const validPwd = await bcrypt.compare(password, foundUser.password);
     if (!validPwd) {
-        return res.status(400).json({ msg: "Password is incorrect" });
+        return res.status(400).json({ message: "Password is incorrect" });
     }
 
     sendAuthCookies(res, {

@@ -29,7 +29,7 @@ const useFetchCardDetail = ({ stateHooks }) => {
                 document.title = `[card] ${card.title}`;
             } catch (err) {
                 const errMsg =
-                    err?.response?.data?.msg || "failed to get card data";
+                    err?.response?.data?.message || "Failed to get card data";
                 setOpenedCard({ failedToLoad: true, errMsg });
             }
         };

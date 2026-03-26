@@ -114,7 +114,8 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
                     toIndex: destIndex,
                 });
             } catch (err) {
-                const errMsg = err.response.data.message || "Failed to reorder list"
+                const errMsg =
+                    err.response.data.message || "Failed to reorder list";
                 toast.error(errMsg);
                 setBoardState((prev) => {
                     return { ...prev, lists: initialLists };
@@ -198,7 +199,8 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
                 card: newCard,
             });
         } catch (err) {
-            const errMsg = err.response.data.message || "Failed to reorder card"
+            const errMsg =
+                err.response.data.message || "Failed to reorder card";
             toast.error(errMsg);
             setBoardState(clonedBoardState);
         }

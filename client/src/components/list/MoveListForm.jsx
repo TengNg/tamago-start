@@ -33,7 +33,9 @@ const MoveListForm = () => {
             return;
         }
 
-        const response = await axiosPrivate.get(`/boards/${boardId}/list-count`);
+        const response = await axiosPrivate.get(
+            `/boards/${boardId}/list-count`,
+        );
         const listCount = response.data.count;
 
         setListCount(listCount);
@@ -132,7 +134,9 @@ const MoveListForm = () => {
             } catch (err) {
                 setOpen(false);
                 setListToMove(undefined);
-                toast.error("Failed to move list");
+                const errMsg =
+                    err.response?.data?.message || "Failed to move list";
+                toast.error(errMsg);
             }
 
             setLoading(false);

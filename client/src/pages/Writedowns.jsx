@@ -51,7 +51,10 @@ const Writedowns = () => {
             const response = await axiosPrivate.get("/personal_writedowns");
             setWritedowns(response.data.writedowns);
         } catch (err) {
-            toast.error("Failed to get writedowns. Please try again");
+            const errMsg =
+                err?.response?.data?.message ||
+                "Failed to get writedowns. Please try again";
+            toast.error(errMsg);
         } finally {
             setIsDataLoaded(true);
         }
@@ -72,7 +75,9 @@ const Writedowns = () => {
                 loading: false,
             });
         } catch (err) {
-            toast.error("Can't load writedown");
+            const errMsg =
+                err?.response?.data?.message || "Can't load writedown";
+            toast.error(errMsg);
 
             setWritedown({
                 open: false,
@@ -101,7 +106,9 @@ const Writedowns = () => {
                 return [...prev, newWritedown];
             });
         } catch (err) {
-            toast.error("Failed to create writedown");
+            const errMsg =
+                err?.response?.data?.message || "Failed to create writedown";
+            toast.error(errMsg);
         } finally {
             setIsCreatingWritedown(false);
         }
@@ -133,7 +140,9 @@ const Writedowns = () => {
                 );
             });
         } catch (err) {
-            toast.error("Failed to save writedown");
+            const errMsg =
+                err?.response?.data?.message || "Failed to save writedown";
+            toast.error(errMsg);
         } finally {
             setWritedown((prev) => {
                 return { ...prev, loading: false, open: false };
@@ -166,7 +175,9 @@ const Writedowns = () => {
             await axiosPrivate.delete(`/personal_writedowns/`);
             setWritedowns([]);
         } catch (err) {
-            toast.error("Failed to delete writedowns");
+            const errMsg =
+                err?.response?.data?.message || "Failed to delete writedowns";
+            toast.error(errMsg);
         }
     }
 
@@ -212,7 +223,9 @@ const Writedowns = () => {
                 return newWritedowns;
             });
         } catch (err) {
-            toast.error("Failed to pin writedown");
+            const errMsg =
+                err?.response?.data?.message || "Failed to pin writedown";
+            toast.error(errMsg);
         }
     }
 
@@ -254,7 +267,10 @@ const Writedowns = () => {
                 JSON.stringify({ rank }),
             );
         } catch (err) {
-            toast.error("something went wrong, please try again");
+            const errMsg =
+                err?.response?.data?.message ||
+                "something went wrong, please try again";
+            toast.error(errMsg);
             setClonedWritedowns(clonedWritedowns);
         } finally {
             setActiveWritedown(null);

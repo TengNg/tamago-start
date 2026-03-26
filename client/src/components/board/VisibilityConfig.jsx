@@ -50,7 +50,10 @@ const VisibilityConfig = ({ open, setOpen }) => {
             setUpdating(false);
         } catch (err) {
             setUpdating(false);
-            toast.error("Failed to update board visibility");
+            const errMsg =
+                err?.response?.data?.message ||
+                "Failed to update board visibility";
+            toast.error(errMsg);
         }
     };
 

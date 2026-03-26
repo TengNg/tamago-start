@@ -76,7 +76,8 @@ const AddList = ({ open, setOpen }) => {
             setListTitle("");
             titleInputRef.current.focus();
         } catch (err) {
-            const errMsg = err?.response?.data?.msg || "Failed to add new list";
+            const errMsg =
+                err?.response?.data?.message || "Failed to add new list";
             toast.error(errMsg);
         } finally {
             setAddingList(false);

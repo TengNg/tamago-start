@@ -10,7 +10,7 @@ const { usernameRegex } = require('../data/regex');
 const handleRegister = async (req, res) => {
     const { username, password, confirmedPassword } = req.body;
     if (!username || !password) {
-        return res.status(400).json({ msg: "Username and password are required" });
+        return res.status(400).json({ message: "Username and password are required" });
     }
 
     if (!usernameRegex.test(username)) {
@@ -27,7 +27,7 @@ const handleRegister = async (req, res) => {
 
     const foundUser = await User.findOne({ username });
     if (foundUser) {
-        return res.status(409).json({ msg: "Username is already exists" });
+        return res.status(409).json({ message: "Username is already exists" });
     }
 
     try {
@@ -39,7 +39,7 @@ const handleRegister = async (req, res) => {
         await newUser.save();
         return res.status(204);
     } catch (err) {
-        return res.status(500).json({ msg: err.message });
+        return res.status(500).json({ message: err.message });
     }
 };
 

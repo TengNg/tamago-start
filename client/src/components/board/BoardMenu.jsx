@@ -37,7 +37,9 @@ const BoardMenu = ({
             socket.emit("leaveBoard");
             navigate("/boards");
         } catch (err) {
-            toast.error("Failed to leave this board");
+            const errMsg =
+                err?.response?.data?.message || "Failed to leave this board";
+            toast.error(errMsg);
             navigate("/boards");
         }
     };
@@ -51,7 +53,10 @@ const BoardMenu = ({
                 socket.emit("closeBoard");
                 navigate("/boards");
             } catch (err) {
-                toast.error("Failed to close this board, something went wrong");
+                const errMsg =
+                    err?.response?.data?.message ||
+                    "Failed to close this board, something went wrong";
+                toast.error(errMsg);
             }
         }
     };
@@ -65,7 +70,8 @@ const BoardMenu = ({
             );
             socket.emit("updateBoardDescription", e.target.value.trim());
         } catch (err) {
-            const errMsg = err.response?.data?.message || "Failed to update board title";
+            const errMsg =
+                err.response?.data?.message || "Failed to update board title";
             toast.error(errMsg);
         }
     };

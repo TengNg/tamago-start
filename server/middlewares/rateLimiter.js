@@ -25,7 +25,7 @@ function rateLimiter(req, res, next) {
             delete blockedUsers[userIP];
         } else {
             const errMsg = `Too many requests. Try again in ${remaining} seconds.`;
-            return res.status(429).json({ msg: errMsg });
+            return res.status(429).json({ message: errMsg });
         }
     }
 
@@ -40,7 +40,7 @@ function rateLimiter(req, res, next) {
     if (requestLogs[userIP].length >= MAX_REQUESTS) {
         blockedUsers[userIP] = currentTime + BLOCK_PERIOD_MS;
         const errMsg = 'Too many requests. Please try again later 5 minutes.';
-        return res.status(429).json({ msg: errMsg });
+        return res.status(429).json({ message: errMsg });
     }
 
     requestLogs[userIP] = requestLogs[userIP].filter(timestamp => {
