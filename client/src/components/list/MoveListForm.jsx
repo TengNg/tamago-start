@@ -53,7 +53,7 @@ const MoveListForm = () => {
                 const response = await axiosPrivate.get(`/boards`);
                 const { boards } = response.data;
                 setBoards(boards);
-                getBoardListCount(listToMove?.boardId);
+                getBoardListCount(boards[0]?._id);
             };
 
             getBoards().catch((_err) => {

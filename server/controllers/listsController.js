@@ -215,30 +215,50 @@ const moveList = async (req, res) => {
         return res.status(403).json({ msg: "List not found" });
     }
 
-    // it's about something like, move list to another board is like create a
-    // like to that board, so we need to check for both sides, move on current
-    // board or move to another board
+    // check for both sides, move on current board or move to another board
+    // if move to different board, it's like remove from current and create from new
 
     const isMovedToDifferentBoard = foundList.boardId.toString() !== boardId;
-    const { board } = await checkBoardPermission({
-        boardId,
-        userId,
-        resource: "list",
-        action: isMovedToDifferentBoard ? "create" : "edit"
-    })
+    let boardToMove = null;
+    if (isMovedToDifferentBoard) {
+        const { board: _currentBoard } = await checkBoardPermission({
+            boardId: foundList.boardId.toString(),
+            userId,
+            resource: "list",
+            action: "delete"
+        });
+
+        const { board: newBoard } = await checkBoardPermission({
+            boardId,
+            userId,
+            resource: "list",
+            action: "create"
+        })
+
+        boardToMove = newBoard;
+    } else {
+        const { board } = await checkBoardPermission({
+            boardId,
+            userId,
+            resource: "list",
+            action: "edit"
+        });
+
+        boardToMove = board;
+    }
 
     const sortedLists = await List.find({ boardId }).sort({ order: 'asc' });
     const [newOrder, ok] = lexorank.insert(sortedLists[+index - 1]?.order, sortedLists[+index]?.order);
     if (!ok) {
-        return res.status(403).send('Bad Request');
+        return res.status(403).send("list's order is invalid");
     }
 
     foundList.order = newOrder;
-    foundList.boardId = board._id;
+    foundList.boardId = boardToMove._id;
     await foundList.save();
 
-    await Card.updateMany({ listId: id }, { boardId });
-    const newCards = await Card.find({ listId: id, boardId }).sort({ order: 'asc' });
+    await Card.updateMany({ listId: id }, { boardId: boardToMove._id });
+    const newCards = await Card.find({ listId: id, boardId: boardToMove._id }).sort({ order: 'asc' });
 
     return res.status(200).json({ list: foundList, cards: newCards });
 };

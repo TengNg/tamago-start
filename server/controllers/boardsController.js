@@ -677,21 +677,14 @@ const cleanPinnedBoardsCollection = async (req, res) => {
  * @param {import('express').Response} res
  */
 const getListCount = async (req, res) => {
-    const { userId } = req.user;
-    const { boardId } = req.params;
+    const { id } = req.params;
 
-    const foundBoard = await Board.findById(boardId);
+    const foundBoard = await Board.findById(id);
     if (!foundBoard) {
         return res.status(403).json({ msg: 'board not found' });
     }
 
-    await checkAllowedRoles({
-        userId,
-        boardId,
-        roles: ["owner", "member"]
-    });
-
-    const count = await List.countDocuments({ boardId });
+    const count = await List.countDocuments({ boardId: id });
     return res.status(200).json({ count });
 };
 
