@@ -438,6 +438,37 @@ export const BoardStateContextProvider = ({ children }) => {
             });
         });
 
+        // CARD_ATTACHMENT =====================================================
+        socket.on("cardAttachmentAdded", (data) => {
+            const { attachment } = data;
+            queryClient.setQueryData(
+                ["card-attachments", attachment.refId],
+                (old) => {
+                    if (!old) {
+                        return old;
+                    }
+
+                    const updated = [...old, attachment];
+                    return updated;
+                },
+            );
+        });
+
+        socket.on("cardAttachmentDeleted", (data) => {
+            const { id, cardId } = data;
+            queryClient.setQueryData(
+                ["card-attachments", cardId],
+                (old) => {
+                    if (!old) {
+                        return old;
+                    }
+
+                    const updated = [...old].filter(a => a._id != id);
+                    return updated;
+                },
+            );
+        });
+
         return () => {
             // socket.off('receiveMessage');
             socket.off();

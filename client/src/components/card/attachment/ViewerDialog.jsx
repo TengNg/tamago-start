@@ -3,42 +3,39 @@ import { axiosPrivate } from "../../../api/axios";
 import Icon from "../../shared/Icon";
 
 function ViewerDialog({ viewedAttachment, setViewedAttachment }) {
-    const [imageDataUrl, setImageDataUrl] = useState(null);
-    const [loadingImage, setLoadingImage] = useState(false);
-    const [imageError, setImageError] = useState(null);
+    const [attachmentDataUrl, setAttachmentDataUrl] = useState(null);
+    const [loadingAttachment, setLoadingAttachment] = useState(false);
+    const [attachmentError, setAttachmentError] = useState(null);
 
     useEffect(() => {
-        if (
-            viewedAttachment &&
-            viewedAttachment.mimetype.startsWith("image/")
-        ) {
-            setLoadingImage(true);
-            setImageError(null);
-            setImageDataUrl(null);
+        if (viewedAttachment) {
+            setLoadingAttachment(true);
+            setAttachmentError(null);
+            setAttachmentDataUrl(null);
             axiosPrivate
-                .get(`/attachments/${viewedAttachment.id}`, {
+                .get(`/attachments/${viewedAttachment._id}`, {
                     responseType: "blob",
                 })
                 .then((res) => {
                     const reader = new FileReader();
                     reader.onloadend = () => {
-                        setImageDataUrl(reader.result);
-                        setLoadingImage(false);
+                        setAttachmentDataUrl(reader.result);
+                        setLoadingAttachment(false);
                     };
                     reader.onerror = () => {
-                        setImageError("Failed to load image");
-                        setLoadingImage(false);
+                        setAttachmentError("Failed to load image");
+                        setLoadingAttachment(false);
                     };
                     reader.readAsDataURL(res.data);
                 })
                 .catch(() => {
-                    setImageError("Failed to load image");
-                    setLoadingImage(false);
+                    setAttachmentError("Failed to load image");
+                    setLoadingAttachment(false);
                 });
         } else {
-            setImageDataUrl(null);
-            setLoadingImage(false);
-            setImageError(null);
+            setAttachmentDataUrl(null);
+            setLoadingAttachment(false);
+            setAttachmentError(null);
         }
     }, [viewedAttachment]);
 
@@ -69,32 +66,19 @@ function ViewerDialog({ viewedAttachment, setViewedAttachment }) {
                         <Icon name="xmark" className="w-5 h-5" />
                     </button>
                 </div>
-                {viewedAttachment.mimetype.startsWith("image/") ? (
-                    loadingImage ? (
+                {
+                    loadingAttachment ? (
                         <div className="p-8">Loading image...</div>
-                    ) : imageError ? (
-                        <div className="text-red-600 p-8">{imageError}</div>
-                    ) : imageDataUrl ? (
+                    ) : attachmentError ? (
+                        <div className="text-red-600 p-8">{attachmentError}</div>
+                    ) : attachmentDataUrl ? (
                         <img
-                            src={imageDataUrl}
+                            src={attachmentDataUrl}
                             alt={viewedAttachment.originalname}
                             className="max-w-[80vw] max-h-[70vh] border"
                         />
                     ) : null
-                ) : (
-                    <div className="flex flex-col items-center mt-4 text-gray-400">
-                        <span className="mb-2">No preview available</span>
-                        <a
-                            href={`/api/attachments/${viewedAttachment.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-800 underline border px-2 py-1"
-                            download={viewedAttachment.originalname}
-                        >
-                            Download
-                        </a>
-                    </div>
-                )}
+                }
             </div>
         </div>
     );

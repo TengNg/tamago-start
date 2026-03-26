@@ -45,7 +45,12 @@ exports.uploadAttachment = async (req, res) => {
         originalname: req.file.originalname
     });
     await attachment.save();
-    res.status(201).json({ id: attachment._id });
+    res.status(201).json({
+        _id: attachment._id,
+        type: attachment.type,
+        refId: attachment.refId,
+        originalname: attachment.originalname
+    });
 };
 
 /**
@@ -99,13 +104,8 @@ exports.listAttachments = async (req, res) => {
             action: "view",
         });
 
-        const attachments = await Attachment.find({ type, refId });
-        res.json(attachments.map(a => ({
-            id: a._id,
-            mimetype: a.mimetype,
-            createdAt: a.createdAt,
-            originalname: a.originalname || '',
-        })));
+        const attachments = await Attachment.find({ type, refId }).select("_id createdAt originalname");
+        res.json(attachments);
     } catch (err) {
         res.status(500).json({ error: 'Failed to list attachments.' });
     }
@@ -137,5 +137,5 @@ exports.deleteAttachment = async (req, res) => {
         return res.status(404);
     }
 
-    res.json({ success: true });
+    res.json({ id });
 };

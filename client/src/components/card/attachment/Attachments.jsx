@@ -7,17 +7,19 @@ import {
 import { axiosPrivate } from "../../../api/axios";
 import Icon from "../../shared/Icon";
 import useToast from "../../../hooks/useToast";
+import useBoardState from "../../../hooks/useBoardState";
 
 function Attachments({ card, setViewedAttachment }) {
     const queryClient = useQueryClient();
     const toast = useToast();
+    const { socket } = useBoardState();
 
     const {
         data: attachments = [],
         isLoading: isAttachmentsLoading,
         isError: isAttachmentsError,
     } = useQuery({
-        queryKey: ["attachments", card._id],
+        queryKey: ["card-attachments", card._id],
         queryFn: async () => {
             const res = await axiosPrivate.get(`/attachments/${card._id}/card`);
             return res.data;
@@ -25,24 +27,35 @@ function Attachments({ card, setViewedAttachment }) {
     });
 
     const deleteAttachmentMutation = useMutation({
-        mutationKey: ["delete-attachment"],
+        mutationKey: ["delete-card-attachment"],
         mutationFn: async (attachmentId) => {
-            return await axiosPrivate.delete(`/attachments/${attachmentId}`);
+            const response = await axiosPrivate.delete(`/attachments/${attachmentId}`);
+            return response.data;
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries(["attachments", card._id]);
-            toast.success("Attachment deleted");
+        onSuccess: (data) => {
+            queryClient.setQueryData(
+                ["card-attachments", card._id],
+                (old) => {
+                    if (!old) {
+                        return old;
+                    }
+
+                    const updated = [...old].filter(a => a._id != data.id);
+                    return updated;
+                },
+            );
+            socket.emit("deleteCardAttachment", { id: data.id, cardId: card._id });
         },
         onError: (err) => {
             const errMsg =
-                err.response?.data?.message || "Failed to delete attachment";
+                err.response?.data?.message || err.message || "Failed to delete attachment";
             toast.error(errMsg);
         },
     });
 
     const pendingDeleteIds = useMutationState({
         filters: {
-            mutationKey: ["delete-attachment"],
+            mutationKey: ["delete-card-attachment"],
             status: "pending",
         },
         select: (mutation) => mutation.state.variables,
@@ -65,26 +78,26 @@ function Attachments({ card, setViewedAttachment }) {
             ) : attachments.length === 0 ? (
                 <div className="text-gray-400">No attachments</div>
             ) : (
-                <ul className="space-y-1">
+                <ul className="space-y-1 w-full">
                     {attachments.map((att) => {
-                        const deleting = isDeleting(att.id);
+                        const deleting = isDeleting(att._id);
                         return (
                             <li
-                                key={att.id}
+                                key={att._id}
                                 className="flex items-center gap-2"
                             >
-                                <span
-                                    className={`${deleting ? "text-red-400 line-through" : ""} cursor-pointer hover:underline`}
+                                <div
+                                    className={`${deleting ? "text-red-400 line-through" : ""} cursor-pointer hover:underline truncate max-w-full text-ellipsis overflow-hidden whitespace-nowrap`}
                                     onClick={() => setViewedAttachment(att)}
                                     title={att.originalname}
                                 >
                                     {att.originalname}
-                                </span>
+                                </div>
                                 <button
                                     title="delete"
                                     className="text-red-700 text-xs ms-1 disabled:opacity-50"
                                     onClick={() =>
-                                        deleteAttachmentMutation.mutate(att.id)
+                                        deleteAttachmentMutation.mutate(att._id)
                                     }
                                     disabled={deleting}
                                 >

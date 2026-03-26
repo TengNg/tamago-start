@@ -84,11 +84,13 @@ const initSocket = (server) => {
         const registerCardHandlers = require('./handlers/card');
         const registerChatHandlers = require('./handlers/chat');
         const registerCardCommentHandlers = require('./handlers/cardComment');
+        const registerCardAttachmentHandlers = require('./handlers/cardAttachment');
         registerBoardHandlers(io, socket, state);
         registerListHandlers(socket, state);
         registerCardHandlers(socket, state);
         registerChatHandlers(socket, state);
         registerCardCommentHandlers(socket, state);
+        registerCardAttachmentHandlers(socket, state);
 
         socket.on("disconnectFromBoard", () => {
             const { boardIdMap } = state;

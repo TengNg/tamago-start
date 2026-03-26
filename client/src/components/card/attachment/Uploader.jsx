@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { axiosPrivate } from "../../../api/axios";
 import useToast from "../../../hooks/useToast";
+import useBoardState from "../../../hooks/useBoardState";
 
 function Uploader({ card }) {
     const queryClient = useQueryClient();
@@ -9,21 +10,35 @@ function Uploader({ card }) {
     const fileInputRef = useRef();
     const abortControllerRef = useRef(null);
     const toast = useToast();
+    const { socket } = useBoardState();
 
     const fileUploadMutation = useMutation({
         mutationFn: async (formData) => {
             abortControllerRef.current = new AbortController();
             const abortSignal = abortControllerRef.current.signal;
-            return await axiosPrivate.post("/attachments/upload", formData, {
+            const response = await axiosPrivate.post("/attachments/upload", formData, {
                 headers: { "Content-Type": "multipart/form-data" },
                 signal: abortSignal,
             });
+            return response.data;
         },
-        onSuccess: () => {
-            queryClient.invalidateQueries(["attachments", card._id]);
+        onSuccess: (data) => {
+            queryClient.setQueryData(
+                ["card-attachments", card._id],
+                (old) => {
+                    if (!old) {
+                        return old;
+                    }
+
+                    const updated = [...old, data];
+                    return updated;
+                },
+            );
+
             toast.success("Attachment uploaded");
             fileInputRef.current.value = "";
             setSelectedFileName("");
+            socket.emit("addCardAttachment", { attachment: data });
         },
         onError: (err, _, _context) => {
             if (err.name === "CanceledError" || err.name === "AbortError") {
