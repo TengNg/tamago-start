@@ -32,7 +32,7 @@ const List = ({ index, list, cards }) => {
         socket,
     } = useBoardState();
 
-    const [initialListData, setInitialListData] = useState(list.title);
+    const [initialListTitle, setInitialListTitle] = useState(list.title);
     const [openCardComposer, setOpenCardComposer] = useState(false);
     const [openListMenu, setOpenListMenu] = useState(false);
 
@@ -47,8 +47,12 @@ const List = ({ index, list, cards }) => {
     const toast = useToast();
 
     const onInputConfirm = async () => {
+        if (textAreaRef.current.value.trim() === initialListTitle) {
+            return;
+        }
+
         if (textAreaRef.current.value.trim() === "") {
-            setListTitle(list._id, initialListData);
+            setListTitle(list._id, initialListTitle);
             return;
         }
 
@@ -61,13 +65,15 @@ const List = ({ index, list, cards }) => {
                 `/lists/${list._id}/new-title`,
                 JSON.stringify({ title: textAreaRef.current.value }),
             );
-            setInitialListData(textAreaRef.current.value);
+            setInitialListTitle(textAreaRef.current.value);
             socket.emit("updateListTitle", {
                 listId: list._id,
                 title: textAreaRef.current.value,
             });
         } catch (err) {
-            toast.error("Failed to update title");
+            setListTitle(list._id, initialListTitle);
+            const errMsg = err.response?.data?.message || "Failed to update title";
+            toast.error(errMsg);
         }
     };
 

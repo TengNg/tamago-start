@@ -23,8 +23,6 @@ import { axiosPrivate } from "../../api/axios";
 import useToast from "../../hooks/useToast";
 
 const ListContainer = ({ openAddList, setOpenAddList }) => {
-    const { currentUser } = useCurrentUserContext();
-
     const { boardState, setBoardState, socket } = useBoardState();
     const [clonedBoardState, setClonedBoardState] = useState(null);
 
