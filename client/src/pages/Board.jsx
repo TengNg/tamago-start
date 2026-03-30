@@ -116,7 +116,7 @@ const Board = () => {
         useState(undefined);
     const [allMessagesFetched, setAllMessagesFetched] = useState(false);
 
-    const [title, setTitle] = useState("");
+    const [initialTitle, setInitialTitle] = useState("");
     const [isDataLoaded, setIsDataLoaded] = useState(false);
     const [error, setError] = useState({ msg: undefined });
     const [chatError, setChatError] = useState({ msg: undefined });
@@ -168,7 +168,7 @@ const Board = () => {
         const fetchBoardData = async () => {
             const boardResponse = await axiosPrivate.get(`/boards/${boardId}`);
             setBoardState(boardResponse.data);
-            setTitle(boardResponse.data.board.title);
+            setInitialTitle(boardResponse.data.board.title);
             setIsDataLoaded(true);
             document.title = boardResponse.data.board.title;
         };
@@ -258,7 +258,7 @@ const Board = () => {
 
     const handleConfirmBoardTitle = async (value) => {
         if (value === "") {
-            setBoardTitle(title);
+            setBoardTitle(initialTitle);
             return;
         }
 
@@ -267,7 +267,7 @@ const Board = () => {
                 `/boards/${boardState.board._id}/new-title`,
                 JSON.stringify({ title: value }),
             );
-            setTitle(response.data.newBoard.title);
+            setInitialTitle(response.data.newBoard.title);
             setBoardTitle(response.data.newBoard.title);
 
             socket.emit("updateBoardTitle", value);
@@ -275,7 +275,7 @@ const Board = () => {
             const errMsg =
                 err.response?.data?.message || "Failed to update board title";
             toast.error(errMsg);
-            setBoardTitle(title);
+            setBoardTitle(initialTitle);
         }
     };
 
