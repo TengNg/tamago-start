@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import useBoardState from "../../hooks/useBoardState";
-import Avatar from "../avatar/Avatar";
 import Loading from "../ui/Loading";
 import Member from "./Member";
 import Icon from "../shared/Icon";
@@ -188,27 +187,7 @@ const InvitationForm = ({ open, setOpen }) => {
                 </div>
 
                 <div className="flex flex-col gap-3 w-full max-w-[400px] max-h-[250px] overflow-auto border-[1px] border-t-gray-600 p-0 py-3">
-                    <div className="flex gap-1">
-                        <Avatar
-                            username={boardState.board.createdBy.username}
-                            size="md"
-                            clickable={false}
-                        />
-
-                        <div className="flex flex-col justify-center">
-                            <p className="text-[0.75rem] text-gray-800 font-medium">
-                                {boardState.board.createdBy.username}{" "}
-                                {currentUser.username ===
-                                    boardState.board.createdBy.username &&
-                                    "(you)"}
-                            </p>
-                            <p className="text-[0.75rem] text-gray-800">
-                                owner
-                            </p>
-                        </div>
-                    </div>
-
-                    {boardState.members.map((user, index) => {
+                    {boardState.members.map((member, index) => {
                         return (
                             <Member
                                 key={index}
@@ -216,7 +195,7 @@ const InvitationForm = ({ open, setOpen }) => {
                                     handleRemoveMemberFromBoard
                                 }
                                 boardState={boardState}
-                                user={user}
+                                member={member}
                             />
                         );
                     })}
