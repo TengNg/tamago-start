@@ -80,11 +80,8 @@ const Profile = () => {
     });
 
     const updatePasswordMutation = useMutation({
-        mutationFn: (currentPwd, newPwd) => {
-            return updatePassword({
-                currentPassword: currentPwd,
-                newPassword: newPwd,
-            });
+        mutationFn: ({ currentPassword, newPassword }) => {
+            return updatePassword({ currentPassword, newPassword });
         },
         onSuccess: (data, _variables, _context) => {
             if (data?.notice === "PLEASE_PROVIDE_NEW_PASSWORD") {
@@ -101,6 +98,11 @@ const Profile = () => {
             }
 
             queryClient.invalidateQueries({ queryKey: ["me"], exact: true });
+
+            setPassword("");
+            setNewPassword("");
+            setConfirmedPassword("");
+            toast.success("Password updated successfully");
         },
         onError: (err) => {
             const errMsg =
@@ -118,7 +120,20 @@ const Profile = () => {
         setChangePassword(false);
     };
 
-    const checkPassword = () => {
+    const handleSaveProfile = async (e) => {
+        e.preventDefault();
+        const newUsername = usernameInputRef.current.value.trim();
+
+        if (newUsername === "" || newUsername === currentUser.username) {
+            return;
+        }
+
+        updateUsernameMutation.mutate(newUsername);
+    };
+
+    const handleUpdatePassword = (e) => {
+        e.preventDefault();
+
         if (confirmedPassword === "" || newPassword === "" || password === "") {
             setMsg({ error: true, content: "Please fill all required fields" });
             return;
@@ -145,27 +160,11 @@ const Profile = () => {
             return;
         }
 
-        setMsg({
-            error: true,
-            content: "Failed to update password",
+        setMsg({ error: false, content: "" });
+        updatePasswordMutation.mutate({
+            currentPassword: password,
+            newPassword,
         });
-    };
-
-    const handleSaveProfile = async (e) => {
-        e.preventDefault();
-        const newUsername = usernameInputRef.current.value.trim();
-
-        if (newUsername === "" || newUsername === currentUser.username) {
-            return;
-        }
-
-        updateUsernameMutation.mutate(newUsername);
-    };
-
-    const handleCheckPassword = async (e) => {
-        e.preventDefault();
-        checkPassword();
-        updatePasswordMutation.mutate(password, newPassword);
     };
 
     const handleLogout = async (e) => {
@@ -374,7 +373,7 @@ const Profile = () => {
                                                 updatePasswordMutation.isPending
                                             }
                                             onClick={(e) =>
-                                                handleCheckPassword(e)
+                                                handleUpdatePassword(e)
                                             }
                                             className="text-white p-2 text-[0.75rem] bg-sky-800 font-medium hover:bg-sky-700 w-[100%]"
                                         >
