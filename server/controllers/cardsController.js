@@ -69,7 +69,7 @@ const addCard = async (req, res) => {
         createdAt: newCard.updatedAt,
     })
 
-    return res.status(201).json({ newCard });
+    return res.status(200).json({ newCard });
 };
 
 /**
@@ -102,7 +102,7 @@ const reorder = async (req, res) => {
 
     const foundList = await listById(listId);
     if (!foundList) {
-        return res.status(404);
+        return res.sendStatus(403).json({ message: "list not found" });
     }
 
     if (foundCard.order === rank) {
@@ -144,7 +144,7 @@ const updateTitle = async (req, res) => {
     const { title } = req.body;
 
     const foundCard = await cardById(id, { lean: false });
-    if (!foundCard) return res.status(404).json({ error: 'Card not found' });
+    if (!foundCard) return res.sendStatus(404);
 
     await checkBoardPermission({
         boardId: foundCard.boardId.toString(),
@@ -169,7 +169,7 @@ const updateDescription = async (req, res) => {
     const { description } = req.body;
 
     const foundCard = await cardById(id, { lean: false });
-    if (!foundCard) return res.status(404).json({ error: 'Card not found' });
+    if (!foundCard) return res.sendStatus(404);
 
     await checkBoardPermission({
         boardId: foundCard.boardId.toString(),
@@ -194,7 +194,7 @@ const updateHighlight = async (req, res) => {
     const { highlight } = req.body;
 
     const foundCard = await cardById(id, { lean: false });
-    if (!foundCard) return res.status(404).json({ error: 'Card not found' });
+    if (!foundCard) return res.sendStatus(404);
 
     await checkBoardPermission({
         boardId: foundCard.boardId.toString(),
@@ -219,7 +219,7 @@ const updatePriorityLevel = async (req, res) => {
     const { priorityLevel } = req.body;
 
     const foundCard = await cardById(id, { lean: false });
-    if (!foundCard) return res.status(404).json({ error: 'Card not found' });
+    if (!foundCard) return res.sendStatus(404);
 
     const currentPriorityLevel = foundCard.priorityLevel;
 
@@ -255,7 +255,7 @@ const deleteCard = async (req, res) => {
     const { id } = req.params;
 
     const foundCard = await cardById(id, { lean: true });
-    if (!foundCard) return res.status(404).json({ error: 'Card not found' });
+    if (!foundCard) return res.sendStatus(404);
 
     await checkBoardPermission({
         boardId: foundCard.boardId.toString(),
@@ -287,7 +287,7 @@ const copyCard = async (req, res) => {
     const { rank } = req.body;
 
     const foundCard = await cardById(id, { lean: true });
-    if (!foundCard) return res.status(404).json({ error: 'Card not found' });
+    if (!foundCard) return res.sendStatus(404);
 
     await checkBoardPermission({
         boardId: foundCard.boardId.toString(),
@@ -326,7 +326,7 @@ const updateOwner = async (req, res) => {
     const { ownerName } = req.body;
 
     const foundCard = await cardById(id, { lean: false });
-    if (!foundCard) return res.status(404).json({ error: 'Card not found' });
+    if (!foundCard) return res.sendStatus(404);
 
     await checkBoardPermission({
         boardId: foundCard.boardId.toString(),
@@ -350,7 +350,7 @@ const toggleVerified = async (req, res) => {
     const { id } = req.params;
 
     const foundCard = await cardById(id, { lean: false });
-    if (!foundCard) return res.status(404).json({ error: 'Card not found' });
+    if (!foundCard) return res.sendStatus(404);
 
     await checkBoardPermission({
         boardId: foundCard.boardId.toString(),
@@ -385,7 +385,7 @@ const updateDueDate = async (req, res) => {
     const { id } = req.params;
 
     const foundCard = await cardById(id, { lean: false });
-    if (!foundCard) return res.status(404).json({ error: 'Card not found' });
+    if (!foundCard) return res.sendStatus(404);
 
     await checkBoardPermission({
         boardId: foundCard.boardId.toString(),

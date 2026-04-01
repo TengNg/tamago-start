@@ -89,16 +89,16 @@ router.route("/:id/new-highlight")
 router.route("/:id/copy")
     .post(withCardLock("copy", copyCard))
 
-router.route("/:id/member/update")
+router.route("/:id/new-owner")
     .patch(updateOwner)
 
-router.route("/:id/priority/update")
+router.route("/:id/new-priority")
     .patch(updatePriorityLevel)
 
 router.route("/:id/toggle-verified")
     .patch(withCardLock("toggleVerified", toggleVerified))
 
-router.route("/:id/due-date/update")
+router.route("/:id/new-due-date")
     .patch(updateDueDate)
 
 // Comments

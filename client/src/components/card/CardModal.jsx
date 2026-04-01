@@ -155,7 +155,7 @@ const CardModal = ({
     const handleCardOwnerChange = async (memberName) => {
         try {
             const response = await axiosPrivate.patch(
-                `/cards/${card._id}/member/update`,
+                `/cards/${card._id}/new-owner`,
                 JSON.stringify({ ownerName: memberName }),
             );
             const cardOwner = response?.data?.newCard?.owner || "";
@@ -178,7 +178,7 @@ const CardModal = ({
     const handleCardPriorityLevelChange = async (value) => {
         try {
             const response = await axiosPrivate.patch(
-                `/cards/${card._id}/priority/update`,
+                `/cards/${card._id}/new-priority`,
                 JSON.stringify({ priorityLevel: value }),
             );
             const priorityLevel =
@@ -238,7 +238,7 @@ const CardModal = ({
     const handleChangeDueDate = async (value) => {
         try {
             const response = await axiosPrivate.patch(
-                `/cards/${card._id}/due-date/update`,
+                `/cards/${card._id}/new-due-date`,
                 JSON.stringify({ dueDate: value }),
             );
             const { dueDate } = response.data;
