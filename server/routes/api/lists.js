@@ -10,36 +10,48 @@ const {
     moveList,
 } = require('../../controllers/listsController');
 
+/** @type {{ [listId: string]: { [action: string]: true } | undefined }} */
 let listActionLocks = {};
 
-const withLock = (action, fn) => async (req, res) => {
-    const listId = req.params.id;
+/**
+ * @param {string} action
+ * @param {import("express").RequestHandler} fn
+ */
+const withListLock = (action, fn) => {
+    /**
+     * @param {import("express").Request} req
+     * @param {import("express").Response} res
+     * @param {import("express").NextFunction} next
+     */
+    return async (req, res, next) => {
+        const listId = req.params.id;
 
-     if (listActionLocks[listId] && listActionLocks[listId][action]) {
-        res.status(503).send(`Service Unavailable: ${action}-action for list ${listId} is being processed`);
-        return;
-    }
-
-    // Acquire lock for the action
-    if (!listActionLocks[listId]) {
-        listActionLocks[listId] = {};
-    }
-
-    listActionLocks[listId][action] = true;
-
-    try {
-        // await new Promise(_ => setTimeout(_, 5000)); // for testing
-        await fn(req, res);
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).send('Internal Server Error [Mutex]');
-    } finally {
-        // Release the lock after processing is complete
-        delete listActionLocks[listId][action];
-        if (Object.keys(listActionLocks[listId]).length === 0) {
-            delete listActionLocks[listId];
+        if (listActionLocks[listId]?.[action]) {
+            const errMessage = process.env.NODE_ENV === "development"
+                ? `withListLock :: Service Unavailable: ${action}-action for list ${listId} is being processed`
+                : "Action is being processed"
+            res.status(503).send(errMessage);
+            return;
         }
-    }
+
+        if (!listActionLocks[listId]) {
+            listActionLocks[listId] = {};
+        }
+
+        listActionLocks[listId][action] = true;
+
+        try {
+            // await new Promise(_ => setTimeout(_, 2000));
+            await fn(req, res, next);
+        } catch (err) {
+            next(err);
+        } finally {
+            delete listActionLocks[listId][action];
+            if (Object.keys(listActionLocks[listId]).length === 0) {
+                delete listActionLocks[listId];
+            }
+        }
+    };
 };
 
 router.route("/")
@@ -55,7 +67,7 @@ router.route("/:id/new-title")
     .patch(updateTitle)
 
 router.route("/copy/:id")
-    .post(withLock("copy", copyList))
+    .post(withListLock("copy", copyList))
 
 router.route("/move/:id/b/:boardId/i/:index")
     .patch(moveList)
