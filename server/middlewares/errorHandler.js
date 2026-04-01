@@ -13,7 +13,7 @@ const errorHandler = (err, _req, res, _next) => {
         ? err.status
         : 500
 
-    const isProd = process.env.MODE === 'production';
+    const isProd = process.env.NODE_ENV === 'production';
 
     res.status(status).json({
         message,

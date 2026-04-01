@@ -1,11 +1,5 @@
 require('dotenv').config();
 
-const mongoose = require("mongoose");
-mongoose.set("strictQuery", true);
-mongoose
-    .connect(process.env.DB_CONNECTION)
-    .catch((err) => console.log(err));
-
 const express = require("express");
 const errorHandler = require('./middlewares/errorHandler');
 const notFoundHandler = require('./middlewares/notFoundHandler');
@@ -17,17 +11,17 @@ const app = express();
 
 app.disable('x-powered-by');
 app.use((_req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('Referrer-Policy', 'no-referrer');
-  next();
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    next();
 });
 
 app.use(credentials);
 app.use(express.json());
 app.use(cookieParser());
 app.use(bodyParser.json())
-if (process.env.MODE !== "production") {
+if (process.env.NODE_ENV !== "production") {
     const cors = require("cors");
     app.use(cors({
         origin: true,
@@ -41,7 +35,7 @@ const apiRouter = require("./routes/api/index");
 app.use("/api", apiRouter);
 
 // prod-setup
-if (process.env.MODE === "production") {
+if (process.env.NODE_ENV === "production") {
     const path = require('path');
     const buildPath = path.join(__dirname, "../client/dist");
     app.use(express.static(buildPath));
@@ -57,14 +51,16 @@ if (process.env.MODE === "production") {
 app.use(notFoundHandler);
 app.use(errorHandler);
 
-// init socket =================================================================
+if (process.env.NODE_ENV !== 'test') {
+    const mongoose = require("mongoose");
+    mongoose.set("strictQuery", true);
+    mongoose.connect(process.env.DB_CONNECTION).catch(e => console.log(e));
 
-const { initSocket } = require('./socket');
-const { createServer } = require('http');
-const server = createServer(app);
-initSocket(server);
+    const { initSocket } = require('./socket');
+    const { createServer } = require('http');
+    const server = createServer(app);
+    initSocket(server);
 
-const PORT = process.env.PORT || 3001;
-if (process.env.MODE !== 'test') {
+    const PORT = process.env.PORT || 3001;
     server.listen(PORT, () => console.log(`app is listening on PORT ${PORT}`));
 }

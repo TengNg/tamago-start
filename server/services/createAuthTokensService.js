@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const __prod__ = process.env.MODE === 'production';
+const __prod__ = process.env.NODE_ENV === 'production';
 
 /** @type import('express').CookieOptions */
 const aCookieOpts = {

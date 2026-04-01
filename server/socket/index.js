@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 const { Server } = require("socket.io");
 const state = require('./state');
 
-const __prod__ = process.env.MODE === "production";
+const __prod__ = process.env.NODE_ENV === "production";
 const opts = __prod__ ? {} : {
     cors: {
         origin: 'http://localhost:5173',
@@ -39,7 +39,7 @@ const initSocket = (server) => {
         const accessToken = cookiePairs[aTokenName];
         const refreshToken = cookiePairs[rTokenName];
 
-        if (process.env.MODE == "development") {
+        if (process.env.NODE_ENV == "development") {
             console.log("socket-middleware#cookiePairs: ", cookiePairs);
             console.log("socket-middleware#accessToken: ", accessToken);
             console.log("socket-middleware#refreshToken: ", refreshToken);
@@ -53,7 +53,7 @@ const initSocket = (server) => {
             /** @type import('express').Request["user"] */
             const decoded = jwt.verify(accessToken, accessTokenSecret);
 
-            if (process.env.MODE === "development") {
+            if (process.env.NODE_ENV === "development") {
                 console.log("Token decoded data: ", decoded);
             }
 
@@ -66,7 +66,7 @@ const initSocket = (server) => {
                 username: decoded.username,
             };
 
-            if (process.env.MODE === "development") {
+            if (process.env.NODE_ENV === "development") {
                 console.log('Authenticated user:', socket.user);
             }
 

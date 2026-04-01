@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const __prod__ = process.env.MODE === "production";
+const __prod__ = process.env.NODE_ENV === "production";
 const PORT = process.env.PORT || 3001;
 const SERVER_URL = process.env.SERVER_URL || `http://localhost:${PORT}`;
 const FRONTEND_URL = __prod__ ? SERVER_URL : (process.env.FRONTEND_URL || "http://localhost:5173");

@@ -12,7 +12,7 @@ function registerBoardHandlers(io, socket, state) {
 
         socket.join(boardId);
 
-        if (process.env.MODE === "development") {
+        if (process.env.NODE_ENV === "development") {
             console.log(`User[id=${socket.user.id}][username=${socket.user.username}][socket_id=${socket.id}] joins board with id ${boardId}`);
         }
     });
