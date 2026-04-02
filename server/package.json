@@ -2,7 +2,7 @@
     "scripts": {
         "start": "node index.js",
         "dev": "nodemon index.js",
-        "test": "jest --forceExit",
+        "test": "jest --runInBand",
         "type": "npx tsc --noEmit"
     },
     "dependencies": {
