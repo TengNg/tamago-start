@@ -8,7 +8,7 @@ import { useSearchParams } from "react-router-dom";
 import { closestCenter, DndContext, DragOverlay } from "@dnd-kit/core";
 import { rectSwappingStrategy, SortableContext } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
-import { lexorank } from "../utils/class/Lexorank";
+import { lexorank } from "../lib/lexorank";
 import { axiosPrivate } from "../api/axios";
 import useToast from "../hooks/useToast";
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import useBoardState from "../../hooks/useBoardState";
-import { lexorank } from "../../utils/class/Lexorank";
+import { lexorank } from "../../lib/lexorank";
 import Loading from "../ui/Loading";
 import Icon from "../shared/Icon";
 import { axiosPrivate } from "../../api/axios";

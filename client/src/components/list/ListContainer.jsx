@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import List from "./List";
 import useBoardState from "../../hooks/useBoardState";
 import AddList from "./AddList";
-import { lexorank } from "../../utils/class/Lexorank";
+import { lexorank } from "../../lib/lexorank";
 import {
     DndContext,
     DragOverlay,

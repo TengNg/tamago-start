@@ -17,7 +17,8 @@ const Member = ({ member, handleRemoveMemberFromBoard }) => {
                     <div className="flex flex-col justify-center">
                         <p className="text-[0.75rem] text-gray-800 font-medium">
                             {member.username}{" "}
-                            {currentUser.username === member.username && "(you)"}
+                            {currentUser.username === member.username &&
+                                "(you)"}
                         </p>
                         <p className="text-[0.75rem] text-gray-800">member</p>
                     </div>

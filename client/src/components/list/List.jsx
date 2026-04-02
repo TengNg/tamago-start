@@ -5,7 +5,7 @@ import Card from "../card/Card";
 import useBoardState from "../../hooks/useBoardState";
 import CardComposer from "../card/CardComposer";
 import ListMenu from "./ListMenu";
-import { lexorank } from "../../utils/class/Lexorank";
+import { lexorank } from "../../lib/lexorank";
 import { axiosPrivate } from "../../api/axios";
 import Icon from "../shared/Icon";
 import useToast from "../../hooks/useToast";
@@ -72,7 +72,8 @@ const List = ({ index, list, cards }) => {
             });
         } catch (err) {
             setListTitle(list._id, initialListTitle);
-            const errMsg = err.response?.data?.message || "Failed to update title";
+            const errMsg =
+                err.response?.data?.message || "Failed to update title";
             toast.error(errMsg);
         }
     };

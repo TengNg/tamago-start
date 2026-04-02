@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { lexorank } from "../utils/class/Lexorank";
+import { lexorank } from "../lib/lexorank";
 import useBoardState from "../hooks/useBoardState";
 import useKeyBinds from "../hooks/useKeyBinds";
 import useCardActions from "../hooks/useCardActions";
