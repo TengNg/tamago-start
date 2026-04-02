@@ -1,67 +1,94 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const app = require('../../../server');
-
+const app = require('../../../index');
 const List = require('../../../models/List');
-const { isActionAuthorized } = require('../../../services/boardActionAuthorizeService');
-jest.mock('../../../models/List');
-jest.mock('../../../services/boardActionAuthorizeService');
+const Board = require('../../../models/Board');
+const {
+    createTestUser,
+    createTestBoard,
+    createTestList,
+    createTestCard,
+} = require('../../helpers/generateDoc');
+const { objectId } = require('../../helpers/common');
 
 describe('DELETE /lists/:id', () => {
-    let token;
+    let cookieName = process.env.ACCESS_TOKEN_COOKIE_NAME;
+    let accessToken;
+    let testUser;
+    let testBoard;
+    let testList;
 
-    beforeAll(() => {
-        token = jwt.sign({ username: 'testuser' }, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
+    beforeAll(async () => {
+        await mongoose.connect(global.__MONGO_URI__);
     });
 
-    afterEach(() => {
-        jest.clearAllMocks();
+    afterAll(async () => {
+        await mongoose.disconnect();
     });
 
-    it('should return 403 if list is not found', async () => {
-        const listId = new mongoose.Types.ObjectId().toString();
-        const mockList = { _id: listId, save: jest.fn() };
-        List.findById = jest.fn().mockImplementation(() => null);
+    beforeEach(async () => {
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            await collections[key].deleteMany({});
+        }
+        testUser = await createTestUser();
+        testBoard = await createTestBoard(testUser._id);
+        testList = await createTestList(testBoard._id);
+        for (let i = 1; i <= 10; i++) {
+            await createTestCard(testBoard._id, testList._id);
+        }
+
+        accessToken = jwt.sign(
+            {
+                userId: testUser._id.toString(),
+                username: testUser.username,
+                refreshTokenVersion: testUser.refreshTokenVersion || 0,
+            },
+            process.env.ACCESS_TOKEN_SECRET || 'testsecret',
+            { expiresIn: '1h' }
+        );
+    });
+
+    afterEach(async () => {
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            await collections[key].deleteMany({});
+        }
+    });
+
+    it('should return 404 if id is not found', async () => {
+        const unknownId = objectId();
         const res = await request(app)
-            .delete(`/lists/${mockList._id}`)
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(403);
+            .delete(`/api/lists/${unknownId}`)
+            .set('Cookie', `${cookieName}=${accessToken}`)
+        expect(res.statusCode).toBe(404);
     });
 
-    it('should return 403 if not authorized', async () => {
-        const mockUser = { _id: new mongoose.Types.ObjectId().toString(), username: 'testuser' };
-        const listId = new mongoose.Types.ObjectId().toString();
-        const mockList = { _id: listId, boardId: new mongoose.Types.ObjectId().toString(), save: jest.fn() };
-        List.findById = jest.fn().mockImplementation(() => mockList);
-        isActionAuthorized.mockResolvedValue({ authorized: false, user: mockUser });
+    it('should return 403 if user does not have access to board', async () => {
+        const anotherUser = await createTestUser();
+        const anotherBoard = await createTestBoard(anotherUser._id);
+        const anotherList = await createTestList(anotherBoard._id);
         const res = await request(app)
-            .delete(`/lists/${mockList._id}`)
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(403);
+            .delete(`/api/lists/${anotherList._id}`)
+            .set('Cookie', `${cookieName}=${accessToken}`)
+        expect(res.statusCode).toBe(403);
+        expect(res.body.message).toBe("You do not have permission to delete lists");
     });
 
-    it('should return 403 if user is not found', async () => {
-        const listId = new mongoose.Types.ObjectId().toString();
-        const mockList = { _id: listId, save: jest.fn() };
-        List.findById = jest.fn().mockImplementation(() => null);
-        isActionAuthorized.mockResolvedValue({ authorized: false, user: null });
+    it('should successfully delete list', async () => {
         const res = await request(app)
-            .delete(`/lists/${mockList._id}`)
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(403);
-    });
+            .delete(`/api/lists/${testList._id}`)
+            .set('Cookie', `${cookieName}=${accessToken}`)
 
-    it('should return 201 if user & list are found', async () => {
-        const mockUser = { _id: new mongoose.Types.ObjectId().toString(), username: 'testuser' };
-        const listId = new mongoose.Types.ObjectId().toString();
-        const mockList = { _id: listId, boardId: new mongoose.Types.ObjectId().toString(), save: jest.fn() };
-        List.findById = jest.fn().mockImplementation(() => mockList);
-        isActionAuthorized.mockResolvedValue({ authorized: true, user: mockUser });
-        const res = await request(app)
-            .delete(`/lists/${mockList._id}`)
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(200);
-        expect(res.body.message).toEqual('list deleted');
+        expect(res.statusCode).toBe(201);
+
+        const lists = await List.find({ title: testList.title })
+        expect(lists.length).toBe(0);
+
+        const board = await Board.findOne({});
+        expect(board.listCount).toBe(0);
     });
 });
+
+
