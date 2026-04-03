@@ -218,42 +218,42 @@ const CardQuickEditor = ({
 
                         <button
                             onClick={handleOpenCardModal}
-                            className="hover:ms-1 transition-all text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80"
+                            className="hover:ms-1 text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80"
                         >
                             open
                         </button>
 
                         <button
                             onClick={handleOpenCardInNewTab}
-                            className="hover:ms-1 transition-all text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80"
+                            className="hover:ms-1 text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80"
                         >
                             open in new tab
                         </button>
 
                         <button
                             onClick={handleToggleHighlightPicker}
-                            className={`${openHighlightPicker ? "bg-gray-600" : "bg-gray-800"} hover:ms-1 transition-all text-[0.75rem] text-white px-3 py-1 flex--center opacity-80 z-30`}
+                            className={`${openHighlightPicker ? "bg-gray-600" : "bg-gray-800"} hover:ms-1 text-[0.75rem] text-white px-3 py-1 flex--center opacity-80 z-30`}
                         >
                             highlight
                         </button>
 
                         <button
                             onClick={copyCard}
-                            className="hover:ms-1 transition-all text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80"
+                            className="hover:ms-1 text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80"
                         >
                             duplicate
                         </button>
 
                         <button
                             onClick={deleteCard}
-                            className="hover:ms-1 transition-all text-[0.75rem] relative text-white bg-gray-800 px-3 py-1 flex--center opacity-80 z-30"
+                            className="hover:ms-1 text-[0.75rem] relative text-white bg-gray-800 px-3 py-1 flex--center opacity-80 z-30"
                         >
                             delete
                         </button>
 
                         <button
                             onClick={handleClose}
-                            className="hover:ms-1 transition-all text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80 z-0"
+                            className="hover:ms-1 text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80 z-0"
                         >
                             close
                         </button>

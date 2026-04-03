@@ -239,7 +239,7 @@ const MoveListForm = () => {
 
                 <div className="flex w-full justify-between items-center border-b-[1px] border-black pb-4 mb-4">
                     <div className="text-[0.85rem] text-gray-700">
-                        <span>list title:</span>
+                        <span>title:</span>
                         <span> </span>
                         <span className="font-medium">{listToMove?.title}</span>
                     </div>
@@ -292,7 +292,7 @@ const MoveListForm = () => {
 
                     <button
                         onClick={handleMoveList}
-                        className="button--style border-[2px] py-2 text-[0.8rem] hover:bg-gray-600 hover:text-white transition-all"
+                        className="button--style border-[2px] py-2 text-[0.8rem] hover:bg-gray-600 hover:text-white"
                     >
                         move
                     </button>
