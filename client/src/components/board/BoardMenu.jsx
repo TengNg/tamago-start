@@ -30,7 +30,7 @@ const BoardMenu = ({
 
     const handleLeaveBoard = async () => {
         try {
-            await axiosPrivate.patch(
+            await axiosPrivate.delete(
                 `/boards/${boardState.board._id}/members/leave`,
             );
             removeMemberFromBoard(currentUser.username);

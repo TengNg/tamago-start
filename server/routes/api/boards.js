@@ -35,10 +35,10 @@ router.route("/:id/list-count")
     .get(getListCount)
 
 router.route("/:id/members/leave")
-    .patch(leaveBoard)
+    .delete(leaveBoard)
 
 router.route("/:id/members/:memberName")
-    .patch(removeMemberFromBoard)
+    .delete(removeMemberFromBoard)
 
 router.route("/:id/new-title")
     .patch(updateTitle)

@@ -108,7 +108,7 @@ const getBoard = async (req, res) => {
         select: 'username createdAt'
     });
     if (!board) {
-        return res.status(404);
+        return res.sendStatus(404);
     }
 
     const hasAccess = await BoardMembership.exists({ boardId: id, userId: userId });
@@ -119,15 +119,15 @@ const getBoard = async (req, res) => {
         return res.status(403).json({ message: 'You do not have permission to access this board' });
     }
 
-    // sync list count
-    const listCount = await List.countDocuments({ boardId: id });
-    board.listCount = listCount;
-
-    // sync card count
-    const cardCount = await Card.countDocuments({ boardId: id });
-    board.cardCount = cardCount;
-
-    await board.save();
+    // // sync list count
+    // const listCount = await List.countDocuments({ boardId: id });
+    // board.listCount = listCount;
+    //
+    // // sync card count
+    // const cardCount = await Card.countDocuments({ boardId: id });
+    // board.cardCount = cardCount;
+    //
+    // await board.save();
 
     const listsWithCards = await List.aggregate([
         {
@@ -286,7 +286,7 @@ const createBoard = async (req, res) => {
         createdBy: userId
     });
     await newBoard.save();
-    return res.status(201).json({ message: 'new board created', newBoard });
+    return res.status(201).json({ newBoard });
 };
 
 /**
@@ -300,7 +300,7 @@ const updateTitle = async (req, res) => {
 
     const board = await Board.findById(id);
     if (!board) {
-        return res.status(404);
+        return res.sendStatus(404);
     }
 
     await checkAllowedRoles({
@@ -323,7 +323,7 @@ const updateTitle = async (req, res) => {
         })
     }
 
-    return res.status(200).json({ message: 'board updated', newBoard: board });
+    return res.status(200).json({ newBoard: board });
 };
 
 /**
@@ -337,7 +337,7 @@ const updateDescription = async (req, res) => {
 
     const board = await Board.findById(id);
     if (!board) {
-        return res.status(404);
+        return res.sendStatus(404);
     }
 
     await checkAllowedRoles({
@@ -360,7 +360,7 @@ const updateDescription = async (req, res) => {
         })
     }
 
-    return res.status(200).json({ message: 'board updated', newBoard: board });
+    return res.status(200).json({ newBoard: board });
 };
 
 /**
@@ -374,7 +374,7 @@ const updateVisibility = async (req, res) => {
 
     const board = await Board.findById(id);
     if (!board) {
-        return res.status(404);
+        return res.sendStatus(404);
     }
 
     await checkAllowedRoles({
@@ -386,7 +386,7 @@ const updateVisibility = async (req, res) => {
     board.visibility = visibility;
     board.save();
 
-    return res.status(200).json({ message: 'board updated', newBoard: board });
+    return res.status(200).json({ newBoard: board });
 };
 
 /**
@@ -399,7 +399,7 @@ const leaveBoard = async (req, res) => {
 
     const board = await Board.findById(id);
     if (!board) {
-        return res.status(404);
+        return res.sendStatus(404);
     }
 
     await checkAllowedRoles({
@@ -410,7 +410,7 @@ const leaveBoard = async (req, res) => {
 
     const foundBoardMembership = await BoardMembership.findOne({ boardId: board._id, userId });
     if (!foundBoardMembership) {
-        return res.status(404).json({ error: 'Member not found' });
+        return res.sendStatus(404);
     }
 
     await BoardMembership.deleteOne({ boardId: board._id, userId });
@@ -427,7 +427,7 @@ const removeMemberFromBoard = async (req, res) => {
 
     const board = await Board.findById(id);
     if (!board) {
-        return res.status(404);
+        return res.sendStatus(404);
     }
 
     const membership = await checkAllowedRoles({
@@ -438,11 +438,11 @@ const removeMemberFromBoard = async (req, res) => {
 
     const foundMember = await getUser(memberName);
     if (!foundMember) {
-        return res.status(403).json({ error: 'member not found' });
+        return res.status(403).json({ message: 'member not found' });
     }
 
-    if (foundMember._id === membership.userId) {
-        return res.status(403).json({ error: 'cannot remove yourself' });
+    if (foundMember._id.toString() === membership.userId.toString()) {
+        return res.status(403).json({ message: 'cannot remove yourself' });
     }
 
     await BoardMembership.deleteOne({
@@ -468,11 +468,11 @@ const closeBoard = async (req, res) => {
 
         const board = await Board.findById(id);
         if (!board) {
-            return res.status(404);
+            return res.sendStatus(404);
         }
 
         await checkAllowedRoles({
-            roles: ["member"],
+            roles: ["owner"],
             userId,
             boardId: board._id.toString()
         });
@@ -488,7 +488,7 @@ const closeBoard = async (req, res) => {
     } catch (error) {
         await session.abortTransaction();
         const status = error.status || 400;
-        res.status(status).json({ error: error.message });
+        res.status(status).json({ message: error.message });
     } finally {
         session.endSession();
     }
@@ -509,17 +509,14 @@ const copyBoard = async (req, res) => {
 
         const board = await Board.findById(id);
         if (!board) {
-            return res.status(404);
+            return res.sendStatus(404);
         }
 
-        const allowed = await BoardMembership.exists({
+        await checkAllowedRoles({
+            roles: ["owner", "member"],
             userId,
-            boardId: board._id,
-            role: "owner",
+            boardId: board._id.toString()
         });
-        if (!allowed) {
-            return res.status(403).json({ message: "unauthorized" });
-        }
 
         const newBoardId = new mongoose.Types.ObjectId();
         const lists = await List.find({ boardId: board._id });
@@ -567,110 +564,12 @@ const copyBoard = async (req, res) => {
         return res.status(200).json({ message: 'board copied' });
     } catch (error) {
         await session.abortTransaction();
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ message: error.message });
     } finally {
         session.endSession();
     }
 };
 
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
-const togglePinBoard = async (req, res) => {
-    const { userId } = req.user;
-    const { id } = req.params;
-
-    const foundBoard = await Board.findById(id);
-    if (!foundBoard) {
-        return res.status(404);
-    }
-
-    const foundUser = await User.findById(userId);
-    if (!foundUser) {
-        return res.status(403).json({ message: "user not found" });
-    }
-
-    if (foundUser.pinnedBoardIdCollection && foundUser.pinnedBoardIdCollection.has(id)) {
-        const result = await User.findOneAndUpdate(
-            { _id: userId },
-            { $unset: { [`pinnedBoardIdCollection.${id}`]: 1 } },
-            { new: true }
-        ).select('pinnedBoardIdCollection');
-        return res.status(200).json({ result });
-    }
-
-    const result = await User.findOneAndUpdate(
-        { _id: userId },
-        { $set: { [`pinnedBoardIdCollection.${id}`]: { title: foundBoard?.title } } },
-        { new: true, upsert: true }
-    ).select('pinnedBoardIdCollection');
-    return res.status(200).json({ result });
-};
-
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
-const deletePinnedBoard = async (req, res) => {
-    const { userId } = req.user;
-    const { id } = req.params;
-
-    const foundUser = await User.findById(userId);
-    if (!foundUser) {
-        return res.status(403).json({ message: "user not found" });
-    }
-
-    if (foundUser.pinnedBoardIdCollection && foundUser.pinnedBoardIdCollection.has(id)) {
-        const result = await User.findOneAndUpdate(
-            { _id: userId },
-            { $unset: { [`pinnedBoardIdCollection.${id}`]: 1 } },
-            { new: true }
-        ).select('pinnedBoardIdCollection');
-        return res.status(200).json({ result });
-    }
-
-    return res.status(404).json({ message: 'pinned board not found' });
-};
-
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
-const updatePinnedBoardsCollection = async (req, res) => {
-    const { userId } = req.user;
-    const { pinnedBoards } = req.body;
-
-    const foundUser = await User.findById(userId);
-    if (JSON.stringify(foundUser.pinnedBoardIdCollection) === JSON.stringify(pinnedBoards)) {
-        return res.status(200).json({
-            result: foundUser.pinnedBoardIdCollection,
-        });
-    }
-
-    const result = await User.findOneAndUpdate(
-        { _id: userId },
-        { pinnedBoardIdCollection: pinnedBoards },
-        { new: true }
-    ).select('pinnedBoardIdCollection');
-
-    return res.status(200).json({ result });
-};
-
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
-const cleanPinnedBoardsCollection = async (req, res) => {
-    const { userId } = req.user;
-    const result = await User.findOneAndUpdate(
-        { _id: userId },
-        { pinnedBoardIdCollection: {} },
-        { new: true }
-    ).select('pinnedBoardIdCollection');
-
-    return res.status(200).json({ result });
-};
 
 /**
  * @param {import('express').Request} req
@@ -700,9 +599,5 @@ module.exports = {
     removeMemberFromBoard,
     closeBoard,
     copyBoard,
-    togglePinBoard,
-    deletePinnedBoard,
-    cleanPinnedBoardsCollection,
-    updatePinnedBoardsCollection,
     getListCount,
 };
