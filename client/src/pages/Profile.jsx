@@ -9,7 +9,7 @@ import dateFormatter from "../utils/dateFormatter";
 import useCurrentUserContext from "../hooks/useCurrentUserContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getBoards } from "../api/boardApi";
-import { updatePassword, updateUsername } from "../api/accountApi";
+import { updatePassword, updateUsername } from "../api/meApi";
 import useToast from "../hooks/useToast";
 
 const Profile = () => {

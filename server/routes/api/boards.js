@@ -13,10 +13,6 @@ const {
     removeMemberFromBoard,
     closeBoard,
     copyBoard,
-    togglePinBoard,
-    deletePinnedBoard,
-    cleanPinnedBoardsCollection,
-    updatePinnedBoardsCollection,
     getListCount,
 } = require('../../controllers/boardsController');
 
@@ -51,15 +47,5 @@ router.route("/:id/new-visibility")
 
 router.route("/copy/:id")
     .post(copyBoard)
-
-router.route("/:id/pinned")
-    .patch(togglePinBoard)
-    .delete(deletePinnedBoard)
-
-router.route("/pinned/update")
-    .patch(updatePinnedBoardsCollection)
-
-router.route("/pinned/clean")
-    .patch(cleanPinnedBoardsCollection)
 
 module.exports = router;

@@ -109,7 +109,7 @@ const PinnedBoards = ({ setOpen }) => {
         try {
             setDeletingBoardId(boardId);
 
-            await axiosPrivate.delete(`/boards/${boardId}/pinned`);
+            await axiosPrivate.delete(`/me/pinned-boards/${boardId}`);
             await currentUserQuery.refetch();
         } catch (err) {
             const errMsg =
@@ -125,7 +125,7 @@ const PinnedBoards = ({ setOpen }) => {
 
         try {
             setLoading(true);
-            await axiosPrivate.patch(`/boards/pinned/clean`);
+            await axiosPrivate.delete(`/me/pinned-boards`);
 
             setLoading(false);
             setCleaned(true);
@@ -179,7 +179,7 @@ const PinnedBoards = ({ setOpen }) => {
                 {},
             );
             await axiosPrivate.patch(
-                `/boards/pinned/update`,
+                `/me/pinned-boards`,
                 JSON.stringify({
                     pinnedBoards: mappedPinnedBoards,
                 }),

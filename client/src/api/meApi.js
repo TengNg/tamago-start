@@ -8,3 +8,21 @@ export async function fetchCurrentUser() {
 
     return response.data.user;
 }
+
+export async function updateUsername({ username }) {
+    const response = await axiosPrivate.patch(
+        `/me/username`,
+        JSON.stringify({ newUsername: username }),
+    );
+
+    return response.data;
+}
+
+export async function updatePassword({ currentPassword, newPassword }) {
+    const response = await axiosPrivate.patch(
+        `/me/password`,
+        JSON.stringify({ currentPassword, newPassword }),
+    );
+
+    return response.data;
+}
