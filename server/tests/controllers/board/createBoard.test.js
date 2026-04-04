@@ -1,45 +1,69 @@
 const request = require('supertest');
+const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const app = require('../../../server');
-const { userByUsername: getUser } = require('../../../services/userService');
-
-jest.mock('../../../services/userService');
-jest.mock('../../../models/Board');
-jest.mock('../../../models/User');
+const app = require('../../../index');
+const {
+    createTestUser,
+} = require('../../helpers/generateDoc');
 
 describe('POST /boards', () => {
-    let token;
+    let cookieName = process.env.ACCESS_TOKEN_COOKIE_NAME;
+    let accessToken;
+    let testUser;
 
-    beforeAll(() => {
-        token = jwt.sign({ username: 'testuser' }, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
+    beforeAll(async () => {
+        await mongoose.connect(global.__MONGO_URI__);
     });
 
-    afterEach(() => {
-        jest.clearAllMocks();
+    afterAll(async () => {
+        await mongoose.disconnect();
     });
 
-    it('should return 403 if user is not found', async () => {
-        const title = 'Test Title';
-        const description = 'Test Description';
-        getUser.mockResolvedValue(null);
+    beforeEach(async () => {
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            await collections[key].deleteMany({});
+        }
+
+        testUser = await createTestUser();
+
+        accessToken = jwt.sign(
+            {
+                userId: testUser._id.toString(),
+                username: testUser.username,
+                refreshTokenVersion: testUser.refreshTokenVersion || 0,
+            },
+            process.env.ACCESS_TOKEN_SECRET || 'testsecret',
+            { expiresIn: '1h' }
+        );
+    });
+
+    afterEach(async () => {
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            await collections[key].deleteMany({});
+        }
+    });
+
+    it('should return 500 if missing required fields', async () => {
         const res = await request(app)
-            .post(`/boards`)
-            .send({ title, description })
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(403);
-        expect(res.body.msg).toEqual('user not found');
+            .post(`/api/boards`)
+            .set('Cookie', `${cookieName}=${accessToken}`)
+            .send({})
+        expect(res.statusCode).toBe(500);
     });
 
-    it('should return 200 if user is found', async () => {
-        const title = 'Test Title';
-        const description = 'Test Description';
-        const mockUser = { _id: 'userId', username: 'testuser', recentlyViewedBoardId: null, save: jest.fn() };
-        getUser.mockResolvedValue(mockUser);
+    it('should successfully create board', async () => {
         const res = await request(app)
-            .post(`/boards`)
-            .send({ title, description })
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(201);
+            .post(`/api/boards`)
+            .set('Cookie', `${cookieName}=${accessToken}`)
+            .send({
+                title: "test board title",
+                description: "test board description",
+            })
+        expect(res.statusCode).toBe(201);
+        expect(res.body.newBoard.title).toBe("test board title");
+        expect(res.body.newBoard.description).toBe("test board description");
     });
 });
 

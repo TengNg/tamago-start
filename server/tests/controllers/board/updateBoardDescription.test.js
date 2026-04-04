@@ -1,52 +1,100 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const app = require('../../../server');
-const { userByUsername: getUser } = require('../../../services/userService');
-const { isActionAuthorized } = require('../../../services/boardActionAuthorizeService');
-const saveBoardActivity = require('../../../services/saveBoardActivity');
+const app = require('../../../index');
+const {
+    createTestUser,
+    createTestBoard,
+} = require('../../helpers/generateDoc');
+const { objectId } = require('../../helpers/common');
 
-jest.mock('../../../services/userService');
-jest.mock('../../../services/boardActionAuthorizeService');
-jest.mock('../../../services/saveBoardActivity');
+describe('PATCH /boards/:id/new-description (updateDescription)', () => {
+    let cookieName = process.env.ACCESS_TOKEN_COOKIE_NAME;
+    let accessToken;
+    let testUser;
+    let anotherUser;
+    let ownedBoard;
 
-describe('PUT /boards/:id/new-title', () => {
-    let token;
-
-    beforeAll(() => {
-        token = jwt.sign({ username: 'testuser' }, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
+    beforeAll(async () => {
+        await mongoose.connect(global.__MONGO_URI__);
     });
 
-    afterEach(() => {
-        jest.clearAllMocks();
+    afterAll(async () => {
+        await mongoose.disconnect();
     });
 
-    it('should return 403 if user is not found', async () => {
-        const boardId = new mongoose.Types.ObjectId().toString();
-        const description = 'Test description';
-        getUser.mockResolvedValue(null);
-        isActionAuthorized.mockResolvedValue({ authorized: false, user: null, board: null });
+    beforeEach(async () => {
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            await collections[key].deleteMany({});
+        }
+
+        testUser = await createTestUser();
+        anotherUser = await createTestUser();
+
+        ownedBoard = await createTestBoard(testUser._id, {
+            title: "Test Board",
+            description: "Original description"
+        });
+
+        accessToken = jwt.sign(
+            {
+                userId: testUser._id.toString(),
+                username: testUser.username,
+                refreshTokenVersion: testUser.refreshTokenVersion || 0,
+            },
+            process.env.ACCESS_TOKEN_SECRET || 'testsecret',
+            { expiresIn: '1h' }
+        );
+    });
+
+    afterEach(async () => {
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            await collections[key].deleteMany({});
+        }
+    });
+
+    it('should return 404 if board does not exist', async () => {
+        const unknownId = objectId();
         const res = await request(app)
-            .put(`/boards/${boardId}/new-description`)
-            .send({ description })
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(403);
-        expect(res.body.msg).toEqual('unauthorized');
+            .patch(`/api/boards/${unknownId}/new-description`)
+            .send({ description: 'New desc' })
+            .set('Cookie', `${cookieName}=${accessToken}`);
+
+        expect(res.statusCode).toBe(404);
     });
 
-    it('should return 200 if user is found', async () => {
-        const boardId = new mongoose.Types.ObjectId().toString();
-        const description = 'Test description';
-        const mockUser = { _id: 'userId', username: 'testuser', recentlyViewedBoardId: null, save: jest.fn() };
-        const mockBoard = { _id: boardId, description: 'Old description', members: [], save: jest.fn() };
-        getUser.mockResolvedValue(mockUser);
-        isActionAuthorized.mockResolvedValue({ authorized: true, user: mockUser, board: mockBoard });
-        saveBoardActivity.mockResolvedValue({});
+    it('should return 403 if user is not the owner', async () => {
+        const anotherToken = jwt.sign(
+            {
+                userId: anotherUser._id.toString(),
+                username: anotherUser.username,
+                refreshTokenVersion: anotherUser.refreshTokenVersion || 0,
+            },
+            process.env.ACCESS_TOKEN_SECRET || 'testsecret',
+            { expiresIn: '1h' }
+        );
+
         const res = await request(app)
-            .put(`/boards/${boardId}/new-description`)
-            .send({ description })
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(200);
+            .patch(`/api/boards/${ownedBoard._id}/new-description`)
+            .send({ description: 'New desc' })
+            .set('Cookie', `${cookieName}=${anotherToken}`);
+
+        expect(res.statusCode).toBe(403);
+    });
+
+    it('should successfully update board description', async () => {
+        const newDescription = 'This is the updated board description!';
+
+        const res = await request(app)
+            .patch(`/api/boards/${ownedBoard._id}/new-description`)
+            .send({ description: newDescription })
+            .set('Cookie', `${cookieName}=${accessToken}`);
+
+        expect(res.statusCode).toBe(200);
+        expect(res.body.newBoard).toBeDefined();
+        expect(res.body.newBoard._id.toString()).toBe(ownedBoard._id.toString());
+        expect(res.body.newBoard.description).toBe(newDescription);
     });
 });
-

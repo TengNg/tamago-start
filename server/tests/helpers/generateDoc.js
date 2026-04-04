@@ -2,6 +2,7 @@ const User = require('../../models/User');
 const Board = require('../../models/Board');
 const List = require('../../models/List');
 const Card = require('../../models/Card');
+const BoardMembership = require('../../models/BoardMembership');
 
 async function createTestUser(overrides = {}) {
     const user = new User({
@@ -48,6 +49,16 @@ async function createTestCard(boardId, listId, overrides = {}) {
     return card;
 }
 
+async function createTestBoardMembership(boardId, userId, role = 'owner') {
+    const membership = new BoardMembership({
+        boardId,
+        userId,
+        role
+    });
+    await membership.save();
+    return membership;
+}
+
 async function initializeTestDocs() {
     const testUser = await createTestUser();
     const testBoard = await createTestBoard(testUser._id);
@@ -66,5 +77,6 @@ module.exports = {
     createTestBoard,
     createTestList,
     createTestCard,
+    createTestBoardMembership,
     initializeTestDocs,
 };

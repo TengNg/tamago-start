@@ -1,96 +1,116 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const app = require('../../../server');
-const { userByUsername: getUser } = require('../../../services/userService');
-const { isActionAuthorized } = require('../../../services/boardActionAuthorizeService');
+const app = require('../../../index');
+const {
+    createTestUser,
+    createTestBoard,
+    createTestBoardMembership,
+} = require('../../helpers/generateDoc');
+const { objectId } = require('../../helpers/common');
 
-jest.mock('../../../services/userService');
-jest.mock('../../../services/boardActionAuthorizeService');
+describe('DELETE /boards/:id/members/:memberName (removeMemberFromBoard)', () => {
+    let cookieName = process.env.ACCESS_TOKEN_COOKIE_NAME;
+    let accessToken;
+    let testUser;
+    let anotherUser;
+    let memberUser;
+    let ownedBoard;
 
-describe('PUT /boards/:id/members/:memberName', () => {
-    let token;
-
-    beforeAll(() => {
-        token = jwt.sign({ username: 'testuser' }, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
+    beforeAll(async () => {
+        await mongoose.connect(global.__MONGO_URI__);
     });
 
-    afterEach(() => {
-        jest.clearAllMocks();
+    afterAll(async () => {
+        await mongoose.disconnect();
     });
 
-    it('should return 403 if user is not found', async () => {
-        const boardId = new mongoose.Types.ObjectId().toString();
-        const mockMember = { _id: 'userId', username: 'testmember', recentlyViewedBoardId: null, save: jest.fn() };
-        isActionAuthorized.mockResolvedValue({ authorized: false, user: null, board: null });
+    beforeEach(async () => {
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            await collections[key].deleteMany({});
+        }
+
+        testUser = await createTestUser();
+        anotherUser = await createTestUser();
+        memberUser = await createTestUser({ username: 'testmember123' });
+
+        // Board owned by testUser (auto owner membership)
+        ownedBoard = await createTestBoard(testUser._id, { title: "Test Board" });
+
+        // Add a regular member
+        await createTestBoardMembership(ownedBoard._id, memberUser._id, 'member');
+
+        accessToken = jwt.sign(
+            {
+                userId: testUser._id.toString(),
+                username: testUser.username,
+                refreshTokenVersion: testUser.refreshTokenVersion || 0,
+            },
+            process.env.ACCESS_TOKEN_SECRET || 'testsecret',
+            { expiresIn: '1h' }
+        );
+    });
+
+    afterEach(async () => {
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            await collections[key].deleteMany({});
+        }
+    });
+
+    it('should return 404 if board does not exist', async () => {
+        const unknownId = objectId();
         const res = await request(app)
-            .put(`/boards/${boardId}/members/${mockMember.username}`)
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(403);
-        expect(res.body.error).toEqual('unauthorized');
+            .delete(`/api/boards/${unknownId}/members/testmember123`)
+            .set('Cookie', `${cookieName}=${accessToken}`);
+
+        expect(res.statusCode).toBe(404);
     });
 
-    it('should return 401 if member is not found', async () => {
-        const userId = new mongoose.Types.ObjectId().toString();
-        const memberId = new mongoose.Types.ObjectId().toString();
-        const boardId = new mongoose.Types.ObjectId().toString();
-        const mockUser = { _id: userId, username: 'testuser', recentlyViewedBoardId: null, save: jest.fn() };
-        const mockMember = { _id: memberId, username: 'testmember', recentlyViewedBoardId: null, save: jest.fn() };
-        const mockBoard = { _id: boardId, members: [mockUser._id], createdBy: mockUser._id, save: jest.fn() };
-        isActionAuthorized.mockResolvedValue({ authorized: true, user: mockUser, board: mockBoard });
-        getUser.mockResolvedValue(null);
+    it('should return 403 if user is not the owner', async () => {
+        // anotherUser is not owner
+        const anotherToken = jwt.sign(
+            {
+                userId: anotherUser._id.toString(),
+                username: anotherUser.username,
+                refreshTokenVersion: anotherUser.refreshTokenVersion || 0,
+            },
+            process.env.ACCESS_TOKEN_SECRET || 'testsecret',
+            { expiresIn: '1h' }
+        );
+
         const res = await request(app)
-            .put(`/boards/${boardId}/members/${mockMember.username}`)
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(401);
-        expect(res.body.error).toEqual('unauthorized');
+            .delete(`/api/boards/${ownedBoard._id}/members/testmember123`)
+            .set('Cookie', `${cookieName}=${anotherToken}`);
+
+        expect(res.statusCode).toBe(403);
     });
 
-    it('should return 401 if member is the owner of the board', async () => {
-        const userId = new mongoose.Types.ObjectId().toString();
-        const memberId = new mongoose.Types.ObjectId().toString();
-        const boardId = new mongoose.Types.ObjectId().toString();
-        const mockUser = { _id: userId, username: 'testuser', recentlyViewedBoardId: null, save: jest.fn() };
-        const mockMember = { _id: memberId, username: 'testmember', recentlyViewedBoardId: null, save: jest.fn() };
-        const mockBoard = { _id: boardId, members: [mockUser._id], createdBy: mockMember._id, save: jest.fn() };
-        isActionAuthorized.mockResolvedValue({ authorized: true, user: mockUser, board: mockBoard });
-        getUser.mockResolvedValue(mockMember);
+    it('should return 403 if memberName does not exist', async () => {
         const res = await request(app)
-            .put(`/boards/${boardId}/members/${mockMember.username}`)
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(401);
-        expect(res.body.error).toEqual('unauthorized');
+            .delete(`/api/boards/${ownedBoard._id}/members/nonexistentuser`)
+            .set('Cookie', `${cookieName}=${accessToken}`);
+
+        expect(res.statusCode).toBe(403);
+        expect(res.body.message).toBe('member not found');
     });
 
-    it('should return 404 if member is not from the board', async () => {
-        const userId = new mongoose.Types.ObjectId().toString();
-        const memberId = new mongoose.Types.ObjectId().toString();
-        const boardId = new mongoose.Types.ObjectId().toString();
-        const mockUser = { _id: userId, username: 'testuser', recentlyViewedBoardId: null, save: jest.fn() };
-        const mockMember = { _id: memberId, username: 'testmember', recentlyViewedBoardId: null, save: jest.fn() };
-        const mockBoard = { _id: boardId, members: [], createdBy: mockUser._id, save: jest.fn() };
-        isActionAuthorized.mockResolvedValue({ authorized: true, user: mockUser, board: mockBoard });
-        getUser.mockResolvedValue(mockMember);
+    it('should return 403 if trying to remove yourself', async () => {
         const res = await request(app)
-            .put(`/boards/${boardId}/members/${mockMember.username}`)
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(404);
-        expect(res.body.error).toEqual('Member not found in the board');
+            .delete(`/api/boards/${ownedBoard._id}/members/${testUser.username}`)
+            .set('Cookie', `${cookieName}=${accessToken}`);
+
+        expect(res.statusCode).toBe(403);
+        expect(res.body.message).toBe('cannot remove yourself');
     });
 
-    it('should return 200 if user, member, board are found & member is from the board & member is not the owner', async () => {
-        const userId = new mongoose.Types.ObjectId().toString();
-        const memberId = new mongoose.Types.ObjectId().toString();
-        const boardId = new mongoose.Types.ObjectId().toString();
-        const mockUser = { _id: userId, username: 'testuser', recentlyViewedBoardId: null, save: jest.fn() };
-        const mockMember = { _id: memberId, username: 'testmember', recentlyViewedBoardId: null, save: jest.fn() };
-        const mockBoard = { _id: boardId, members: [mockMember._id], createdBy: mockUser._id, save: jest.fn() };
-        getUser.mockResolvedValue(mockMember);
-        isActionAuthorized.mockResolvedValue({ authorized: true, user: mockUser, board: mockBoard });
+    it('should successfully remove a member', async () => {
         const res = await request(app)
-            .put(`/boards/${boardId}/members/${mockMember.username}`)
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(200);
+            .delete(`/api/boards/${ownedBoard._id}/members/testmember123`)
+            .set('Cookie', `${cookieName}=${accessToken}`);
+
+        expect(res.statusCode).toBe(200);
+        expect(res.body).toEqual({ message: 'Member removed from the board successfully' });
     });
 });
-

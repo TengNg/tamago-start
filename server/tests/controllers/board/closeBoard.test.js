@@ -1,45 +1,105 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const app = require('../../../server');
-const { userByUsername: getUser } = require('../../../services/userService');
-const { isActionAuthorized } = require('../../../services/boardActionAuthorizeService');
-
-jest.mock('../../../services/userService');
-jest.mock('../../../services/boardActionAuthorizeService');
+const app = require('../../../index');
+const Board = require('../../../models/Board');
+const List = require('../../../models/List');
+const BoardMembership = require('../../../models/BoardMembership');
+const {
+    createTestUser,
+    createTestBoard,
+    createTestList,
+    createTestCard,
+    createTestBoardMembership,
+} = require('../../helpers/generateDoc');
+const { objectId } = require('../../helpers/common');
 
 describe('DELETE /boards/:id', () => {
-    let token;
+    let cookieName = process.env.ACCESS_TOKEN_COOKIE_NAME;
+    let accessToken;
+    let testUser;
+    let testBoard;
 
-    beforeAll(() => {
-        token = jwt.sign({ username: 'testuser' }, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
+    let testList1;
+    let testList2;
+
+    beforeAll(async () => {
+        await mongoose.connect(global.__MONGO_URI__);
     });
 
-    afterEach(() => {
-        jest.clearAllMocks();
+    afterAll(async () => {
+        await mongoose.disconnect();
     });
 
-    it('should return 403 if user is not found', async () => {
-        const boardId = new mongoose.Types.ObjectId().toString();
-        getUser.mockResolvedValue(null);
-        isActionAuthorized.mockResolvedValue({ authorized: false, user: null, board: null });
+    beforeEach(async () => {
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            await collections[key].deleteMany({});
+        }
+
+        testUser = await createTestUser();
+        testBoard = await createTestBoard(testUser._id);
+        testList1 = await createTestList(testBoard._id, { title: "test list 1", order: "0" });
+        testList2 = await createTestList(testBoard._id, { title: "test list 2", order: "1" });
+
+        for (let i = 0; i < 5; i++) {
+            await createTestCard(testBoard._id, testList1._id);
+        }
+
+        for (let i = 0; i < 5; i++) {
+            await createTestCard(testBoard._id, testList2._id);
+        }
+
+        accessToken = jwt.sign(
+            {
+                userId: testUser._id.toString(),
+                username: testUser.username,
+                refreshTokenVersion: testUser.refreshTokenVersion || 0,
+            },
+            process.env.ACCESS_TOKEN_SECRET || 'testsecret',
+            { expiresIn: '1h' }
+        );
+    });
+
+    afterEach(async () => {
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            await collections[key].deleteMany({});
+        }
+    });
+
+    it('should return 404 if id is not found', async () => {
+        const unknownId = objectId();
         const res = await request(app)
-            .delete(`/boards/${boardId}`)
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(403);
-        expect(res.body.msg).toEqual('unauthorized');
+            .delete(`/api/boards/${unknownId}`)
+            .set('Cookie', `${cookieName}=${accessToken}`)
+        expect(res.statusCode).toBe(404);
     });
 
-    it('should return 200 if user & board are found', async () => {
-        const boardId = new mongoose.Types.ObjectId().toString();
-        const mockUser = { _id: 'userId', username: 'testuser', recentlyViewedBoardId: null, save: jest.fn() };
-        const mockBoard = { _id: boardId, title: 'Old Title', members: [mockUser._id], save: jest.fn() };
-        getUser.mockResolvedValue(mockUser);
-        isActionAuthorized.mockResolvedValue({ authorized: true, user: mockUser, board: mockBoard });
+    it('should return 403 if user is not a owner', async () => {
+        const anotherUser = await createTestUser();
+        const anotherBoard = await createTestBoard(anotherUser._id);
+        await createTestBoardMembership(anotherBoard._id, testUser._id, "member");
         const res = await request(app)
-            .delete(`/boards/${boardId}`)
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(200);
+            .delete(`/api/boards/${anotherBoard._id}`)
+            .set('Cookie', `${cookieName}=${accessToken}`)
+        expect(res.statusCode).toBe(403);
+    });
+
+    it('should successfully delete board with related data', async () => {
+        const res = await request(app)
+            .delete(`/api/boards/${testBoard._id}`)
+            .set('Cookie', `${cookieName}=${accessToken}`)
+        expect(res.statusCode).toBe(200);
+
+        const boards = await Board.countDocuments({});
+        const lists = await List.countDocuments({});
+        const cards = await List.countDocuments({});
+        const memberships = await BoardMembership.countDocuments({});
+        expect(boards).toBe(0);
+        expect(lists).toBe(0);
+        expect(cards).toBe(0);
+        expect(memberships).toBe(0);
     });
 });
 

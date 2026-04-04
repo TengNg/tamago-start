@@ -3,6 +3,8 @@ module.exports = {
     testMatch: [
         '**/tests/controllers/card/*.test.js',
         '**/tests/controllers/list/*.test.js',
+        '**/tests/controllers/board/*.test.js',
+        '**/tests/controllers/writedown/*.test.js',
         // '**/tests/controllers/*.test.js',
         // '**/tests/services/*.test.js'
     ],

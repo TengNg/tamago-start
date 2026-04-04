@@ -213,7 +213,7 @@ const getBoardStats = async (req, res) => {
         .lean();
 
     if (!foundBoard) {
-        return res.status(403).json({ message: "board not found" });
+        return res.sendStatus(404);
     }
 
     const memberships = await BoardMembership.find({ boardId: foundBoard._id })
@@ -474,7 +474,7 @@ const closeBoard = async (req, res) => {
         await checkAllowedRoles({
             roles: ["owner"],
             userId,
-            boardId: board._id.toString()
+            boardId: id,
         });
 
         await Card.deleteMany({ boardId: id }, { session });
@@ -487,7 +487,7 @@ const closeBoard = async (req, res) => {
         res.status(200).json({ message: 'board closed' });
     } catch (error) {
         await session.abortTransaction();
-        const status = error.status || 400;
+        const status = error.status || 500;
         res.status(status).json({ message: error.message });
     } finally {
         session.endSession();
@@ -564,7 +564,8 @@ const copyBoard = async (req, res) => {
         return res.status(200).json({ message: 'board copied' });
     } catch (error) {
         await session.abortTransaction();
-        res.status(400).json({ message: error.message });
+        const status = error.status || 500;
+        res.status(status).json({ message: error.message });
     } finally {
         session.endSession();
     }
