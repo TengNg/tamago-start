@@ -69,7 +69,7 @@ const addCard = async (req, res) => {
         createdAt: newCard.updatedAt,
     })
 
-    return res.status(200).json({ newCard });
+    return res.status(201).json({ newCard });
 };
 
 /**

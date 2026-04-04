@@ -39,7 +39,7 @@ const addList = async (req, res) => {
         description: '',
     })
 
-    return res.status(200).json({ message: 'new list created', newList });
+    return res.status(201).json({ newList });
 }
 
 /**

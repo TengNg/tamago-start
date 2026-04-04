@@ -72,7 +72,7 @@ describe('POST /lists', () => {
             .post(`/api/lists`)
             .set('Cookie', `${cookieName}=${accessToken}`)
             .send({ boardId: testBoard._id, title: "Test List", order: "0" })
-        expect(res.statusCode).toBe(200);
+        expect(res.statusCode).toBe(201);
 
         const listInDb = await List.findOne({ title: 'Test List' });
         expect(listInDb).toBeTruthy();

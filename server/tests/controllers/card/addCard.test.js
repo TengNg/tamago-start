@@ -105,7 +105,7 @@ describe('POST /api/cards', () => {
             .post('/api/cards')
             .set('Cookie', `${cookieName}=${accessToken}`)
             .send(body);
-        expect(res.statusCode).toBe(200);
+        expect(res.statusCode).toBe(201);
         expect(res.body).toHaveProperty('newCard');
         expect(res.body.newCard).toMatchObject({
             title: body.title,
