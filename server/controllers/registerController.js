@@ -14,15 +14,15 @@ const handleRegister = async (req, res) => {
     }
 
     if (!usernameRegex.test(username)) {
-        return res.status(400).json({ error: "Username not valid" });
+        return res.status(400).json({ message: "Username not valid" });
     }
 
     if (password.length < 8) {
-        return res.status(400).json({ error: "Password must be at least 8 characters" });
+        return res.status(400).json({ message: "Password must be at least 8 characters" });
     }
 
     if (confirmedPassword !== password) {
-        return res.status(400).json({ error: "Confirmed password is not matched" });
+        return res.status(400).json({ message: "Confirmed password is not matched" });
     }
 
     const foundUser = await User.findOne({ username });

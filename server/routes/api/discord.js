@@ -31,11 +31,11 @@ router.get("/auth/discord/callback", async (req, res) => {
     const code = req.query.code;
 
     if (typeof code !== 'string') {
-        return res.status(400).json({ error: 'Query parameter "code" must be a string' });
+        return res.status(400).json({ message: 'Query parameter "code" must be a string' });
     }
 
     if (!code) {
-        return res.status(400).json({ error: "Authorization code not provided!" });
+        return res.status(400).json({ message: "Authorization code not provided!" });
     }
 
     try {
