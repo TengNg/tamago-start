@@ -8,11 +8,10 @@ const { authorize } = require('../services/attachmentService');
 exports.uploadAttachment = async (req, res) => {
     const { userId } = req.user;
     const { type, refId } = req.body;
-
     const validTypes = ["card", "writedown"];
     if (!validTypes.includes(type)) {
         const errMsg = 'Invalid attachment-type (attachment should only for card or writedown)'
-        return res.status(400).json({ message: errMsg });
+        return res.status(422).json({ message: errMsg });
     }
 
     await authorize({
@@ -28,13 +27,13 @@ exports.uploadAttachment = async (req, res) => {
         typeof req.file.mimetype !== 'string' ||
         typeof req.file.originalname !== 'string') {
         const errMsg = 'Invalid or missing attachment file'
-        return res.status(400).json({ message: errMsg });
+        return res.status(422).json({ message: errMsg });
     }
 
     const { fileTypeFromBuffer } = await import('file-type');
     const detectedType = await fileTypeFromBuffer(req.file.buffer);
     if (!detectedType) {
-        return res.status(400).json({ message: 'Could not determine file type (possibly corrupted or empty)' });
+        return res.status(422).json({ message: 'Could not determine file type (possibly corrupted or empty)' });
     }
 
     const attachment = new Attachment({
@@ -62,7 +61,7 @@ exports.getAttachment = async (req, res) => {
         const { userId } = req.user;
         const attachment = await Attachment.findById(req.params.id);
         if (!attachment) {
-            return res.status(404);
+            return res.sendStatus(404);
         }
 
         await authorize({
@@ -89,11 +88,11 @@ exports.listAttachments = async (req, res) => {
         const { userId } = req.user;
         const { type, refId } = req.params;
         if (!['card', 'writedown'].includes(type)) {
-            return res.status(400).json({ error: 'Invalid type' });
+            return res.status(422).json({ error: 'Invalid type' });
         }
 
         if (!refId) {
-            return res.status(400).json({ error: 'Missing refId' });
+            return res.status(422).json({ error: 'Missing refId' });
         }
 
         await authorize({
@@ -121,7 +120,7 @@ exports.deleteAttachment = async (req, res) => {
 
     const attachment = await Attachment.findById(req.params.id);
     if (!attachment) {
-        return res.status(404);
+        return res.sendStatus(404);
     }
 
     await authorize({
@@ -134,7 +133,7 @@ exports.deleteAttachment = async (req, res) => {
 
     const result = await Attachment.deleteOne({ _id: id });
     if (result.deletedCount === 0) {
-        return res.status(404);
+        return res.sendStatus(404);
     }
 
     res.json({ id });
