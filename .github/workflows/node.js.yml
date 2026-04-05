@@ -48,3 +48,9 @@ jobs:
         run: |
           cd server
           npm test
+
+      - name: Deploy
+        if: success()
+        run: |
+          curl -X POST ${{ secrets.DEPLOY_HOOK_URL }}
+
