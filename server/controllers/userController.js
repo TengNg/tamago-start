@@ -1,6 +1,23 @@
 const User = require('../models/User.js');
+const Board = require('../models/Board.js');
 const bcrypt = require('bcryptjs');
 const { usernameRegex } = require('../data/regex');
+
+const { sanitizeUser } = require('../services/userService.js');
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+const getCurrentUser = async (req, res) => {
+    const { userId } = req.user;
+    const user = await User.findById(userId).select('-password -refreshTokenVersion');
+    if (!user) {
+        return res.sendStatus(404);
+    }
+
+    res.json({ user: sanitizeUser(user) });
+}
 
 /**
  * @param {import('express').Request} req
@@ -12,7 +29,7 @@ const updateUsername = async (req, res) => {
 
     const user = await User.findById(userId);
     if (!user) {
-        return res.status(403).json({ message: "User not found" });
+        return res.sendStatus(404);
     }
 
     const foundUser = await User.findOne({ username: newUsername })
@@ -21,7 +38,7 @@ const updateUsername = async (req, res) => {
     }
 
     if (!usernameRegex.test(newUsername)) {
-        return res.status(400).json({ message: "Username not valid" });
+        return res.status(422).json({ message: "Invalid username" });
     }
 
     user.username = newUsername;
@@ -47,16 +64,17 @@ const updatePassword = async (req, res) => {
 
     const foundUser = await User.findById(userId);
     if (!foundUser) {
-        return res.status(401).json({ message: "Unauthorized" });
+        return res.sendStatus(404);
     }
 
     if (foundUser.discordId) {
-        return res.status(400).json({ message: "Cannot change password" });
+        const errMsg = "Logged in with discord, cannot change password"
+        return res.status(400).json({ message: errMsg });
     }
 
     const validPwd = await bcrypt.compare(currentPassword, foundUser.password);
     if (!validPwd) {
-        return res.status(400).json({ message: "Password is incorrect" });
+        return res.status(422).json({ message: "Password is incorrect" });
     }
 
     if (newPassword === currentPassword) {
@@ -73,7 +91,111 @@ const updatePassword = async (req, res) => {
     res.sendStatus(204);
 };
 
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+const addPinnedBoard = async (req, res) => {
+    const { userId } = req.user;
+    const { id } = req.params;
+
+    const foundUser = await User.findById(userId);
+    if (!foundUser) {
+        return res.sendStatus(404);
+    }
+
+    const foundBoard = await Board.findById(id);
+    if (!foundBoard) {
+        return res.sendStatus(422).json({ message: "Board does not exist" });
+    }
+
+    if (foundUser.pinnedBoardIdCollection && foundUser.pinnedBoardIdCollection.has(id)) {
+        const result = await User.findOneAndUpdate(
+            { _id: userId },
+            { $unset: { [`pinnedBoardIdCollection.${id}`]: 1 } },
+            { new: true }
+        ).select('pinnedBoardIdCollection');
+        return res.status(200).json({ result });
+    }
+
+    const result = await User.findOneAndUpdate(
+        { _id: userId },
+        { $set: { [`pinnedBoardIdCollection.${id}`]: { title: foundBoard?.title } } },
+        { new: true, upsert: true }
+    ).select('pinnedBoardIdCollection');
+    return res.status(200).json({ result });
+};
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+const deletePinnedBoard = async (req, res) => {
+    const { userId } = req.user;
+    const { id } = req.params;
+
+    const foundUser = await User.findById(userId);
+    if (!foundUser) {
+        return res.status(403).json({ message: "user not found" });
+    }
+
+    if (foundUser.pinnedBoardIdCollection && foundUser.pinnedBoardIdCollection.has(id)) {
+        const result = await User.findOneAndUpdate(
+            { _id: userId },
+            { $unset: { [`pinnedBoardIdCollection.${id}`]: 1 } },
+            { new: true }
+        ).select('pinnedBoardIdCollection');
+        return res.status(200).json({ result });
+    }
+
+    return res.sendStatus(404);
+};
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+const updatePinnedBoards = async (req, res) => {
+    const { userId } = req.user;
+    const { pinnedBoards } = req.body;
+
+    const foundUser = await User.findById(userId);
+    if (JSON.stringify(foundUser.pinnedBoardIdCollection) === JSON.stringify(pinnedBoards)) {
+        return res.status(200).json({
+            result: foundUser.pinnedBoardIdCollection,
+        });
+    }
+
+    const result = await User.findOneAndUpdate(
+        { _id: userId },
+        { pinnedBoardIdCollection: pinnedBoards },
+        { new: true }
+    ).select('pinnedBoardIdCollection');
+
+    return res.status(200).json({ result });
+};
+
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
+const cleanPinnedBoards = async (req, res) => {
+    const { userId } = req.user;
+    const result = await User.findOneAndUpdate(
+        { _id: userId },
+        { pinnedBoardIdCollection: {} },
+        { new: true }
+    ).select('pinnedBoardIdCollection');
+
+    return res.status(200).json({ result });
+};
+
 module.exports = {
+    getCurrentUser,
     updateUsername,
     updatePassword,
+    addPinnedBoard,
+    deletePinnedBoard,
+    updatePinnedBoards,
+    cleanPinnedBoards,
 }

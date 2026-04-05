@@ -111,10 +111,7 @@ const checkBoardPermission = async ({ boardId, userId, resource, action }) => {
         action
     });
     if (!authorized) {
-        const message = action === 'view'
-            ? 'You do not have permission to view this board'
-            : `You do not have permission to ${action} ${resource}s`;
-
+        const message = `You do not have permission to ${action} ${resource}s`;
         throw { status: 403, message }; // catch it with errorHandler middleware
     }
 

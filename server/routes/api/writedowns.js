@@ -29,7 +29,7 @@ router.route("/:writedownId/pin")
 router.route("/:writedownId/reorder")
     .patch(reorder)
 
-router.route("/:writedownId/update-title")
+router.route("/:writedownId/title")
     .patch(updateTitle);
 
 module.exports = router;

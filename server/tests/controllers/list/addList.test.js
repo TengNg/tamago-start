@@ -1,42 +1,86 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const app = require('../../../server');
-
-const { isActionAuthorized } = require('../../../services/boardActionAuthorizeService');
-jest.mock('../../../models/List');
-jest.mock('../../../services/boardActionAuthorizeService');
+const app = require('../../../index');
+const List = require('../../../models/List');
+const Board = require('../../../models/Board');
+const {
+    createTestUser,
+    createTestBoard,
+} = require('../../helpers/generateDoc');
 
 describe('POST /lists', () => {
-    let token;
+    let cookieName = process.env.ACCESS_TOKEN_COOKIE_NAME;
+    let accessToken;
+    let testUser;
+    let testBoard;
 
-    beforeAll(() => {
-        token = jwt.sign({ username: 'testuser' }, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
+    beforeAll(async () => {
+        await mongoose.connect(global.__MONGO_URI__);
     });
 
-    afterEach(() => {
-        jest.clearAllMocks();
+    afterAll(async () => {
+        await mongoose.disconnect();
     });
 
-    it('should return 403 if user is not found', async () => {
-        isActionAuthorized.mockResolvedValue({ authorized: false, user: null });
+    beforeEach(async () => {
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            await collections[key].deleteMany({});
+        }
+        testUser = await createTestUser();
+        testBoard = await createTestBoard(testUser._id);
+        accessToken = jwt.sign(
+            {
+                userId: testUser._id.toString(),
+                username: testUser.username,
+                refreshTokenVersion: testUser.refreshTokenVersion || 0,
+            },
+            process.env.ACCESS_TOKEN_SECRET || 'testsecret',
+            { expiresIn: '1h' }
+        );
+    });
+
+    afterEach(async () => {
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            await collections[key].deleteMany({});
+        }
+    });
+
+    it('should return 500 if required fields are missing', async () => {
         const res = await request(app)
-            .post(`/lists`)
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(403);
+            .post(`/api/lists`)
+            .set('Cookie', `${cookieName}=${accessToken}`)
+            .send({ boardId: testBoard._id })
+        expect(res.statusCode).toBe(500);
     });
 
-    it('should return 201 if user & list are found', async () => {
-        const mockUser = { _id: new mongoose.Types.ObjectId().toString(), username: 'testuser' };
-        isActionAuthorized.mockResolvedValue({ authorized: true, user: mockUser });
+    it('should return 403 if user does not have access to board', async () => {
+        const anotherUser = await createTestUser();
+        const anotherBoard = await createTestBoard(anotherUser._id);
         const res = await request(app)
-            .post(`/lists`)
-            .send({
-                rank: "1",
-                boardId: new mongoose.Types.ObjectId().toString(),
-                title: "test",
-            })
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(201);
+            .post(`/api/lists`)
+            .set('Cookie', `${cookieName}=${accessToken}`)
+            .send({ boardId: anotherBoard._id })
+        expect(res.statusCode).toBe(403);
+        expect(res.body.message).toBe("You do not have permission to create lists");
+    });
+
+    it('should successfully create new list', async () => {
+        const res = await request(app)
+            .post(`/api/lists`)
+            .set('Cookie', `${cookieName}=${accessToken}`)
+            .send({ boardId: testBoard._id, title: "Test List", order: "0" })
+        expect(res.statusCode).toBe(201);
+
+        const listInDb = await List.findOne({ title: 'Test List' });
+        expect(listInDb).toBeTruthy();
+        expect(listInDb.boardId.toString()).toEqual(testBoard._id.toString());
+        expect(listInDb.order).toEqual("0");
+
+        const board = await Board.findOne({});
+        expect(board.listCount).toBe(1);
     });
 });
+

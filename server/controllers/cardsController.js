@@ -17,7 +17,7 @@ const getCard = async (req, res) => {
 
     const foundCard = await cardById(id);
     if (!foundCard) {
-        return res.status(403).json({ message: "card not found" });
+        return res.sendStatus(404);
     }
 
     await checkBoardPermission({
@@ -27,7 +27,7 @@ const getCard = async (req, res) => {
         action: "view"
     })
 
-    return res.status(201).json({ card: foundCard });
+    return res.status(200).json({ card: foundCard });
 };
 
 /**
@@ -69,7 +69,7 @@ const addCard = async (req, res) => {
         createdAt: newCard.updatedAt,
     })
 
-    return res.status(200).json({ newCard });
+    return res.status(201).json({ newCard });
 };
 
 /**
@@ -86,7 +86,7 @@ const reorder = async (req, res) => {
         select: '_id title boardId'
     });
     if (!foundCard) {
-        return res.status(404);
+        return res.sendStatus(404);
     }
 
     await checkBoardPermission({

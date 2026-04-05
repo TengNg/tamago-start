@@ -1,46 +1,87 @@
 const request = require('supertest');
+const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const app = require('../../../server');
-
-const { writedownsByUserId } = require('../../../services/writedownService');
-const { userByUsername: getUser } = require('../../../services/userService');
-
-jest.mock('../../../services/userService');
-jest.mock('../../../services/writedownService');
+const app = require('../../../index');
+const {
+    createTestUser,
+    createTestWritedown,
+} = require('../../helpers/generateDoc');
 
 describe('GET /personal_writedowns', () => {
-    let token;
+    let cookieName = process.env.ACCESS_TOKEN_COOKIE_NAME;
+    let accessToken;
+    let testUser;
 
-    beforeAll(() => {
-        token = jwt.sign({ username: 'testuser' }, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
+    beforeAll(async () => {
+        await mongoose.connect(global.__MONGO_URI__);
     });
 
-    afterEach(() => {
-        jest.clearAllMocks();
+    afterAll(async () => {
+        await mongoose.disconnect();
     });
 
-    it('should return 403 if user is not found', async () => {
-        getUser.mockResolvedValue(null);
+    beforeEach(async () => {
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            await collections[key].deleteMany({});
+        }
+
+        testUser = await createTestUser();
+
+        // Create 3 writedowns for the user
+        await createTestWritedown(testUser._id, { title: 'Note A', order: 10 });
+        await createTestWritedown(testUser._id, { title: 'Note B', order: 20 });
+        await createTestWritedown(testUser._id, { title: 'Note C', order: 30 });
+
+        accessToken = jwt.sign(
+            {
+                userId: testUser._id.toString(),
+                username: testUser.username,
+                refreshTokenVersion: testUser.refreshTokenVersion || 0,
+            },
+            process.env.ACCESS_TOKEN_SECRET || 'testsecret',
+            { expiresIn: '1h' }
+        );
+    });
+
+    afterEach(async () => {
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            await collections[key].deleteMany({});
+        }
+    });
+
+    it('should return all writedowns belonging to the user', async () => {
         const res = await request(app)
-            .get(`/personal_writedowns`)
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(403);
-        expect(res.body.msg).toEqual('user not found');
+            .get('/api/personal_writedowns')
+            .set('Cookie', `${cookieName}=${accessToken}`);
+
+        expect(res.statusCode).toBe(200);
+        expect(res.body.writedowns).toHaveLength(3);
+
+        const titles = res.body.writedowns.map(w => w.title);
+        expect(titles).toContain('Note A');
+        expect(titles).toContain('Note B');
+        expect(titles).toContain('Note C');
     });
 
-    it('should return 200 if user is found', async () => {
-        const mockUser = { _id: 'userId', username: 'testuser', recentlyViewedBoardId: null, save: jest.fn() };
-        const mockWritedowns = [
-            { _id: 'userId', owner: mockUser._id },
-            { _id: 'userId', owner: mockUser._id },
-            { _id: 'userId', owner: mockUser._id },
-        ]
-        getUser.mockResolvedValue(mockUser);
-        writedownsByUserId.mockResolvedValue(mockWritedowns);
+    it('should return empty array when user has no writedowns', async () => {
+        const emptyUser = await createTestUser();
+        const emptyToken = jwt.sign(
+            {
+                userId: emptyUser._id.toString(),
+                username: emptyUser.username,
+                refreshTokenVersion: emptyUser.refreshTokenVersion || 0,
+            },
+            process.env.ACCESS_TOKEN_SECRET || 'testsecret',
+            { expiresIn: '1h' }
+        );
+
         const res = await request(app)
-            .get(`/personal_writedowns`)
-            .set('Authorization', `Bearer ${token}`);
-        expect(res.statusCode).toEqual(200);
-        expect(res.body.writedowns).toEqual(mockWritedowns);
+            .get('/api/personal_writedowns')
+            .set('Cookie', `${cookieName}=${emptyToken}`);
+
+        expect(res.statusCode).toBe(200);
+        expect(res.body.writedowns).toEqual([]);
     });
 });

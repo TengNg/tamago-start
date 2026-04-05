@@ -18,7 +18,7 @@ const getCardComments = async (req, res) => {
     const { cardId } = req.params;
     const foundCard = await cardById(cardId, { lean: true });
     if (!foundCard) {
-        return res.status(404).json({ error: 'Card not found' });
+        return res.sendStatus(404);
     }
 
     await checkBoardPermission({
@@ -54,7 +54,7 @@ const getCardComment = async (req, res) => {
     const { cardId, commentId } = req.params;
     const foundCard = await cardById(cardId, { lean: true });
     if (!foundCard) {
-        return res.status(404).json({ error: 'Card not found' });
+        return res.sendStatus(404);
     }
 
     await checkBoardPermission({
@@ -69,7 +69,7 @@ const getCardComment = async (req, res) => {
         _id: commentId,
     }).populate('userId', '_id username avatar');
     if (!foundComment) {
-        return res.status(404).json({ error: 'Comment not found' });
+        return res.sendStatus(404);
     }
 
     const commentsBefore = await CardComment.countDocuments({
@@ -97,7 +97,7 @@ const createCardComment = async (req, res) => {
     const { content } = req.body;
     const foundCard = await cardById(cardId, { lean: true });
     if (!foundCard) {
-        return res.status(404).json({ error: 'Card not found' });
+        return res.sendStatus(404);
     }
 
     await checkBoardPermission({
@@ -148,7 +148,7 @@ const deleteCardComment = async (req, res) => {
         select: "boardId",
     });
     if (!foundComment) {
-        return res.status(404).json({ error: 'Comment not found' });
+        return res.sendStatus(404);
     }
 
     await checkBoardPermission({
@@ -163,7 +163,7 @@ const deleteCardComment = async (req, res) => {
     }
 
     await CardComment.findOneAndDelete({ _id: commentId });
-    res.status(200).json({ message: 'Comment removed successfully' });
+    res.sendStatus(204);
 };
 
 module.exports = {

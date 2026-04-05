@@ -110,7 +110,7 @@ const InvitationForm = ({ open, setOpen }) => {
     const handleRemoveMemberFromBoard = async (memberName) => {
         try {
             setLoading(true);
-            await axiosPrivate.patch(
+            await axiosPrivate.delete(
                 `/boards/${boardState.board._id}/members/${memberName}`,
             );
             removeMemberFromBoard(memberName);
@@ -118,7 +118,7 @@ const InvitationForm = ({ open, setOpen }) => {
             setLoading(false);
         } catch (err) {
             setLoading(false);
-            setErrMsg(err?.response?.data?.error || "Failed to remove member");
+            setErrMsg(err?.response?.data?.message || "Failed to remove member");
         }
     };
 

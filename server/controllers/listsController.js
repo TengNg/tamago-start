@@ -39,7 +39,7 @@ const addList = async (req, res) => {
         description: '',
     })
 
-    return res.status(201).json({ message: 'new list created', newList });
+    return res.status(201).json({ newList });
 }
 
 /**
@@ -52,7 +52,7 @@ const reorder = async (req, res) => {
     const { rank, sourceIndex, destinationIndex } = req.body;
 
     const foundList = await List.findById(id);
-    if (!foundList) return res.status(403).json({ message: "list not found" });
+    if (!foundList) return res.sendStatus(404);
 
     await checkBoardPermission({
         boardId: foundList.boardId.toString(),
@@ -62,24 +62,29 @@ const reorder = async (req, res) => {
     })
 
     if (foundList.order === rank) {
-        return res.status(200).json({
-            newList: foundList,
-        });
+        return res.status(200).json({ newList: foundList });
     }
 
     foundList.order = rank;
     foundList.save();
 
-    await saveBoardActivity({
-        userId,
-        boardId: foundList.boardId,
-        listId: foundList._id,
-        action: "update list rank",
-        type: "list",
-        description: `(${+sourceIndex + 1}) > (${+destinationIndex + 1})`,
-    })
+    if (
+        sourceIndex
+        && destinationIndex
+        && !isNaN(+sourceIndex)
+        && !isNaN(+destinationIndex)
+    ) {
+        await saveBoardActivity({
+            userId,
+            boardId: foundList.boardId,
+            listId: foundList._id,
+            action: "update list rank",
+            type: "list",
+            description: `(${+sourceIndex + 1}) > (${+destinationIndex + 1})`,
+        });
+    }
 
-    res.status(200).json({ message: 'list updated', newList: foundList });
+    res.status(200).json({ newList: foundList });
 };
 
 /**
@@ -92,7 +97,7 @@ const updateTitle = async (req, res) => {
     const { title } = req.body;
 
     const foundList = await List.findById(id);
-    if (!foundList) return res.status(403).json({ message: "list not found" });
+    if (!foundList) return res.sendStatus(404);
 
     await checkBoardPermission({
         boardId: foundList.boardId.toString(),
@@ -104,7 +109,7 @@ const updateTitle = async (req, res) => {
     foundList.title = title;
     foundList.save();
 
-    res.status(200).json({ message: 'list updated', newList: foundList });
+    res.status(200).json({ newList: foundList });
 };
 
 /**
@@ -116,7 +121,7 @@ const deleteList = async (req, res) => {
     const { id } = req.params;
 
     const foundList = await List.findById(id);
-    if (!foundList) return res.status(403).json({ message: "list not found" });
+    if (!foundList) return res.sendStatus(404);
 
     await checkBoardPermission({
         boardId: foundList.boardId.toString(),
@@ -135,7 +140,7 @@ const deleteList = async (req, res) => {
         description: `list with title "${foundList.title}" deleted`,
     });
 
-    res.status(200).json({ message: 'list deleted' });
+    res.sendStatus(204);
 };
 
 /**
@@ -149,7 +154,7 @@ const copyList = async (req, res) => {
 
     const foundList = await List.findById(id);
     if (!foundList) {
-        return res.status(403).json({ message: "List not found" });
+        return res.sendStatus(404);
     }
 
     const { title, boardId } = foundList;
@@ -161,10 +166,8 @@ const copyList = async (req, res) => {
         action: "create"
     })
 
-    const newListId = new mongoose.Types.ObjectId();
-
     const listData = {
-        _id: newListId,
+        _id: new mongoose.Types.ObjectId(),
         title,
         order: rank,
         boardId,
@@ -210,9 +213,13 @@ const moveList = async (req, res) => {
     const { userId } = req.user;
     const { id, boardId, index } = req.params;
 
+    if (isNaN(+index)) {
+        return res.sendStatus(422).json({ message: "index must be a number" });
+    }
+
     const foundList = await List.findById(id);
     if (!foundList) {
-        return res.status(403).json({ message: "List not found" });
+        return res.sendStatus(404);
     }
 
     // check for both sides, move on current board or move to another board
@@ -248,7 +255,23 @@ const moveList = async (req, res) => {
     }
 
     const sortedLists = await List.find({ boardId }).sort({ order: 'asc' });
-    const [newOrder, ok] = lexorank.insert(sortedLists[+index - 1]?.order, sortedLists[+index]?.order);
+    const indexToMove = +index < 0
+        ? 0
+        : +index > sortedLists.length + 1
+            ? sortedLists.length
+            : +index
+    const movedListIndex = sortedLists.findIndex(l => {
+        return l._id.toString() === foundList._id.toString();
+    });
+    const srcOrder =
+        movedListIndex < +index && foundList.toString() === boardId
+            ? sortedLists[+indexToMove]?.order
+            : sortedLists[+indexToMove - 1]?.order
+    const dstOrder =
+        movedListIndex < +index && foundList.boardId.toString() === boardId
+            ? sortedLists[+indexToMove + 1]?.order
+            : sortedLists[+indexToMove]?.order
+    const [newOrder, ok] = lexorank.insert(srcOrder, dstOrder);
     if (!ok) {
         return res.status(403).send("list's order is invalid");
     }

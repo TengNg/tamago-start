@@ -1,5 +1,8 @@
 module.exports = {
-    testMatch: ['**/tests/controllers/**/*.test.js', '**/tests/controllers/*.test.js', '**/tests/services/*.test.js'],
+    preset: '@shelf/jest-mongodb',
+    testMatch: [
+        '**/tests/controllers/**/*.test.js',
+    ],
     testTimeout: 20000,
     coveragePathIgnorePatterns: [
         "/lib/",

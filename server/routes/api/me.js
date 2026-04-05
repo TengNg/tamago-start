@@ -1,22 +1,36 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../../models/User.js');
-const { sanitizeUser } = require('../../services/userService.js');
+const pinnedBoardRouter = express.Router();
 
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
-const getCurrentUser = async (req, res) => {
-    const { userId } = req.user;
-    const user = await User.findById(userId).select('-password -refreshTokenVersion');
-    if (!user) {
-        return res.status(401).json({ message: 'Unauthorized' });
-    }
+const {
+    getCurrentUser,
+    updateUsername,
+    updatePassword,
+    addPinnedBoard,
+    deletePinnedBoard,
+    updatePinnedBoards,
+    cleanPinnedBoards,
+} = require("../../controllers/userController");
 
-    res.json({ user: sanitizeUser(user) });
-}
+router.route("/")
+    .get(getCurrentUser);
 
-router.get('/', getCurrentUser);
+router.route("/username")
+    .patch(updateUsername);
+
+router.route("/password")
+    .patch(updatePassword);
+
+// pinned-boards router
+
+router.use("/pinned-boards", pinnedBoardRouter);
+
+pinnedBoardRouter.route("/:id")
+    .patch(addPinnedBoard)
+    .delete(deletePinnedBoard)
+
+pinnedBoardRouter.route("/")
+    .patch(updatePinnedBoards)
+    .delete(cleanPinnedBoards)
 
 module.exports = router;

@@ -1,102 +1,101 @@
 const request = require('supertest');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const app = require('../../../server');
-const User = require('../../../models/User');
-const Board = require('../../../models/Board');
-const List = require('../../../models/List');
-const BoardMembership = require('../../../models/BoardMembership');
+const app = require('../../../index');
+const {
+    createTestUser,
+    createTestBoard,
+    createTestList,
+    createTestCard,
+} = require('../../helpers/generateDoc');
+const { objectId } = require('../../helpers/common');
 
 describe('GET /boards/:id', () => {
-    let token;
+    let cookieName = process.env.ACCESS_TOKEN_COOKIE_NAME;
+    let accessToken;
+    let testUser;
+    let testBoard;
 
-    beforeAll(() => {
-        token = jwt.sign({ username: 'testuser' }, process.env.ACCESS_TOKEN, { expiresIn: '1h' });
+    let testList1;
+    let testList2;
+
+    beforeAll(async () => {
+        await mongoose.connect(global.__MONGO_URI__);
     });
 
-    afterEach(() => {
-        jest.clearAllMocks();
+    afterAll(async () => {
+        await mongoose.disconnect();
     });
 
-    it('should return 404 if board ID is invalid', async () => {
-        const invalidId = '123';
+    beforeEach(async () => {
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            await collections[key].deleteMany({});
+        }
 
+        testUser = await createTestUser();
+        testBoard = await createTestBoard(testUser._id);
+        testList1 = await createTestList(testBoard._id, { title: "test list 1", order: "0" });
+        testList2 = await createTestList(testBoard._id, { title: "test list 2", order: "1" });
+
+        for (let i = 0; i < 5; i++) {
+            await createTestCard(testBoard._id, testList1._id);
+        }
+
+        for (let i = 0; i < 5; i++) {
+            await createTestCard(testBoard._id, testList2._id);
+        }
+
+        accessToken = jwt.sign(
+            {
+                userId: testUser._id.toString(),
+                username: testUser.username,
+                refreshTokenVersion: testUser.refreshTokenVersion || 0,
+            },
+            process.env.ACCESS_TOKEN_SECRET || 'testsecret',
+            { expiresIn: '1h' }
+        );
+    });
+
+    afterEach(async () => {
+        const collections = mongoose.connection.collections;
+        for (const key in collections) {
+            await collections[key].deleteMany({});
+        }
+    });
+
+    it('should return 404 if id is not found', async () => {
+        const unknownId = objectId();
         const res = await request(app)
-            .get(`/boards/${invalidId}`)
-            .set('Authorization', `Bearer ${token}`);
-
-        expect(res.statusCode).toEqual(404);
-        expect(res.body).toHaveProperty('msg', 'board not found');
+            .get(`/api/boards/${unknownId}`)
+            .set('Cookie', `${cookieName}=${accessToken}`)
+        expect(res.statusCode).toBe(404);
     });
 
-    it('should return 403 if user is not found', async () => {
-        const validId = new mongoose.Types.ObjectId().toString();
-        User.findOne = jest.fn().mockResolvedValue(null);
-
+    it('should return 403 if user is not a member', async () => {
+        const anotherUser = await createTestUser();
+        const anotherBoard = await createTestBoard(anotherUser._id);
         const res = await request(app)
-            .get(`/boards/${validId}`)
-            .set('Authorization', `Bearer ${token}`);
-
-        expect(res.statusCode).toEqual(403);
-        expect(res.body).toHaveProperty('msg', 'user not found');
+            .get(`/api/boards/${anotherBoard._id}`)
+            .set('Cookie', `${cookieName}=${accessToken}`)
+        expect(res.statusCode).toBe(403);
     });
 
-    it('should return 404 if board is not found', async () => {
-        const validId = new mongoose.Types.ObjectId().toString();
-        const mockUser = { _id: 'userId', username: 'testuser', password: '12345678' };
-
-        User.findOne = jest.fn().mockResolvedValueOnce(mockUser);
-
-        Board.findOne = jest.fn().mockImplementation(() => ({
-            populate: () => ({
-                populate: () => null
-            })
-        }));
-
+    it('should successfully return board with lists & cards', async () => {
         const res = await request(app)
-            .get(`/boards/${validId}`)
-            .set('Authorization', `Bearer ${token}`);
+            .get(`/api/boards/${testBoard._id}`)
+            .set('Cookie', `${cookieName}=${accessToken}`)
+        expect(res.statusCode).toBe(200);
 
-        expect(res.statusCode).toEqual(404);
-        expect(res.body).toEqual({ msg: 'board not found' });
+        const { board, lists, members } = res.body;
+        expect(board._id.toString()).toBe(testBoard._id.toString());
+
+        const listTitles = lists.map(l => l.title);
+        expect(listTitles).toStrictEqual([testList1.title, testList2.title]);
+
+        expect(members.length).toBe(1);
+        expect(members[0].username).toBe(testUser.username);
+        expect(members[0].role).toBe("owner");
     });
-
-    it('should return the board, lists with cards, and memberships on success', async () => {
-        const validId = new mongoose.Types.ObjectId().toString();
-        const mockUser = { _id: 'userId', username: 'testuser', recentlyViewedBoardId: null, save: jest.fn() };
-        const mockBoard = { _id: validId, createdBy: mockUser._id, listCount: 1, save: jest.fn() };
-        const mockLists = [{ _id: 'listId', boardId: validId, order: 1 }];
-        const mockListsWithCards = [{ _id: 'listId', boardId: validId, order: 1, cards: [] }];
-        const mockMemberships = [{ boardId: validId, userId: 'userId' }];
-
-        User.findOne = jest.fn().mockResolvedValueOnce(mockUser);
-
-        Board.findOne = jest.fn().mockImplementation(() => ({
-            populate: () => ({
-                populate: () => mockBoard
-            })
-        }));
-
-        List.find = jest.fn().mockImplementation(() => ({
-            sort: () => mockLists
-        }));
-
-        List.aggregate = jest.fn().mockResolvedValueOnce(mockListsWithCards);
-
-        BoardMembership.find = jest.fn().mockImplementation(() => ({
-            lean: () => mockMemberships
-        }));
-
-        const res = await request(app)
-            .get(`/boards/${validId}`)
-            .set('Authorization', `Bearer ${token}`);
-
-        expect(res.statusCode).toEqual(200);
-        expect(res.body).toEqual({
-            board: { _id: validId, createdBy: mockUser._id, listCount: 1 },
-            lists: mockListsWithCards,
-            memberships: mockMemberships,
-        });
-    }, 60000);
 });
 
