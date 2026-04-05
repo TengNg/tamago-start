@@ -71,14 +71,13 @@ Requirements: Node.js v21.x or higher
 
 ---
 
-### Running Tests (deprecated)
-
-Tests are currently disabled due to ongoing updates.
+### Running Tests
 
 ```bash
 cd server && npm test
 ```
 
-For test coverage reports:
+For test coverage reports, run:
 `cd server && npm test -- --coverage`
+
 Then open `server/coverage/lcov-report/index.html` in your browser.
