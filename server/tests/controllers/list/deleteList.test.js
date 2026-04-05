@@ -81,7 +81,7 @@ describe('DELETE /lists/:id', () => {
             .delete(`/api/lists/${testList._id}`)
             .set('Cookie', `${cookieName}=${accessToken}`)
 
-        expect(res.statusCode).toBe(201);
+        expect(res.statusCode).toBe(204);
 
         const lists = await List.find({ title: testList.title })
         expect(lists.length).toBe(0);

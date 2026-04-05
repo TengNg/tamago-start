@@ -140,7 +140,7 @@ const deleteList = async (req, res) => {
         description: `list with title "${foundList.title}" deleted`,
     });
 
-    res.sendStatus(201);
+    res.sendStatus(204);
 };
 
 /**
