@@ -10,6 +10,33 @@ const { userByUsername: getUser } = require('../services/userService');
 const saveBoardActivity = require('../services/saveBoardActivity');
 
 /**
+ * @param {import('mongoose').Types.ObjectId} boardId
+ */
+const boardMemberships = async (boardId) => {
+    const memberships = await BoardMembership.aggregate([
+        { $match: { boardId } },
+        {
+            $lookup: {
+                from: 'users',
+                localField: 'userId',
+                foreignField: '_id',
+                as: 'user'
+            }
+        },
+        { $unwind: '$user' },
+        {
+            $project: {
+                role: 1,
+                createdAt: 1,
+                userId: '$user._id',
+                username: '$user.username'
+            }
+        }
+    ]);
+    return memberships;
+}
+
+/**
  * @param {Object} params
  * @param {("owner" | "member")[]} params.roles
  * @param {string | import("mongoose").ObjectId} params.userId
@@ -167,19 +194,14 @@ const getBoard = async (req, res) => {
         foundUser.save();
     }
 
-    const memberships = await BoardMembership
-        .find({ boardId: board._id })
-        .populate({
-            path: 'userId',
-            select: 'username role'
-        }).lean()
+    const memberships = await boardMemberships(board._id);
 
     const ownerFound = memberships.find(m => m.role === "owner");
     if (!ownerFound) {
         return res.status(400).json({ message: "abandoned board" });
     }
 
-    const isMember = memberships.find(m => m.userId._id.toString() === userId);
+    const isMember = memberships.find(m => m.userId.toString() === userId);
     if (board.visibility !== "public" && !isMember) {
         return res.status(400).json({ message: "your're not a member of this board" });
     }
@@ -187,13 +209,7 @@ const getBoard = async (req, res) => {
     return res.json({
         board,
         lists: listsWithCards,
-        members: memberships.map((m) => {
-            return {
-                username: /** @type any */(m.userId).username,
-                role: m.role,
-                createdAt: m.createdAt,
-            }
-        }),
+        members: memberships,
     });
 }
 
@@ -216,15 +232,8 @@ const getBoardStats = async (req, res) => {
         return res.sendStatus(404);
     }
 
-    const memberships = await BoardMembership.find({ boardId: foundBoard._id })
-        .populate({
-            path: "userId",
-            select: "username"
-        })
-        .lean();
-    const isMember = memberships.some(m => {
-        return m.userId._id.toString() === userId
-    });
+    const memberships = await boardMemberships(foundBoard._id);
+    const isMember = memberships.some(m => m.userId.toString() === userId);
     if (!isMember) {
         return res.status(403).json({ message: "unauthorized" });
     }
@@ -264,10 +273,7 @@ const getBoardStats = async (req, res) => {
 
     res.status(200).json({
         board: foundBoard,
-        members: memberships.map((m) => {
-            const username = /** @type any */(m.userId).username
-            return { username };
-        }),
+        members: memberships,
         priorityLevelStats,
         staleCardCount
     });
