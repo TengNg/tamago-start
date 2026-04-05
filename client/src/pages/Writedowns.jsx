@@ -184,7 +184,7 @@ const Writedowns = () => {
     async function handleUpdateWritedownTitle(id, newTitle) {
         try {
             await axiosPrivate.patch(
-                `/personal_writedowns/${id}/update-title`,
+                `/personal_writedowns/${id}/title`,
                 {
                     title: newTitle,
                 },

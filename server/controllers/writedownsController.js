@@ -25,7 +25,7 @@ const getWritedown = async (req, res) => {
         owner: req.user.userId
     });
     if (!writedown) {
-        return res.status(403);
+        return res.sendStatus(404);
     }
 
     return res.status(200).json({ writedown });
@@ -52,7 +52,7 @@ const saveWritedown = async (req, res) => {
         owner: req.user.userId
     });
     if (!writedown) {
-        return res.status(403);
+        return res.sendStatus(404);
     }
 
     const { content } = req.body;
@@ -75,7 +75,7 @@ const pinWritedown = async (req, res) => {
         owner: req.user.userId
     });
     if (!writedown) {
-        return res.status(403);
+        return res.sendStatus(404);
     }
 
     writedown.pinned = !writedown.pinned;
@@ -93,13 +93,13 @@ const updateTitle = async (req, res) => {
         owner: req.user.userId
     });
     if (!writedown) {
-        return res.status(403);
+        return res.sendStatus(404);
     }
 
     const { title } = req.body;
     writedown.title = title;
     await writedown.save();
-    return res.status(201);
+    return res.sendStatus(204);
 };
 
 /**
@@ -112,11 +112,11 @@ const deleteWritedown = async (req, res) => {
         owner: req.user.userId
     });
     if (!writedown) {
-        return res.status(403);
+        return res.sendStatus(404);
     }
 
     await Writedown.findByIdAndDelete(writedown._id);
-    return res.status(201);
+    return res.sendStatus(204);
 };
 
 /**
@@ -125,7 +125,7 @@ const deleteWritedown = async (req, res) => {
  */
 const deleteAllWritedowns = async (req, res) => {
     await Writedown.deleteMany({ owner: req.user.userId });
-    return res.status(201);
+    return res.sendStatus(204);
 };
 
 /**
@@ -138,12 +138,12 @@ const reorder = async (req, res) => {
         owner: req.user.userId
     });
     if (!writedown) {
-        return res.status(403);
+        return res.sendStatus(404);
     }
 
     const { rank } = req.body;
     await Writedown.findOneAndUpdate({ _id: writedown._id }, { order: rank });
-    return res.status(201);
+    return res.sendStatus(204);
 };
 
 module.exports = {

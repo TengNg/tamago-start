@@ -2,6 +2,7 @@ const User = require('../../models/User');
 const Board = require('../../models/Board');
 const List = require('../../models/List');
 const Card = require('../../models/Card');
+const Writedown = require('../../models/Writedown');
 const BoardMembership = require('../../models/BoardMembership');
 
 async function createTestUser(overrides = {}) {
@@ -72,11 +73,25 @@ async function initializeTestDocs() {
     }
 }
 
+async function createTestWritedown(userId, overrides = {}) {
+    const writedown = new Writedown({
+        owner: userId,
+        title: overrides.title || `Writedown ${Date.now()}`,
+        content: overrides.content || '',
+        order: overrides.order ?? Math.random().toString(36).substring(2, 10),
+        pinned: overrides.pinned ?? false,
+        ...overrides
+    });
+    await writedown.save();
+    return writedown;
+}
+
 module.exports = {
     createTestUser,
     createTestBoard,
     createTestList,
     createTestCard,
+    createTestWritedown,
     createTestBoardMembership,
     initializeTestDocs,
 };
