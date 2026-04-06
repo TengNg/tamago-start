@@ -53,7 +53,7 @@ export default function ListMenu({
         handleDelete();
     };
 
-    const copy = () => {
+    const duplicate = () => {
         handleCopy(list._id);
     };
 
@@ -79,7 +79,7 @@ export default function ListMenu({
         >
             <button
                 className="absolute right-3 top-2.5 text-gray-600 flex justify-center items-center"
-                onClick={() => setOpen(false)}
+                onClick={close}
             >
                 <Icon className="w-4 h-4" name="xmark" />
             </button>
@@ -108,10 +108,10 @@ export default function ListMenu({
                     collapse
                 </button>
                 <button
-                    onClick={copy}
+                    onClick={duplicate}
                     className={`${processingList?.processing ? "cursor-not-allowed" : ""} text-[12px] sm:text-[0.75rem] text-white bg-gray-600 px-1 py-2 hover:bg-gray-500`}
                 >
-                    {processingList.processing ? "copying..." : "copy"}
+                    {processingList.processing ? "duplicating..." : "duplicate"}
                 </button>
                 <button
                     onClick={handleOpenMoveListForm}

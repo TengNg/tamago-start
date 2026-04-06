@@ -183,12 +183,9 @@ const Writedowns = () => {
 
     async function handleUpdateWritedownTitle(id, newTitle) {
         try {
-            await axiosPrivate.patch(
-                `/personal_writedowns/${id}/title`,
-                {
-                    title: newTitle,
-                },
-            );
+            await axiosPrivate.patch(`/personal_writedowns/${id}/title`, {
+                title: newTitle,
+            });
         } catch (err) {
             toast.error("Failed to delete writedown");
         }

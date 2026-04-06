@@ -293,7 +293,9 @@ const Board = () => {
         if (e.button !== 0) return;
 
         try {
-            await axiosPrivate.patch(`/me/pinned-boards/${boardState.board._id}`);
+            await axiosPrivate.patch(
+                `/me/pinned-boards/${boardState.board._id}`,
+            );
             await currentUserQuery.refetch();
         } catch (err) {
             const errMsg =

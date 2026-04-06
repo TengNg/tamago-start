@@ -155,6 +155,7 @@ const List = ({ index, list, cards }) => {
             );
             const newList = response.data.list;
             const newCards = response.data.cards;
+            newCards.sort((a, b) => (a.order > b.order ? 1 : -1));
             newList.cards = newCards;
 
             lists.splice(index + 1, 0, newList);
@@ -167,9 +168,8 @@ const List = ({ index, list, cards }) => {
 
             socket.emit("updateLists", lists);
         } catch (err) {
-            toast.error(
-                "Failed to create a copy of this list, action cannot be performed at this time, please try again",
-            );
+            const errMsg = err.response?.data?.message || err.message;
+            toast.error(errMsg);
 
             setProcessingList({ msg: "", processing: false });
 

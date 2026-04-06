@@ -175,16 +175,14 @@ const copyList = async (req, res) => {
 
     const list = await saveList(listData);
 
-    const copiedCards = await Card.find({ listId: id });
+    const copiedCards = await Card.find({ listId: id }).lean();
     const newCards = [];
 
     for (const card of copiedCards) {
-        const { title, description, order, highlight } = card;
         const newCard = new Card({
-            title,
-            description,
-            order,
-            highlight,
+            ...card,
+            _id: new mongoose.Types.ObjectId(),
+            trackedId: crypto.randomUUID(),
             listId: list._id,
             boardId: list.boardId
         });

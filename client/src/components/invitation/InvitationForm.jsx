@@ -118,7 +118,9 @@ const InvitationForm = ({ open, setOpen }) => {
             setLoading(false);
         } catch (err) {
             setLoading(false);
-            setErrMsg(err?.response?.data?.message || "Failed to remove member");
+            setErrMsg(
+                err?.response?.data?.message || "Failed to remove member",
+            );
         }
     };
 
