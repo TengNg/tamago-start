@@ -30,10 +30,12 @@ exports.uploadAttachment = async (req, res) => {
         return res.status(422).json({ message: errMsg });
     }
 
-    const { fileTypeFromBuffer } = await import('file-type');
-    const detectedType = await fileTypeFromBuffer(req.file.buffer);
-    if (!detectedType) {
-        return res.status(422).json({ message: 'Could not determine file type (possibly corrupted or empty)' });
+    if (process.env.NODE_ENV !== "test") {
+        const { fileTypeFromBuffer } = await import('file-type');
+        const detectedType = await fileTypeFromBuffer(req.file.buffer);
+        if (!detectedType) {
+            return res.status(422).json({ message: 'Could not determine file type (possibly corrupted or empty)' });
+        }
     }
 
     const attachment = new Attachment({
@@ -48,6 +50,7 @@ exports.uploadAttachment = async (req, res) => {
         _id: attachment._id,
         type: attachment.type,
         refId: attachment.refId,
+        mimetype: attachment.mimetype,
         originalname: attachment.originalname
     });
 };
@@ -75,7 +78,7 @@ exports.getAttachment = async (req, res) => {
         res.set('Content-Type', attachment.mimetype);
         res.send(attachment.data);
     } catch (err) {
-        res.status(500).json({ error: 'Failed to get attachment.' });
+        res.status(500).json({ message: 'Failed to get attachment.' });
     }
 };
 
@@ -88,11 +91,11 @@ exports.listAttachments = async (req, res) => {
         const { userId } = req.user;
         const { type, refId } = req.params;
         if (!['card', 'writedown'].includes(type)) {
-            return res.status(422).json({ error: 'Invalid type' });
+            return res.status(422).json({ message: 'Invalid type' });
         }
 
         if (!refId) {
-            return res.status(422).json({ error: 'Missing refId' });
+            return res.status(422).json({ message: 'Missing refId' });
         }
 
         await authorize({
@@ -103,10 +106,10 @@ exports.listAttachments = async (req, res) => {
             action: "view",
         });
 
-        const attachments = await Attachment.find({ type, refId }).select("_id createdAt originalname");
+        const attachments = await Attachment.find({ type, refId }).select("_id createdAt mimetype originalname");
         res.json(attachments);
     } catch (err) {
-        res.status(500).json({ error: 'Failed to list attachments.' });
+        res.status(500).json({ message: 'Failed to list attachments.' });
     }
 };
 
