@@ -21,7 +21,7 @@ function Attachments({ card, setViewedAttachment }) {
     } = useQuery({
         queryKey: ["card-attachments", card._id],
         queryFn: async () => {
-            const res = await axiosPrivate.get(`/attachments/${card._id}/card`);
+            const res = await axiosPrivate.get(`/attachments/${card._id}/Card`);
             return res.data;
         },
     });

@@ -90,8 +90,8 @@ function Uploader({ card }) {
                         "attachment",
                         fileInputRef.current.files[0],
                     );
-                    formData.append("type", "card");
-                    formData.append("refId", card._id);
+                    formData.append("docModel", "Card");
+                    formData.append("doc", card._id);
                     fileUploadMutation.mutate(formData);
                 }}
                 className="flex items-center gap-2"

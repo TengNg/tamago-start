@@ -14,7 +14,7 @@ const { objectId } = require('../../helpers/common');
 const path = require('path');
 const filePath = path.join(__dirname, '../../fixtures/test-image.png');
 
-describe('POST /api/attachments/:id', () => {
+describe('DELETE /api/attachments/:id', () => {
     let cookieName = process.env.ACCESS_TOKEN_COOKIE_NAME;
     let accessToken;
     let testUser;
@@ -62,7 +62,7 @@ describe('POST /api/attachments/:id', () => {
     it('should return 404 if id is not found', async () => {
         const unknownId = objectId();
         const res = await request(app)
-            .get(`/api/attachments/${unknownId}`)
+            .delete(`/api/attachments/${unknownId}`)
             .set('Cookie', `${cookieName}=${accessToken}`)
 
         expect(res.statusCode).toBe(404);
@@ -75,16 +75,16 @@ describe('POST /api/attachments/:id', () => {
         const anotherCard = await createTestCard(anotherBoard._id, anotherList._id);
         const anotherAttachment = await createTestAttachment('Card', anotherCard._id, filePath);
         const res = await request(app)
-            .get(`/api/attachments/${anotherAttachment._id}`)
+            .delete(`/api/attachments/${anotherAttachment._id}`)
             .set('Cookie', `${cookieName}=${accessToken}`)
 
         expect(res.statusCode).toBe(403);
         expect(res.body.message).toBe('You do not have permission to view attachments');
     });
 
-    it('should successfully get the attachment', async () => {
+    it('should successfully delete the attachment', async () => {
         const res = await request(app)
-            .get(`/api/attachments/${testAttachment._id}`)
+            .delete(`/api/attachments/${testAttachment._id}`)
             .set('Cookie', `${cookieName}=${accessToken}`)
 
         expect(res.statusCode).toBe(200);

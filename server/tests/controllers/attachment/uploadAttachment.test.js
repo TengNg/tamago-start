@@ -76,8 +76,8 @@ describe('POST /api/attachments/upload', () => {
             .post('/api/attachments/upload')
             .set('Cookie', `${cookieName}=${accessToken}`)
             .attach('attachment', filePath)
-            .field('type', 'card')
-            .field('refId', testCard._id.toString());
+            .field('docModel', 'Card')
+            .field('doc', testCard._id.toString());
 
         expect(res.statusCode).toBe(201);
     });
@@ -88,8 +88,8 @@ describe('POST /api/attachments/upload', () => {
             .post('/api/attachments/upload')
             .set('Cookie', `${cookieName}=${accessToken}`)
             .attach('attachment', filePath)
-            .field('type', 'writedown')
-            .field('refId', testWritedown._id.toString());
+            .field('docModel', 'Writedown')
+            .field('doc', testWritedown._id.toString());
 
         expect(res.statusCode).toBe(201);
     });
@@ -98,8 +98,8 @@ describe('POST /api/attachments/upload', () => {
         const res = await request(app)
             .post('/api/attachments/upload')
             .set('Cookie', `${cookieName}=${accessToken}`)
-            .field('type', 'card')
-            .field('refId', testCard._id.toString());
+            .field('docModel', 'Card')
+            .field('doc', testCard._id.toString());
 
         expect(res.statusCode).toBe(422);
         expect(res.body.message).toBe("Invalid or missing attachment file");
@@ -124,8 +124,8 @@ describe('POST /api/attachments/upload', () => {
             .post('/api/attachments/upload')
             .set('Cookie', `${cookieName}=${accessToken}`)
             .attach('attachment', largeBuffer, 'large.jpg')
-            .field('type', 'card')
-            .field('refId', testCard._id.toString());
+            .field('docModel', 'Card')
+            .field('doc', testCard._id.toString());
 
         expect(res.body.message).toBe('File too large');
     });

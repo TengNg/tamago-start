@@ -88,11 +88,11 @@ async function createTestWritedown(userId, overrides = {}) {
     return writedown;
 }
 
-async function createTestAttachment(type = "card", refId, filePath) {
+async function createTestAttachment(docModel = "Card", doc, filePath) {
     const buffer = fs.readFileSync(filePath);
     const attachment = new Attachment({
-        type,
-        refId,
+        docModel,
+        doc,
         data: buffer,
         mimetype: "image/png",
         originalname: "test-image.png"

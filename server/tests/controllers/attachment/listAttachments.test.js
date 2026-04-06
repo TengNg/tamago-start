@@ -14,7 +14,7 @@ const { objectId } = require('../../helpers/common');
 const path = require('path');
 const filePath = path.join(__dirname, '../../fixtures/test-image.png');
 
-describe('POST /api/attachments/:id', () => {
+describe('GET /api/attachments/:doc/:docModel', () => {
     let cookieName = process.env.ACCESS_TOKEN_COOKIE_NAME;
     let accessToken;
     let testUser;
@@ -59,32 +59,27 @@ describe('POST /api/attachments/:id', () => {
         }
     });
 
-    it('should return 404 if id is not found', async () => {
+    it('should return 403 if id is not found', async () => {
         const unknownId = objectId();
         const res = await request(app)
-            .get(`/api/attachments/${unknownId}`)
-            .set('Cookie', `${cookieName}=${accessToken}`)
-
-        expect(res.statusCode).toBe(404);
-    });
-
-    it('should return 403 if attachment comes from a different board', async () => {
-        const anotherUser = await createTestUser();
-        const anotherBoard = await createTestBoard(anotherUser._id);
-        const anotherList = await createTestList(anotherBoard._id);
-        const anotherCard = await createTestCard(anotherBoard._id, anotherList._id);
-        const anotherAttachment = await createTestAttachment('Card', anotherCard._id, filePath);
-        const res = await request(app)
-            .get(`/api/attachments/${anotherAttachment._id}`)
+            .get(`/api/attachments/${unknownId}/Card`)
             .set('Cookie', `${cookieName}=${accessToken}`)
 
         expect(res.statusCode).toBe(403);
-        expect(res.body.message).toBe('You do not have permission to view attachments');
     });
 
-    it('should successfully get the attachment', async () => {
+    it('should return 422 if docModel is invalid', async () => {
+        const invalidDocModel = "Invalid";
         const res = await request(app)
-            .get(`/api/attachments/${testAttachment._id}`)
+            .get(`/api/attachments/${testCard._id}/${invalidDocModel}`)
+            .set('Cookie', `${cookieName}=${accessToken}`)
+
+        expect(res.statusCode).toBe(422);
+    });
+
+    it('should successfully get the attachments', async () => {
+        const res = await request(app)
+            .get(`/api/attachments/${testCard._id}/Card`)
             .set('Cookie', `${cookieName}=${accessToken}`)
 
         expect(res.statusCode).toBe(200);
