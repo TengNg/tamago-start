@@ -71,11 +71,30 @@ function ViewerDialog({ viewedAttachment, setViewedAttachment }) {
                 ) : attachmentError ? (
                     <div className="text-red-600 p-8">{attachmentError}</div>
                 ) : attachmentDataUrl ? (
-                    <img
-                        src={attachmentDataUrl}
-                        alt={viewedAttachment.originalname}
-                        className="max-w-[80vw] max-h-[70vh] border"
-                    />
+                    <>
+                        {viewedAttachment.mimetype.startsWith("image/") ? (
+                            <img
+                                src={attachmentDataUrl}
+                                alt={viewedAttachment.originalname}
+                                className="max-w-[80vw] max-h-[70vh] border"
+                            />
+                        ) : (
+                            <div className="flex flex-col items-center mt-4">
+                                <span className="mb-2">
+                                    No preview available.
+                                </span>
+                                <a
+                                    href={`/api/attachments/${viewedAttachment.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-800 underline border px-2 py-1"
+                                    download={viewedAttachment.originalname}
+                                >
+                                    Download
+                                </a>
+                            </div>
+                        )}
+                    </>
                 ) : null}
             </div>
         </div>
