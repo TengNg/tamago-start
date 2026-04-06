@@ -60,26 +60,22 @@ exports.uploadAttachment = async (req, res) => {
  * @param {import('express').Response} res
  */
 exports.getAttachment = async (req, res) => {
-    try {
-        const { userId } = req.user;
-        const attachment = await Attachment.findById(req.params.id);
-        if (!attachment) {
-            return res.sendStatus(404);
-        }
-
-        await authorize({
-            type: attachment.type,
-            refId: attachment.refId.toString(),
-            userId,
-            resource: "attachment",
-            action: "view",
-        });
-
-        res.set('Content-Type', attachment.mimetype);
-        res.send(attachment.data);
-    } catch (err) {
-        res.status(500).json({ message: 'Failed to get attachment.' });
+    const { userId } = req.user;
+    const attachment = await Attachment.findById(req.params.id);
+    if (!attachment) {
+        return res.sendStatus(404);
     }
+
+    await authorize({
+        type: attachment.type,
+        refId: attachment.refId.toString(),
+        userId,
+        resource: "attachment",
+        action: "view",
+    });
+
+    res.set('Content-Type', attachment.mimetype);
+    res.send(attachment.data);
 };
 
 /**
