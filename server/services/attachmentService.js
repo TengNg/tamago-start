@@ -10,21 +10,21 @@ const { checkBoardPermission } = require('./boardPermissionService');
  */
 /**
  * @param {Object} params
- * @param {'card'|'writedown'} params.type
- * @param {string} params.refId
+ * @param {'Card'|'Writedown'} params.docModel
+ * @param {string} params.doc
  * @param {string} params.userId
  * @param {'list' | 'card' | 'comment' | 'attachment'} params.resource
  * @param {'view' | 'create' | 'edit' | 'delete'} params.action
  * @throws {{ status: number, message: string }}
  */
-async function authorize({ type, refId, userId, resource, action }) {
-    if (!type || !resource || !action) {
+async function authorize({ docModel, doc, userId, resource, action }) {
+    if (!docModel || !resource || !action) {
         const message = "Missing required params for authorization";
         throw { status: 403, message };
     }
 
-    if (type === "writedown") {
-        const foundWritedown = await findWritedown(refId.toString());
+    if (docModel === "Writedown") {
+        const foundWritedown = await findWritedown(doc);
         if (!foundWritedown) {
             const message = "Writedown not found";
             throw { status: 403, message };
@@ -33,7 +33,7 @@ async function authorize({ type, refId, userId, resource, action }) {
         return;
     }
 
-    const foundCard = await cardById(refId.toString());
+    const foundCard = await cardById(doc);
     if (!foundCard) {
         const message = "Card not found";
         throw { status: 403, message };

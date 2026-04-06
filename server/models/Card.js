@@ -120,6 +120,12 @@ cardSchema.post('findOneAndDelete', async function(doc) {
     if (foundBoard) {
         await Board.updateOne({ _id: doc.boardId }, { $inc: { cardCount: -1 } });
     }
+
+    const Attachment = mongoose.model('Attachment');
+    await Attachment.deleteMany({ type: "card", refId: doc._id });
+
+    const CardComment = mongoose.model('CardComment');
+    await CardComment.deleteMany({ cardId: doc._id });
 });
 
 module.exports = mongoose.model('Card', cardSchema);

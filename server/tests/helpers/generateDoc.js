@@ -4,6 +4,8 @@ const List = require('../../models/List');
 const Card = require('../../models/Card');
 const Writedown = require('../../models/Writedown');
 const BoardMembership = require('../../models/BoardMembership');
+const Attachment = require('../../models/Attachment');
+const fs = require("fs");
 
 async function createTestUser(overrides = {}) {
     const user = new User({
@@ -86,6 +88,19 @@ async function createTestWritedown(userId, overrides = {}) {
     return writedown;
 }
 
+async function createTestAttachment(docModel = "Card", doc, filePath) {
+    const buffer = fs.readFileSync(filePath);
+    const attachment = new Attachment({
+        docModel,
+        doc,
+        data: buffer,
+        mimetype: "image/png",
+        originalname: "test-image.png"
+    });
+    await attachment.save();
+    return attachment;
+}
+
 module.exports = {
     createTestUser,
     createTestBoard,
@@ -94,4 +109,5 @@ module.exports = {
     createTestWritedown,
     createTestBoardMembership,
     initializeTestDocs,
+    createTestAttachment,
 };

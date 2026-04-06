@@ -46,12 +46,17 @@ const writedownSchema = new mongoose.Schema({
 
 writedownSchema.index({ owner: 1, order: 1 });
 
-writedownSchema.pre('save', function (next) {
+writedownSchema.pre('save', function(next) {
     if (!this.isNew) {
         this.updatedAt = new Date();
     }
 
     next();
+});
+
+writedownSchema.post('findOneAndDelete', async function(doc) {
+    const Attachment = mongoose.model('Attachment');
+    await Attachment.deleteMany({ type: "writedown", refId: doc._id });
 });
 
 module.exports = mongoose.model('Writedown', writedownSchema);

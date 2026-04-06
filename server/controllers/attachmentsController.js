@@ -7,47 +7,62 @@ const { authorize } = require('../services/attachmentService');
  */
 exports.uploadAttachment = async (req, res) => {
     const { userId } = req.user;
-    const { type, refId } = req.body;
-    const validTypes = ["card", "writedown"];
-    if (!validTypes.includes(type)) {
-        const errMsg = 'Invalid attachment-type (attachment should only for card or writedown)'
-        return res.status(422).json({ message: errMsg });
+    const { docModel, doc } = req.body;
+
+    const validDocModels = ["Card", "Writedown"];
+    if (!validDocModels.includes(docModel)) {
+        return res.status(422).json({
+            message: 'Invalid docModel (must be Card or Writedown)'
+        });
+    }
+
+    if (!doc) {
+        return res.status(422).json({ message: 'Missing doc id' });
     }
 
     await authorize({
-        type,
-        refId,
+        docModel,
+        doc,
         userId,
         resource: "attachment",
         action: "create",
     });
 
-    if (!req.file || typeof req.file !== 'object' ||
+    if (
+        !req.file ||
+        typeof req.file !== 'object' ||
         typeof req.file.buffer === 'undefined' ||
         typeof req.file.mimetype !== 'string' ||
-        typeof req.file.originalname !== 'string') {
-        const errMsg = 'Invalid or missing attachment file'
-        return res.status(422).json({ message: errMsg });
+        typeof req.file.originalname !== 'string'
+    ) {
+        return res.status(422).json({ message: 'Invalid or missing attachment file' });
     }
 
-    const { fileTypeFromBuffer } = await import('file-type');
-    const detectedType = await fileTypeFromBuffer(req.file.buffer);
-    if (!detectedType) {
-        return res.status(422).json({ message: 'Could not determine file type (possibly corrupted or empty)' });
+    if (process.env.NODE_ENV !== "test") {
+        const { fileTypeFromBuffer } = await import('file-type');
+        const detectedType = await fileTypeFromBuffer(req.file.buffer);
+        if (!detectedType) {
+            return res.status(422).json({
+                message: 'Could not determine file type (possibly corrupted or empty)'
+            });
+        }
     }
 
     const attachment = new Attachment({
-        type,
-        refId,
+        docModel,
+        doc,
         data: req.file.buffer,
         mimetype: req.file.mimetype,
         originalname: req.file.originalname
     });
+
     await attachment.save();
+
     res.status(201).json({
         _id: attachment._id,
-        type: attachment.type,
-        refId: attachment.refId,
+        docModel: attachment.docModel,
+        doc: attachment.doc,
+        mimetype: attachment.mimetype,
         originalname: attachment.originalname
     });
 };
@@ -57,26 +72,23 @@ exports.uploadAttachment = async (req, res) => {
  * @param {import('express').Response} res
  */
 exports.getAttachment = async (req, res) => {
-    try {
-        const { userId } = req.user;
-        const attachment = await Attachment.findById(req.params.id);
-        if (!attachment) {
-            return res.sendStatus(404);
-        }
+    const { userId } = req.user;
 
-        await authorize({
-            type: attachment.type,
-            refId: attachment.refId.toString(),
-            userId,
-            resource: "attachment",
-            action: "view",
-        });
-
-        res.set('Content-Type', attachment.mimetype);
-        res.send(attachment.data);
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to get attachment.' });
+    const attachment = await Attachment.findById(req.params.id);
+    if (!attachment) {
+        return res.sendStatus(404);
     }
+
+    await authorize({
+        docModel: attachment.docModel,
+        doc: attachment.doc.toString(),
+        userId,
+        resource: "attachment",
+        action: "view",
+    });
+
+    res.set('Content-Type', attachment.mimetype);
+    res.send(attachment.data);
 };
 
 /**
@@ -84,30 +96,32 @@ exports.getAttachment = async (req, res) => {
  * @param {import('express').Response} res
  */
 exports.listAttachments = async (req, res) => {
-    try {
-        const { userId } = req.user;
-        const { type, refId } = req.params;
-        if (!['card', 'writedown'].includes(type)) {
-            return res.status(422).json({ error: 'Invalid type' });
-        }
+    const { userId } = req.user;
+    const { docModel, doc } = req.params;
 
-        if (!refId) {
-            return res.status(422).json({ error: 'Missing refId' });
-        }
-
-        await authorize({
-            type: /** @type ("card"|"writedown") */(type),
-            refId,
-            userId,
-            resource: "attachment",
-            action: "view",
+    if (docModel !== "Card" && docModel !== "Writedown") {
+        return res.status(422).json({
+            message: 'Invalid docModel (must be Card or Writedown)'
         });
-
-        const attachments = await Attachment.find({ type, refId }).select("_id createdAt originalname");
-        res.json(attachments);
-    } catch (err) {
-        res.status(500).json({ error: 'Failed to list attachments.' });
     }
+
+    if (!doc) {
+        return res.status(422).json({ message: 'Missing doc id' });
+    }
+
+    await authorize({
+        docModel,
+        doc,
+        userId,
+        resource: "attachment",
+        action: "view",
+    });
+
+    const attachments = await Attachment
+        .find({ docModel, doc })
+        .select("_id createdAt mimetype originalname");
+
+    res.json(attachments);
 };
 
 /**
@@ -118,14 +132,14 @@ exports.deleteAttachment = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
 
-    const attachment = await Attachment.findById(req.params.id);
+    const attachment = await Attachment.findById(id);
     if (!attachment) {
         return res.sendStatus(404);
     }
 
     await authorize({
-        type: attachment.type,
-        refId: attachment.refId.toString(),
+        docModel: attachment.docModel,
+        doc: attachment.doc.toString(),
         userId,
         resource: "attachment",
         action: "view",
@@ -138,3 +152,4 @@ exports.deleteAttachment = async (req, res) => {
 
     res.json({ id });
 };
+

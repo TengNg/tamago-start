@@ -1,14 +1,15 @@
 const mongoose = require('mongoose');
 
 const AttachmentSchema = new mongoose.Schema({
-    type: {
+    docModel: {
         type: String,
-        enum: ['card', 'writedown'],
+        enum: ['Card', 'Writedown'],
         required: true
     },
-    refId: {
+    doc: {
         type: mongoose.Schema.Types.ObjectId,
-        required: true
+        required: true,
+        refPath: "docModel",
     },
     data: {
         type: Buffer,
