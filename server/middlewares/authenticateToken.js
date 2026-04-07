@@ -22,7 +22,7 @@ const checkTokens = async (accessToken, refreshToken) => {
                 return {
                     userId: decoded.userId,
                     username: decoded.username,
-                    refreshTokenVersion: decoded.refreshTokenVeresion,
+                    refreshTokenVersion: decoded.refreshTokenVersion,
                 };
             }
         }
