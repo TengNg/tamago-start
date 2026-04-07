@@ -5,7 +5,6 @@ const errorHandler = require('./middlewares/errorHandler');
 const notFoundHandler = require('./middlewares/notFoundHandler');
 const credentials = require('./middlewares/credentials');
 const cookieParser = require('cookie-parser');
-const bodyParser = require('body-parser');
 
 const app = express();
 
@@ -20,7 +19,6 @@ app.use((_req, res, next) => {
 app.use(credentials);
 app.use(express.json());
 app.use(cookieParser());
-app.use(bodyParser.json())
 if (process.env.NODE_ENV !== "production") {
     const cors = require("cors");
     app.use(cors({
