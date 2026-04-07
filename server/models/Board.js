@@ -1,7 +1,7 @@
-const mongoose = require('mongoose');
-const { MAX_BOARD_COUNT } = require('../data/limits');
+import { Schema, model } from 'mongoose';
+import { MAX_BOARD_COUNT } from '../data/limits.js';
 
-const boardSchema = new mongoose.Schema({
+const boardSchema = new Schema({
     title: {
         type: String,
         required: true,
@@ -30,7 +30,7 @@ const boardSchema = new mongoose.Schema({
     },
 
     createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
@@ -46,7 +46,7 @@ boardSchema.pre('save', async function(next) {
     this.$locals.wasNew = this.isNew;
 
     if (this.isNew) {
-        const Board = mongoose.model('Board');
+        const Board = model('Board');
         const boardCount = await Board.countDocuments({ createdBy: this.createdBy });
         if (boardCount >= MAX_BOARD_COUNT) {
             const error = new Error(`Maximum board count reached (maximum: ${MAX_BOARD_COUNT})`);
@@ -61,7 +61,7 @@ boardSchema.post('save', async function(doc) {
     }
 
     try {
-        const BoardMembership = mongoose.model('BoardMembership');
+        const BoardMembership = model('BoardMembership');
         await BoardMembership.create({
             boardId: doc._id,
             userId: doc.createdBy,
@@ -80,4 +80,4 @@ boardSchema.post('save', async function(doc) {
 //     await BoardMembership.deleteMany({ boardId: doc._id, });
 // });
 
-module.exports = mongoose.model('Board', boardSchema);
+export default model('Board', boardSchema);

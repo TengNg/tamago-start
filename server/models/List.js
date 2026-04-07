@@ -1,7 +1,7 @@
-const mongoose = require('mongoose');
-const { MAX_LIST_COUNT } = require('../data/limits');
+import { Schema, model, startSession } from 'mongoose';
+import { MAX_LIST_COUNT } from '../data/limits.js';
 
-const listSchema = new mongoose.Schema({
+const listSchema = new Schema({
     title: {
         type: String,
         required: true,
@@ -13,7 +13,7 @@ const listSchema = new mongoose.Schema({
     },
 
     boardId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Board',
         required: true,
     },
@@ -29,7 +29,7 @@ listSchema.index({ boardId: 1, order: 1 });
 
 listSchema.pre('save', async function(next) {
     if (this.isNew) {
-        const Board = mongoose.model('Board');
+        const Board = model('Board');
         const foundBoard = await Board.findById(this.boardId)
         if (foundBoard && foundBoard.listCount >= MAX_LIST_COUNT) {
             const error = new Error(`Maximum list count reached for this board (maximum: ${MAX_LIST_COUNT})`);
@@ -40,17 +40,17 @@ listSchema.pre('save', async function(next) {
 });
 
 listSchema.post('save', async function(doc, next) {
-    const Board = mongoose.model('Board');
+    const Board = model('Board');
     await Board.updateOne({ _id: doc.boardId }, { $inc: { listCount: 1 } });
     next();
 });
 
 listSchema.post('findOneAndDelete', async function(doc) {
-    const session = await mongoose.startSession();
+    const session = await startSession();
     session.startTransaction();
 
-    const Board = mongoose.model('Board');
-    const Card = mongoose.model('Card');
+    const Board = model('Board');
+    const Card = model('Card');
 
     const documentId = doc._id;
     const foundBoard = await Board.findById(doc.boardId);
@@ -75,4 +75,4 @@ listSchema.post('findOneAndDelete', async function(doc) {
     }
 });
 
-module.exports = mongoose.model('List', listSchema);
+export default model('List', listSchema);

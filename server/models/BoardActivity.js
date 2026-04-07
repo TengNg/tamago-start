@@ -1,24 +1,24 @@
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
 
-const boardActivitySchema = new mongoose.Schema({
+const boardActivitySchema = new Schema({
     board: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Board',
         required: true,
     },
 
     user: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'User',
     },
 
     card: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Card',
     },
 
     list: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'List',
     },
 
@@ -44,4 +44,4 @@ const boardActivitySchema = new mongoose.Schema({
     },
 }, { collection: 'board_activities' });
 
-module.exports = mongoose.model('BoardActivity', boardActivitySchema);
+export default model('BoardActivity', boardActivitySchema);

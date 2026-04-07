@@ -1,16 +1,16 @@
-const mongoose = require('mongoose');
-const { MAX_BOARD_MEMBER_COUNT } = require('../data/limits');
-const { DEFAULT_BOARD_PERMISSIONS } = require('../data/permissions');
+import { Schema, model } from 'mongoose';
+import { MAX_BOARD_MEMBER_COUNT } from '../data/limits.js';
+import { DEFAULT_BOARD_PERMISSIONS } from '../data/permissions.js';
 
-const boardMembershipSchema = new mongoose.Schema({
+const boardMembershipSchema = new Schema({
     boardId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Board',
         required: true,
     },
 
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'User', required: true,
     },
 
@@ -62,7 +62,7 @@ boardMembershipSchema.index({ boardId: 1, userId: 1 }, { unique: true });
 
 boardMembershipSchema.pre('save', async function(next) {
     if (this.isNew) {
-        const BoardMembership = mongoose.model('BoardMembership');
+        const BoardMembership = model('BoardMembership');
         const membershipCount = await BoardMembership.countDocuments({ boardId: this.boardId });
         if (membershipCount >= MAX_BOARD_MEMBER_COUNT) {
             const error = new Error(`Maximum member count reached (maximum: ${MAX_BOARD_MEMBER_COUNT})`);
@@ -71,4 +71,4 @@ boardMembershipSchema.pre('save', async function(next) {
     }
 });
 
-module.exports = mongoose.model('BoardMembership', boardMembershipSchema);
+export default model('BoardMembership', boardMembershipSchema);

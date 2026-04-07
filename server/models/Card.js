@@ -1,22 +1,22 @@
-const mongoose = require('mongoose');
-const crypto = require('crypto');
-const { MAX_CARD_COUNT } = require('../data/limits');
+import { Schema, model } from 'mongoose';
+import { randomUUID } from 'crypto';
+import { MAX_CARD_COUNT } from '../data/limits.js';
 
-const cardSchema = new mongoose.Schema({
+const cardSchema = new Schema({
     trackedId: {
         type: String,
-        default: crypto.randomUUID(),
+        default: randomUUID(),
         required: true,
     },
 
     listId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'List',
         required: true,
     },
 
     boardId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Board',
         required: true,
     },
@@ -91,7 +91,7 @@ cardSchema.index({ listId: 1, order: 1 });
 
 cardSchema.pre('save', async function(next) {
     if (this.isNew) {
-        const Board = mongoose.model('Board');
+        const Board = model('Board');
         const foundBoard = await Board.findById(this.boardId)
         if (foundBoard && foundBoard.cardCount >= MAX_CARD_COUNT) {
             const error = new Error(`Maximum card count reached for this board (maximum: ${MAX_CARD_COUNT})`);
@@ -109,23 +109,23 @@ cardSchema.pre('save', async function(next) {
 });
 
 cardSchema.post('save', async function(doc, next) {
-    const Board = mongoose.model('Board');
+    const Board = model('Board');
     await Board.updateOne({ _id: doc.boardId }, { $inc: { cardCount: 1 } });
     next();
 });
 
 cardSchema.post('findOneAndDelete', async function(doc) {
-    const Board = mongoose.model('Board');
+    const Board = model('Board');
     const foundBoard = await Board.findById(doc.boardId);
     if (foundBoard) {
         await Board.updateOne({ _id: doc.boardId }, { $inc: { cardCount: -1 } });
     }
 
-    const Attachment = mongoose.model('Attachment');
+    const Attachment = model('Attachment');
     await Attachment.deleteMany({ type: "card", refId: doc._id });
 
-    const CardComment = mongoose.model('CardComment');
+    const CardComment = model('CardComment');
     await CardComment.deleteMany({ cardId: doc._id });
 });
 
-module.exports = mongoose.model('Card', cardSchema);
+export default model('Card', cardSchema);

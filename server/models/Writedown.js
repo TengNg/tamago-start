@@ -1,8 +1,8 @@
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
 
-const writedownSchema = new mongoose.Schema({
+const writedownSchema = new Schema({
     owner: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
@@ -55,8 +55,8 @@ writedownSchema.pre('save', function(next) {
 });
 
 writedownSchema.post('findOneAndDelete', async function(doc) {
-    const Attachment = mongoose.model('Attachment');
+    const Attachment = model('Attachment');
     await Attachment.deleteMany({ type: "writedown", refId: doc._id });
 });
 
-module.exports = mongoose.model('Writedown', writedownSchema);
+export default model('Writedown', writedownSchema);

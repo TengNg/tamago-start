@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
 
 const INVALID_USERNAMES = Object.freeze([
   // Unknown
@@ -26,7 +26,7 @@ const INVALID_USERNAMES = Object.freeze([
   "verified", "official", "team", "security", "help", "info"
 ]);
 
-const UserSchema = new mongoose.Schema({
+const UserSchema = new Schema({
     username: {
         type: String,
         required: true,
@@ -83,7 +83,7 @@ const UserSchema = new mongoose.Schema({
     },
 
     recentlyViewedBoardId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Board',
     },
 
@@ -120,5 +120,5 @@ const UserSchema = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model('User', UserSchema);
+export default model('User', UserSchema);
 

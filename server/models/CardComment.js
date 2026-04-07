@@ -1,14 +1,14 @@
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
 
-const cardCommentSchema = new mongoose.Schema({
+const cardCommentSchema = new Schema({
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
 
     cardId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Card',
         required: true,
     },
@@ -30,4 +30,4 @@ const cardCommentSchema = new mongoose.Schema({
 
 cardCommentSchema.index({ cardId: 1 });
 
-module.exports = mongoose.model('CardComment', cardCommentSchema);
+export default model('CardComment', cardCommentSchema);

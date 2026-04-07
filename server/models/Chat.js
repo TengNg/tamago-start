@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
 
-const chatSchema = new mongoose.Schema({
+const chatSchema = new Schema({
     type: {
         type: String,
         enum: ['MESSAGE', 'CARD_CODE', 'BOARD_CODE'],
@@ -14,13 +14,13 @@ const chatSchema = new mongoose.Schema({
     },
 
     boardId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Board',
         required: true,
     },
 
     sentBy: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
@@ -37,6 +37,6 @@ const chatSchema = new mongoose.Schema({
     },
 });
 
-const Chat = mongoose.model('Chat', chatSchema);
+const Chat = model('Chat', chatSchema);
 
-module.exports = Chat;
+export default Chat;

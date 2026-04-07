@@ -1,14 +1,14 @@
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
 
-const joinBoardRequestSchema = new mongoose.Schema({
+const joinBoardRequestSchema = new Schema({
     boardId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Board',
         required: true,
     },
 
     requester: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
@@ -44,7 +44,7 @@ joinBoardRequestSchema.pre('save', function(next) {
 joinBoardRequestSchema.post('save', async function(doc) {
     if (doc.status === 'accepted') {
         try {
-            const BoardMembership = mongoose.model('BoardMembership');
+            const BoardMembership = model('BoardMembership');
             await BoardMembership.create({
                 boardId: doc.boardId,
                 userId: doc.requester,
@@ -56,4 +56,4 @@ joinBoardRequestSchema.post('save', async function(doc) {
     }
 });
 
-module.exports = mongoose.model('join_board_requests', joinBoardRequestSchema);
+export default model('join_board_requests', joinBoardRequestSchema);

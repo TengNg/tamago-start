@@ -1,13 +1,13 @@
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
 
-const AttachmentSchema = new mongoose.Schema({
+const AttachmentSchema = new Schema({
     docModel: {
         type: String,
         enum: ['Card', 'Writedown'],
         required: true
     },
     doc: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         required: true,
         refPath: "docModel",
     },
@@ -29,4 +29,4 @@ const AttachmentSchema = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model('Attachment', AttachmentSchema);
+export default model('Attachment', AttachmentSchema);
