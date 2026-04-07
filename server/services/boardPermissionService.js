@@ -1,5 +1,5 @@
-const Board = require('../models/Board');
-const BoardMembership = require('../models/BoardMembership');
+import Board from '../models/Board.js';
+import BoardMembership from '../models/BoardMembership.js';
 
 /**
  * @param {Object} params
@@ -118,7 +118,7 @@ const checkBoardPermission = async ({ boardId, userId, resource, action }) => {
     return { board };
 };
 
-module.exports = {
+export {
     isActionAuthorized,
     checkBoardPermission,
 };

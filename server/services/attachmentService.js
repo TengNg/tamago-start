@@ -1,6 +1,6 @@
-const { cardById } = require('../services/cardService');
-const { findWritedown } = require('../services/writedownService');
-const { checkBoardPermission } = require('./boardPermissionService');
+import { cardById } from '../services/cardService.js';
+import { findWritedown } from '../services/writedownService.js';
+import { checkBoardPermission } from './boardPermissionService.js';
 
 /**
  * @typedef {object} AuthorizationResult
@@ -47,6 +47,6 @@ async function authorize({ docModel, doc, userId, resource, action }) {
     })
 }
 
-module.exports = {
+export {
     authorize
 }

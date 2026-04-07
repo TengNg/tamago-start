@@ -1,4 +1,4 @@
-const Writedown = require('../models/Writedown');
+import Writedown from '../models/Writedown.js';
 
 /**
  * @param {Object} writedownData
@@ -32,7 +32,7 @@ const findWritedown = async (writedownId, option = { lean: true }) => {
     return foundWritedown;
 };
 
-module.exports = {
+export {
     saveNewWritedown,
     writedownsByUserId,
     findWritedown,

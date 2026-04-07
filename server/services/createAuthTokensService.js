@@ -29,7 +29,7 @@ const rTokenName = process.env.REFRESH_TOKEN_COOKIE_NAME;
  */
 const createAccessToken = (user) => {
     const { userId, username } = user;
-    const accessToken = jwt.sign(
+    const accessToken = sign(
         { userId, username },
         process.env.ACCESS_TOKEN_SECRET,
         { expiresIn: '15min' }
@@ -42,7 +42,7 @@ const createAccessToken = (user) => {
  */
 const createRefreshToken = (user) => {
     const { userId, username, refreshTokenVersion } = user;
-    const refreshToken = jwt.sign(
+    const refreshToken = sign(
         { userId, username, refreshTokenVersion },
         process.env.REFRESH_TOKEN_SECRET,
         { expiresIn: '15d' }
@@ -93,7 +93,7 @@ const clearAuthCookies = (res) => {
     res.clearCookie(aTokenName, aCookieOpts);
 };
 
-module.exports = {
+export {
     rTokenName,
     createAccessToken,
     createRefreshToken,

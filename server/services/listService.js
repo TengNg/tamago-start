@@ -1,4 +1,4 @@
-const List = require('../models/List.js');
+import List from '../models/List.js';
 
 /**
  * @param {string|import('mongoose').Types.ObjectId} id
@@ -16,7 +16,7 @@ const saveList = (listData) => {
     return newList.save();
 };
 
-module.exports = {
+export {
     listById,
     saveList,
 }

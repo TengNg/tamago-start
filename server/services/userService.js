@@ -1,4 +1,4 @@
-const User = require('../models/User');
+import User from '../models/User.js';
 
 /**
  * @param {string} username
@@ -43,7 +43,7 @@ const sanitizeUser = (user) => {
     return data;
 };
 
-module.exports = {
+export {
     userByUsername,
     sanitizeUser,
 };
