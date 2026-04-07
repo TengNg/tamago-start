@@ -20,11 +20,12 @@
         "@shelf/jest-mongodb": "^6.0.2",
         "@types/cookie-parser": "^1.4.10",
         "@types/express": "^5.0.3",
+        "@types/jsonwebtoken": "^9.0.10",
         "@types/multer": "2.0.0",
+        "dotenv": "^16.0.3",
         "jest": "^29.7.0",
         "nodemon": "^3.1.4",
         "supertest": "^7.0.0",
-        "typescript": "^5.9.2",
-        "dotenv": "^16.0.3"
+        "typescript": "^5.9.2"
     }
 }

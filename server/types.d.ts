@@ -1,8 +1,16 @@
 export { };
 
+import { JwtPayload } from "jsonwebtoken";
+
 declare global {
     type SocketSharedState = {
         boardIdMap: Map<string, string>;
+    }
+
+    interface AuthJwtPayload extends JwtPayload {
+        userId: string;
+        username: string;
+        refreshTokenVersion: number;
     }
 }
 
