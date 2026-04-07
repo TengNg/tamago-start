@@ -1,14 +1,15 @@
 require('dotenv').config();
 
-const express = require("express");
-const errorHandler = require('./middlewares/errorHandler');
-const notFoundHandler = require('./middlewares/notFoundHandler');
-const credentials = require('./middlewares/credentials');
-const cookieParser = require('cookie-parser');
+import express from "express";
+import errorHandler from './middlewares/errorHandler.js';
+import notFoundHandler from './middlewares/notFoundHandler.js';
+import cookieParser from 'cookie-parser';
+import path from 'path';
 
 const app = express();
 
 app.disable('x-powered-by');
+
 app.use((_req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
@@ -16,9 +17,6 @@ app.use((_req, res, next) => {
     next();
 });
 
-app.use(credentials);
-app.use(express.json());
-app.use(cookieParser());
 if (process.env.NODE_ENV !== "production") {
     const cors = require("cors");
     app.use(cors({
@@ -28,20 +26,23 @@ if (process.env.NODE_ENV !== "production") {
     }));
 }
 
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
+
 // api-router
-const apiRouter = require("./routes/api/index");
+import apiRouter from "./routes/api/index.js";
 app.use("/api", apiRouter);
 
 // prod-setup
 if (process.env.NODE_ENV === "production") {
-    const path = require('path');
     const buildPath = path.join(__dirname, "../client/dist");
     app.use(express.static(buildPath));
     app.get("/*splat", (req, res) => {
         if (req.originalUrl.startsWith("/api")) {
             res.status(404).json({ message: "API route not found" });
         } else {
-            res.sendFile(`${buildPath}/index.html`);
+            res.sendFile(path.join(buildPath, 'index.html'));
         }
     });
 }
@@ -63,4 +64,4 @@ if (process.env.NODE_ENV !== 'test') {
     server.listen(PORT, () => console.log(`app is listening on PORT ${PORT}`));
 }
 
-module.exports = app;
+export default app;

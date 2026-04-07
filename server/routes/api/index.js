@@ -1,8 +1,8 @@
-const express = require("express");
-const apiRouter = express.Router();
+import { Router } from "express";
+const apiRouter = Router();
 
-const authenticateToken = require('../../middlewares/authenticateToken');
-const rateLimiter = require('../../middlewares/rateLimiter');
+import authenticateToken from '../../middlewares/authenticateToken.js';
+import rateLimiter from '../../middlewares/rateLimiter.js';
 
 // discord
 apiRouter.use(require('../../routes/api/discord'));
@@ -26,4 +26,4 @@ apiRouter.use("/personal_writedowns", require("../../routes/api/writedowns"));
 apiRouter.use("/board_activities", require("../../routes/api/boardActivities"));
 apiRouter.use("/attachments", require("../../routes/api/attachments"));
 
-module.exports = apiRouter;
+export default apiRouter;
