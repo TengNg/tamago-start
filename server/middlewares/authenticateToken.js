@@ -1,7 +1,7 @@
-const express = require("express");
-const jwt = require('jsonwebtoken');
-const User = require('../models/User.js');
-const { createAccessToken, sendAccessTokenCookie } = require('../services/createAuthTokensService.js');
+import express from "express";
+import jwt from "jsonwebtoken";
+import User from '../models/User.js';
+import { createAccessToken, sendAccessTokenCookie } from '../services/createAuthTokensService.js';
 
 const aTokenSecret = process.env.ACCESS_TOKEN_SECRET;
 const rTokenSecret = process.env.REFRESH_TOKEN_SECRET;
@@ -17,7 +17,7 @@ const rTokenName = process.env.REFRESH_TOKEN_COOKIE_NAME;
 const checkTokens = async (accessToken, refreshToken) => {
     try {
         if (accessToken) {
-            const decoded = jwt.verify(accessToken, aTokenSecret);
+            const decoded = verifyToken(accessToken, aTokenSecret);
             if (decoded) {
                 return {
                     userId: decoded.userId,
@@ -32,7 +32,7 @@ const checkTokens = async (accessToken, refreshToken) => {
             throw new Error('Invalid token');
         }
 
-        const decoded = jwt.verify(refreshToken, rTokenSecret);
+        const decoded = verifyToken(refreshToken, rTokenSecret);
         const user = await User.findById(decoded.userId);
         if (!user || user.refreshTokenVersion !== decoded.refreshTokenVersion) {
             console.log("middlewares#checkTokens error: user not found or invalid refresh token");
@@ -78,4 +78,19 @@ const authenticateToken = async (req, res, next) => {
     }
 };
 
-module.exports = authenticateToken;
+/**
+ * @param {string} token
+ * @param {string} secret
+ * @returns {AuthJwtPayload}
+ */
+const verifyToken = (token, secret) => {
+    const decoded = jwt.verify(token, secret);
+
+    if (typeof decoded === "string") {
+        throw new Error("Invalid token");
+    }
+
+    return /** @type {AuthJwtPayload} */ (decoded);
+};
+
+export default authenticateToken;

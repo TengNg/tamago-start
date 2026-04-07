@@ -21,4 +21,4 @@ const errorHandler = (err, _req, res, _next) => {
     });
 };
 
-module.exports = errorHandler;
+export default errorHandler;

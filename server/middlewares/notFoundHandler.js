@@ -7,4 +7,4 @@ const notFoundHandler = (_req, res, _next) => {
     return res.status(404);
 }
 
-module.exports = notFoundHandler;
+export default notFoundHandler;
