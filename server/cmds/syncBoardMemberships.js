@@ -1,9 +1,9 @@
-require('dotenv').config();
+import "dotenv/config";
 
-const mongoose = require('mongoose');
-const Board = require('../models/Board');
-const BoardMembership = require('../models/BoardMembership');
-const { DEFAULT_BOARD_PERMISSIONS } = require('../data/permissions');
+import mongoose from 'mongoose';
+import Board from '../models/Board.js';
+import BoardMembership from '../models/BoardMembership.js';
+import { DEFAULT_BOARD_PERMISSIONS } from '../data/permissions.js';
 
 mongoose.set("strictQuery", true);
 mongoose
