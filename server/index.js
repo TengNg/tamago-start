@@ -1,10 +1,15 @@
-require('dotenv').config();
+import "dotenv/config";
 
 import express from "express";
 import errorHandler from './middlewares/errorHandler.js';
 import notFoundHandler from './middlewares/notFoundHandler.js';
 import cookieParser from 'cookie-parser';
 import path from 'path';
+import cors from 'cors';
+
+import mongoose from "mongoose";
+import { initSocket } from './socket/index.js';
+import { createServer } from 'http';
 
 const app = express();
 
@@ -18,7 +23,6 @@ app.use((_req, res, next) => {
 });
 
 if (process.env.NODE_ENV !== "production") {
-    const cors = require("cors");
     app.use(cors({
         origin: true,
         credentials: true,
@@ -51,12 +55,9 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'test') {
-    const mongoose = require("mongoose");
     mongoose.set("strictQuery", true);
     mongoose.connect(process.env.DB_CONNECTION).catch(e => console.log(e));
 
-    const { initSocket } = require('./socket');
-    const { createServer } = require('http');
     const server = createServer(app);
     initSocket(server);
 
