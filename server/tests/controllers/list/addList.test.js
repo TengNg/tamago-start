@@ -1,13 +1,13 @@
-const request = require('supertest');
-const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
-const app = require('../../../index');
-const List = require('../../../models/List');
-const Board = require('../../../models/Board');
-const {
+import request from 'supertest';
+import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
+import app from '../../../index.js';
+import List from '../../../models/List.js';
+import Board from '../../../models/Board.js';
+import {
     createTestUser,
     createTestBoard,
-} = require('../../helpers/generateDoc');
+} from '../../helpers/generateDoc.js';
 
 describe('POST /lists', () => {
     let cookieName = process.env.ACCESS_TOKEN_COOKIE_NAME;

@@ -1,11 +1,11 @@
-const User = require('../../models/User');
-const Board = require('../../models/Board');
-const List = require('../../models/List');
-const Card = require('../../models/Card');
-const Writedown = require('../../models/Writedown');
-const BoardMembership = require('../../models/BoardMembership');
-const Attachment = require('../../models/Attachment');
-const fs = require("fs");
+import User from '../../models/User.js';
+import Board from '../../models/Board.js';
+import List from '../../models/List.js';
+import Card from '../../models/Card.js';
+import Writedown from '../../models/Writedown.js';
+import BoardMembership from '../../models/BoardMembership.js';
+import Attachment from '../../models/Attachment.js';
+import fs from 'fs';
 
 async function createTestUser(overrides = {}) {
     const user = new User({
@@ -101,7 +101,7 @@ async function createTestAttachment(docModel = "Card", doc, filePath) {
     return attachment;
 }
 
-module.exports = {
+export {
     createTestUser,
     createTestBoard,
     createTestList,

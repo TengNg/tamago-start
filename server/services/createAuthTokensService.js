@@ -29,7 +29,7 @@ const rTokenName = process.env.REFRESH_TOKEN_COOKIE_NAME;
  */
 const createAccessToken = (user) => {
     const { userId, username } = user;
-    const accessToken = sign(
+    const accessToken = jwt.sign(
         { userId, username },
         process.env.ACCESS_TOKEN_SECRET,
         { expiresIn: '15min' }
@@ -42,7 +42,7 @@ const createAccessToken = (user) => {
  */
 const createRefreshToken = (user) => {
     const { userId, username, refreshTokenVersion } = user;
-    const refreshToken = sign(
+    const refreshToken = jwt.sign(
         { userId, username, refreshTokenVersion },
         process.env.REFRESH_TOKEN_SECRET,
         { expiresIn: '15d' }

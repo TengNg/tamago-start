@@ -1,12 +1,12 @@
-const request = require('supertest');
-const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
-const app = require('../../../index');
-const {
+import request from 'supertest';
+import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
+import app from '../../../index.js';
+import {
     createTestUser,
     createTestBoard,
-} = require('../../helpers/generateDoc');
-const { objectId } = require('../../helpers/common');
+} from '../../helpers/generateDoc.js';
+import { objectId } from '../../helpers/common.js';
 
 describe('PATCH /boards/:id/new-description (updateDescription)', () => {
     let cookieName = process.env.ACCESS_TOKEN_COOKIE_NAME;

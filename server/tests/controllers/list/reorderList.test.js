@@ -1,14 +1,14 @@
-const request = require('supertest');
-const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
-const app = require('../../../index');
-const List = require('../../../models/List');
-const {
+import request from 'supertest';
+import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
+import app from '../../../index.js';
+import List from '../../../models/List.js';
+import {
     createTestUser,
     createTestBoard,
     createTestList,
-} = require('../../helpers/generateDoc');
-const { objectId } = require('../../helpers/common');
+} from '../../helpers/generateDoc.js';
+import { objectId } from '../../helpers/common.js';
 
 describe('DELETE /lists/:id/reorder', () => {
     let cookieName = process.env.ACCESS_TOKEN_COOKIE_NAME;
