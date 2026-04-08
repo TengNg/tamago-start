@@ -3,6 +3,6 @@
  */
 const boardIdMap = new Map();
 
-module.exports = {
+export default {
     boardIdMap,
 };

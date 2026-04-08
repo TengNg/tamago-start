@@ -2,7 +2,7 @@
  * @param {import('socket.io').Socket} socket
  * @param {SocketSharedState} state
  */
-function registerCardAttachmentHandlers(socket, state) {
+export default function registerCardAttachmentHandlers(socket, state) {
     const { boardIdMap } = state;
 
     socket.on("addCardAttachment", (data) => {
@@ -17,5 +17,3 @@ function registerCardAttachmentHandlers(socket, state) {
         socket.to(boardId).emit("cardAttachmentDeleted", data);
     });
 }
-
-module.exports = registerCardAttachmentHandlers;

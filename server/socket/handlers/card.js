@@ -2,7 +2,7 @@
  * @param {import('socket.io').Socket} socket
  * @param {SocketSharedState} state
  */
-function registerCardHandlers(socket, state) {
+export default function registerCardHandlers(socket, state) {
     const { boardIdMap } = state;
 
     socket.on("addCard", (data) => {
@@ -83,5 +83,3 @@ function registerCardHandlers(socket, state) {
         socket.to(boardId).emit("updatedCardDueDate", data);
     });
 }
-
-module.exports = registerCardHandlers;
