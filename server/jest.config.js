@@ -1,4 +1,5 @@
-module.exports = {
+/** @type {import('jest').Config} */
+export default {
     preset: '@shelf/jest-mongodb',
     testMatch: [
         '**/tests/controllers/**/*.test.js',
