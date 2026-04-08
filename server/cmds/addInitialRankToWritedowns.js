@@ -1,7 +1,7 @@
-require('dotenv').config();
+import "dotenv/config";
 
-const mongoose = require("mongoose");
-const Writedown = require("../models/Writedown");
+import mongoose from "mongoose";
+import Writedown from "../models/Writedown.js";
 
 mongoose.set("strictQuery", true);
 mongoose

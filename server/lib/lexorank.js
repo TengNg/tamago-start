@@ -94,4 +94,4 @@ class Lexorank {
 }
 
 const lexorank = new Lexorank();
-module.exports = { lexorank };
+export { lexorank };

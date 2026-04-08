@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
-const {
+import {
     getWritedowns,
     getWritedown,
     createWritedown,
@@ -11,7 +11,7 @@ const {
     deleteWritedown,
     deleteAllWritedowns,
     reorder,
-} = require('../../controllers/writedownsController');
+} from '../../controllers/writedownsController.js';
 
 router.route("/")
     .get(getWritedowns)
@@ -32,4 +32,4 @@ router.route("/:writedownId/reorder")
 router.route("/:writedownId/title")
     .patch(updateTitle);
 
-module.exports = router;
+export default router;

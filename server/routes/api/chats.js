@@ -1,12 +1,12 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
-const {
+import {
     sendMessage,
     clearMessages,
     deleteMessage,
     getMessages,
-} = require("../../controllers/chatsController");
+} from "../../controllers/chatsController.js";
 
 router.route("/b/:boardId")
     .get(getMessages)
@@ -16,5 +16,4 @@ router.route("/b/:boardId")
 router.route("/b/:boardId/chats/:trackedId")
     .delete(deleteMessage)
 
-module.exports = router;
-
+export default router;

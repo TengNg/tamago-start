@@ -2,7 +2,7 @@
  * @param {import('socket.io').Socket} socket
  * @param {SocketSharedState} state
  */
-function registerChatHandlers(socket, state) {
+export default function registerChatHandlers(socket, state) {
     const { boardIdMap } = state;
 
     socket.on("sendMessage", (data) => {
@@ -23,5 +23,3 @@ function registerChatHandlers(socket, state) {
         socket.to(boardId).emit("messagesCleared");
     });
 }
-
-module.exports = registerChatHandlers;

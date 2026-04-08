@@ -1,8 +1,14 @@
-require('dotenv').config();
+import jwt from 'jsonwebtoken';
+import { Server } from "socket.io";
+import state from './state.js';
 
-const jwt = require('jsonwebtoken');
-const { Server } = require("socket.io");
-const state = require('./state');
+// handlers
+import registerBoardHandlers from './handlers/board.js';
+import registerListHandlers from './handlers/list.js';
+import registerCardHandlers from './handlers/card.js';
+import registerChatHandlers from './handlers/chat.js';
+import registerCardCommentHandlers from './handlers/cardComment.js';
+import registerCardAttachmentHandlers from './handlers/cardAttachment.js';
 
 const __prod__ = process.env.NODE_ENV === "production";
 const opts = __prod__ ? {} : {
@@ -50,8 +56,9 @@ const initSocket = (server) => {
         }
 
         try {
-            /** @type import('express').Request["user"] */
-            const decoded = jwt.verify(accessToken, accessTokenSecret);
+            const decoded = /** @type AuthJwtPayload */ (
+                jwt.verify(accessToken, accessTokenSecret)
+            );
 
             if (process.env.NODE_ENV === "development") {
                 console.log("Token decoded data: ", decoded);
@@ -79,12 +86,6 @@ const initSocket = (server) => {
 
     io.on('connection', (socket) => {
         // register all feature handlers
-        const registerBoardHandlers = require('./handlers/board');
-        const registerListHandlers = require('./handlers/list');
-        const registerCardHandlers = require('./handlers/card');
-        const registerChatHandlers = require('./handlers/chat');
-        const registerCardCommentHandlers = require('./handlers/cardComment');
-        const registerCardAttachmentHandlers = require('./handlers/cardAttachment');
         registerBoardHandlers(io, socket, state);
         registerListHandlers(socket, state);
         registerCardHandlers(socket, state);
@@ -116,8 +117,8 @@ const initSocket = (server) => {
             }
         });
     });
-}
+};
 
-module.exports = {
+export {
     initSocket,
-}
+};

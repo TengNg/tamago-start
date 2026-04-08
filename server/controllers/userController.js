@@ -1,9 +1,8 @@
-const User = require('../models/User.js');
-const Board = require('../models/Board.js');
-const bcrypt = require('bcryptjs');
-const { usernameRegex } = require('../data/regex');
-
-const { sanitizeUser } = require('../services/userService.js');
+import User from '../models/User.js';
+import Board from '../models/Board.js';
+import bcrypt from 'bcryptjs';
+import { usernameRegex } from '../data/regex.js';
+import { sanitizeUser } from '../services/userService.js';
 
 /**
  * @param {import('express').Request} req
@@ -190,7 +189,7 @@ const cleanPinnedBoards = async (req, res) => {
     return res.status(200).json({ result });
 };
 
-module.exports = {
+export {
     getCurrentUser,
     updateUsername,
     updatePassword,

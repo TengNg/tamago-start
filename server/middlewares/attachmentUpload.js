@@ -1,6 +1,6 @@
-const multer = require('multer');
-const path = require('path');
-const { MAX_FILESIZE_IN_MB } = require("../data/limits");
+import multer, { memoryStorage } from 'multer';
+import { extname } from 'path';
+import { MAX_FILESIZE_IN_MB } from "../data/limits.js";
 
 // Dangerous extensions to BLOCK — subset inspired by Mimecast's policy (high-risk only)
 const blockedExtensions = [
@@ -38,7 +38,7 @@ const blockedMimeTypes = [
  * @param {import('multer').FileFilterCallback} cb
  */
 const fileFilter = (_req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
+    const ext = extname(file.originalname).toLowerCase();
     const mime = file.mimetype.toLowerCase();
 
     if (blockedExtensions.includes(ext) || blockedMimeTypes.includes(mime)) {
@@ -49,7 +49,7 @@ const fileFilter = (_req, file, cb) => {
     return cb(null, true);
 };
 
-const storage = multer.memoryStorage();
+const storage = memoryStorage();
 
 const upload = multer({
     storage,
@@ -57,4 +57,4 @@ const upload = multer({
     fileFilter,
 });
 
-module.exports = upload;
+export default upload;

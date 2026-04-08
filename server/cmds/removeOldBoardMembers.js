@@ -1,7 +1,7 @@
-require('dotenv').config();
+import "dotenv/config";
 
-const mongoose = require('mongoose');
-const Board = require('../models/Board');
+import mongoose from 'mongoose';
+import Board from '../models/Board.js';
 
 mongoose.set("strictQuery", true);
 mongoose

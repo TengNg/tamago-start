@@ -1,20 +1,20 @@
-const mongoose = require('mongoose');
+import { Schema, model } from 'mongoose';
 
-const invitationSchema = new mongoose.Schema({
+const invitationSchema = new Schema({
     boardId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'Board',
         required: true,
     },
 
     invitedUserId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
 
     invitedByUserId: {
-        type: mongoose.Schema.Types.ObjectId,
+        type: Schema.Types.ObjectId,
         ref: 'User',
         required: true,
     },
@@ -32,4 +32,4 @@ const invitationSchema = new mongoose.Schema({
     },
 });
 
-module.exports = mongoose.model('Invitation', invitationSchema);
+export default model('Invitation', invitationSchema);

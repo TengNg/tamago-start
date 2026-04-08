@@ -1,7 +1,6 @@
-const User = require('../models/User');
-const bcrypt = require('bcryptjs');
-
-const { usernameRegex } = require('../data/regex');
+import User from '../models/User.js';
+import bcrypt from 'bcryptjs';
+import { usernameRegex } from '../data/regex.js';
 
 /**
  * @param {import('express').Request} req
@@ -43,4 +42,4 @@ const handleRegister = async (req, res) => {
     }
 };
 
-module.exports = { handleRegister };
+export { handleRegister };

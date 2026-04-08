@@ -1,15 +1,15 @@
-const request = require('supertest');
-const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
-const app = require('../../../index');
-const {
+import request from 'supertest';
+import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
+import app from '../../../index.js';
+import {
     createTestUser,
     createTestBoard,
     createTestList,
     createTestCard,
     initializeTestDocs
-} = require('../../helpers/generateDoc');
-const { objectId } = require('../../helpers/common');
+} from '../../helpers/generateDoc.js';
+import { objectId } from '../../helpers/common.js';
 
 describe('PATCH /cards/:id/new-highlight', () => {
     let cookieName = process.env.ACCESS_TOKEN_COOKIE_NAME;

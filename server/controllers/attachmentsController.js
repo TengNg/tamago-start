@@ -1,11 +1,11 @@
-const Attachment = require('../models/Attachment');
-const { authorize } = require('../services/attachmentService');
+import Attachment from '../models/Attachment.js';
+import { authorize } from '../services/attachmentService.js';
 
 /**
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  */
-exports.uploadAttachment = async (req, res) => {
+export const uploadAttachment = async (req, res) => {
     const { userId } = req.user;
     const { docModel, doc } = req.body;
 
@@ -71,7 +71,7 @@ exports.uploadAttachment = async (req, res) => {
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  */
-exports.getAttachment = async (req, res) => {
+export const getAttachment = async (req, res) => {
     const { userId } = req.user;
 
     const attachment = await Attachment.findById(req.params.id);
@@ -95,7 +95,7 @@ exports.getAttachment = async (req, res) => {
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  */
-exports.listAttachments = async (req, res) => {
+export const listAttachments = async (req, res) => {
     const { userId } = req.user;
     const { docModel, doc } = req.params;
 
@@ -128,7 +128,7 @@ exports.listAttachments = async (req, res) => {
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  */
-exports.deleteAttachment = async (req, res) => {
+export const deleteAttachment = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
 

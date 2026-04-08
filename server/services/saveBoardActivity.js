@@ -1,4 +1,4 @@
-const BoardActivity = require('../models/BoardActivity');
+import BoardActivity from '../models/BoardActivity.js';
 
 /**
  * @typedef {object} Params
@@ -52,4 +52,4 @@ const saveBoardActivity = async ({ boardId, userId, listId, cardId, action, crea
     }
 };
 
-module.exports = saveBoardActivity;
+export default saveBoardActivity;

@@ -1,6 +1,6 @@
-const User = require('../models/User');
-const bcrypt = require('bcryptjs');
-const { sendAuthCookies } = require('../services/createAuthTokensService');
+import User from '../models/User.js';
+import bcrypt from 'bcryptjs';
+import { sendAuthCookies } from '../services/createAuthTokensService.js';
 
 /**
  * @param {import('express').Request} req
@@ -31,4 +31,6 @@ const handleLogin = async (req, res) => {
     return res.sendStatus(204);
 };
 
-module.exports = { handleLogin };
+export {
+    handleLogin
+};

@@ -9,10 +9,9 @@ const requestLogs = {};
 const blockedUsers = {};
 
 /**
- *
- * @param req
- * @param res
- * @param next
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ * @param {import('express').NextFunction} next
  */
 function rateLimiter(req, res, next) {
     const userIP = req.ip;
@@ -51,4 +50,4 @@ function rateLimiter(req, res, next) {
     next();
 }
 
-module.exports = rateLimiter;
+export default rateLimiter;

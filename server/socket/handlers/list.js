@@ -2,7 +2,7 @@
  * @param {import('socket.io').Socket} socket
  * @param {SocketSharedState} state
  */
-function registerListHandlers(socket, state) {
+export default function registerListHandlers(socket, state) {
     const { boardIdMap } = state;
 
     socket.on("updateLists", (data) => {
@@ -40,5 +40,3 @@ function registerListHandlers(socket, state) {
         socket.to(boardId).emit("updatedListTitle", data);
     });
 }
-
-module.exports = registerListHandlers;

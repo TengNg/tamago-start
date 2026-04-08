@@ -1,5 +1,5 @@
-const Board = require("../models/Board");
-const BoardActivity = require("../models/BoardActivity");
+import Board from "../models/Board.js";
+import BoardActivity from "../models/BoardActivity.js";
 
 /**
  * @param {import('express').Request} req
@@ -54,7 +54,7 @@ const deleteAllBoardActivities = async (req, res) => {
     return res.status(200).json({ message: "activities removed" });
 };
 
-module.exports = {
+export {
     getBoardActivities,
     deleteAllBoardActivities
 };

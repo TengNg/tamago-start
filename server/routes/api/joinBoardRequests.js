@@ -1,14 +1,14 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
-const {
+import {
     getAllRequests,
     getBoardRequests,
     sendRequest,
     acceptRequest,
     rejectRequest,
     removeRequest,
-} = require("../../controllers/joinBoardRequestsController");
+} from "../../controllers/joinBoardRequestsController.js";
 
 router.route("/")
     .get(getAllRequests)
@@ -26,5 +26,4 @@ router.route("/:requestId/accept")
 router.route("/:requestId/reject")
     .patch(rejectRequest)
 
-module.exports = router;
-
+export default router;

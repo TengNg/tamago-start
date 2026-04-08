@@ -1,13 +1,13 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
-const {
+import {
     getBoardActivities,
     deleteAllBoardActivities,
-} = require('../../controllers/boardActivitiesController');
+} from '../../controllers/boardActivitiesController.js';
 
 router.route("/:boardId")
     .get(getBoardActivities)
     .delete(deleteAllBoardActivities)
 
-module.exports = router;
+export default router;

@@ -1,11 +1,11 @@
-const request = require('supertest');
-const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
-const app = require('../../../index');
-const {
+import request from 'supertest';
+import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
+import app from '../../../index.js';
+import {
     createTestUser,
     createTestWritedown,
-} = require('../../helpers/generateDoc');
+} from '../../helpers/generateDoc.js';
 
 describe('PATCH /personal_writedowns/:writedownId/title', () => {
     let cookieName = process.env.ACCESS_TOKEN_COOKIE_NAME;
@@ -70,3 +70,4 @@ describe('PATCH /personal_writedowns/:writedownId/title', () => {
         expect(res.statusCode).toBe(204);
     });
 });
+

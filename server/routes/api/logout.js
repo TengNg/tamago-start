@@ -1,12 +1,13 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
-const {
+import {
     handleLogout,
     handleLogoutOfAllDevices,
-} = require('../../controllers/logoutController');
+} from '../../controllers/logoutController.js';
 
 router.get('/', handleLogout);
 router.get('/all-devices', handleLogoutOfAllDevices);
 
-module.exports = router;
+export default router;
+

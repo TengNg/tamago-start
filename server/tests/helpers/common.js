@@ -1,9 +1,7 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 function objectId() {
     return new mongoose.Types.ObjectId();
 }
 
-module.exports = {
-    objectId,
-}
+export { objectId };

@@ -1,4 +1,4 @@
-const jwt = require('jsonwebtoken');
+import jwt from 'jsonwebtoken';
 
 const __prod__ = process.env.NODE_ENV === 'production';
 
@@ -93,7 +93,7 @@ const clearAuthCookies = (res) => {
     res.clearCookie(aTokenName, aCookieOpts);
 };
 
-module.exports = {
+export {
     rTokenName,
     createAccessToken,
     createRefreshToken,

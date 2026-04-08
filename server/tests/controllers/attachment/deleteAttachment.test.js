@@ -1,18 +1,18 @@
-const request = require('supertest');
-const mongoose = require('mongoose');
-const jwt = require('jsonwebtoken');
-const app = require('../../../index');
-const {
+import request from 'supertest';
+import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
+import app from '../../../index.js';
+import {
     createTestUser,
     createTestBoard,
     createTestList,
     createTestCard,
     createTestAttachment,
-} = require('../../helpers/generateDoc');
-const { objectId } = require('../../helpers/common');
+} from '../../helpers/generateDoc.js';
+import { objectId } from '../../helpers/common.js';
 
-const path = require('path');
-const filePath = path.join(__dirname, '../../fixtures/test-image.png');
+import path from 'path';
+const filePath = path.join(path.dirname(import.meta.url.replace('file://', '')), '../../fixtures/test-image.png');
 
 describe('DELETE /api/attachments/:id', () => {
     let cookieName = process.env.ACCESS_TOKEN_COOKIE_NAME;
