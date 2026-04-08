@@ -1,11 +1,17 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
-const upload = require('../../middlewares/attachmentUpload');
-const attachmentsController = require('../../controllers/attachmentsController');
 
-router.post('/upload', upload.single('attachment'), attachmentsController.uploadAttachment);
-router.get('/:doc/:docModel', attachmentsController.listAttachments);
-router.get('/:id', attachmentsController.getAttachment);
-router.delete('/:id', attachmentsController.deleteAttachment);
+import upload from '../../middlewares/attachmentUpload.js';
+import {
+    uploadAttachment,
+    listAttachments,
+    getAttachment,
+    deleteAttachment,
+} from '../../controllers/attachmentsController.js';
 
-module.exports = router;
+router.post('/upload', upload.single('attachment'), uploadAttachment);
+router.get('/:doc/:docModel', listAttachments);
+router.get('/:id', getAttachment);
+router.delete('/:id', deleteAttachment);
+
+export default router;

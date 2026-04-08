@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
-const {
+import {
     getBoards,
     getBoardStats,
     createBoard,
@@ -14,7 +14,7 @@ const {
     closeBoard,
     copyBoard,
     getListCount,
-} = require('../../controllers/boardsController');
+} from '../../controllers/boardsController.js';
 
 router.route("/")
     .get(getBoards)
@@ -48,4 +48,4 @@ router.route("/:id/new-visibility")
 router.route("/copy/:id")
     .post(copyBoard)
 
-module.exports = router;
+export default router;

@@ -1,8 +1,8 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 const pinnedBoardRouter = express.Router();
 
-const {
+import {
     getCurrentUser,
     updateUsername,
     updatePassword,
@@ -10,7 +10,7 @@ const {
     deletePinnedBoard,
     updatePinnedBoards,
     cleanPinnedBoards,
-} = require("../../controllers/userController");
+} from "../../controllers/userController.js";
 
 router.route("/")
     .get(getCurrentUser);
@@ -33,4 +33,4 @@ pinnedBoardRouter.route("/")
     .patch(updatePinnedBoards)
     .delete(cleanPinnedBoards)
 
-module.exports = router;
+export default router;

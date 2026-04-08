@@ -1,14 +1,14 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
-const {
+import {
     addList,
     updateTitle,
     deleteList,
     copyList,
     reorder,
     moveList,
-} = require('../../controllers/listsController');
+} from '../../controllers/listsController.js';
 
 /** @type {{ [listId: string]: { [action: string]: true } | undefined }} */
 let listActionLocks = {};
@@ -72,4 +72,4 @@ router.route("/copy/:id")
 router.route("/move/:id/b/:boardId/i/:index")
     .patch(moveList)
 
-module.exports = router;
+export default router;

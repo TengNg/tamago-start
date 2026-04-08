@@ -1,13 +1,13 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
-const {
+import {
     getInvitations,
     sendInvitation,
     acceptInvitation,
     rejectInvitation,
     removeInvitation,
-} = require("../../controllers/invitationsController");
+} from "../../controllers/invitationsController.js";
 
 router.route("/")
     .get(getInvitations)
@@ -22,4 +22,4 @@ router.route("/:id/accept")
 router.route("/:id/reject")
     .patch(rejectInvitation)
 
-module.exports = router;
+export default router;

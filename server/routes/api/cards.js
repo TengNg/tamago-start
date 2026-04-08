@@ -1,7 +1,7 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
-const {
+import {
     getCard,
     addCard,
     updateTitle,
@@ -14,14 +14,14 @@ const {
     copyCard,
     updateOwner,
     toggleVerified,
-} = require('../../controllers/cardsController');
+} from '../../controllers/cardsController.js';
 
-const {
+import {
     getCardComments,
     getCardComment,
     createCardComment,
     deleteCardComment,
-} = require('../../controllers/cardCommentsController');
+} from '../../controllers/cardCommentsController.js';
 
 /** @type {{ [cardId: string]: { [action: string]: true } | undefined }} */
 let cardActionLocks = {};
@@ -110,4 +110,4 @@ router.route("/:cardId/comments/:commentId")
     .get(getCardComment)
     .delete(deleteCardComment)
 
-module.exports = router;
+export default router;

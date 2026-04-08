@@ -1,4 +1,4 @@
-const express = require('express');
+import express from 'express';
 const router = express.Router();
 
 const __prod__ = process.env.NODE_ENV === "production";
@@ -6,8 +6,10 @@ const PORT = process.env.PORT || 3001;
 const SERVER_URL = process.env.SERVER_URL || `http://localhost:${PORT}`;
 const FRONTEND_URL = __prod__ ? SERVER_URL : (process.env.FRONTEND_URL || "http://localhost:5173");
 
-const { sendAuthCookies } = require('../../services/createAuthTokensService');
-const { generateRandomHex } = require('../../utils/generateRandomHex');
+import { sendAuthCookies } from '../../services/createAuthTokensService.js';
+import { generateRandomHex } from '../../utils/generateRandomHex.js';
+
+import User from "../../models/User.js";
 
 router.get("/auth/discord", (_req, res) => {
     const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
@@ -75,7 +77,6 @@ router.get("/auth/discord/callback", async (req, res) => {
             throw new Error("User is not verified");
         }
 
-        const User = require("../../models/User");
         let user = await User.findOne({ discordId: currentProfile.id });
         if (!user) {
             const secureId = generateRandomHex(10);
@@ -105,4 +106,4 @@ router.get("/auth/discord/callback", async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
