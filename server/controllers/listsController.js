@@ -1,11 +1,11 @@
-const mongoose = require('mongoose');
-const List = require('../models/List.js');
-const Card = require('../models/Card.js');
-const { lexorank } = require('../lib/lexorank.js');
+import mongoose from 'mongoose';
+import List from '../models/List.js';
+import Card from '../models/Card.js';
+import { lexorank } from '../lib/lexorank.js';
 
-const { saveList } = require('../services/listService');
-const saveBoardActivity = require('../services/saveBoardActivity');
-const { checkBoardPermission } = require('../services/boardPermissionService.js');
+import { saveList } from '../services/listService.js';
+import saveBoardActivity from '../services/saveBoardActivity.js';
+import { checkBoardPermission } from '../services/boardPermissionService.js';
 
 /**
  * @param {import('express').Request} req
@@ -284,7 +284,7 @@ const moveList = async (req, res) => {
     return res.status(200).json({ list: foundList, cards: newCards });
 };
 
-module.exports = {
+export {
     addList,
     updateTitle,
     deleteList,

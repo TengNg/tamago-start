@@ -1,13 +1,11 @@
-const mongoose = require('mongoose');
-const Board = require("../models/Board");
-const BoardMembership = require("../models/BoardMembership");
-const List = require("../models/List");
-const Card = require("../models/Card");
-const User = require("../models/User");
-
-const { userByUsername: getUser } = require('../services/userService');
-
-const saveBoardActivity = require('../services/saveBoardActivity');
+import mongoose from "mongoose";
+import Board from "../models/Board.js";
+import List from "../models/List.js";
+import Card from "../models/Card.js";
+import User from "../models/User.js";
+import BoardMembership from "../models/BoardMembership.js";
+import { userByUsername as getUser } from '../services/userService.js';
+import saveBoardActivity from '../services/saveBoardActivity.js';
 
 /**
  * @param {import('mongoose').Types.ObjectId} boardId
@@ -594,7 +592,7 @@ const getListCount = async (req, res) => {
     return res.status(200).json({ count });
 };
 
-module.exports = {
+export {
     getBoards,
     getBoardStats,
     createBoard,

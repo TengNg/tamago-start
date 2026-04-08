@@ -1,7 +1,6 @@
-const User = require('../models/User.js');
-const jwt = require('jsonwebtoken');
-
-const { rTokenName, clearAuthCookies } = require('../services/createAuthTokensService');
+import User from '../models/User.js';
+import jwt from 'jsonwebtoken';
+import { rTokenName, clearAuthCookies } from '../services/createAuthTokensService.js';
 
 /**
  * @param {import('express').Request} req
@@ -25,7 +24,9 @@ const handleLogoutOfAllDevices = async (req, res) => {
     if (!cookies || !cookies[rTokenName]) return res.sendStatus(204);
 
     const refreshToken = cookies[rTokenName];
-    const data = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+    const data = /** @type AuthJwtPayload */ (
+        jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET)
+    );
 
     await User.findOneAndUpdate(
         { username: data.username },
@@ -37,7 +38,7 @@ const handleLogoutOfAllDevices = async (req, res) => {
     res.sendStatus(204);
 }
 
-module.exports = {
+export {
     handleLogout,
     handleLogoutOfAllDevices,
 }

@@ -1,11 +1,11 @@
-const mongoose = require('mongoose');
-const Card = require('../models/Card.js');
+import mongoose from 'mongoose';
+import Card from '../models/Card.js';
 
-const { checkBoardPermission } = require('../services/boardPermissionService');
-const saveBoardActivity = require('../services/saveBoardActivity');
+import { checkBoardPermission } from '../services/boardPermissionService.js';
+import saveBoardActivity from '../services/saveBoardActivity.js';
 
-const { listById } = require('../services/listService');
-const { cardById } = require('../services/cardService');
+import { listById } from '../services/listService.js';
+import { cardById } from '../services/cardService.js';
 
 /**
  * @param {import('express').Request} req
@@ -400,7 +400,7 @@ const updateDueDate = async (req, res) => {
     res.status(200).json({ dueDate: foundCard.dueDate });
 };
 
-module.exports = {
+export {
     getCard,
     addCard,
     updateTitle,

@@ -1,9 +1,9 @@
-const Invitation = require("../models/Invitation");
-const User = require("../models/User");
-const Board = require("../models/Board");
-const BoardMembership = require("../models/BoardMembership");
+import Invitation from "../models/Invitation.js";
+import User from "../models/User.js";
+import Board from "../models/Board.js";
+import BoardMembership from "../models/BoardMembership.js";
 
-const { MAX_INVITATION_PAGE } = require('../data/limits');
+import { MAX_INVITATION_PAGE } from '../data/limits.js';
 
 /**
  * @param {string} username
@@ -148,7 +148,7 @@ const removeInvitation = async (req, res) => {
     res.status(200).json({ message: 'Invitation removed successfully' });
 };
 
-module.exports = {
+export {
     getInvitations,
     sendInvitation,
     acceptInvitation,

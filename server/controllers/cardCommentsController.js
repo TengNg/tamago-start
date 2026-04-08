@@ -1,7 +1,7 @@
-const CardComment = require("../models/CardComment");
-const { checkBoardPermission } = require('../services/boardPermissionService');
-const { cardById } = require("../services/cardService");
-const saveBoardActivity = require('../services/saveBoardActivity');
+import CardComment from "../models/CardComment.js";
+import { checkBoardPermission } from '../services/boardPermissionService.js';
+import { cardById } from "../services/cardService.js";
+import saveBoardActivity from '../services/saveBoardActivity.js';
 
 const COMMENTS_PER_PAGE = 20;
 
@@ -166,7 +166,7 @@ const deleteCardComment = async (req, res) => {
     res.sendStatus(204);
 };
 
-module.exports = {
+export {
     getCardComments,
     getCardComment,
     createCardComment,

@@ -1,9 +1,8 @@
-const Writedown = require("../models/Writedown");
-
-const {
+import Writedown from "../models/Writedown.js";
+import {
     saveNewWritedown,
     writedownsByUserId,
-} = require('../services/writedownService');
+} from '../services/writedownService.js';
 
 /**
  * @param {import('express').Request} req
@@ -146,7 +145,7 @@ const reorder = async (req, res) => {
     return res.sendStatus(204);
 };
 
-module.exports = {
+export {
     getWritedowns,
     getWritedown,
     createWritedown,

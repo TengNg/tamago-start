@@ -1,7 +1,6 @@
-const mongoose = require('mongoose');
-
-const Chat = require("../models/Chat");
-const Board = require("../models/Board");
+import mongoose from 'mongoose';
+import Chat from "../models/Chat.js";
+import Board from "../models/Board.js";
 
 /**
  * @param {string} boardId
@@ -98,7 +97,7 @@ const clearMessages = async (req, res) => {
     res.status(200).json({ message: "messages deleted" });
 };
 
-module.exports = {
+export {
     sendMessage,
     clearMessages,
     getMessages,

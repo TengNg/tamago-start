@@ -1,10 +1,9 @@
-const mongoose = require('mongoose');
-const Board = require("../models/Board");
-const BoardMembership = require("../models/BoardMembership");
-const JoinBoardRequest = require("../models/JoinBoardRequest");
-const { userByUsername: getUser } = require('../services/userService');
-
-const { MAX_REQUEST_PAGE } = require('../data/limits');
+import mongoose from 'mongoose';
+import Board from "../models/Board.js";
+import BoardMembership from "../models/BoardMembership.js";
+import JoinBoardRequest from "../models/JoinBoardRequest.js";
+import { userByUsername as getUser } from '../services/userService.js';
+import { MAX_REQUEST_PAGE } from '../data/limits.js';
 
 const findUser = async (req, res) => {
     const { username } = req.user;
@@ -170,7 +169,7 @@ const removeRequest = async (req, res) => {
     return res.json({ message: 'request removed' });
 };
 
-module.exports = {
+export {
     getAllRequests,
     getBoardRequests,
     sendRequest,
