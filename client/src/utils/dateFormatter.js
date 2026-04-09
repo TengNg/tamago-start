@@ -86,5 +86,8 @@ export const dateToCompare = (miliseconds) => {
     const date = new Date(miliseconds);
     const today = new Date();
 
+    date.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+
     return date.getTime() <= today.getTime();
 };
