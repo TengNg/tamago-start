@@ -764,12 +764,9 @@ export const BoardStateContextProvider = ({ children }) => {
         setBoardState((prev) => {
             return {
                 ...prev,
-                board: {
-                    ...prev.board,
-                    members: prev.members.filter(
-                        (member) => member.username !== memberName,
-                    ),
-                },
+                members: prev.members.filter(
+                    (member) => member.username !== memberName,
+                ),
             };
         });
     };
@@ -778,16 +775,13 @@ export const BoardStateContextProvider = ({ children }) => {
         setBoardState((prev) => {
             return {
                 ...prev,
-                board: {
-                    ...prev.board,
-                    members: [
-                        ...prev.members,
-                        {
-                            username: member.username,
-                            profileImage: member.profileImage,
-                        },
-                    ],
-                },
+                members: [
+                    ...prev.members,
+                    {
+                        username: member.username,
+                        profileImage: member.profileImage,
+                    },
+                ],
             };
         });
     };
