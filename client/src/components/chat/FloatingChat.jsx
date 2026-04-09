@@ -89,7 +89,7 @@ const FloatingChat = ({
                 className={`fixed ${!open ? "hidden" : "block"} box--style flex pt-2 flex-col top-[5rem] right-0 left-[50%] overflow-auto -translate-x-[50%] w-[90%] md:w-[80%] lg:w-[80%] xl:w-[50%] 2xl:w-[50%] h-[75%] border-[2px] border-black z-50 cursor-auto bg-slate-100`}
             >
                 <div className="flex justify-between items-center pb-2 mx-3">
-                    <div>Chat</div>
+                    <div>chat</div>
 
                     <div className="flex justify-center items-center">
                         {currentUser.username ===

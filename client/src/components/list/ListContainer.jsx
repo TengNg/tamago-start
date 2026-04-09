@@ -18,7 +18,6 @@ import {
 import { createPortal } from "react-dom";
 import Card from "../card/Card";
 import { useMouseDragScroll } from "../../hooks/useMouseDragScroll";
-import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 import { axiosPrivate } from "../../api/axios";
 import useToast from "../../hooks/useToast";
 

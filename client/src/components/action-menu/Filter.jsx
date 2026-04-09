@@ -158,12 +158,9 @@ const Filter = ({ open, setOpen }) => {
             return {};
         }
 
-        const map = {};
-        const createdBy = boardState.board.createdBy;
-        const members = boardState.members;
-        map[createdBy._id] = createdBy.username;
-        members.forEach((m) => (map[m._id] = m.username));
-        return map;
+        return boardState.members.reduce((acc, member) => {
+            return { ...acc, [member.userId]: member.username };
+        }, {});
     }, [boardState]);
 
     const handleCloseOnOutsideClick = (e) => {
@@ -241,10 +238,9 @@ const Filter = ({ open, setOpen }) => {
             params.delete("search");
         }
 
-        const filterUrl = `${window.location.origin}${window.location.pathname}${
-            params.toString() ? `?${params.toString()}` : ""
-        }`;
-
+        const origin = window.location.origin;
+        const pathname = window.location.pathname;
+        const filterUrl = `${origin}${pathname}${params.toString()}`;
         try {
             await navigator.clipboard.writeText(filterUrl);
             toast.success("Link copied");

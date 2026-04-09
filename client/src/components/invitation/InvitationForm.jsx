@@ -150,7 +150,7 @@ const InvitationForm = ({ open, setOpen }) => {
 
                 <div className="flex w-full justify-between items-center border-b-[1px] border-black pb-3">
                     <p className="font-normal text-[1rem] text-gray-700">
-                        Invite people this board
+                        invite people this board
                     </p>
                     <button
                         className="text-gray-600 flex justify-center items-center"
@@ -189,10 +189,10 @@ const InvitationForm = ({ open, setOpen }) => {
                 </div>
 
                 <div className="flex flex-col gap-3 w-full max-w-[400px] max-h-[250px] overflow-auto border-[1px] border-t-gray-600 p-0 py-3">
-                    {boardState.members.map((member, index) => {
+                    {boardState.members.map((member) => {
                         return (
                             <Member
-                                key={index}
+                                key={member._id}
                                 handleRemoveMemberFromBoard={
                                     handleRemoveMemberFromBoard
                                 }

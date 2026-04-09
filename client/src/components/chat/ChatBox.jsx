@@ -112,7 +112,7 @@ const ChatBox = ({
             className={`${open ? "flex" : "hidden"} fixed flex-col border-[2px] border-black right-0 bottom-0 sm:right-1 sm:bottom-1 bg-slate-100 w-[325px] h-[400px] overflow-auto z-30`}
         >
             <div className="relative flex items-center justify-center gap-3 border-b-2 border-black px-3 py-2">
-                <p className="flex-1 font-semibold text-gray-600">Chat</p>
+                <p className="flex-1 font-semibold text-gray-600">chat</p>
 
                 <div className="flex items-center gap-2">
                     {currentUser.username ===
