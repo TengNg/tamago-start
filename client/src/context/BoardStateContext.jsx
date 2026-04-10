@@ -23,7 +23,6 @@ export const BoardStateContextProvider = ({ children }) => {
     const [searchParams] = useSearchParams();
 
     const [boardState, setBoardState] = useState({});
-    const [chats, setChats] = useState([]);
     const [isRemoved, setIsRemoved] = useState(false);
     const [openMoveListForm, setOpenMoveListForm] = useState(false);
     const [focusedCard, setFocusedCard] = useState();
@@ -43,21 +42,7 @@ export const BoardStateContextProvider = ({ children }) => {
         {},
     );
 
-    const [hasReceivedNewMessage, setHasReceivedNewMessage] = useState(true);
-    const [isAtBottomOfChat, setIsAtBottomOfChat] = useState(true);
-    const [chatMessageToast, setChatMessageToast] = useState({
-        open: false,
-        message: "",
-        duration: null,
-        timeSent: null,
-        from: null,
-    });
-
     const [isConnected, setIsConnected] = useState(false);
-
-    const notify = ({ message, timeSent, duration, from }) => {
-        setChatMessageToast({ open: true, message, timeSent, duration, from });
-    };
 
     const searchParamsFn = useCallback(() => {
         const search = searchParams.get("search");
@@ -344,27 +329,9 @@ export const BoardStateContextProvider = ({ children }) => {
         });
 
         socket.on("receiveMessage", (data) => {
-            setChats((prev) => [...prev, data]);
-
-            // donnot notify message from self
-            if (currentUser.username === data.sentBy.user) {
-                return;
-            }
-
-            notify({
-                from: { username: data.sentBy.username },
-                message: data.content,
-                timeSent: data.createdAt,
-                duration: null,
-            });
-
-            setHasReceivedNewMessage(true);
         });
 
         socket.on("messageDeleted", (data) => {
-            setChats((prev) => {
-                return prev.filter((chat) => chat.trackedId !== data.trackedId);
-            });
         });
 
         // CARD_COMMENT ========================================================
@@ -669,13 +636,6 @@ export const BoardStateContextProvider = ({ children }) => {
     };
 
     const addCardToList = (listId, card) => {
-        // const currentBoardState = { ...boardState };
-        // const list = currentBoardState.lists.find(list => list._id === listId);
-        // if (list) {
-        //     list.cards.push(card);
-        //     setBoardState(currentBoardState);
-        // }
-
         setBoardState((prev) => {
             return {
                 ...prev,
@@ -817,9 +777,6 @@ export const BoardStateContextProvider = ({ children }) => {
                 removeMemberFromBoard,
                 addMemberToBoard,
 
-                setChats,
-                chats,
-
                 isRemoved,
                 setIsRemoved,
 
@@ -857,13 +814,13 @@ export const BoardStateContextProvider = ({ children }) => {
                 isConnected,
                 setIsConnected,
 
-                chatMessageToast,
-                setChatMessageToast,
-
-                hasReceivedNewMessage,
-                setHasReceivedNewMessage,
-                isAtBottomOfChat,
-                setIsAtBottomOfChat,
+                // chatMessageToast,
+                // setChatMessageToast,
+                //
+                // hasReceivedNewMessage,
+                // setHasReceivedNewMessage,
+                // isAtBottomOfChat,
+                // setIsAtBottomOfChat,
 
                 windowWidth,
                 isLargeScreen,

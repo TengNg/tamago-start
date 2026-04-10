@@ -35,7 +35,7 @@ apiRouter.use("/boards", boardsRoutes);
 apiRouter.use("/lists", listsRoutes);
 apiRouter.use("/cards", cardsRoutes);
 apiRouter.use("/invitations", invitationsRoutes);
-apiRouter.use("/chats", chatsRoutes);
+apiRouter.use("/chat", chatsRoutes);
 apiRouter.use("/join_board_requests", joinBoardRequestsRoutes);
 apiRouter.use("/personal_writedowns", writedownsRoutes);
 apiRouter.use("/board_activities", boardActivitiesRoutes);

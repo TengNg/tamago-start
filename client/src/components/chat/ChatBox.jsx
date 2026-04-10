@@ -25,7 +25,7 @@ const ChatBox = ({
 }) => {
     const { currentUser } = useCurrentUserContext();
 
-    const { boardState, chats, isAtBottomOfChat, setIsAtBottomOfChat } =
+    const { boardState, isAtBottomOfChat, setIsAtBottomOfChat } =
         useBoardState();
 
     const messageEndRef = useRef();

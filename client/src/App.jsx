@@ -14,6 +14,7 @@ import Register from "./pages/Register";
 const About = lazy(() => import("./pages/About"));
 const Boards = lazy(() => import("./pages/Boards"));
 const Board = lazy(() => import("./pages/Board"));
+const Board2 = lazy(() => import("./pages/Board2"));
 const Activities = lazy(() => import("./pages/Activities"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Writedowns = lazy(() => import("./pages/Writedowns"));
@@ -55,6 +56,10 @@ function App() {
     );
 
     useEffect(() => {
+        if ('scrollRestoration' in window.history) {
+            window.history.scrollRestoration = 'manual';
+        }
+
         const handleKeyDown = (event) => {
             if (event.ctrlKey && event.key === "e") {
                 event.preventDefault();
@@ -65,6 +70,7 @@ function App() {
                 setOpenPinnedBoards(false);
             }
         };
+
         document.addEventListener("keydown", handleKeyDown);
 
         return () => {
@@ -108,7 +114,7 @@ function App() {
                             path="/b/:boardId/"
                             element={
                                 <BoardStateContextProvider>
-                                    <Board />
+                                    <Board2 />
                                 </BoardStateContextProvider>
                             }
                         />

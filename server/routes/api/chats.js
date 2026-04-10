@@ -13,7 +13,7 @@ router.route("/b/:boardId")
     .post(sendMessage)
     .delete(clearMessages)
 
-router.route("/b/:boardId/chats/:trackedId")
+router.route("/b/:boardId/messages/:id")
     .delete(deleteMessage)
 
 export default router;
