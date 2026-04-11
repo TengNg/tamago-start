@@ -21,7 +21,7 @@ const getMessages = async (req, res) => {
 
     const foundBoard = await boardById(boardId);
     if (!foundBoard) {
-        return res.status(404);
+        return res.sendStatus(404);
     }
 
     let query = { boardId };
@@ -56,7 +56,7 @@ const getMessages = async (req, res) => {
  */
 const sendMessage = async (req, res) => {
     const { userId } = req.user;
-    const { content, trackedId } = req.body;
+    const { content } = req.body;
     const { boardId } = req.params;
 
     const foundBoard = await boardById(boardId);
@@ -64,7 +64,6 @@ const sendMessage = async (req, res) => {
 
     const chatMessage = new ChatMessage({
         sentBy: userId,
-        trackedId,
         boardId,
         content,
     });
@@ -73,10 +72,21 @@ const sendMessage = async (req, res) => {
     const hasBoardCodePreffix = chatMessage.content.startsWith("!b ");
     const type = hasCardCodePreffix ? 'CARD_CODE' : hasBoardCodePreffix ? 'BOARD_CODE' : 'MESSAGE';
 
-    const isValidCode = mongoose.Types.ObjectId.isValid(chatMessage.content.split(" ")[1]);
-    if (isValidCode) chatMessage.type = type;
+    const isValidCode = (
+        ["CARD_CODE", "BOARD_CODE"].includes(type)
+        && mongoose.Types.ObjectId.isValid(chatMessage.content.split(" ")[1])
+    )
+    if (isValidCode) {
+        chatMessage.type = type;
+    } else {
+        chatMessage.type = "MESSAGE";
+    }
 
-    await chatMessage.save();
+    await chatMessage.save()
+    await chatMessage.populate({
+        path: "sentBy",
+        select: "username"
+    });
 
     res.status(201).json({ chatMessage });
 };
@@ -88,7 +98,7 @@ const sendMessage = async (req, res) => {
 const deleteMessage = async (req, res) => {
     const { id } = req.params;
     await ChatMessage.findByIdAndDelete(id);
-    res.status(204);
+    res.sendStatus(204);
 };
 
 /**
