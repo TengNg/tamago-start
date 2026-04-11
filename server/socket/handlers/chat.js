@@ -8,7 +8,7 @@ export default function registerChatHandlers(socket, state) {
     socket.on("sendMessage", (data) => {
         const boardId = boardIdMap.get(socket.id);
         if (!boardId) return;
-        socket.to(boardId).emit("receiveMessage", data);
+        socket.to(boardId).emit("messageReceived", data);
     });
 
     socket.on("deleteMessage", (data) => {
