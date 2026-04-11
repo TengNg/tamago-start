@@ -7,11 +7,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useToast from "../../hooks/useToast";
 import { deleteMessage } from "../../api/chatApi";
 import useBoardState from "../../hooks/useBoardState";
+import { chatKeys } from "../../queries/chatKeys";
 
-const ChatMessage = ({
-    chatMessage,
-    withUserIcon = false,
-}) => {
+const ChatMessage = ({ chatMessage }) => {
     const location = useLocation();
     const { pathname } = location;
 
@@ -28,13 +26,31 @@ const ChatMessage = ({
     const deleteMessageMutation = useMutation({
         mutationFn: () => deleteMessage({ boardId, id: _id }),
         onSuccess: (_data, _variables, _context) => {
-            queryClient.invalidateQueries({
-                queryKey: ["chat", "board", boardId, "messages", _id],
+            queryClient.setQueryData(chatKeys.messages(boardId), (old) => {
+                if (!old) {
+                    return old;
+                }
+
+                const newPages = old.pages.map((page) => {
+                    return {
+                        ...page,
+                        messages: [...page.messages].filter((message) => {
+                            return message._id !== _id;
+                        }),
+                    };
+                });
+
+                return {
+                    ...old,
+                    pages: newPages,
+                };
             });
+
             socket.emit("deleteMessage", { id: _id });
         },
         onError: (err) => {
-            const errMsg = err.response?.data?.message || "Failed to send message";
+            const errMsg =
+                err.response?.data?.message || "Failed to send message";
             toast.error(errMsg);
         },
     });
@@ -48,20 +64,13 @@ const ChatMessage = ({
     };
 
     return (
-        <div
-            className={`group relative w-full h-fit flex justify-start items-start px-1 gap-2 border-b-[1px] border-gray-300 pb-2`}
-        >
+        <div className="group relative w-full h-fit flex justify-start items-start p-2 gap-2 border-b-[1px] border-gray-400/30 bg-inherit hover:bg-gray-400/20">
             <div className="flex flex-col w-full">
                 <div className="flex w-full justify-start items-start">
                     <div className="flex w-full gap-2 justify-between flex-wrap">
                         <div
-                            className={`flex items-center gap-1 text-[0.75rem] font-bold ${chatMessage.sentBy?.username === currentUser.username ? "text-teal-700" : "text-gray-700"}`}
+                            className={`flex items-center gap-0.5 text-[0.75rem] font-bold ${isMe ? "text-teal-700" : "text-gray-700"}`}
                         >
-                            {withUserIcon &&
-                                chatMessage.sentBy?.username ===
-                                currentUser.username && (
-                                    <Icon className="w-3 h-3" name="profile" />
-                                )}
                             <p>{sentBy?.username}</p>
                         </div>
                         {!error ? (
@@ -78,60 +87,70 @@ const ChatMessage = ({
                     </div>
                 </div>
 
-                {type === "CARD_CODE" ? (
-                    <div
-                        className={`max-w-[95%] px-1 py-2 w-fit flex justify-center items-center bg-pink-50 text-pink-600 border-[1px] border-dashed border-pink-600`}
-                    >
-                        <div className="w-full break-words whitespace-pre-line text-[0.75rem] p-[0.1rem] font-semibold">
-                            <Link
-                                replace={true}
-                                to={`${pathname}?card=${chatContent}`}
-                                className="px-2 py-1 bg-pink-400 text-gray-50 cursor-pointer"
+                <div className="flex gap-1 justify-start items-start">
+                    {type === "CARD_CODE" ? (
+                        <div className="flex-1 w-fit justify-center items-center">
+                            <div className="p-2 w-fit break-words whitespace-pre-line text-[0.75rem] font-semibold bg-pink-100 text-pink-600 border-[1px] border-dashed border-pink-600">
+                                <Link
+                                    replace
+                                    to={`${pathname}?card=${chatContent}`}
+                                    className="px-2 py-1 bg-pink-400 text-gray-50 cursor-pointer"
+                                >
+                                    CARD
+                                </Link>
+                                <span> </span>
+                                <span>{chatContent}</span>
+                            </div>
+                            <div
+                                className={`${validUrl(content.split(" ").slice(2).join(" ")) ? "cursor-pointer hover:underline" : ""} flex-1 break-words break-all whitespace-pre-line text-[0.75rem] text-gray-600 font-medium`}
+                                onClick={() => {
+                                    openLink(content.split(" ")[2]);
+                                }}
                             >
-                                CARD
-                            </Link>
-                            <span> </span>
-                            <span>{chatContent}</span>
+                                {content.split(" ").slice(2).join(" ")}
+                            </div>
                         </div>
-                    </div>
-                ) : type === "BOARD_CODE" ? (
-                    <div
-                        className={`max-w-[95%] px-1 py-2 w-fit flex justify-center items-center bg-violet-50 text-violet-700 border-[1px] border-dashed border-violet-600`}
-                    >
-                        <div className="w-full break-words whitespace-pre-line text-[0.75rem] p-[0.1rem] font-medium">
-                            <Link
-                                to={`/b/${chatContent}`}
-                                className="px-2 py-1 bg-violet-400 text-gray-50 cursor-pointer"
+                    ) : type === "BOARD_CODE" ? (
+                        <div className="flex-1 w-fit justify-center items-center">
+                            <div className="p-2 w-fit break-words whitespace-pre-line text-[0.75rem] font-medium bg-violet-100 text-violet-700 border-[1px] border-dashed border-violet-600">
+                                <Link
+                                    to={`/b/${chatContent}`}
+                                    className="px-2 py-1 bg-violet-400 text-gray-50 cursor-pointer"
+                                >
+                                    BOARD
+                                </Link>
+                                <span> </span>
+                                <span>{chatContent}</span>
+                            </div>
+                            <div
+                                className={`${validUrl(content.split(" ").slice(2).join(" ")) ? "cursor-pointer hover:underline" : ""} flex-1 break-words break-all whitespace-pre-line text-[0.75rem] text-gray-600 font-medium`}
+                                onClick={() => {
+                                    openLink(content.split(" ")[2]);
+                                }}
                             >
-                                BOARD
-                            </Link>
-                            <span> </span>
-                            <span>{chatContent}</span>
+                                {content.split(" ").slice(2).join(" ")}
+                            </div>
                         </div>
-                    </div>
-                ) : (
-                    <div
-                        className="max-w-[95%] w-fit flex justify-center items-center"
-                    >
+                    ) : (
                         <div
-                            className={`${validUrl(chatContent) ? "cursor-pointer hover:underline" : ""} w-full break-words whitespace-pre-line text-[0.75rem] text-gray-600 font-medium`}
+                            className={`${validUrl(chatContent) ? "cursor-pointer hover:underline" : ""} flex-1 break-words break-all whitespace-pre-line text-[0.75rem] text-gray-600 font-medium`}
                             onClick={() => {
                                 openLink(chatContent);
                             }}
                         >
                             {chatContent}
                         </div>
-                    </div>
-                )}
+                    )}
 
-                {isMe && (
-                    <button
-                        onClick={deleteMessageMutation.mutate}
-                        className="absolute top-[1.25rem] right-[0.2rem] text-transparent group-hover:text-gray-400"
-                    >
-                        <Icon className="w-3 h-3" name="xmark" />
-                    </button>
-                )}
+                    {isMe && (
+                        <button
+                            onClick={deleteMessageMutation.mutate}
+                            className="text-transparent group-hover:text-gray-400 mt-0.5 hover:!text-red-600"
+                        >
+                            <Icon className="w-3 h-3" name="xmark" />
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );

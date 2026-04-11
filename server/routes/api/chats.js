@@ -8,12 +8,12 @@ import {
     getMessages,
 } from "../../controllers/chatsController.js";
 
-router.route("/b/:boardId/messages")
+router.route("/messages/b/:boardId")
     .get(getMessages)
     .post(sendMessage)
     .delete(clearMessages)
 
-router.route("/b/:boardId/messages/:id")
+router.route("/messages/:id")
     .delete(deleteMessage)
 
 export default router;

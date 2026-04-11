@@ -10,12 +10,15 @@ import useWindowSize from "../hooks/useWindowSize";
 import { useQueryClient } from "@tanstack/react-query";
 import useCurrentUserContext from "../hooks/useCurrentUserContext";
 import { chatKeys } from "../queries/chatKeys";
+import useToast from "../hooks/useToast";
 
 const BoardStateContext = createContext({});
 
 export const BoardStateContextProvider = ({ children }) => {
     const { currentUser } = useCurrentUserContext();
     const queryClient = useQueryClient();
+
+    const toast = useToast();
 
     const { width: windowWidth } = useWindowSize();
     const isLargeScreen = windowWidth >= 769;
@@ -33,6 +36,8 @@ export const BoardStateContextProvider = ({ children }) => {
         useState(undefined);
     const [listToMove, setListToMove] = useState();
     const [hasFilter, setHasFilter] = useState(false);
+
+    const [isAtBottomOfChatBox, setIsAtBottomOfChatBox] = useState(true);
 
     const [theme, setTheme] = useLocalStorage(
         LOCAL_STORAGE_KEYS.BOARD_ITEM_THEME,
@@ -329,68 +334,86 @@ export const BoardStateContextProvider = ({ children }) => {
             setCardDueDate(data.id, data.listId, data.dueDate);
         });
 
+        // CHAT_MESSGAGE =======================================================
+
         socket.on("messageReceived", (data) => {
-            const { chatMessage } = data
-            queryClient.setQueryData(
-                chatKeys.messages(boardId),
-                (old) => {
-                    if (!old) {
-                        return old;
-                    }
+            const { chatMessage } = data;
+            queryClient.setQueryData(chatKeys.messages(boardId), (old) => {
+                if (!old) {
+                    return old;
+                }
 
-                    const currentPages = [...old.pages];
-                    const currentFirstPage = currentPages[0]
-                    const newFirstPage = {
-                        ...currentFirstPage,
-                        messages: [
-                            chatMessage,
-                            ...currentFirstPage.messages.slice(
-                                0,
-                                currentFirstPage.messages.length - 1,
-                            ),
-                        ],
-                    };
+                const currentPages = [...old.pages];
+                const currentFirstPage = currentPages[0];
+                const newFirstPage = {
+                    ...currentFirstPage,
+                    messages: [
+                        chatMessage,
+                        ...currentFirstPage.messages.slice(
+                            0,
+                            currentFirstPage.messages.length - 1,
+                        ),
+                    ],
+                };
 
-                    if (old.pages.length === 1) {
-                        return {
-                            ...old,
-                            pages: [newFirstPage],
-                        };
-                    }
-
-                    currentPages[0] = newFirstPage;
+                if (old.pages.length === 1) {
                     return {
                         ...old,
-                        pages: currentPages,
+                        pages: [newFirstPage],
                     };
                 }
-            );
+
+                currentPages[0] = newFirstPage;
+                return {
+                    ...old,
+                    pages: currentPages,
+                };
+            });
+
+            if (!isAtBottomOfChatBox) {
+                toast.success(
+                    `new message from ${chatMessage.sentBy.username}`,
+                    3000,
+                );
+            }
         });
 
         socket.on("messageDeleted", (data) => {
             const { id } = data;
-            queryClient.setQueryData(
-                chatKeys.messages(boardId),
-                (old) => {
-                    if (!old) {
-                        return old;
-                    }
-
-                    const newPages = old.pages.map((page) => {
-                        return {
-                            ...page,
-                            messages: [...page.messages].filter((message) => {
-                                return message._id !== id;
-                            }),
-                        };
-                    });
-
-                    return {
-                        ...old,
-                        pages: newPages,
-                    }
+            queryClient.setQueryData(chatKeys.messages(boardId), (old) => {
+                if (!old) {
+                    return old;
                 }
-            );
+
+                const newPages = old.pages.map((page) => {
+                    return {
+                        ...page,
+                        messages: [...page.messages].filter((message) => {
+                            return message._id !== id;
+                        }),
+                    };
+                });
+
+                return {
+                    ...old,
+                    pages: newPages,
+                };
+            });
+        });
+
+        socket.on("messagesCleared", (_data) => {
+            queryClient.setQueryData(chatKeys.messages(boardId), (old) => {
+                if (!old) {
+                    return old;
+                }
+
+                return {
+                    pages: [],
+                    pageParams: [],
+                };
+            });
+
+            toast.success("Chat cleared");
         });
 
         // CARD_COMMENT ========================================================
@@ -534,13 +557,13 @@ export const BoardStateContextProvider = ({ children }) => {
                 lists: prev.lists.map((list) =>
                     list._id === listId
                         ? {
-                            ...list,
-                            cards: list.cards.map((card) =>
-                                card._id === cardId
-                                    ? { ...card, title: value }
-                                    : card,
-                            ),
-                        }
+                              ...list,
+                              cards: list.cards.map((card) =>
+                                  card._id === cardId
+                                      ? { ...card, title: value }
+                                      : card,
+                              ),
+                          }
                         : list,
                 ),
             };
@@ -554,13 +577,13 @@ export const BoardStateContextProvider = ({ children }) => {
                 lists: prev.lists.map((list) =>
                     list._id === listId
                         ? {
-                            ...list,
-                            cards: list.cards.map((card) =>
-                                card._id === cardId
-                                    ? { ...card, description: value }
-                                    : card,
-                            ),
-                        }
+                              ...list,
+                              cards: list.cards.map((card) =>
+                                  card._id === cardId
+                                      ? { ...card, description: value }
+                                      : card,
+                              ),
+                          }
                         : list,
                 ),
             };
@@ -574,13 +597,13 @@ export const BoardStateContextProvider = ({ children }) => {
                 lists: prev.lists.map((list) =>
                     list._id === listId
                         ? {
-                            ...list,
-                            cards: list.cards.map((card) =>
-                                card._id === cardId
-                                    ? { ...card, highlight: value }
-                                    : card,
-                            ),
-                        }
+                              ...list,
+                              cards: list.cards.map((card) =>
+                                  card._id === cardId
+                                      ? { ...card, highlight: value }
+                                      : card,
+                              ),
+                          }
                         : list,
                 ),
             };
@@ -612,13 +635,13 @@ export const BoardStateContextProvider = ({ children }) => {
                 lists: prev.lists.map((list) =>
                     list._id === listId
                         ? {
-                            ...list,
-                            cards: list.cards.map((card) =>
-                                card._id === cardId
-                                    ? { ...card, owner: value }
-                                    : card,
-                            ),
-                        }
+                              ...list,
+                              cards: list.cards.map((card) =>
+                                  card._id === cardId
+                                      ? { ...card, owner: value }
+                                      : card,
+                              ),
+                          }
                         : list,
                 ),
             };
@@ -632,13 +655,13 @@ export const BoardStateContextProvider = ({ children }) => {
                 lists: prev.lists.map((list) =>
                     list._id === listId
                         ? {
-                            ...list,
-                            cards: list.cards.map((card) =>
-                                card._id === cardId
-                                    ? { ...card, priorityLevel: value }
-                                    : card,
-                            ),
-                        }
+                              ...list,
+                              cards: list.cards.map((card) =>
+                                  card._id === cardId
+                                      ? { ...card, priorityLevel: value }
+                                      : card,
+                              ),
+                          }
                         : list,
                 ),
             };
@@ -652,13 +675,13 @@ export const BoardStateContextProvider = ({ children }) => {
                 lists: prev.lists.map((list) =>
                     list._id === listId
                         ? {
-                            ...list,
-                            cards: list.cards.map((card) =>
-                                card._id === cardId
-                                    ? { ...card, verified: value }
-                                    : card,
-                            ),
-                        }
+                              ...list,
+                              cards: list.cards.map((card) =>
+                                  card._id === cardId
+                                      ? { ...card, verified: value }
+                                      : card,
+                              ),
+                          }
                         : list,
                 ),
             };
@@ -672,13 +695,13 @@ export const BoardStateContextProvider = ({ children }) => {
                 lists: prev.lists.map((list) =>
                     list._id === listId
                         ? {
-                            ...list,
-                            cards: list.cards.map((card) =>
-                                card._id === cardId
-                                    ? { ...card, dueDate: value }
-                                    : card,
-                            ),
-                        }
+                              ...list,
+                              cards: list.cards.map((card) =>
+                                  card._id === cardId
+                                      ? { ...card, dueDate: value }
+                                      : card,
+                              ),
+                          }
                         : list,
                 ),
             };
@@ -748,11 +771,11 @@ export const BoardStateContextProvider = ({ children }) => {
                 lists: prev.lists.map((list) =>
                     list._id === listId
                         ? {
-                            ...list,
-                            cards: list.cards.filter(
-                                (card) => card._id !== cardId,
-                            ),
-                        }
+                              ...list,
+                              cards: list.cards.filter(
+                                  (card) => card._id !== cardId,
+                              ),
+                          }
                         : list,
                 ),
             };
@@ -872,6 +895,9 @@ export const BoardStateContextProvider = ({ children }) => {
 
                 isConnected,
                 setIsConnected,
+
+                isAtBottomOfChatBox,
+                setIsAtBottomOfChatBox,
 
                 // chatMessageToast,
                 // setChatMessageToast,

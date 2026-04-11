@@ -96,7 +96,7 @@ const BoardOptions = ({
                 className="bg-[rgb(var(--card-item-bg))] cursor-auto absolute outline-none bottom-0 right-0 overflow-x-hidden flex flex-col min-w-[300px] min-h-[200px] box--style shadow-gray-600 border-[2px] border-gray-600 p-3 select-none gap-2 translate-y-[105%]"
             >
                 <div className="font-medium text-gray-600 flex-1 flex--center border-b-[1px] border-black pb-1 mb-1">
-                    options 
+                    options
                 </div>
 
                 <div className="flex justify-start">

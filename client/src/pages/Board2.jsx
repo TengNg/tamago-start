@@ -79,7 +79,6 @@ const Board = () => {
         setOpenFilter,
         openChatBox,
         setOpenChatBox,
-        openFloatingChat,
         openInvitationForm,
         setOpenInvitationForm,
         openAddList,
@@ -150,10 +149,8 @@ const Board = () => {
         }
 
         return () => {
-            if (socket.isConnected) {
-                socket.disconnect();
-            }
-        }
+            socket.disconnect();
+        };
     }, [boardQuery.isSuccess, boardQuery.data]);
 
     // card process wrapper => set loading state =======================================================================
@@ -420,7 +417,8 @@ const Board = () => {
         return (
             <section className="w-full flex flex-col justify-center items-center gap-4">
                 <p className="font-medium mx-auto text-center mt-20 text-gray-600">
-                    {boardQuery.error?.response?.data?.message || "Failed to load Board"}
+                    {boardQuery.error?.response?.data?.message ||
+                        "Failed to load Board"}
                 </p>
             </section>
         );
@@ -528,10 +526,7 @@ const Board = () => {
                 setOpen={setOpenInvitationForm}
             />
 
-            <ChatBox2
-                open={openChatBox}
-                setOpen={setOpenChatBox}
-            />
+            <ChatBox2 open={openChatBox} setOpen={setOpenChatBox} />
 
             <div className="w-full h-[calc(100vh-8rem)] flex flex-col justify-start gap-3 items-start bg-transparent">
                 <div className="flex flex-wrap justify-between w-full z-20 px-4">
@@ -560,7 +555,7 @@ const Board = () => {
                             <div
                                 onClick={() => setOpenChatBox((prev) => !prev)}
                                 className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-[80px] px-4 border-[2px] text-[0.75rem] text-gray-600 font-medium
-                                        ${openChatBox || openFloatingChat ? "shadow-[0_1px_0_0] mt-[2px]" : "shadow-[0_3px_0_0]"}`}
+                                        ${openChatBox ? "shadow-[0_1px_0_0] mt-[2px]" : "shadow-[0_3px_0_0]"}`}
                             >
                                 chat
                             </div>
@@ -668,8 +663,7 @@ const Board = () => {
                         bg-[rgb(var(--card-item-bg))] border-[2px] border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium
                     `}
                 >
-                    visibility:
-                    <span>{VISIBILITY_MAP[boardState.board?.visibility]}</span>
+                    <span>{boardState.board?.visibility}</span>
                 </button>
 
                 <div className="flex gap-3 ms-3 text-[0.75rem] items-center justify-center text-gray-700">

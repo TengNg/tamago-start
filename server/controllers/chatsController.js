@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import ChatMessage from "../models/ChatMessage.js";
 import Board from "../models/Board.js";
+import BoardMembership from "../models/BoardMembership.js";
 
 /**
  * @param {string} boardId
@@ -60,7 +61,9 @@ const sendMessage = async (req, res) => {
     const { boardId } = req.params;
 
     const foundBoard = await boardById(boardId);
-    if (!foundBoard) return res.status(403).json({ message: "cannot send message, board not found" });
+    if (!foundBoard) {
+        return res.sendStatus(404);
+    }
 
     const chatMessage = new ChatMessage({
         sentBy: userId,
@@ -96,8 +99,28 @@ const sendMessage = async (req, res) => {
  * @param {import('express').Response} res
  */
 const deleteMessage = async (req, res) => {
+    const { userId } = req.user;
     const { id } = req.params;
-    await ChatMessage.findByIdAndDelete(id);
+
+    const chatMessage = await ChatMessage.findById(id);
+    if (!chatMessage) {
+        return res.sendStatus(404);
+    }
+
+    const membership = await BoardMembership.findOne({
+        boardId: chatMessage.boardId,
+        userId,
+    });
+    if (!membership) {
+        return res.sendStatus(403);
+    }
+
+    if (membership.role !== "owner" && userId !== chatMessage.sentBy.toString()) {
+        return res.sendStatus(403);
+    }
+
+    await chatMessage.deleteOne();
+
     res.sendStatus(204);
 };
 
@@ -110,14 +133,21 @@ const clearMessages = async (req, res) => {
     const { boardId } = req.params;
 
     const foundBoard = await boardById(boardId);
-    if (!foundBoard) return res.status(403).json({ message: "cannot send message, board not found" });
+    if (!foundBoard) {
+        return res.sendStatus(404);
+    }
 
-    if (foundBoard.createdBy.toString() !== userId) {
-        return res.status(401).json({ message: 'Not authorize' });
+    const isOwner = await BoardMembership.exists({
+        boardId,
+        userId,
+        role: "owner",
+    });
+    if (!isOwner) {
+        return res.status(403).json({ message: 'not allow to clear messages' });
     }
 
     await ChatMessage.deleteMany({ boardId });
-    res.status(200).json({ message: "messages deleted" });
+    res.sendStatus(204);
 };
 
 export {

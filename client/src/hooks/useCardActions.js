@@ -90,9 +90,13 @@ const useCardActions = ({ stateHooks, effectDeps }) => {
 
             let foundCard;
             if (focusedCard) {
-                const foundList = boardState.lists.find(l => l._id == focusedCard.listId);
+                const foundList = boardState.lists.find(
+                    (l) => l._id == focusedCard.listId,
+                );
                 if (foundList) {
-                    foundCard = foundList.cards.find(c => c._id == focusedCard.id);
+                    foundCard = foundList.cards.find(
+                        (c) => c._id == focusedCard.id,
+                    );
                 }
             }
 

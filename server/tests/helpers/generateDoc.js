@@ -5,6 +5,7 @@ import Card from '../../models/Card.js';
 import Writedown from '../../models/Writedown.js';
 import BoardMembership from '../../models/BoardMembership.js';
 import Attachment from '../../models/Attachment.js';
+import ChatMessage from '../../models/ChatMessage.js';
 import fs from 'fs';
 
 async function createTestUser(overrides = {}) {
@@ -101,6 +102,16 @@ async function createTestAttachment(docModel = "Card", doc, filePath) {
     return attachment;
 }
 
+async function createTestChatMessage(boardId, sentBy, content) {
+    const chatMessage = new ChatMessage({
+        sentBy,
+        boardId,
+        content,
+    });
+    await chatMessage.save();
+    return chatMessage;
+}
+
 export {
     createTestUser,
     createTestBoard,
@@ -110,4 +121,5 @@ export {
     createTestBoardMembership,
     initializeTestDocs,
     createTestAttachment,
+    createTestChatMessage,
 };

@@ -4,7 +4,7 @@ import HighlightPicker from "./HighlightPicker";
 import CardModalInfo from "./CardModalInfo";
 import Loading from "../ui/Loading";
 
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import Icon from "../shared/Icon";
 import CardComments from "./CardComments";
 import { axiosPrivate } from "../../api/axios";
@@ -262,10 +262,6 @@ const CardModal = ({
         }
     };
 
-    const handleOpenCardInNewTab = () => {
-        window.open(`/b/${boardState.board._id}?card=${card._id}`, "_blank");
-    };
-
     const confirmDescription = async () => {
         if (card?.description == description) {
             return;
@@ -450,21 +446,11 @@ const CardModal = ({
                             />
                             {card.highlight && (
                                 <div
-                                    className={`mt-2 h-2 w-1/4 bg-[${card.highlight}]`}
+                                    className={`mt-2 h-2 w-40 md:w-60 bg-[${card.highlight}]`}
                                     style={{ background: card.highlight }}
                                 ></div>
                             )}
                         </div>
-
-                        <button
-                            onClick={handleOpenCardInNewTab}
-                            className="text-[0.75rem] grid text-gray-400 hover:text-gray-600 place-items-center"
-                        >
-                            <Icon
-                                className="w-5 h-5 me-1"
-                                name="arrow-up-right-from-square"
-                            />
-                        </button>
 
                         <button
                             onClick={handleCancel}
@@ -475,10 +461,10 @@ const CardModal = ({
                     </div>
 
                     <div className="p-3 pt-0 flex flex-col gap-3">
-                        <div className="flex gap-2 md:w-[60%] w-full justify-between items-center">
+                        <div className="flex gap-2 w-full justify-between items-center">
                             <div className="flex flex-1 gap-2">
                                 <select
-                                    className={`shadow-[0_2px_0_0] shadow-gray-600 bg-gray-100 appearance-none cursor-pointer hover:bg-gray-200 truncate border-[2px] border-gray-600 text-[0.75rem] font-medium w-3/4 py-2 px-4 text-gray-600 ${listSelectOptions.length === 0 ? "bg-gray-400" : ""}`}
+                                    className={`shadow-[0_2px_0_0] w-40 md:w-60 shadow-gray-600 bg-gray-100 appearance-none cursor-pointer hover:bg-gray-200 truncate border-[2px] border-gray-600 text-[0.75rem] font-medium py-2 px-4 text-gray-600 ${listSelectOptions.length === 0 ? "bg-gray-400" : ""}`}
                                     value={card.listId}
                                     onChange={(e) => {
                                         handleMoveCardOnListOptionChanged(e);
@@ -495,7 +481,7 @@ const CardModal = ({
                                 </select>
 
                                 <select
-                                    className={`shadow-[0_2px_0_0] shadow-gray-600 bg-gray-100 appearance-none cursor-pointer hover:bg-gray-200 truncate border-[2px] border-gray-600 text-[0.75rem] font-medium w-fit py-2 px-4 text-gray-600 ${listSelectOptions.length === 0 ? "bg-gray-400" : ""}`}
+                                    className={`shadow-[0_2px_0_0] shadow-gray-600 bg-gray-100 text-center appearance-none cursor-pointer hover:bg-gray-200 truncate border-[2px] border-gray-600 text-[0.75rem] font-medium w-fit py-2 px-4 text-gray-600 ${listSelectOptions.length === 0 ? "bg-gray-400" : ""}`}
                                     value={position}
                                     onChange={(e) => {
                                         moveByIndex(e);

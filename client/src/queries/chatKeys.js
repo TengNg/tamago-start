@@ -1,16 +1,8 @@
 export const chatKeys = {
     /**
-    * @param {string} boardId
-    */
+     * @param {string} boardId
+     */
     messages: (boardId) => {
-        return ['chat', 'board', boardId, 'messages'];
+        return ["chat", "messages", "board", boardId];
     },
-
-    /**
-    * @param {string} boardId
-    * @param {string} messageId
-    */
-    message: (boardId, messageId) => {
-        return ['chat', 'board', boardId, 'messages', messageId]
-    }
 };

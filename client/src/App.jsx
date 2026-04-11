@@ -13,7 +13,7 @@ import Register from "./pages/Register";
 
 const About = lazy(() => import("./pages/About"));
 const Boards = lazy(() => import("./pages/Boards"));
-const Board = lazy(() => import("./pages/Board"));
+// const Board = lazy(() => import("./pages/Board"));
 const Board2 = lazy(() => import("./pages/Board2"));
 const Activities = lazy(() => import("./pages/Activities"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -56,8 +56,8 @@ function App() {
     );
 
     useEffect(() => {
-        if ('scrollRestoration' in window.history) {
-            window.history.scrollRestoration = 'manual';
+        if ("scrollRestoration" in window.history) {
+            window.history.scrollRestoration = "manual";
         }
 
         const handleKeyDown = (event) => {
