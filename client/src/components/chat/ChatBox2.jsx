@@ -1,24 +1,19 @@
 import { useLayoutEffect, useMemo, useRef } from "react";
-import useBoardState from "../../hooks/useBoardState";
-import ChatMessage from "./ChatMessage";
+import ChatMessage2 from "./ChatMessage2";
 import ChatInput from "./ChatInput";
 import Icon from "../shared/Icon";
-import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 import { useParams } from "react-router-dom";
 import { fetchChat } from "../../api/chatApi";
 import { useInfiniteQuery } from "@tanstack/react-query";
 
 const ChatBox2 = ({ open, setOpen }) => {
-    const { currentUser } = useCurrentUserContext();
-    const { boardState } = useBoardState();
     const { boardId } = useParams();
-
     const containerRef = useRef(null);
     const messagesRef = useRef(null);
     const previousScrollHeightRef = useRef(0);
 
     const chatQuery = useInfiniteQuery({
-        queryKey: ["chat", boardId],
+        queryKey: ["chat", "board", boardId, "messages"],
         queryFn: ({ pageParam = null }) => fetchChat({ boardId, before: pageParam }),
         initialPageParam: null,
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
@@ -125,23 +120,15 @@ const ChatBox2 = ({ open, setOpen }) => {
                 )}
 
                 {chatMessages.map((item) => (
-                    <ChatMessage
+                    <ChatMessage2
                         key={item._id}
                         chatMessage={item}
-                        deleteMessage={() => false}
-                        highlightOwnMessages={true}
-                        inMiniChat={true}
                     />
                 ))}
             </div>
 
             <div className="bg-gray-100 px-2 border-t-[2px] border-black">
-                <ChatInput
-                    withSentButton={true}
-                    sendMessage={() => false}
-                    setHasReceivedNewMessage={false}
-                    setIsAtBottomOfChat={false}
-                />
+                <ChatInput />
             </div>
         </div>
     );

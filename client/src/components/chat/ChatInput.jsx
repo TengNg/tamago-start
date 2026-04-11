@@ -1,12 +1,31 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState, useEffect } from "react";
+import { chatKeys } from "../../queries/chatKeys";
+import { sendMessage } from "../../api/chatApi";
+import { useParams } from "react-router-dom";
+import useBoardState from "../../hooks/useBoardState";
 
-const ChatInput = ({
-    sendMessage,
-    withSentButton = false,
-    setHasReceivedNewMessage,
-}) => {
+const ChatInput = () => {
+    const { boardId } = useParams();
+    const queryClient = useQueryClient();
+    const { socket } = useBoardState();
     const [message, setMessage] = useState("");
     const textAreaRef = useRef();
+
+    const sendMessageMutation = useMutation({
+        mutationFn: (content) => sendMessage({ boardId, content }),
+        onSuccess: (data, _variables, _context) => {
+            queryClient.invalidateQueries({
+                queryKey: chatKeys.messages(boardId)
+            });
+            socket.emit("sendMessage", { chatMessage: data.chatMessage });
+        },
+        onError: (err) => {
+            const errMsg = err.response?.data?.message || "Failed to send message";
+            toast.error(errMsg);
+        },
+    });
+
 
     useEffect(() => {
         const textarea = textAreaRef.current;
@@ -15,7 +34,8 @@ const ChatInput = ({
     }, []);
 
     const send = () => {
-        sendMessage(textAreaRef.current.value.trim());
+        const messageContent = textAreaRef.current.value.trim();
+        sendMessageMutation.mutate(messageContent);
         setMessage("");
         textAreaRef.current.style.height = "2.5rem";
     };
@@ -37,7 +57,6 @@ const ChatInput = ({
 
     const handleSentButtonOnClick = () => {
         if (message) {
-            setHasReceivedNewMessage(true);
             send(message);
         }
     };
@@ -54,14 +73,12 @@ const ChatInput = ({
                 onKeyDown={handleKeyDown}
             ></textarea>
 
-            {withSentButton && (
-                <button
-                    className="h-[2.75rem] sm:h-[2.5rem] d-flex justify-center items-center text-[12px] text-gray-600 border-[1px] border-gray-600 px-3 hover:text-white hover:bg-gray-500"
-                    onClick={handleSentButtonOnClick}
-                >
-                    send
-                </button>
-            )}
+            <button
+                className="h-[2.75rem] sm:h-[2.5rem] d-flex justify-center items-center text-[12px] text-gray-600 border-[1px] border-gray-600 px-3 hover:text-white hover:bg-gray-500"
+                onClick={handleSentButtonOnClick}
+            >
+                send
+            </button>
         </div>
     );
 };

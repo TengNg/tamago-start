@@ -9,6 +9,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import useWindowSize from "../hooks/useWindowSize";
 import { useQueryClient } from "@tanstack/react-query";
 import useCurrentUserContext from "../hooks/useCurrentUserContext";
+import { chatKeys } from "../queries/chatKeys";
 
 const BoardStateContext = createContext({});
 
@@ -328,10 +329,68 @@ export const BoardStateContextProvider = ({ children }) => {
             setCardDueDate(data.id, data.listId, data.dueDate);
         });
 
-        socket.on("receiveMessage", (data) => {
+        socket.on("messageReceived", (data) => {
+            const { chatMessage } = data
+            queryClient.setQueryData(
+                chatKeys.messages(boardId),
+                (old) => {
+                    if (!old) {
+                        return old;
+                    }
+
+                    const currentPages = [...old.pages];
+                    const currentFirstPage = currentPages[0]
+                    const newFirstPage = {
+                        ...currentFirstPage,
+                        messages: [
+                            chatMessage,
+                            ...currentFirstPage.messages.slice(
+                                0,
+                                currentFirstPage.messages.length - 1,
+                            ),
+                        ],
+                    };
+
+                    if (old.pages.length === 1) {
+                        return {
+                            ...old,
+                            pages: [newFirstPage],
+                        };
+                    }
+
+                    currentPages[0] = newFirstPage;
+                    return {
+                        ...old,
+                        pages: currentPages,
+                    };
+                }
+            );
         });
 
         socket.on("messageDeleted", (data) => {
+            const { id } = data;
+            queryClient.setQueryData(
+                chatKeys.messages(boardId),
+                (old) => {
+                    if (!old) {
+                        return old;
+                    }
+
+                    const newPages = old.pages.map((page) => {
+                        return {
+                            ...page,
+                            messages: [...page.messages].filter((message) => {
+                                return message._id !== id;
+                            }),
+                        };
+                    });
+
+                    return {
+                        ...old,
+                        pages: newPages,
+                    }
+                }
+            );
         });
 
         // CARD_COMMENT ========================================================
@@ -475,13 +534,13 @@ export const BoardStateContextProvider = ({ children }) => {
                 lists: prev.lists.map((list) =>
                     list._id === listId
                         ? {
-                              ...list,
-                              cards: list.cards.map((card) =>
-                                  card._id === cardId
-                                      ? { ...card, title: value }
-                                      : card,
-                              ),
-                          }
+                            ...list,
+                            cards: list.cards.map((card) =>
+                                card._id === cardId
+                                    ? { ...card, title: value }
+                                    : card,
+                            ),
+                        }
                         : list,
                 ),
             };
@@ -495,13 +554,13 @@ export const BoardStateContextProvider = ({ children }) => {
                 lists: prev.lists.map((list) =>
                     list._id === listId
                         ? {
-                              ...list,
-                              cards: list.cards.map((card) =>
-                                  card._id === cardId
-                                      ? { ...card, description: value }
-                                      : card,
-                              ),
-                          }
+                            ...list,
+                            cards: list.cards.map((card) =>
+                                card._id === cardId
+                                    ? { ...card, description: value }
+                                    : card,
+                            ),
+                        }
                         : list,
                 ),
             };
@@ -515,13 +574,13 @@ export const BoardStateContextProvider = ({ children }) => {
                 lists: prev.lists.map((list) =>
                     list._id === listId
                         ? {
-                              ...list,
-                              cards: list.cards.map((card) =>
-                                  card._id === cardId
-                                      ? { ...card, highlight: value }
-                                      : card,
-                              ),
-                          }
+                            ...list,
+                            cards: list.cards.map((card) =>
+                                card._id === cardId
+                                    ? { ...card, highlight: value }
+                                    : card,
+                            ),
+                        }
                         : list,
                 ),
             };
@@ -553,13 +612,13 @@ export const BoardStateContextProvider = ({ children }) => {
                 lists: prev.lists.map((list) =>
                     list._id === listId
                         ? {
-                              ...list,
-                              cards: list.cards.map((card) =>
-                                  card._id === cardId
-                                      ? { ...card, owner: value }
-                                      : card,
-                              ),
-                          }
+                            ...list,
+                            cards: list.cards.map((card) =>
+                                card._id === cardId
+                                    ? { ...card, owner: value }
+                                    : card,
+                            ),
+                        }
                         : list,
                 ),
             };
@@ -573,13 +632,13 @@ export const BoardStateContextProvider = ({ children }) => {
                 lists: prev.lists.map((list) =>
                     list._id === listId
                         ? {
-                              ...list,
-                              cards: list.cards.map((card) =>
-                                  card._id === cardId
-                                      ? { ...card, priorityLevel: value }
-                                      : card,
-                              ),
-                          }
+                            ...list,
+                            cards: list.cards.map((card) =>
+                                card._id === cardId
+                                    ? { ...card, priorityLevel: value }
+                                    : card,
+                            ),
+                        }
                         : list,
                 ),
             };
@@ -593,13 +652,13 @@ export const BoardStateContextProvider = ({ children }) => {
                 lists: prev.lists.map((list) =>
                     list._id === listId
                         ? {
-                              ...list,
-                              cards: list.cards.map((card) =>
-                                  card._id === cardId
-                                      ? { ...card, verified: value }
-                                      : card,
-                              ),
-                          }
+                            ...list,
+                            cards: list.cards.map((card) =>
+                                card._id === cardId
+                                    ? { ...card, verified: value }
+                                    : card,
+                            ),
+                        }
                         : list,
                 ),
             };
@@ -613,13 +672,13 @@ export const BoardStateContextProvider = ({ children }) => {
                 lists: prev.lists.map((list) =>
                     list._id === listId
                         ? {
-                              ...list,
-                              cards: list.cards.map((card) =>
-                                  card._id === cardId
-                                      ? { ...card, dueDate: value }
-                                      : card,
-                              ),
-                          }
+                            ...list,
+                            cards: list.cards.map((card) =>
+                                card._id === cardId
+                                    ? { ...card, dueDate: value }
+                                    : card,
+                            ),
+                        }
                         : list,
                 ),
             };
@@ -689,11 +748,11 @@ export const BoardStateContextProvider = ({ children }) => {
                 lists: prev.lists.map((list) =>
                     list._id === listId
                         ? {
-                              ...list,
-                              cards: list.cards.filter(
-                                  (card) => card._id !== cardId,
-                              ),
-                          }
+                            ...list,
+                            cards: list.cards.filter(
+                                (card) => card._id !== cardId,
+                            ),
+                        }
                         : list,
                 ),
             };
