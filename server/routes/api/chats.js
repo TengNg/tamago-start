@@ -8,7 +8,7 @@ import {
     getMessages,
 } from "../../controllers/chatsController.js";
 
-router.route("/b/:boardId")
+router.route("/b/:boardId/messages")
     .get(getMessages)
     .post(sendMessage)
     .delete(clearMessages)
