@@ -7,10 +7,8 @@ import useCardActions from "../hooks/useCardActions";
 import useFetchCardDetail from "../hooks/useFetchCardDetail";
 import ListContainer from "../components/list/ListContainer";
 import InvitationForm from "../components/invitation/InvitationForm";
-import BoardMenu from "../components/board/BoardMenu";
-import ChatBox from "../components/chat/ChatBox";
+import BoardOptions from "../components/board/BoardOptions";
 import CopyBoardForm from "../components/board/CopyBoardForm";
-import FloatingChat from "../components/chat/FloatingChat";
 import MoveListForm from "../components/list/MoveListForm";
 import CardModal from "../components/card/CardModal";
 import CardQuickEditor from "../components/card/CardQuickEditor";
@@ -20,13 +18,12 @@ import Filter from "../components/action-menu/Filter";
 import VisibilityConfig from "../components/board/VisibilityConfig";
 import KeyBindings from "../components/ui/KeyBindings";
 import BoardActivities from "../components/activity-history/BoardActivities";
-import ChatMessageToast from "../components/ui/ChatMessageToast";
-import VISIBILITY_MAP from "../data/visibility";
 import useCurrentUserContext from "../hooks/useCurrentUserContext";
 import { axiosPrivate } from "../api/axios";
 import useToast from "../hooks/useToast";
-
-const chatsPerPage = 50;
+import { fetchBoard } from "../api/boardApi";
+import { useQuery } from "@tanstack/react-query";
+import ChatBox from "../components/chat/ChatBox";
 
 const Board = () => {
     const { currentUser, currentUserQuery } = useCurrentUserContext();
@@ -36,7 +33,6 @@ const Board = () => {
         setBoardState,
 
         setBoardTitle,
-        setChats,
 
         // check if board is deleted or not
         isRemoved,
@@ -72,14 +68,6 @@ const Board = () => {
         // socket connection state
         isConnected,
 
-        chatMessageToast,
-        setChatMessageToast,
-
-        setIsAtBottomOfChat,
-
-        hasReceivedNewMessage,
-        setHasReceivedNewMessage,
-
         socket,
     } = useBoardState();
 
@@ -90,8 +78,6 @@ const Board = () => {
         setOpenFilter,
         openChatBox,
         setOpenChatBox,
-        openFloatingChat,
-        setOpenFloatingChat,
         openInvitationForm,
         setOpenInvitationForm,
         openAddList,
@@ -104,22 +90,13 @@ const Board = () => {
         setOpenBoardActivities,
     } = useKeyBinds();
 
-    const [openBoardMenu, setOpenBoardMenu] = useState(false);
+    const [openBoardOptions, setOpenBoardOptions] = useState(false);
     const [openCopyBoardForm, setOpenCopyBoardForm] = useState(false);
 
     const [cardDetailAbortController, setCardDetailAbortController] =
         useState(null);
 
-    // chat messages ==================================================================================================
-    const [chatsPage, setChatsPage] = useState(1);
-    const [isFetchingMoreMessages, setIsFetchingMoreMessages] =
-        useState(undefined);
-    const [allMessagesFetched, setAllMessagesFetched] = useState(false);
-
     const [initialTitle, setInitialTitle] = useState("");
-    const [isDataLoaded, setIsDataLoaded] = useState(false);
-    const [error, setError] = useState({ msg: undefined });
-    const [chatError, setChatError] = useState({ msg: undefined });
 
     const [openVisibilityConfig, setOpenVisibilityConfig] = useState(false);
     const [processingCard, setProcessingCard] = useState({
@@ -159,77 +136,21 @@ const Board = () => {
         },
     });
 
+    const boardQuery = useQuery({
+        queryKey: ["boards", boardId],
+        queryFn: () => fetchBoard(boardId),
+    });
+
     useEffect(() => {
-        socket.connect();
-
-        setChats([]);
-        setIsDataLoaded(false);
-
-        const fetchBoardData = async () => {
-            const boardResponse = await axiosPrivate.get(`/boards/${boardId}`);
-            setBoardState(boardResponse.data);
-            setInitialTitle(boardResponse.data.board.title);
-            setIsDataLoaded(true);
-            document.title = boardResponse.data.board.title;
-        };
-
-        const fetchChat = async () => {
-            const chatsResponse = await axiosPrivate.get(
-                `/chats/b/${boardId}?perPage=10&page=1`,
-            );
-            const newMessages = chatsResponse.data.messages.reverse();
-            setChats(newMessages);
-            setChatsPage(2);
-            setOpenChatBox(false);
-            setOpenFloatingChat(false);
-        };
-
-        fetchBoardData().catch((err) => {
-            const errMsg =
-                err?.response?.data?.message || "Failed to load Board";
-            setError({ msg: errMsg });
-            socket.emit("disconnectFromBoard");
-        });
-
-        fetchChat().catch((err) => {
-            const errMsg =
-                err?.response?.data?.message || "Failed to load Chat";
-            setChatError(errMsg);
-        });
-
-        setIsDataLoaded(true);
+        if (boardQuery.isSuccess && boardQuery.data) {
+            socket.connect();
+            setBoardState(boardQuery.data);
+        }
 
         return () => {
             socket.disconnect();
         };
-    }, [boardId]);
-
-    // fetching chat messages from current board =======================================================================
-    const fetchMessages = async () => {
-        setHasReceivedNewMessage(false);
-        setIsFetchingMoreMessages(true);
-
-        try {
-            const chatsResponse = await axiosPrivate.get(
-                `/chats/b/${boardId}?perPage=${chatsPerPage}&page=${chatsPage}`,
-            );
-            const newMessages = chatsResponse.data.messages.reverse();
-
-            if (newMessages.length === 0) {
-                setAllMessagesFetched(true);
-            } else {
-                setChats((prevMessages) => [...newMessages, ...prevMessages]);
-                setChatsPage((prevPage) => prevPage + 1);
-            }
-        } catch (err) {
-            const errMsg =
-                err?.response?.data?.message || "Failed to load messages";
-            toast.error(errMsg);
-            setIsFetchingMoreMessages(false);
-        }
-
-        setIsFetchingMoreMessages(false);
-    };
+    }, [boardQuery.isSuccess, boardQuery.data]);
 
     // card process wrapper => set loading state =======================================================================
     const withCardProcessWrapper = (handleFunction) => {
@@ -469,107 +390,6 @@ const Board = () => {
         },
     );
 
-    const handleSendMessage = async (value) => {
-        setIsAtBottomOfChat(true);
-
-        const msgTrackedId = crypto.randomUUID();
-
-        const newMessage = {
-            trackedId: msgTrackedId,
-            content: value,
-            type: "MESSAGE",
-            sentBy: { username: currentUser.username },
-        };
-
-        setChats((prev) => {
-            return [...prev, { ...newMessage }];
-        });
-
-        try {
-            const response = await axiosPrivate.post(
-                `/chats/b/${boardState.board._id}`,
-                JSON.stringify({
-                    content: value,
-                    trackedId: newMessage.trackedId,
-                }),
-            );
-            const chatMsg = response.data.chat;
-            const { type, trackedId, createdAt } = chatMsg;
-            setChats((prev) => {
-                return prev.map((chat) =>
-                    chat.trackedId === trackedId
-                        ? { ...chat, type, createdAt: createdAt }
-                        : chat,
-                );
-            });
-            socket.emit("sendMessage", {
-                ...newMessage,
-                type,
-                createdAt: chatMsg.createdAt,
-                sentBy: {
-                    ...newMessage.sentBy,
-                    username: currentUser.username,
-                },
-            });
-            setHasReceivedNewMessage(true);
-        } catch (err) {
-            setChats((prev) => {
-                return prev.map((chat) =>
-                    chat.trackedId === msgTrackedId
-                        ? { ...chat, error: true }
-                        : chat,
-                );
-            });
-        }
-    };
-
-    const handleDeleteMessage = async (trackedId) => {
-        try {
-            if (confirm("Remove this message, are you sure?")) {
-                const response = await axiosPrivate.delete(
-                    `/chats/b/${boardState.board._id}/chats/${trackedId}`,
-                );
-                const deletedMessage = response.data?.deletedMessage;
-
-                if (!deletedMessage) {
-                    const errMsg =
-                        err?.response?.data?.message ||
-                        "Failed to delete this message";
-                    toast.error(errMsg);
-                    return;
-                }
-
-                setChats((prev) => {
-                    return prev.filter(
-                        (chat) => chat.trackedId !== deletedMessage.trackedId,
-                    );
-                });
-
-                socket.emit("deleteMessage", {
-                    trackedId: deletedMessage.trackedId,
-                });
-            }
-        } catch (err) {
-            const errMsg =
-                err?.response?.data?.message || "Failed to delete this message";
-            toast.error(errMsg);
-        }
-    };
-
-    const handleClearChatMessages = async () => {
-        try {
-            if (confirm("All chat messages will be clear, are you sure ?")) {
-                await axiosPrivate.delete(`/chats/b/${boardState.board._id}`);
-                socket.emit("clearMessages");
-                setChats([]);
-            }
-        } catch (err) {
-            const errMsg =
-                err?.response?.data?.message || "Failed to clear chat messages";
-            toast.error(errMsg);
-        }
-    };
-
     const handleChangeTheme = (value) => {
         setTheme((prev) => {
             return { ...prev, itemTheme: value };
@@ -592,17 +412,18 @@ const Board = () => {
         );
     }
 
-    if (error?.msg) {
+    if (boardQuery.isError) {
         return (
             <section className="w-full flex flex-col justify-center items-center gap-4">
                 <p className="font-medium mx-auto text-center mt-20 text-gray-600">
-                    {error.msg}
+                    {boardQuery.error?.response?.data?.message ||
+                        "Failed to load Board"}
                 </p>
             </section>
         );
     }
 
-    if (isDataLoaded === false || boardState?.board === undefined) {
+    if (boardQuery.isFetching) {
         return (
             <>
                 <div className="font-medium mx-auto text-center mt-20 text-gray-600">
@@ -704,39 +525,7 @@ const Board = () => {
                 setOpen={setOpenInvitationForm}
             />
 
-            <ChatBox
-                error={chatError}
-                open={openChatBox}
-                setOpen={setOpenChatBox}
-                setOpenFloat={setOpenFloatingChat}
-                sendMessage={handleSendMessage}
-                deleteMessage={handleDeleteMessage}
-                clearMessages={handleClearChatMessages}
-                isFetchingMore={isFetchingMoreMessages}
-                allMessagesFetched={allMessagesFetched}
-                isFetching={isDataLoaded}
-                fetchMessages={fetchMessages}
-                hasReceivedNewMessage={hasReceivedNewMessage}
-                setHasReceivedNewMessage={setHasReceivedNewMessage}
-            />
-
-            {!chatError.msg && (
-                <FloatingChat
-                    error={chatError}
-                    open={openFloatingChat}
-                    setOpen={setOpenFloatingChat}
-                    setOpenChatBox={setOpenChatBox}
-                    sendMessage={handleSendMessage}
-                    deleteMessage={handleDeleteMessage}
-                    clearMessages={handleClearChatMessages}
-                    isFetchingMore={isFetchingMoreMessages}
-                    allMessagesFetched={allMessagesFetched}
-                    isFetching={isDataLoaded}
-                    fetchMessages={fetchMessages}
-                    hasReceivedNewMessage={hasReceivedNewMessage}
-                    setHasReceivedNewMessage={setHasReceivedNewMessage}
-                />
-            )}
+            <ChatBox open={openChatBox} setOpen={setOpenChatBox} />
 
             <div className="w-full h-[calc(100vh-8rem)] flex flex-col justify-start gap-3 items-start bg-transparent">
                 <div className="flex flex-wrap justify-between w-full z-20 px-4">
@@ -765,7 +554,7 @@ const Board = () => {
                             <div
                                 onClick={() => setOpenChatBox((prev) => !prev)}
                                 className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-[80px] px-4 border-[2px] text-[0.75rem] text-gray-600 font-medium
-                                        ${openChatBox || openFloatingChat ? "shadow-[0_1px_0_0] mt-[2px]" : "shadow-[0_3px_0_0]"}`}
+                                        ${openChatBox ? "shadow-[0_1px_0_0] mt-[2px]" : "shadow-[0_3px_0_0]"}`}
                             >
                                 chat
                             </div>
@@ -795,19 +584,19 @@ const Board = () => {
                             <button
                                 onClick={(e) => {
                                     if (e.target === e.currentTarget) {
-                                        setOpenBoardMenu((prev) => !prev);
+                                        setOpenBoardOptions((prev) => !prev);
                                     }
                                 }}
                                 className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-[80px] px-4 border-[2px] text-[0.75rem] text-gray-600 font-medium
-                                    ${openBoardMenu ? "shadow-[0_1px_0_0] mt-[2px]" : "shadow-[0_3px_0_0]"}`}
+                                    ${openBoardOptions ? "shadow-[0_1px_0_0] mt-[2px]" : "shadow-[0_3px_0_0]"}`}
                             >
                                 options
                             </button>
 
-                            {openBoardMenu && (
-                                <BoardMenu
-                                    open={setOpenBoardMenu}
-                                    setOpen={setOpenBoardMenu}
+                            {openBoardOptions && (
+                                <BoardOptions
+                                    open={setOpenBoardOptions}
+                                    setOpen={setOpenBoardOptions}
                                     board={boardState.board}
                                     setOpenCopyBoardForm={setOpenCopyBoardForm}
                                     setOpenBoardConfiguration={
@@ -873,8 +662,7 @@ const Board = () => {
                         bg-[rgb(var(--card-item-bg))] border-[2px] border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium
                     `}
                 >
-                    visibility:
-                    <span>{VISIBILITY_MAP[boardState.board?.visibility]}</span>
+                    <span>{boardState.board?.visibility}</span>
                 </button>
 
                 <div className="flex gap-3 ms-3 text-[0.75rem] items-center justify-center text-gray-700">
@@ -893,15 +681,6 @@ const Board = () => {
                     </button>
                 </div>
             </div>
-
-            <ChatMessageToast
-                toast={chatMessageToast}
-                setToast={setChatMessageToast}
-                isChatOpen={openFloatingChat}
-                setOpenChatBox={setOpenChatBox}
-                setOpenFloatingChat={setOpenFloatingChat}
-                hasReceivedNewMessage={hasReceivedNewMessage}
-            />
         </>
     );
 };

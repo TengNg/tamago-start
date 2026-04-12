@@ -13,8 +13,7 @@ import Register from "./pages/Register";
 
 const About = lazy(() => import("./pages/About"));
 const Boards = lazy(() => import("./pages/Boards"));
-// const Board = lazy(() => import("./pages/Board"));
-const Board2 = lazy(() => import("./pages/Board2"));
+const Board = lazy(() => import("./pages/Board"));
 const Activities = lazy(() => import("./pages/Activities"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Writedowns = lazy(() => import("./pages/Writedowns"));
@@ -114,7 +113,7 @@ function App() {
                             path="/b/:boardId/"
                             element={
                                 <BoardStateContextProvider>
-                                    <Board2 />
+                                    <Board />
                                 </BoardStateContextProvider>
                             }
                         />
