@@ -198,7 +198,7 @@ const Boards = () => {
                         </div>
                     </div>
 
-                    <div className="relative flex flex-col items-center mx-auto sm:m-0 sm:justify-start sm:items-start sm:flex-row sm:flex-wrap gap-4 p-6 sm:p-8 border-[2px] box--style shadow-gray-600 border-gray-600 w-[280px] sm:w-full">
+                    <div className="relative flex flex-col items-center mx-auto sm:m-0 sm:justify-start sm:items-start sm:flex-row sm:flex-wrap gap-4 p-6 sm:p-8 border-2 box--style shadow-gray-600 border-gray-600 w-[280px] sm:w-full">
                         {boardsQuery.data.boards.map((item) => {
                             return <BoardItem key={item._id} item={item} />;
                         })}
@@ -209,7 +209,7 @@ const Boards = () => {
                                     setOpenBoardForm((open) => !open)
                                 }
                                 ref={createBoardButtonRef}
-                                className="board--style board--hover h-full w-full border-[2px] border-gray-500 shadow-gray-500 py-3 px-4 select-none bg-transparent"
+                                className="board--style board--hover h-full w-full border-2 border-gray-500 shadow-gray-500 py-3 px-4 select-none bg-transparent"
                             >
                                 <div className="flex items-center gap-2 text-gray-500 font-medium">
                                     <span>+ new board</span>
@@ -225,7 +225,7 @@ const Boards = () => {
                             <p className="text-gray-700 text-[0.75rem]">
                                 recently viewed board
                             </p>
-                            <div className="w-[280px] sm:w-fit flex flex-col flex-wrap gap-1 px-8 pt-6 pb-8 box--style justify-start items-start box--style border-[2px] shadow-gray-600 border-gray-600">
+                            <div className="w-[280px] sm:w-fit flex flex-col flex-wrap gap-1 px-8 pt-6 pb-8 box--style justify-start items-start box--style border-2 shadow-gray-600 border-gray-600">
                                 <BoardItem
                                     item={boardsQuery.data.recentlyViewedBoard}
                                 />

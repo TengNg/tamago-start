@@ -215,7 +215,7 @@ const MoveListForm = () => {
         <>
             <dialog
                 ref={dialog}
-                className="z-40 backdrop:bg-black/15 fixed top-0 right-0 box--style gap-4 items-start p-3 pb-5 h-fit w-[90%] sm:w-1/2 max-w-[350px] border-black border-[2px] bg-gray-200"
+                className="z-40 backdrop:bg-black/15 fixed top-0 right-0 box--style gap-4 items-start p-3 pb-5 h-fit w-[90%] sm:w-1/2 max-w-[350px] border-black border-2 bg-gray-200"
                 onClick={handleCloseOnOutsideClick}
             >
                 <Loading
@@ -225,7 +225,7 @@ const MoveListForm = () => {
                     displayText={"moving list..."}
                 />
 
-                <div className="flex w-full justify-between items-center border-b-[1px] border-black pb-3 mb-4">
+                <div className="flex w-full justify-between items-center border-b border-black pb-3 mb-4">
                     <p className="font-normal text-[1rem] text-gray-700">
                         move this list to
                     </p>
@@ -237,7 +237,7 @@ const MoveListForm = () => {
                     </button>
                 </div>
 
-                <div className="flex w-full justify-between items-center border-b-[1px] border-black pb-4 mb-4">
+                <div className="flex w-full justify-between items-center border-b border-black pb-4 mb-4">
                     <div className="text-[0.85rem] text-gray-700">
                         <span>title:</span>
                         <span> </span>
@@ -288,11 +288,11 @@ const MoveListForm = () => {
                         </select>
                     </div>
 
-                    <div className="h-[1px] w-full my-2 bg-black"></div>
+                    <div className="h-px w-full my-2 bg-black"></div>
 
                     <button
                         onClick={handleMoveList}
-                        className="button--style border-[2px] py-2 text-[0.8rem] hover:bg-gray-600 hover:text-white"
+                        className="button--style border-2 py-2 text-[0.8rem] hover:bg-gray-600 hover:text-white"
                     >
                         move
                     </button>

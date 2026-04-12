@@ -303,7 +303,7 @@ const Writedowns = () => {
                     <div className="flex flex-col justify-center items-center gap-4 text-sm text-gray-600">
                         <button
                             onClick={handleCreateWritedown}
-                            className="w-[180px] grid place-items-center text-gray-600 text-sm border-[2px] border-gray-600 border-dashed py-4 px-6 hover:bg-gray-600 hover:text-gray-50"
+                            className="w-[180px] grid place-items-center text-gray-600 text-sm border-2 border-gray-600 border-dashed py-4 px-6 hover:bg-gray-600 hover:text-gray-50"
                         >
                             {isCreatingWritedown
                                 ? "creating..."

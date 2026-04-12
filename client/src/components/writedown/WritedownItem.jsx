@@ -36,7 +36,7 @@ const WritedownItem = ({ writedown, open, remove, pin }) => {
             ref={setNodeRef}
             {...attributes}
             style={style}
-            className={`${(hasPinnedFilter && pinned) || !hasPinnedFilter ? "flex" : "hidden"} relative flex flex-col w-[250px] h-[220px] border-[2px] px-3 pb-3 pt-2 border-gray-700 border-dashed text-gray-700 text-[0.85rem] bg-gray-100/20`}
+            className={`${(hasPinnedFilter && pinned) || !hasPinnedFilter ? "flex" : "hidden"} relative flex flex-col w-[250px] h-[220px] border-2 px-3 pb-3 pt-2 border-gray-700 border-dashed text-gray-700 text-[0.85rem] bg-gray-100/20`}
         >
             <Loading
                 loading={isPinning}
@@ -45,7 +45,7 @@ const WritedownItem = ({ writedown, open, remove, pin }) => {
                 fontSize="0.75rem"
             />
 
-            <div className="flex w-full justify-between items-center border-b-[1px] border-black pb-2 mb-2 gap-2">
+            <div className="flex w-full justify-between items-center border-b border-black pb-2 mb-2 gap-2">
                 <button
                     title="pin"
                     className={`${pinned ? "bg-amber-600/40" : "bg-gray-400"} w-[10px] h-[10px] rounded-full`}

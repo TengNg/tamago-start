@@ -352,7 +352,7 @@ const CardModal = ({
                 onClick={handleCancel}
             >
                 <div
-                    className="overflow-y-auto overflow-x-hidden box--style text-gray-600 p-3 gap-3 pb-4 w-[350px] h-[350px] border-gray-600 border-[2px] bg-gray-200"
+                    className="overflow-y-auto overflow-x-hidden box--style text-gray-600 p-3 gap-3 pb-4 w-[350px] h-[350px] border-gray-600 border-2 bg-gray-200"
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="w-full h-[300px] text-center flex flex-col items-center justify-center">
@@ -371,7 +371,7 @@ const CardModal = ({
                 onClick={handleCancel}
             >
                 <div
-                    className="overflow-y-auto overflow-x-hidden box--style text-gray-600 p-3 gap-3 pb-4 w-[350px] h-[350px] border-gray-600 border-[2px] bg-gray-200"
+                    className="overflow-y-auto overflow-x-hidden box--style text-gray-600 p-3 gap-3 pb-4 w-[350px] h-[350px] border-gray-600 border-2 bg-gray-200"
                     onClick={(e) => e.stopPropagation()}
                 >
                     <div className="w-full h-[300px] text-center grid items-center">
@@ -399,7 +399,7 @@ const CardModal = ({
                     handleClick(e);
                 }}
             >
-                <div className="bg-[rgb(var(--card-item-bg))] relative w-full h-fit flex flex-col min-h-[38rem] md:min-h-[44rem]">
+                <div className="bg-[rgb(var(--card-item-bg))] relative w-full h-fit flex flex-col min-h-152 md:min-h-176">
                     <Loading
                         position={"absolute"}
                         fontSize={"1rem"}
@@ -464,7 +464,7 @@ const CardModal = ({
                         <div className="flex gap-2 w-full justify-between items-center">
                             <div className="flex flex-1 gap-2">
                                 <select
-                                    className={`shadow-[0_2px_0_0] w-40 md:w-60 shadow-gray-600 bg-gray-100 appearance-none cursor-pointer hover:bg-gray-200 truncate border-[2px] border-gray-600 text-[0.75rem] font-medium py-2 px-4 text-gray-600 ${listSelectOptions.length === 0 ? "bg-gray-400" : ""}`}
+                                    className={`shadow-[0_2px_0_0] w-40 md:w-60 shadow-gray-600 bg-gray-100 appearance-none cursor-pointer hover:bg-gray-200 truncate border-2 border-gray-600 text-[0.75rem] font-medium py-2 px-4 text-gray-600 ${listSelectOptions.length === 0 ? "bg-gray-400" : ""}`}
                                     value={card.listId}
                                     onChange={(e) => {
                                         handleMoveCardOnListOptionChanged(e);
@@ -481,7 +481,7 @@ const CardModal = ({
                                 </select>
 
                                 <select
-                                    className={`shadow-[0_2px_0_0] shadow-gray-600 bg-gray-100 text-center appearance-none cursor-pointer hover:bg-gray-200 truncate border-[2px] border-gray-600 text-[0.75rem] font-medium w-fit py-2 px-4 text-gray-600 ${listSelectOptions.length === 0 ? "bg-gray-400" : ""}`}
+                                    className={`shadow-[0_2px_0_0] shadow-gray-600 bg-gray-100 text-center appearance-none cursor-pointer hover:bg-gray-200 truncate border-2 border-gray-600 text-[0.75rem] font-medium w-fit py-2 px-4 text-gray-600 ${listSelectOptions.length === 0 ? "bg-gray-400" : ""}`}
                                     value={position}
                                     onChange={(e) => {
                                         moveByIndex(e);
@@ -503,7 +503,7 @@ const CardModal = ({
                             </div>
                         </div>
 
-                        <div className="w-full flex flex-wrap border-b-[1px] border-t-[1px] py-4 gap-3 border-black z-20">
+                        <div className="w-full flex flex-wrap border-b border-t py-4 gap-3 border-black z-20">
                             <div className="relative w-full">
                                 <Loading
                                     position={"absolute"}
@@ -517,7 +517,7 @@ const CardModal = ({
                                 <textarea
                                     ref={cardDescriptionInput}
                                     id="card__detail__description__textarea"
-                                    className="overflow-y-auto border-[2px] shadow-[0_2px_0_0] border-gray-600 shadow-gray-600 min-h-[250px] break-words box-border text-sm py-2 px-3 w-full text-gray-600 bg-gray-100 leading-normal font-medium placeholder-gray-400 focus:outline-none"
+                                    className="overflow-y-auto border-2 shadow-[0_2px_0_0] border-gray-600 shadow-gray-600 min-h-[250px] wrap-break-word box-border text-sm py-2 px-3 w-full text-gray-600 bg-gray-100 leading-normal font-medium placeholder-gray-400 focus:outline-hidden"
                                     autoFocus={true}
                                     placeholder={"add description..."}
                                     value={description}
@@ -646,7 +646,7 @@ const CardModal = ({
                                         {openCardDeleteConfirm && (
                                             <div
                                                 id="card__detail__delete__confirm"
-                                                className="bg-gray-100 border-[2px] shadow-[0_3px_0_0] border-gray-600 shadow-gray-600 absolute text-sm w-[200px] right-0 top-[120%] p-2"
+                                                className="bg-gray-100 border-2 shadow-[0_3px_0_0] border-gray-600 shadow-gray-600 absolute text-sm w-[200px] right-0 top-[120%] p-2"
                                             >
                                                 This action cannot be undone.
                                                 Are you sure you want to delete

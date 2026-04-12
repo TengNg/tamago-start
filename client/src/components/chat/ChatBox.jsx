@@ -127,7 +127,7 @@ const ChatBox = ({ open, setOpen }) => {
         return (
             <div
                 ref={containerRef}
-                className={`${open ? "flex" : "hidden"} fixed flex-col border-[2px] border-black right-1 bottom-1 bg-gray-100 overflow-hidden z-30`}
+                className={`${open ? "flex" : "hidden"} fixed flex-col border-2 border-black right-1 bottom-1 bg-gray-100 overflow-hidden z-30`}
                 style={style}
             >
                 <div className="flex items-center gap-3 border-b-2 border-black px-3 py-2">
@@ -147,7 +147,7 @@ const ChatBox = ({ open, setOpen }) => {
     if (chatQuery.isError) {
         return (
             <div
-                className={`${open ? "flex" : "hidden"} fixed flex-col border-[2px] border-black right-1 bottom-1 bg-gray-100 overflow-hidden z-30`}
+                className={`${open ? "flex" : "hidden"} fixed flex-col border-2 border-black right-1 bottom-1 bg-gray-100 overflow-hidden z-30`}
                 style={style}
             >
                 <div className="flex items-center gap-3 border-b-2 border-black px-3 py-2">

@@ -5,7 +5,7 @@ const ListActivityItem = ({ activity }) => {
     const { action, user, list, description, createdAt } = activity;
 
     return (
-        <div className="flex flex-col gap-2 text-[12px] sm:text-sm shadow-[0_3px_0_0] border-[2px] border-blue-700 shadow-blue-700 bg-blue-50 p-4">
+        <div className="flex flex-col gap-2 text-[12px] sm:text-sm shadow-[0_3px_0_0] border-2 border-blue-700 shadow-blue-700 bg-blue-50 p-4">
             <div>
                 <span className="font-medium text-blue-800">{action}:</span>
                 <span> </span>

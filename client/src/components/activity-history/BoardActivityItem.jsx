@@ -5,7 +5,7 @@ const BoardActivityItem = ({ activity }) => {
     const { action, user, description, createdAt } = activity;
 
     return (
-        <div className="flex flex-col gap-2 text-[12px] sm:text-sm shadow-[0_3px_0_0] border-[2px] border-yellow-600 shadow-yellow-600 bg-yellow-50 p-4">
+        <div className="flex flex-col gap-2 text-[12px] sm:text-sm shadow-[0_3px_0_0] border-2 border-yellow-600 shadow-yellow-600 bg-yellow-50 p-4">
             <div>
                 <span className="font-medium text-yellow-800">{action}:</span>
             </div>

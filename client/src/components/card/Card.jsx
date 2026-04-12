@@ -65,9 +65,9 @@ export default function Card({ card }) {
     if (card.onLoading === true) {
         return (
             <div
-                className={`card__item ${card.hiddenByFilter && "hidden"} relative d-flex justify-center items-center text-[0.75rem] text-gray-500 w-full h-[110px] border-[2px] border-b-[4px] border-gray-600 px-2 py-4 flex flex-col shadow-gray-600 cursor-not-allowed`}
+                className={`card__item ${card.hiddenByFilter && "hidden"} relative d-flex justify-center items-center text-[0.75rem] text-gray-500 w-full h-[110px] border-2 border-b-4 border-gray-600 px-2 py-4 flex flex-col shadow-gray-600 cursor-not-allowed`}
             >
-                <p className="w-full h-full bg-inherit font-medium text-gray-600 py-1 px-2 focus:outline-none text-sm break-words whitespace-pre-line">
+                <p className="w-full h-full bg-inherit font-medium text-gray-600 py-1 px-2 focus:outline-hidden text-sm wrap-break-word whitespace-pre-line">
                     {card.title}
                 </p>
 
@@ -95,10 +95,10 @@ export default function Card({ card }) {
             className={`card__item
                 ${focusedCard?.id === card._id && focusedCard?.focused ? "focused" : ""}
                 ${card.hiddenByFilter ? "hidden" : ""}
-                ${theme.itemTheme == "rounded" ? "rounded" : ""}
+                ${theme.itemTheme == "rounded-sm" ? "rounded-sm" : ""}
                 ${isLargeScreen ? "touch-none" : ""}
                 ${dateToCompare(card?.dueDate) ? "past__due__card" : ""}
-                relative select-none w-full group border-[2px] border-gray-600 p-4 flex flex-col gap-2
+                relative select-none w-full group border-2 border-gray-600 p-4 flex flex-col gap-2
                 shadow-[0_2px_0_0] shadow-gray-600 hover:shadow-[0_4px_0_0] scroll-mx-7
             `}
             onKeyDown={(e) => {
@@ -119,7 +119,7 @@ export default function Card({ card }) {
             }}
             onClick={handleOpenCardDetail}
         >
-            <p className="w-full h-full bg-transparent font-medium text-gray-700 focus:outline-none text-sm break-words whitespace-pre-line">
+            <p className="w-full h-full bg-transparent font-medium text-gray-700 focus:outline-hidden text-sm wrap-break-word whitespace-pre-line">
                 {card.title}
             </p>
 

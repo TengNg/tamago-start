@@ -61,7 +61,7 @@ const NavBar = ({ setOpenPinnedBoards }) => {
                 id="header-section"
                 className="w-full flex--center relative gap-2 py-3 px-2 sm:px-4"
             >
-                <nav className="unauthorized h-full top-4 m-auto border-gray-700 border-[2px] bg-transparent px-2 z-30 drop-shadow-sm">
+                <nav className="unauthorized h-full top-4 m-auto border-gray-700 border-2 bg-transparent px-2 z-30 drop-shadow-xs">
                     <ul className="w-full h-full flex justify-around items-center sm:gap-4 gap-2">
                         {UNAUTHORIZED_NAV_PAGES.map((el, index) => {
                             const { path, title } = el;
@@ -104,7 +104,7 @@ const NavBar = ({ setOpenPinnedBoards }) => {
                 id="header-section"
                 className="w-full flex--center relative gap-2 py-3 px-2 sm:px-4"
             >
-                <div className="md:block hidden w-[40px] h-[40px]"></div>
+                <div className="md:block hidden w-10 h-10"></div>
 
                 <div className="absolute md:flex hidden items-center gap-2 md:top-4 md:left-4 top-2 left-2 text-[0.75rem] font-medium">
                     {currentUser.recentlyViewedBoardId && (
@@ -112,7 +112,7 @@ const NavBar = ({ setOpenPinnedBoards }) => {
                             {!isBoardPath && (
                                 <button
                                     title="[05] Go to last viewed board"
-                                    className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border-[1px] border-dashed text-[0.75rem] md:p-2 p-1 font-medium"
+                                    className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border border-dashed text-[0.75rem] md:p-2 p-1 font-medium cursor-pointer"
                                     onClick={() => {
                                         const recentlyViewedBoardId =
                                             currentUser.recentlyViewedBoardId;
@@ -132,7 +132,7 @@ const NavBar = ({ setOpenPinnedBoards }) => {
                         </>
                     )}
                     <button
-                        className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border-[1px] border-dashed text-[0.75rem] md:p-2 p-1 font-medium"
+                        className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border border-dashed text-[0.75rem] md:p-2 p-1 font-medium cursor-pointer"
                         title="[C-E] Open your pinned boards"
                         onClick={() => {
                             setOpenPinnedBoards(true);
@@ -142,8 +142,8 @@ const NavBar = ({ setOpenPinnedBoards }) => {
                     </button>
                 </div>
 
-                <nav className="h-full top-4 m-auto border-gray-700 border-[1px] bg-transparent px-2 z-30 drop-shadow-sm">
-                    <ul className="w-[100%] h-[100%] flex justify-around items-center sm:gap-4 gap-2">
+                <nav className="h-full top-4 m-auto border-gray-700 border bg-transparent px-2 z-30 drop-shadow-xs">
+                    <ul className="w-full h-full flex justify-around items-center sm:gap-4 gap-2">
                         {AUTHORIZED_NAV_PAGES.map((el, index) => {
                             const { path, title } = el;
                             const num = `0${index + 1}`;
@@ -177,7 +177,7 @@ const NavBar = ({ setOpenPinnedBoards }) => {
                                     <>
                                         {!isBoardPath && (
                                             <button
-                                                className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border-[1px] border-dashed text-[0.75rem] md:p-2 p-1 font-normal"
+                                                className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border border-dashed text-[0.75rem] md:p-2 p-1 font-normal"
                                                 onClick={() => {
                                                     const recentlyViewedBoardId =
                                                         currentUser.recentlyViewedBoardId;
@@ -197,7 +197,7 @@ const NavBar = ({ setOpenPinnedBoards }) => {
                                     </>
                                 )}
                                 <button
-                                    className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border-[1px] border-dashed text-[0.75rem] md:p-2 p-1 font-medium"
+                                    className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border border-dashed text-[0.75rem] md:p-2 p-1 font-medium"
                                     onClick={() => {
                                         setOpenPinnedBoards(true);
                                     }}

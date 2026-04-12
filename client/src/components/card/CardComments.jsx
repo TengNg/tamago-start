@@ -188,7 +188,7 @@ const CardComments = ({ card }) => {
 
     if (commentsQuery.isLoading) {
         return (
-            <div className="relative flex flex-col gap-4 text-[0.65rem] sm:text-[0.8rem] text-gray-700 p-4 border-[1px] border-gray-700">
+            <div className="relative flex flex-col gap-4 text-[0.65rem] sm:text-[0.8rem] text-gray-700 p-4 border border-gray-700">
                 <div>loading comments...</div>
             </div>
         );
@@ -196,14 +196,14 @@ const CardComments = ({ card }) => {
 
     if (commentsQuery.isLoading) {
         return (
-            <div className="relative flex flex-col gap-4 text-[0.65rem] sm:text-[0.8rem] text-gray-700 p-4 border-[1px] border-gray-700">
+            <div className="relative flex flex-col gap-4 text-[0.65rem] sm:text-[0.8rem] text-gray-700 p-4 border border-gray-700">
                 <div>failed to load comments :( please try again.</div>
             </div>
         );
     }
 
     return (
-        <div className="relative flex flex-col gap-4 text-sm text-gray-700 px-4 pt-4 pb-6 mb-4 border-[1px] border-gray-700">
+        <div className="relative flex flex-col gap-4 text-sm text-gray-700 px-4 pt-4 pb-6 mb-4 border border-gray-700">
             <div className="w-full flex justify-start items-start gap-1">
                 <textarea
                     maxLength={1000}
@@ -211,7 +211,7 @@ const CardComments = ({ card }) => {
                     readOnly={addCommentQuery.isPending}
                     onKeyDown={handleTextAreaOnKeydown}
                     onChange={handleSetTextAreaContent}
-                    className="overflow-y-auto border-[1px] shadow-[0_2px_0_0] border-gray-400 shadow-gray-400 focus:border-gray-600 focus:shadow-gray-600 break-words py-2 px-3 w-full text-gray-700 focus:bg-gray-100 bg-transparent font-medium placeholder-gray-400 focus:outline-none"
+                    className="overflow-y-auto border shadow-[0_2px_0_0] border-gray-400 shadow-gray-400 focus:border-gray-600 focus:shadow-gray-600 wrap-break-word py-2 px-3 w-full text-gray-700 focus:bg-gray-100 bg-transparent font-medium placeholder-gray-400 focus:outline-hidden"
                     placeholder="add a comment..."
                 />
                 <div className="flex flex-col gap-2 min-w-[60px] w-[60px]">
@@ -250,7 +250,7 @@ const CardComments = ({ card }) => {
                 <div className="flex flex-col gap-1">
                     {focusedComment && !focusedComment.onFirstPage && (
                         <div ref={focusedCommentRef}>
-                            <div className="bg-indigo-200/50 border-[1px] border-b-[4px] border-indigo-500 px-2 py-1 pb-2">
+                            <div className="bg-indigo-200/50 border border-b-4 border-indigo-500 px-2 py-1 pb-2">
                                 <div className="flex flex-col">
                                     <div className="h-6 flex items-center justify-between">
                                         <div className="text-[12px] text-gray-500">
@@ -265,7 +265,7 @@ const CardComments = ({ card }) => {
                                                         focusedComment.content,
                                                     )
                                                 }
-                                                className="text-gray-400 hover:bg-violet-800 p-1 hover:text-violet-50 rounded-sm"
+                                                className="text-gray-400 hover:bg-violet-800 p-1 hover:text-violet-50 rounded-xs"
                                                 title="Copy content"
                                             >
                                                 <Icon
@@ -276,7 +276,7 @@ const CardComments = ({ card }) => {
                                             {focusedComment.content.length >
                                                 50 && (
                                                 <button
-                                                    className="text-gray-400 hover:bg-violet-800 p-1 hover:text-violet-50 rounded-sm"
+                                                    className="text-gray-400 hover:bg-violet-800 p-1 hover:text-violet-50 rounded-xs"
                                                     title="Collapse this comment"
                                                     onClick={() => {
                                                         setFocusedComment(
@@ -324,14 +324,14 @@ const CardComments = ({ card }) => {
                                                 ) + "..."}
                                             </p>
                                         ) : (
-                                            <pre className="overflow-x-auto break-words whitespace-pre-wrap pt-[1px]">
+                                            <pre className="overflow-x-auto wrap-break-word whitespace-pre-wrap pt-px">
                                                 {focusedComment.content}
                                             </pre>
                                         )}
                                     </div>
                                 </div>
                             </div>
-                            <div className="h-[1px] my-4 bg-gray-800"></div>
+                            <div className="h-px my-4 bg-gray-800"></div>
                         </div>
                     )}
 
@@ -418,7 +418,7 @@ const CardComments = ({ card }) => {
                                             </div>
                                         </div>
                                         <pre
-                                            className={`${comment.deleted ? "text-red-800" : ""} overflow-x-auto break-words whitespace-pre-wrap pt-[1px]`}
+                                            className={`${comment.deleted ? "text-red-800" : ""} overflow-x-auto wrap-break-word whitespace-pre-wrap pt-px`}
                                         >
                                             {comment.deleted
                                                 ? "[deleted]"
@@ -434,7 +434,7 @@ const CardComments = ({ card }) => {
                         <button
                             disabled={commentsQuery.isFetchingNextPage}
                             onClick={handleLoadMoreComments}
-                            className={`${commentsQuery.isFetchingNextPage ? "bg-gray-400" : "bg-gray-500"} mt-2 h-8 w-[10rem] min-w-[10rem] hover:bg-gray-400 p-2 text-gray-50 grid place-items-center`}
+                            className={`${commentsQuery.isFetchingNextPage ? "bg-gray-400" : "bg-gray-500"} mt-2 h-8 w-40 min-w-40 hover:bg-gray-400 p-2 text-gray-50 grid place-items-center`}
                         >
                             {commentsQuery.isFetchingNextPage ? (
                                 <Icon name="three-dots" className="w-4 h-4" />

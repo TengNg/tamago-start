@@ -77,7 +77,7 @@ export default function Register() {
 
     return (
         <>
-            <section className="relative w-[100%] h-[100vh] bg-transparent flex flex-col items-center gap-2">
+            <section className="relative w-full h-screen bg-transparent flex flex-col items-center gap-2">
                 <Title titleName={"register"} />
 
                 <form
@@ -89,7 +89,7 @@ export default function Register() {
                         Username
                     </label>
                     <input
-                        className="border-[2px] border-gray-700 text-gray-700 p-1 font-medium select-none"
+                        className="border-2 border-gray-700 text-gray-700 p-1 font-medium select-none"
                         type="text"
                         id="username"
                         autoComplete="off"
@@ -104,7 +104,7 @@ export default function Register() {
                         Password
                     </label>
                     <input
-                        className="border-[2px] border-gray-700 text-gray-700 p-1 font-medium select-none"
+                        className="border-2 border-gray-700 text-gray-700 p-1 font-medium select-none"
                         type="password"
                         id="password"
                         autoComplete="off"
@@ -118,7 +118,7 @@ export default function Register() {
                         Confirm Password
                     </label>
                     <input
-                        className="border-[2px] border-gray-700 text-gray-700 p-1 font-medium select-none"
+                        className="border-2 border-gray-700 text-gray-700 p-1 font-medium select-none"
                         type="password"
                         id="confirmed-password"
                         autoComplete="off"

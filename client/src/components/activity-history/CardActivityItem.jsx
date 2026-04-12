@@ -8,7 +8,7 @@ const CardActivityItem = ({ activity }) => {
     const [searchParams, setSearchParams] = useSearchParams();
 
     return (
-        <div className="flex flex-col gap-2 text-[12px] sm:text-sm shadow-[0_3px_0_0] border-[2px] border-teal-600 shadow-teal-600 bg-teal-50 p-3">
+        <div className="flex flex-col gap-2 text-[12px] sm:text-sm shadow-[0_3px_0_0] border-2 border-teal-600 shadow-teal-600 bg-teal-50 p-3">
             <div>
                 <span className="font-medium text-teal-700">{action}:</span>
                 <span> </span>

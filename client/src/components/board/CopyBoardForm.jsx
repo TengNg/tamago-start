@@ -49,10 +49,10 @@ const CopyBoardForm = ({ setOpen }) => {
         <>
             <div
                 onClick={handleClose}
-                className="fixed box-border top-0 left-0 text-gray-600 font-bold h-[100vh] text-[1.25rem] w-full bg-gray-500 opacity-40 z-30 cursor-auto"
+                className="fixed box-border top-0 left-0 text-gray-600 font-bold h-screen text-[1.25rem] w-full bg-gray-500 opacity-40 z-30 cursor-auto"
             ></div>
 
-            <div className="fixed box--style flex flex-col items-start py-3 px-3 top-[5rem] right-0 left-[50%] translate-y-[50%] -translate-x-[50%] w-[350px] h-[300px] border-black border-[2px] z-40 cursor-auto bg-gray-200">
+            <div className="fixed box--style flex flex-col items-start py-3 px-3 top-20 right-0 left-[50%] translate-y-[50%] -translate-x-[50%] w-[350px] h-[300px] border-black border-2 z-40 cursor-auto bg-gray-200">
                 <Loading
                     displayText={"creating board..."}
                     loading={loading}
@@ -60,7 +60,7 @@ const CopyBoardForm = ({ setOpen }) => {
                     fontSize={"0.75rem"}
                 />
 
-                <div className="flex w-full justify-between items-center border-b-[1px] border-black pb-2 mb-5">
+                <div className="flex w-full justify-between items-center border-b border-black pb-2 mb-5">
                     <p className="font-normal text-gray-700">
                         create a copy from this board
                     </p>
@@ -75,7 +75,7 @@ const CopyBoardForm = ({ setOpen }) => {
                 <div className="w-full flex flex-col items-start justify-start gap-4">
                     <input
                         ref={nameInputEl}
-                        className={`p-3 w-full shadow-[0_3px_0_0] overflow-hidden whitespace-nowrap text-ellipsis border-[2px] bg-gray-100 border-gray-600 text-gray-600 font-semibold select-none focus:outline-none`}
+                        className={`p-3 w-full shadow-[0_3px_0_0] overflow-hidden whitespace-nowrap text-ellipsis border-2 bg-gray-100 border-gray-600 text-gray-600 font-semibold select-none focus:outline-hidden`}
                         placeholder="new title..."
                         onChange={(e) => setTitle(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleCreate()}
@@ -83,7 +83,7 @@ const CopyBoardForm = ({ setOpen }) => {
                     />
 
                     <textarea
-                        className="p-3 border-gray-600 resize-none shadow-[0_3px_0_0] h-[80px] overflow-auto border-[2px] shadow-gray-600 bg-gray-100 w-full focus:outline-none font-semibold text-gray-600 leading-normal"
+                        className="p-3 border-gray-600 resize-none shadow-[0_3px_0_0] h-[80px] overflow-auto border-2 shadow-gray-600 bg-gray-100 w-full focus:outline-hidden font-semibold text-gray-600 leading-normal"
                         placeholder="description..."
                         onChange={(e) => setDescription(e.target.value)}
                         value={desciption}
@@ -91,7 +91,7 @@ const CopyBoardForm = ({ setOpen }) => {
 
                     <button
                         onClick={() => handleCreate()}
-                        className="button--style w-[100%] mt-1 py-2 border-[2px] text-sm hover:bg-gray-600 hover:text-white"
+                        className="button--style w-full mt-1 py-2 border-2 text-sm hover:bg-gray-600 hover:text-white"
                     >
                         + create
                     </button>

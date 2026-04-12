@@ -45,9 +45,9 @@ const CardModalInfo = ({
     }
 
     return (
-        <div className="relative flex flex-col gap-5 text-sm text-gray-700 p-4 border-[1px] border-gray-700">
+        <div className="relative flex flex-col gap-5 text-sm text-gray-700 p-4 border border-gray-700">
             <button
-                className="absolute top-2 right-2 border-[1px] border-slate-600 border-dashed py-1 px-2 text-slate-500 text-[9px] sm:text-[12px] hover:underline"
+                className="absolute top-2 right-2 border border-slate-600 border-dashed py-1 px-2 text-slate-500 text-[9px] sm:text-[12px] hover:underline"
                 onClick={handleCopyCardCode}
                 title="copy card code"
             >
@@ -72,7 +72,7 @@ const CardModalInfo = ({
                     onChange={(e) =>
                         handleCardPriorityLevelChange(e.target.value)
                     }
-                    className="font-medium max-w-[10rem] px-1 cursor-pointer appearance-none bg-transparent"
+                    className="font-medium max-w-40 px-1 cursor-pointer appearance-none bg-transparent"
                     style={{
                         color:
                             PRIORITY_LEVELS[`${priorityLevel}`]?.color ||
@@ -90,7 +90,7 @@ const CardModalInfo = ({
                 </select>
             </div>
 
-            <div className="flex flex-start items-center w-fit max-w-[30rem]">
+            <div className="flex flex-start items-center w-fit max-w-120">
                 <span className="me-2">owner:</span>
                 {card.owner && (
                     <Icon
@@ -103,7 +103,7 @@ const CardModalInfo = ({
                 <select
                     value={card.owner || ""}
                     onChange={(e) => handleCardOwnerChange(e.target.value)}
-                    className="max-w-[10rem] cursor-pointer appearance-none bg-transparent text-gray-800 font-medium"
+                    className="max-w-40 cursor-pointer appearance-none bg-transparent text-gray-800 font-medium"
                 >
                     <option value={""}>...</option>
                     {memberNames.map((memberName) => {

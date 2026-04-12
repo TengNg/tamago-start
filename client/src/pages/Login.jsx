@@ -48,7 +48,7 @@ export default function Login() {
 
     return (
         <>
-            <section className="relative w-[100%] h-[100vh] bg-transparent flex items-center flex-col gap-2">
+            <section className="relative w-full h-screen bg-transparent flex items-center flex-col gap-2">
                 <Title titleName={"login"} />
 
                 <form
@@ -60,7 +60,7 @@ export default function Login() {
                         Username
                     </label>
                     <input
-                        className="border-[2px] border-gray-700 text-gray-700 p-1 font-medium"
+                        className="border-2 border-gray-700 text-gray-700 p-1 font-medium"
                         type="text"
                         id="username"
                         autoComplete="off"
@@ -75,7 +75,7 @@ export default function Login() {
                     </label>
                     <input
                         ref={passwordInputEl}
-                        className="border-[2px] border-gray-700 text-gray-700 p-1 font-medium select-none"
+                        className="border-2 border-gray-700 text-gray-700 p-1 font-medium select-none"
                         type="password"
                         id="password"
                         onChange={(e) => setPassword(e.target.value)}

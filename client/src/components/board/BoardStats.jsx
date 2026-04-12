@@ -47,7 +47,7 @@ const BoardStats = ({ boardStatsModal, setBoardStatsModal }) => {
     return (
         <dialog
             ref={dialog}
-            className="z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 h-fit min-w-[350px] max-h-[600px] border-black border-[2px] bg-gray-200"
+            className="z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 h-fit min-w-[350px] max-h-[600px] border-black border-2 bg-gray-200"
             onClick={handleCloseOnOutsideClick}
         >
             <Loading
@@ -57,7 +57,7 @@ const BoardStats = ({ boardStatsModal, setBoardStatsModal }) => {
                 fontSize="1rem"
             />
 
-            <div className="flex w-full justify-between items-center border-b-[1px] border-black pb-3">
+            <div className="flex w-full justify-between items-center border-b border-black pb-3">
                 <p className="font-normal text-[1rem] text-gray-700">
                     {boardStatsModal?.board?.title} .inf
                 </p>
@@ -70,7 +70,7 @@ const BoardStats = ({ boardStatsModal, setBoardStatsModal }) => {
             </div>
 
             <div className="w-full relative flex flex-col items-start gap-3 py-2 mt-2">
-                <div className="h-[50px] w-full flex justify-between items-center gap-2 text-gray-700 text-[0.65rem] sm:text-[0.75rem] border-[1px] border-dashed border-gray-700 p-4">
+                <div className="h-[50px] w-full flex justify-between items-center gap-2 text-gray-700 text-[0.65rem] sm:text-[0.75rem] border border-dashed border-gray-700 p-4">
                     <p>
                         code:{" "}
                         <span
@@ -89,7 +89,7 @@ const BoardStats = ({ boardStatsModal, setBoardStatsModal }) => {
                     </p>
 
                     <button
-                        className="p-3 bg-gray-200 hover:bg-indigo-200 rounded group"
+                        className="p-3 bg-gray-200 hover:bg-indigo-200 rounded-sm group"
                         onClick={() =>
                             navigate(`/b/${boardStatsModal?.board?._id}`)
                         }
@@ -99,7 +99,7 @@ const BoardStats = ({ boardStatsModal, setBoardStatsModal }) => {
                     </button>
                 </div>
 
-                <div className="w-full flex flex-col gap-2 text-gray-700 text-[0.65rem] sm:text-[0.75rem] border-[1px] border-dashed border-gray-700 p-4">
+                <div className="w-full flex flex-col gap-2 text-gray-700 text-[0.65rem] sm:text-[0.75rem] border border-dashed border-gray-700 p-4">
                     <div className="flex gap-2">
                         members:
                         <span className="font-medium">
@@ -112,7 +112,7 @@ const BoardStats = ({ boardStatsModal, setBoardStatsModal }) => {
                     </div>
                 </div>
 
-                <div className="w-full flex flex-col gap-2 text-gray-700 text-[0.65rem] sm:text-[0.75rem] border-[1px] border-dashed border-gray-700 p-4">
+                <div className="w-full flex flex-col gap-2 text-gray-700 text-[0.65rem] sm:text-[0.75rem] border border-dashed border-gray-700 p-4">
                     <p>
                         list count:{" "}
                         <span className="font-medium">
@@ -135,7 +135,7 @@ const BoardStats = ({ boardStatsModal, setBoardStatsModal }) => {
                     </p>
                 </div>
 
-                <div className="relative w-full flex flex-col gap-2 text-gray-700 text-[0.65rem] sm:text-[0.75rem] border-[1px] border-dashed border-gray-700 px-4 pb-4 pt-3">
+                <div className="relative w-full flex flex-col gap-2 text-gray-700 text-[0.65rem] sm:text-[0.75rem] border border-dashed border-gray-700 px-4 pb-4 pt-3">
                     <div className="flex justify-between">
                         <p>cards by status:</p>
 
@@ -190,7 +190,7 @@ const BoardStats = ({ boardStatsModal, setBoardStatsModal }) => {
                             return (
                                 <div
                                     key={_id}
-                                    className="w-full p-1 px-3 text-gray-50 font-semibold cursor-pointer rounded-sm hover:opacity-80"
+                                    className="w-full p-1 px-3 text-gray-50 font-semibold cursor-pointer rounded-xs hover:opacity-80"
                                     style={{
                                         backgroundColor:
                                             PRIORITY_LEVELS[`${_id}`]?.color ||
@@ -211,7 +211,7 @@ const BoardStats = ({ boardStatsModal, setBoardStatsModal }) => {
                 </div>
 
                 <div
-                    className="w-full gap-2 text-gray-700 text-[0.65rem] sm:text-[0.75rem] border-[1px] border-dashed border-gray-700 py-2 px-4 cursor-pointer"
+                    className="w-full gap-2 text-gray-700 text-[0.65rem] sm:text-[0.75rem] border border-dashed border-gray-700 py-2 px-4 cursor-pointer"
                     onClick={() => {
                         navigate({
                             pathname: `/b/${boardStatsModal?.board?._id}`,

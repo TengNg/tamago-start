@@ -96,7 +96,7 @@ const ChatInput = () => {
             <div className="flex w-full py-2 gap-1 justify-start items-start">
                 <textarea
                     id="chat-input"
-                    className="text-[1rem] sm:text-[0.75rem] text-gray-700 sm:min-h-[2.5rem] min-h-[2.75rem] max-h-[100px] border border-gray-600 leading-normal overflow-y-auto resize-none w-full py-2 px-3 font-medium placeholder-gray-500 focus:outline-none bg-transparent"
+                    className="text-[1rem] sm:text-[0.75rem] text-gray-700 sm:min-h-10 min-h-11 max-h-[100px] border border-gray-600 leading-normal overflow-y-auto resize-none w-full py-2 px-3 font-medium placeholder-gray-500 focus:outline-hidden bg-transparent"
                     placeholder="Write something..."
                     ref={textAreaRef}
                     value={message}
@@ -105,7 +105,7 @@ const ChatInput = () => {
                 ></textarea>
 
                 <button
-                    className="h-[2.75rem] sm:h-[2.5rem] d-flex justify-center items-center text-[12px] text-gray-600 border-[1px] border-gray-600 px-3 hover:text-white hover:bg-gray-500"
+                    className="h-11 sm:h-10 d-flex justify-center items-center text-[12px] text-gray-600 border border-gray-600 px-3 hover:text-white hover:bg-gray-500"
                     onClick={handleSentButtonOnClick}
                 >
                     send

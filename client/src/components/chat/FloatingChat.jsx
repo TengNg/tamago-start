@@ -81,12 +81,12 @@ const FloatingChat = ({
         <>
             <div
                 onClick={handleClose}
-                className={`fixed ${!open ? "hidden" : "block"} box-border top-0 left-0 text-gray-600 font-bold h-[100vh] text-[1.25rem] w-full bg-gray-500 opacity-40 z-50 cursor-auto`}
+                className={`fixed ${!open ? "hidden" : "block"} box-border top-0 left-0 text-gray-600 font-bold h-screen text-[1.25rem] w-full bg-gray-500 opacity-40 z-50 cursor-auto`}
             ></div>
 
             <div
                 ref={chatContainer}
-                className={`fixed ${!open ? "hidden" : "block"} box--style flex pt-2 flex-col top-[5rem] right-0 left-[50%] overflow-auto -translate-x-[50%] w-[90%] md:w-[80%] lg:w-[80%] xl:w-[50%] 2xl:w-[50%] h-[75%] border-[2px] border-black z-50 cursor-auto bg-slate-100`}
+                className={`fixed ${!open ? "hidden" : "block"} box--style flex pt-2 flex-col top-20 right-0 left-[50%] overflow-auto -translate-x-[50%] w-[90%] md:w-[80%] lg:w-[80%] xl:w-[50%] 2xl:w-[50%] h-[75%] border-2 border-black z-50 cursor-auto bg-slate-100`}
             >
                 <div className="flex justify-between items-center pb-2 mx-3">
                     <div>chat</div>
@@ -96,7 +96,7 @@ const FloatingChat = ({
                             boardState.board.createdBy.username && (
                             <button
                                 onClick={handleClearMessages}
-                                className="me-6 text-[0.75rem] border-[2px] border-rose-400 text-rose-400 px-2 font-medium"
+                                className="me-6 text-[0.75rem] border-2 border-rose-400 text-rose-400 px-2 font-medium"
                             >
                                 Clear
                             </button>
@@ -117,7 +117,7 @@ const FloatingChat = ({
                     </div>
                 </div>
 
-                <div className="h-[1px] bg-gray-300 w-full"></div>
+                <div className="h-px bg-gray-300 w-full"></div>
 
                 <div
                     onScroll={handleLoadMoreOnScroll}

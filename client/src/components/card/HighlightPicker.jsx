@@ -38,13 +38,13 @@ const HighlightPicker = ({ setOpen, card }) => {
     return (
         <div
             id="card__detail__highlight__picker"
-            className="absolute z-10 top-1/2 left-1/2 translate-y-[10%] -translate-x-1/2 flex flex-col gap-1 items-center justify-center bg-gray-200 p-2 border-[2px] border-gray-600 shadow-gray-600 shadow-[4px_5px_0_0] w-[200px]"
+            className="absolute z-10 top-1/2 left-1/2 translate-y-[10%] -translate-x-1/2 flex flex-col gap-1 items-center justify-center bg-gray-200 p-2 border-2 border-gray-600 shadow-gray-600 shadow-[4px_5px_0_0] w-[200px]"
         >
             {highlightColors.map((hl) => {
                 return (
                     <div
                         key={hl}
-                        className={`relative w-full h-[1.25rem] border-[2px] hover:border-blue-400 cursor-pointer`}
+                        className={`relative w-full h-5 border-2 hover:border-blue-400 cursor-pointer`}
                         style={{ background: hl }}
                         onClick={() => handleSetCardHighlight(hl)}
                     ></div>

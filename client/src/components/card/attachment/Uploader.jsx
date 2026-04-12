@@ -116,13 +116,13 @@ function Uploader({ card }) {
                 </label>
                 {selectedFileName ? (
                     <span
-                        className="text-gray-600 truncate max-w-[12rem]"
+                        className="text-gray-600 truncate max-w-48"
                         title={selectedFileName}
                     >
                         {selectedFileName}
                     </span>
                 ) : (
-                    <span className="text-gray-400 text-sm truncate max-w-[12rem]">
+                    <span className="text-gray-400 text-sm truncate max-w-48">
                         (maximum 5MB)
                     </span>
                 )}

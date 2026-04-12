@@ -32,7 +32,7 @@ const ChatMessageToast = ({
         <div
             className={`${toast.open && !isChatOpen ? "flex" : "hidden"} fixed flex-col border-[3px] border-rose-400 right-3 top-3 bg-gray-800 text-gray-50 w-[300px] overflow-auto z-30 opacity-80`}
         >
-            <div className="flex w-full justify-between items-center border-b-[1px] border-gray-600 p-3">
+            <div className="flex w-full justify-between items-center border-b border-gray-600 p-3">
                 <div
                     className="text-sm cursor-pointer"
                     onClick={(e) => {
@@ -70,7 +70,7 @@ const ChatMessageToast = ({
                     ❌
                 </button>
             </div>
-            <div className="text-sm text-wrap break-words flex flex-col gap-1 px-3 pt-2">
+            <div className="text-sm text-wrap wrap-break-word flex flex-col gap-1 px-3 pt-2">
                 <div
                     className="font-medium max-h-[120px] overflow-auto"
                     onClick={() => {

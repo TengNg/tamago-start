@@ -249,7 +249,7 @@ const Profile = () => {
                 <div className="mx-auto sm:w-3/4 w-[90%] flex flex-col items-center">
                     <span className="text-gray-600">information</span>
 
-                    <div className="box--style border-[2px] border-gray-700 shadow-gray-700 sm:p-4 p-3 lg:w-[450px] sm:w-[400px] w-full bg-gray-100/20">
+                    <div className="box--style border-2 border-gray-700 shadow-gray-700 sm:p-4 p-3 lg:w-[450px] sm:w-[400px] w-full bg-gray-100/20">
                         <div className="font-medium text-gray-700">
                             {currentUser.username}
                         </div>
@@ -258,11 +258,11 @@ const Profile = () => {
                             joined at {dateFormatter(currentUser.createdAt)}
                         </div>
 
-                        <div className="h-[1px] my-3 bg-gray-800"></div>
+                        <div className="h-px my-3 bg-gray-800"></div>
 
                         <form
                             id="userInfoForm"
-                            className="relative w-[100%] flex flex-col h-fit gap-2 text-gray-700"
+                            className="relative w-full flex flex-col h-fit gap-2 text-gray-700"
                         >
                             <p
                                 className={`absolute top-0 right-1 text-[0.75rem] font-medium ${msg.error ? "text-red-600" : "text-green-500"}`}
@@ -272,7 +272,7 @@ const Profile = () => {
                             <div className="flex flex-col">
                                 <input
                                     ref={usernameInputRef}
-                                    className="border-[1px] border-gray-500 px-2 py-1 font-medium bg-transparent"
+                                    className="border border-gray-500 px-2 py-1 font-medium bg-transparent"
                                     type="text"
                                     id="username"
                                     autoComplete="off"
@@ -284,7 +284,7 @@ const Profile = () => {
                                 type="submit"
                                 form="userInfoForm"
                                 onClick={handleSaveProfile}
-                                className="text-white p-2 text-[0.75rem] bg-sky-800 font-medium hover:bg-sky-700 w-[100%]"
+                                className="text-white p-2 text-[0.75rem] bg-sky-800 font-medium hover:bg-sky-700 w-full"
                                 disabled={updateUsernameMutation.isPending}
                             >
                                 {updateUsernameMutation.isPending
@@ -293,9 +293,9 @@ const Profile = () => {
                             </button>
 
                             {changePassword && (
-                                <div className="flex flex-col div--style w-[100%] relative py-8 border-[2px] border-gray-700 px-4">
+                                <div className="flex flex-col div--style w-full relative py-8 border-2 border-gray-700 px-4">
                                     <button
-                                        className="absolute top-2 right-2 text-[11px] border-[1px] border-gray-700 px-2 py-1 hover:underline"
+                                        className="absolute top-2 right-2 text-[11px] border border-gray-700 px-2 py-1 hover:underline"
                                         onClick={closeChangePasswordOption}
                                     >
                                         close
@@ -308,7 +308,7 @@ const Profile = () => {
                                         current password
                                     </label>
                                     <input
-                                        className="border-[2px] border-black p-1 font-bold"
+                                        className="border-2 border-black p-1 font-bold"
                                         type="password"
                                         id="password"
                                         autoComplete="off"
@@ -326,7 +326,7 @@ const Profile = () => {
                                         new password
                                     </label>
                                     <input
-                                        className="border-[2px] border-black p-1 font-bold"
+                                        className="border-2 border-black p-1 font-bold"
                                         type="password"
                                         id="newPassword"
                                         autoComplete="off"
@@ -344,7 +344,7 @@ const Profile = () => {
                                         confirm new password
                                     </label>
                                     <input
-                                        className="border-[2px] border-black p-1 font-bold"
+                                        className="border-2 border-black p-1 font-bold"
                                         type="password"
                                         id="confirmedPassword"
                                         autoComplete="off"
@@ -363,7 +363,7 @@ const Profile = () => {
                                             onClick={() =>
                                                 setChangePassword(true)
                                             }
-                                            className="text-white p-2 text-[0.75rem] bg-sky-800 font-medium hover:bg-sky-700 w-[100%]"
+                                            className="text-white p-2 text-[0.75rem] bg-sky-800 font-medium hover:bg-sky-700 w-full"
                                         >
                                             change password
                                         </button>
@@ -375,7 +375,7 @@ const Profile = () => {
                                             onClick={(e) =>
                                                 handleUpdatePassword(e)
                                             }
-                                            className="text-white p-2 text-[0.75rem] bg-sky-800 font-medium hover:bg-sky-700 w-[100%]"
+                                            className="text-white p-2 text-[0.75rem] bg-sky-800 font-medium hover:bg-sky-700 w-full"
                                         >
                                             {updatePasswordMutation.isPending
                                                 ? "updating..."
@@ -385,18 +385,18 @@ const Profile = () => {
                                 </div>
                             )}
 
-                            <div className="h-[1px] my-1 bg-gray-800"></div>
+                            <div className="h-px my-1 bg-gray-800"></div>
 
                             <button
                                 onClick={handleLogout}
-                                className="text-white p-2 text-[0.75rem] bg-gray-600 font-medium hover:bg-gray-500 w-[100%]"
+                                className="text-white p-2 text-[0.75rem] bg-gray-600 font-medium hover:bg-gray-500 w-full"
                             >
                                 log out
                             </button>
 
                             <button
                                 onClick={handleLogoutOfAllDevices}
-                                className="text-white p-2 text-[0.75rem] bg-rose-800 font-medium hover:bg-rose-700 w-[100%]"
+                                className="text-white p-2 text-[0.75rem] bg-rose-800 font-medium hover:bg-rose-700 w-full"
                             >
                                 log out of all devices
                             </button>
@@ -408,7 +408,7 @@ const Profile = () => {
                 <div className="mx-auto sm:w-3/4 w-[90%] flex flex-col items-center mt-6">
                     <span className="text-gray-600">owned boards</span>
 
-                    <div className="box--style relative border-[2px] border-gray-700 shadow-gray-700 sm:p-4 p-3 lg:w-[450px] sm:w-[400px] w-full !bg-gray-100/20">
+                    <div className="box--style relative border-2 border-gray-700 shadow-gray-700 sm:p-4 p-3 lg:w-[450px] sm:w-[400px] w-full bg-gray-100/20!">
                         <div className="flex flex-col items-center mt-3 gap-4 pb-4 px-4 lg:px-2 max-h-[450px] overflow-auto">
                             {ownedBoardsQuery.isPending ||
                             ownedBoardsQuery.isError ? (
@@ -435,12 +435,12 @@ const Profile = () => {
                                             }
                                             className="w-full h-[125px] sm:h-[150px] bg-transparent"
                                         >
-                                            <div className="w-full h-[125px] sm:h-[150px] board--style board--hover border-[2px] md:border-[2.5px] border-gray-600 text-gray-700 py-3 px-3 shadow-gray-600 select-none bg-transparent relative">
+                                            <div className="w-full h-[125px] sm:h-[150px] board--style board--hover border-2 md:border-[2.5px] border-gray-600 text-gray-700 py-3 px-3 shadow-gray-600 select-none bg-transparent relative">
                                                 <p className="text-[12px] sm:text-[1rem] font-medium sm:font-medium text-gray-600 overflow-hidden whitespace-nowrap text-ellipsis">
                                                     {title}
                                                 </p>
 
-                                                <div className="h-[1px] w-full bg-black my-2"></div>
+                                                <div className="h-px w-full bg-black my-2"></div>
 
                                                 <p className="text-[11px] sm:text-[0.85rem] mt-3">
                                                     lists: {item.listCount}

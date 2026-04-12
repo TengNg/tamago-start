@@ -61,25 +61,25 @@ const Avatar = ({
                     clickable && setCollapse((collapse) => !collapse);
                 }}
                 ref={userProfileImageRef}
-                className={`relative ${AVATAR_BG_COLORS[bgColor]} hover:opacity-[0.8] text-white flex--center text-[0.8rem] border-box ${withBorder && "border-[4px] border-teal-600"} rounded-full bg-center bg-cover overflow-hidden ${clickable && "cursor-pointer"} ${SIZE[size]}`}
+                className={`relative ${AVATAR_BG_COLORS[bgColor]} hover:opacity-[0.8] text-white flex--center text-[0.8rem] border-box ${withBorder && "border-4 border-teal-600"} rounded-full bg-center bg-cover overflow-hidden ${clickable && "cursor-pointer"} ${SIZE[size]}`}
             >
                 {!profileImage ? (
                     <div className={`font-bold flex--center select-none`}>
                         {username?.charAt(0)?.toUpperCase()}
                     </div>
                 ) : (
-                    <img className="flex--center h-[100%] w-[100%]" />
+                    <img className="flex--center h-full w-full" />
                 )}
             </div>
 
             {isAdmin && (
-                <div className="rounded-full border-white bg-blue-700 border-[2px] w-[12px] h-[12px] absolute right-0 bottom-0"></div>
+                <div className="rounded-full border-white bg-blue-700 border-2 w-[12px] h-[12px] absolute right-0 bottom-0"></div>
             )}
 
             {collapse === false && (
                 <div
                     ref={userInfoRef}
-                    className="box--style--sm absolute flex flex-col border-[2px] border-black p-3 pe-8 select-none gap-4 bg-gray-100 left-1 -bottom-1 translate-y-[100%] z-30"
+                    className="box--style--sm absolute flex flex-col border-2 border-black p-3 pe-8 select-none gap-4 bg-gray-100 left-1 -bottom-1 translate-y-full z-30"
                     onBlur={() => setCollapse(true)}
                 >
                     <div className="flex gap-2 items-center">
@@ -91,7 +91,7 @@ const Avatar = ({
                                     {username?.charAt(0)?.toUpperCase()}
                                 </div>
                             ) : (
-                                <img className="flex--center h-[100%] w-[100%]" />
+                                <img className="flex--center h-full w-full" />
                             )}
                         </div>
 

@@ -70,7 +70,7 @@ const VisibilityConfig = ({ open, setOpen }) => {
     return (
         <dialog
             ref={dialog}
-            className="z-40 relative backdrop:bg-black/15 box--style gap-4 items-start p-3 pb-4 h-fit min-w-[300px] max-h-[500px] border-black border-[2px] bg-gray-200"
+            className="z-40 relative backdrop:bg-black/15 box--style gap-4 items-start p-3 pb-4 h-fit min-w-[300px] max-h-[500px] border-black border-2 bg-gray-200"
             onClick={handleCloseOnOutsideClick}
         >
             <Loading
@@ -80,7 +80,7 @@ const VisibilityConfig = ({ open, setOpen }) => {
                 fontSize={"0.9rem"}
             />
 
-            <div className="flex w-full justify-between items-center border-b-[1px] border-black pb-3">
+            <div className="flex w-full justify-between items-center border-b border-black pb-3">
                 <p className="font-normal text-[1rem] text-gray-700">
                     board visibility
                 </p>

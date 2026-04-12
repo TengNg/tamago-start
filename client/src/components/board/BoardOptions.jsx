@@ -93,9 +93,9 @@ const BoardOptions = ({
                 id="board-menu"
                 tabIndex={-1}
                 onBlur={handleCloseMenuOnBlur}
-                className="bg-[rgb(var(--card-item-bg))] cursor-auto absolute outline-none bottom-0 right-0 overflow-x-hidden flex flex-col min-w-[300px] min-h-[200px] box--style shadow-gray-600 border-[2px] border-gray-600 p-3 select-none gap-2 translate-y-[105%]"
+                className="bg-[rgb(var(--card-item-bg))] cursor-auto absolute outline-hidden bottom-0 right-0 overflow-x-hidden flex flex-col min-w-[300px] min-h-[200px] box--style shadow-gray-600 border-2 border-gray-600 p-3 select-none gap-2 translate-y-[105%]"
             >
-                <div className="font-medium text-gray-600 flex-1 flex--center border-b-[1px] border-black pb-1 mb-1">
+                <div className="font-medium text-gray-600 flex-1 flex--center border-b border-black pb-1 mb-1">
                     options
                 </div>
 
@@ -163,7 +163,7 @@ const BoardOptions = ({
                 )}
 
                 <div
-                    className={`bg-[rgb(var(--card-item-bg))] absolute w-full h-fit min-h-full pb-4 top-0 right-0 flex flex-col px-5 transition-all ${showDescription === true ? "translate-x-0" : "-translate-x-[100%]"}`}
+                    className={`bg-[rgb(var(--card-item-bg))] absolute w-full h-fit min-h-full pb-4 top-0 right-0 flex flex-col px-5 transition-all ${showDescription === true ? "translate-x-0" : "-translate-x-full"}`}
                 >
                     <button
                         onClick={() => setShowDescription(false)}
@@ -189,7 +189,7 @@ const BoardOptions = ({
                         })}
                     </p>
                     <p
-                        className="font-normal text-[0.75rem] text-start mt-2 cursor-pointer hover:opacity-[75%]"
+                        className="font-normal text-[0.75rem] text-start mt-2 cursor-pointer hover:opacity-75"
                         onClick={() => {
                             navigator.clipboard
                                 .writeText(boardState?.board?._id)
@@ -204,7 +204,7 @@ const BoardOptions = ({
                     </p>
 
                     <textarea
-                        className="border-gray-600 mt-4 shadow-[0_3px_0_0] h-[80px] overflow-auto border-[2px] px-3 py-2 shadow-gray-600 bg-gray-100 w-full focus:outline-none font-medum sm:text-[0.75rem] text-gray-600 leading-normal"
+                        className="border-gray-600 mt-4 shadow-[0_3px_0_0] h-[80px] overflow-auto border-2 px-3 py-2 shadow-gray-600 bg-gray-100 w-full focus:outline-hidden font-medum sm:text-[0.75rem] text-gray-600 leading-normal"
                         placeholder="Write a short description..."
                         onBlur={handleUpdateDescription}
                         defaultValue={boardState.board.description}

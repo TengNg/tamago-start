@@ -103,7 +103,7 @@ const AddList = ({ open, setOpen }) => {
     return (
         <div
             ref={containerRef}
-            className={`${theme.itemTheme == "rounded" ? "rounded-md" : ""} group board--style--sm overflow-hidden bg-gray-100 w-[300px] min-w-[300px] border-[2px] min-h-[3rem] select-none cursor-pointer border-gray-500 shadow-gray-500 text-gray-500 font-medium`}
+            className={`${theme.itemTheme == "rounded-sm" ? "rounded-md" : ""} group board--style--sm overflow-hidden bg-gray-100 w-[300px] min-w-[300px] border-2 min-h-12 select-none cursor-pointer border-gray-500 shadow-gray-500 text-gray-500 font-medium`}
             style={{ backgroundColor: "rgba(241, 241, 241, 0.75)" }}
         >
             {open === false && (
@@ -119,7 +119,7 @@ const AddList = ({ open, setOpen }) => {
                 className={`flex-col flex h-[113px] py-2 px-2 gap-3 -mt-[100%] ${open && "mt-0"}`}
             >
                 <input
-                    className="border-[1px] text-sm border-gray-500 text-gray-500 font-medium p-2 focus:outline-none"
+                    className="border text-sm border-gray-500 text-gray-500 font-medium p-2 focus:outline-hidden"
                     type="text"
                     autoComplete="off"
                     placeholder="list title goes here..."

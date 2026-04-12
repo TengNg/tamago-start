@@ -12,7 +12,7 @@ const ThemesDialog = ({
             title={"themes"}
             open={open}
             setOpen={setOpen}
-            bodyClassName="!px-0"
+            bodyClassName="px-0!"
         >
             <div className="flex flex-col gap-3 h-fit">
                 {Object.entries(backgroundThemes).map((el) => {
@@ -20,7 +20,7 @@ const ThemesDialog = ({
 
                     return (
                         <button
-                            className="w-full h-[50px] border-[1px] border-gray-700 shadow-gray-700 shadow-[0px_3px_0_0] text-center grid items-center"
+                            className="w-full h-[50px] border border-gray-700 shadow-gray-700 shadow-[0px_3px_0_0] text-center grid items-center"
                             style={{
                                 backgroundColor: color,
                                 textDecoration:

@@ -197,13 +197,13 @@ const List = ({ index, list, cards }) => {
                 {...attributes}
                 {...listeners}
                 style={style}
-                className="select-none w-[4rem] h-[20rem] bg-transparent touch-none"
+                className="select-none w-16 h-80 bg-transparent touch-none"
             >
                 <div
-                    className={`list__item ${theme.itemTheme == "rounded" ? "rounded shadow-[0_3px_0_0]" : "shadow-[3px_4px_0_0]"} border-[2px] border-gray-700 shadow-gray-700 p-2 relative`}
+                    className={`list__item ${theme.itemTheme == "rounded-sm" ? "rounded-sm shadow-[0_3px_0_0]" : "shadow-[3px_4px_0_0]"} border-2 border-gray-700 shadow-gray-700 p-2 relative`}
                 >
                     <div
-                        className="text-center bg-gray-400 p-2 text-[10px] hover:bg-gray-400/75 grid place-items-center rounded-sm cursor-pointer"
+                        className="text-center bg-gray-400 p-2 text-[10px] hover:bg-gray-400/75 grid place-items-center rounded-xs cursor-pointer"
                         onClick={() => {
                             collapseList(list._id, false);
                         }}
@@ -246,8 +246,8 @@ const List = ({ index, list, cards }) => {
 
             <div
                 className={`
-                    ${theme.itemTheme == "rounded" ? "rounded-md shadow-[0_4px_0_0]" : "shadow-[4px_6px_0_0]"}
-                    list__item relative flex flex-col justify-start w-[300px] max-h-[100%] overflow-auto border-[2px] select-none pt-2 border-gray-700 shadow-gray-700
+                    ${theme.itemTheme == "rounded-sm" ? "rounded-md shadow-[0_4px_0_0]" : "box--style"}
+                    list__item relative flex flex-col justify-start w-[300px] max-h-full overflow-auto border-2 select-none pt-2 border-gray-700 shadow-gray-700
                 `}
             >
                 <div
@@ -256,14 +256,14 @@ const List = ({ index, list, cards }) => {
                 >
                     <div
                         ref={titleRef}
-                        className="w-[240px] font-medium sm:font-semibold text-gray-700 break-words whitespace-pre-line"
+                        className="w-[240px] font-medium sm:font-semibold text-gray-700 wrap-break-word whitespace-pre-line"
                         onMouseUp={handleMouseUp}
                     >
                         <p>{list.title}</p>
                     </div>
 
                     <textarea
-                        className="hidden bg-transparent h-fit w-[240px] focus:outline-none font-medium sm:font-semibold text-gray-700 leading-normal overflow-y-hidden resize-none"
+                        className="hidden bg-transparent h-fit w-[240px] focus:outline-hidden font-medium sm:font-semibold text-gray-700 leading-normal overflow-y-hidden resize-none"
                         value={list.title}
                         ref={textAreaRef}
                         onFocus={handleTextAreaOnFocus}
@@ -282,7 +282,7 @@ const List = ({ index, list, cards }) => {
                     </button>
                 </div>
 
-                <div className="h-[1px] mt-1 mb-2 mx-3 bg-gray-600"></div>
+                <div className="h-px mt-1 mb-2 mx-3 bg-gray-600"></div>
 
                 <div className="max-h-full overflow-y-auto flex flex-col">
                     <div className="flex flex-1 flex-col gap-2 overflow-y-auto px-3 py-1">
@@ -310,7 +310,7 @@ const List = ({ index, list, cards }) => {
                     {openCardComposer === false && (
                         <div className="mx-3 mt-2 mb-3 group">
                             <button
-                                className="w-full py-2 px-4 flex text-gray-400 text-sm group-hover:bg-gray-600/10 font-medium rounded-sm text-start"
+                                className="w-full py-2 px-4 flex text-gray-400 text-sm group-hover:bg-gray-600/10 font-medium rounded-xs text-start"
                                 onClick={() => setOpenCardComposer(true)}
                             >
                                 <span>+ new card</span>

@@ -48,13 +48,13 @@ const BoardForm = forwardRef(({}, ref) => {
             <form
                 ref={ref}
                 onSubmit={handleCreateBoard}
-                className="absolute board--style border-[2px] border-gray-600 shadow-gray-600 px-4 py-3 w-[250px] sm:w-[300px] flex flex-col gap-3 bg-gray-100 z-20 top-0 sm:left-0 left-1/2 sm:translate-x-0 -translate-x-1/2"
+                className="absolute board--style border-2 border-gray-600 shadow-gray-600 px-4 py-3 w-[250px] sm:w-[300px] flex flex-col gap-3 bg-gray-100 z-20 top-0 sm:left-0 left-1/2 sm:translate-x-0 -translate-x-1/2"
             >
                 <p className="text-gray-600 font-medium">+ new board</p>
 
                 <input
                     autoFocus={true}
-                    className="border-[2px] border-gray-400 text-gray-600 p-2"
+                    className="border-2 border-gray-400 text-gray-600 p-2"
                     type="text"
                     autoComplete="off"
                     placeholder="title *"
@@ -64,7 +64,7 @@ const BoardForm = forwardRef(({}, ref) => {
                 />
 
                 <input
-                    className="border-[2px] border-gray-400 text-gray-600 p-2"
+                    className="border-2 border-gray-400 text-gray-600 p-2"
                     type="text"
                     autoComplete="off"
                     placeholder="description"

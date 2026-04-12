@@ -44,15 +44,15 @@ const Members = ({ open, setOpen }) => {
         <>
             <dialog
                 ref={dialog}
-                className="z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 h-fit min-w-[300px] border-black border-[2px] bg-gray-200"
+                className="z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 h-fit min-w-[300px] border-black border-2 bg-gray-200"
                 onClick={handleCloseOnOutsideClick}
             >
-                <div className="flex w-full justify-between items-center border-b-[1px] border-black pb-3">
+                <div className="flex w-full justify-between items-center border-b border-black pb-3">
                     <p className="font-normal text-[1rem] text-gray-700">
                         members
                     </p>
                     <button
-                        className="text-gray-600 flex justify-center items-center focus:outline-none"
+                        className="text-gray-600 flex justify-center items-center focus:outline-hidden"
                         onClick={handleClose}
                     >
                         <Icon className="w-4 h-4" name="xmark" />

@@ -200,7 +200,7 @@ const CardQuickEditor = ({
                 <div className="flex h-full relative mb-2">
                     <textarea
                         ref={textAreaRef}
-                        className={`${theme.itemTheme == "rounded" ? "rounded" : ""} text-sm h-full bg-gray-50 border-[2px] py-4 px-4 text-gray-600 border-black shadow-[0_3px_0_0] shadow-black leading-normal overflow-y-hidden resize-none w-full font-medium placeholder-gray-400 focus:outline-none focus:bg-gray-50`}
+                        className={`${theme.itemTheme == "rounded-sm" ? "rounded-sm" : ""} text-sm h-full bg-gray-50 border-2 py-4 px-4 text-gray-600 border-black shadow-[0_3px_0_0] shadow-black leading-normal overflow-y-hidden resize-none w-full font-medium placeholder-gray-400 focus:outline-hidden focus:bg-gray-50`}
                         style={{
                             boxShadow: `${card.highlight == null ? "0 3px 0 0 #4b5563" : `0 3px 0 0 ${card.highlight}`}`,
                             borderColor: `${card.highlight == null ? "#4b5563" : `${card.highlight}`}`,
@@ -211,7 +211,7 @@ const CardQuickEditor = ({
                         value={initialTitle}
                         maxLength={200}
                     />
-                    <div className="flex flex-col gap-2 absolute top-0 -right-1 translate-x-[100%] justify-start items-start w-[200px]">
+                    <div className="flex flex-col gap-2 absolute top-0 -right-1 translate-x-full justify-start items-start w-[200px]">
                         {openHighlightPicker && (
                             <QuickEditorHighlightPicker card={card} />
                         )}

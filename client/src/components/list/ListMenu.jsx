@@ -75,7 +75,7 @@ export default function ListMenu({
     return (
         <div
             ref={containerRef}
-            className={`list__menu absolute top-0 left-0 outline-none z-10 border-gray-700 border-[2px] w-full py-2 px-3 ${theme.itemTheme == "rounded" ? "rounded-md" : ""}`}
+            className={`list__menu absolute top-0 left-0 outline-hidden z-10 border-gray-700 border-2 w-full py-2 px-3 ${theme.itemTheme == "rounded-sm" ? "rounded-md" : ""}`}
         >
             <button
                 className="absolute right-3 top-2.5 text-gray-600 flex justify-center items-center"
@@ -83,7 +83,7 @@ export default function ListMenu({
             >
                 <Icon className="w-4 h-4" name="xmark" />
             </button>
-            <div className="border-b-[1px] border-b-black pb-2 text-gray-700">
+            <div className="border-b border-b-black pb-2 text-gray-700">
                 <div className="text-[12px] sm:text-base">
                     <span className="font-medium">{list.title}</span>
                 </div>

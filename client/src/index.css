@@ -1,6 +1,131 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility flex--center {
+  @apply flex justify-center items-center;
+}
+
+@utility badge {
+  @apply text-[0.75rem] py-1 px-2 hover:brightness-105 font-medium;
+}
+
+@utility underline--style {
+  @apply before:content-[''] before:absolute before:w-[50%] before:h-[10%] before:bg-gray-600 before:-bottom-2 before:mx-auto before:left-0 before:right-0 before:transition-all;
+}
+
+@utility underline--hover {
+  @apply hover:before:w-[95%];
+}
+
+@utility form--style {
+  @apply border-gray-700 border-2 shadow-[5px_6px_0_0_black] shadow-gray-700 bg-gray-100 rounded-xs;
+}
+
+@utility box--style {
+  @apply shadow-[4px_6px_0_0];
+}
+
+@utility box--style--sm {
+  @apply shadow-[2px_4px_0_0];
+}
+
+@utility board--style {
+  @apply shadow-[0px_6px_0_0] cursor-pointer;
+}
+
+@utility board--style--sm {
+  @apply shadow-[0px_4px_0_0] cursor-pointer;
+}
+
+@utility board--hover {
+  @apply hover:mt-[6px] hover:shadow-none hover:brightness-110 transition-all;
+}
+
+@utility button--style {
+  @apply border-gray-700 border-2 px-3 py-2 text-gray-700 box-border font-medium;
+}
+
+@utility button--style--dark {
+  @apply px-3 py-2 bg-gray-600 text-white hover:bg-gray-500 font-medium;
+}
+
+@utility button--style--rounded {
+  @apply shadow-[0_3px_0_0] border-2 rounded-md font-medium;
+}
+
+@utility anchor--style {
+  @apply flex justify-center items-center py-1 md:px-2 px-1 text-gray-700! hover:underline select-none;
+}
+
+@utility anchor--style--selected {
+  @apply text-gray-50! bg-gray-600 flex justify-center items-center py-1 md:px-2 px-1 select-none;
+}
+
+@utility card--detail--button {
+  @apply bg-gray-100 border-2 border-black shadow-[0_3px_0_0] w-fit text-[0.8rem] px-3 py-4 cursor-pointer;
+}
+
+@utility key {
+  @apply bg-gray-100/30 border-[1.5px] border-gray-600 shadow-[0_2px_0_0] shadow-gray-600 p-1 px-2 text-[10px] text-gray-600 font-medium hover:bg-gray-400 hover:text-white select-none;
+}
+
+@utility card--details--button {
+  @apply flex items-center justify-center gap-1 w-fit min-w-[40px] h-[35px] border-2 shadow-[0_2px_0_0] bg-gray-100 text-[9px] sm:text-[0.75rem] p-2 font-semibold hover:shadow-[0_1px_0_0] hover:mt-px;
+}
+
+@utility card__item {
+  @apply text-gray-800 dark:text-white;
+  background: rgb(var(--card-item-bg));
+
+  &.focused {
+    @apply text-gray-800 dark:text-white;
+    background: rgb(var(--card-item-focused-bg)) !important;
+  }
+}
+
+@utility past__due__card {
+  @apply text-gray-800 dark:text-white;
+  background: rgb(var(--past-due-card-bg));
+}
+
+@utility focused {
+  &.card__item {
+    @apply text-gray-800 dark:text-white;
+    background: rgb(var(--card-item-focused-bg)) !important;
+  }
+}
+
+@utility list__item {
+  @apply text-gray-800 dark:text-white;
+  background: rgb(var(--card-item-bg));
+}
+
+@utility list__menu {
+  @apply text-gray-800 dark:text-white;
+  background: rgb(var(--card-item-bg));
+}
+
+@utility account__menu {
+  @apply text-gray-800 dark:text-white;
+  background: rgb(var(--card-item-bg));
+}
 
 @layer base {
   :root {
@@ -14,100 +139,6 @@
     --past-due-card-bg: 255, 194, 231;
     --card-item-focused-bg: 173, 216, 230;
   }
-}
-
-@layer components {
-    .flex--center {
-        @apply flex justify-center items-center
-    }
-
-    .badge {
-        @apply text-[0.75rem] py-1 px-2 hover:brightness-105 font-medium
-    }
-
-    .underline--style {
-        @apply before:content-[''] before:absolute before:w-[50%] before:h-[10%] before:bg-gray-600 before:bottom-[-0.5rem] before:mx-auto before:left-0 before:right-0 before:transition-all
-    }
-
-    .underline--hover {
-        @apply before:hover:w-[95%]
-    }
-
-    .form--style {
-        @apply border-gray-700 border-[2px] shadow-[5px_6px_0_0_black] shadow-gray-700 bg-gray-100 rounded-sm
-    }
-
-    .box--style {
-        @apply shadow-[4px_6px_0_0]
-    }
-
-    .box--style--sm {
-        @apply shadow-[2px_4px_0_0]
-    }
-
-    .board--style {
-        @apply shadow-[0px_6px_0_0] cursor-pointer
-    }
-
-    .board--style--sm {
-        @apply shadow-[0px_4px_0_0] cursor-pointer
-    }
-
-    .board--hover {
-        @apply hover:mt-[6px] hover:shadow-none hover:brightness-110 transition-all
-    }
-
-    .button--style {
-        @apply border-gray-700 border-[2px] px-3 py-2 text-gray-700 box-border font-medium
-    }
-
-    .button--style--dark {
-        @apply px-3 py-2 bg-gray-600 text-white hover:bg-gray-500 font-medium
-    }
-
-    .button--style--rounded {
-        @apply shadow-[0_3px_0_0] border-[2px] rounded-md font-medium
-    }
-
-    .anchor--style {
-        @apply flex justify-center items-center py-1 md:px-2 px-1 text-gray-700 hover:underline select-none
-    }
-
-    .anchor--style--selected {
-        @apply text-gray-50 bg-gray-600 flex justify-center items-center py-1 md:px-2 px-1 select-none
-    }
-
-    .card--detail--button {
-        @apply bg-gray-100 border-[2px] border-black shadow-[0_3px_0_0] w-fit text-[0.8rem] px-3 py-4 cursor-pointer
-    }
-
-    .key {
-        @apply bg-gray-100/30 border-[1.5px] border-gray-600 shadow-[0_2px_0_0] shadow-gray-600 p-1 px-2 text-[10px] text-gray-600 font-medium hover:bg-gray-400 hover:text-white select-none
-    }
-
-    .card--details--button {
-        @apply flex items-center justify-center gap-1 w-fit min-w-[40px] h-[35px] border-2 shadow-[0_2px_0_0] bg-gray-100 text-[9px] sm:text-[0.75rem] p-2 font-semibold hover:shadow-[0_1px_0_0] hover:mt-[1px]
-    }
-
-    .card__item {
-        @apply text-gray-800 dark:text-white;
-        background: rgb(var(--card-item-bg));
-    }
-
-    .past__due__card {
-        @apply text-gray-800 dark:text-white;
-        background: rgb(var(--past-due-card-bg));
-    }
-
-    .card__item.focused {
-        @apply text-gray-800 dark:text-white;
-        background: rgb(var(--card-item-focused-bg)) !important;
-    }
-
-    .list__item, .list__menu, .account__menu {
-        @apply text-gray-800 dark:text-white;
-        background: rgb(var(--card-item-bg));
-    }
 }
 
 @font-face { font-family: 'JetBrainsMono'; src: url('./fonts/JetBrainsMono-VariableFont_wght.ttf') format('truetype'); }

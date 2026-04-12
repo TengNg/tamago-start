@@ -138,7 +138,7 @@ const InvitationForm = ({ open, setOpen }) => {
         <>
             <dialog
                 ref={dialog}
-                className="z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 h-fit min-w-[350px] border-black border-[2px] bg-gray-200 overflow-hidden"
+                className="z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 h-fit min-w-[350px] border-black border-2 bg-gray-200 overflow-hidden"
                 onClick={handleCloseOnOutsideClick}
             >
                 <Loading
@@ -148,7 +148,7 @@ const InvitationForm = ({ open, setOpen }) => {
                     displayText={"loading..."}
                 />
 
-                <div className="flex w-full justify-between items-center border-b-[1px] border-black pb-3">
+                <div className="flex w-full justify-between items-center border-b border-black pb-3">
                     <p className="font-normal text-[1rem] text-gray-700">
                         invite people this board
                     </p>
@@ -163,7 +163,7 @@ const InvitationForm = ({ open, setOpen }) => {
                 <div className="w-full relative flex flex-col justify-center gap-3 py-2 my-3">
                     <input
                         ref={usernameInputRef}
-                        className={`p-3 w-full overflow-hidden shadow-[0_3px_0_0] shadow-gray-600 sm:text-[0.75rem] whitespace-nowrap text-ellipsis border-[2px] bg-gray-100 border-gray-600 text-gray-600 font-bold select-none font-mono focus:outline-none`}
+                        className={`p-3 w-full overflow-hidden shadow-[0_3px_0_0] shadow-gray-600 sm:text-[0.75rem] whitespace-nowrap text-ellipsis border-2 bg-gray-100 border-gray-600 text-gray-600 font-bold select-none font-mono focus:outline-hidden`}
                         placeholder="Enter username..."
                         onChange={(e) => setUsername(e.target.value)}
                         onKeyDown={handleInputOnEnter}
@@ -171,7 +171,7 @@ const InvitationForm = ({ open, setOpen }) => {
                     />
                     <button
                         onClick={() => handleSendInvitation()}
-                        className="button--style border-[2px] py-2 text-[0.75rem] hover:bg-gray-600 hover:text-white"
+                        className="button--style border-2 py-2 text-[0.75rem] hover:bg-gray-600 hover:text-white"
                     >
                         + invite
                     </button>
@@ -188,7 +188,7 @@ const InvitationForm = ({ open, setOpen }) => {
                     )}
                 </div>
 
-                <div className="flex flex-col gap-3 w-full max-w-[400px] max-h-[250px] overflow-auto border-[1px] border-t-gray-600 p-0 py-3">
+                <div className="flex flex-col gap-3 w-full max-w-[400px] max-h-[250px] overflow-auto border border-t-gray-600 p-0 py-3">
                     {boardState.members.map((member) => {
                         return (
                             <Member

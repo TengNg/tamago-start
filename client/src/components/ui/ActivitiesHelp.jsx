@@ -20,7 +20,7 @@ const ActivitiesHelp = ({ open, setOpen }) => {
                     </li>
                 </ul>
 
-                <div className="h-[1px] bg-black mt-6 mb-4"></div>
+                <div className="h-px bg-black mt-6 mb-4"></div>
                 <p>[?]:</p>
                 <ul className="flex flex-col gap-4 list-disc mt-2">
                     <li>

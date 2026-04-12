@@ -113,7 +113,7 @@ const BoardActivities = ({ open, setOpen }) => {
     return (
         <dialog
             ref={dialog}
-            className="z-40 backdrop:bg-black/15 box--style gap-4 items-start h-fit min-w-[350px] w-[500px] border-black border-[2px] bg-gray-50"
+            className="z-40 backdrop:bg-black/15 box--style gap-4 items-start h-fit min-w-[350px] w-[500px] border-black border-2 bg-gray-50"
             onClick={handleCloseOnOutsideClick}
         >
             <div className="flex w-full justify-between items-center border-black p-3">
@@ -146,7 +146,7 @@ const BoardActivities = ({ open, setOpen }) => {
                 </button>
             </div>
 
-            <div className="border-b-[1px] border-gray-300"></div>
+            <div className="border-b border-gray-300"></div>
 
             <div className="relative flex flex-col gap-3 p-3 text-gray-600 text-[0.65rem] sm:text-[0.75rem] max-h-[600px] overflow-auto">
                 <Loading

@@ -261,10 +261,10 @@ const Filter = ({ open, setOpen }) => {
     return (
         <dialog
             ref={dialog}
-            className="z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 min-w-[350px] h-fit border-black border-[2px] bg-gray-200"
+            className="z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 min-w-[350px] h-fit border-black border-2 bg-gray-200"
             onClick={handleCloseOnOutsideClick}
         >
-            <div className="flex w-full justify-between items-center border-b-[1px] border-black pb-3">
+            <div className="flex w-full justify-between items-center border-b border-black pb-3">
                 <div className="flex gap-2">
                     <p className="font-normal text-[1rem] text-gray-700">
                         filter
@@ -294,7 +294,7 @@ const Filter = ({ open, setOpen }) => {
                     <div className="w-full flex gap-2">
                         <input
                             ref={cardTitleInput}
-                            className={`p-3 w-full overflow-hidden shadow-[0_3px_0_0] shadow-gray-600 text-sm whitespace-nowrap text-ellipsis border-[2px] bg-gray-100 border-gray-600 text-gray-600 font-medium select-none focus:outline-none`}
+                            className={`p-3 w-full overflow-hidden shadow-[0_3px_0_0] shadow-gray-600 text-sm whitespace-nowrap text-ellipsis border-2 bg-gray-100 border-gray-600 text-gray-600 font-medium select-none focus:outline-hidden`}
                             placeholder="card title"
                             value={searchInputValue}
                             onChange={(e) =>
@@ -303,11 +303,11 @@ const Filter = ({ open, setOpen }) => {
                         />
                     </div>
 
-                    <div className="h-[1px] bg-gray-700 w-full"></div>
+                    <div className="h-px bg-gray-700 w-full"></div>
 
                     <div className="w-full flex gap-2 flex-wrap">
                         <div
-                            className="select-none flex items-center gap-1 text-[0.75rem] cursor-pointer w-fit p-1 px-2 text-gray-700 font-medium hover:brightness-105 border-[1px] border-gray-700"
+                            className="select-none flex items-center gap-1 text-[0.75rem] cursor-pointer w-fit p-1 px-2 text-gray-700 font-medium hover:brightness-105 border border-gray-700"
                             onClick={() => handleFilterByOwner("unassigned")}
                             style={{
                                 textDecoration: currentOwners.includes(
@@ -329,7 +329,7 @@ const Filter = ({ open, setOpen }) => {
                             return (
                                 <div
                                     key={id}
-                                    className="select-none flex items-center gap-1 text-[0.75rem] cursor-pointer w-fit p-1 px-2 text-gray-700 font-medium hover:brightness-105 border-[1px] border-gray-700"
+                                    className="select-none flex items-center gap-1 text-[0.75rem] cursor-pointer w-fit p-1 px-2 text-gray-700 font-medium hover:brightness-105 border border-gray-700"
                                     onClick={() =>
                                         handleFilterByOwner(username)
                                     }
@@ -351,7 +351,7 @@ const Filter = ({ open, setOpen }) => {
                         })}
                     </div>
 
-                    <div className="h-[1px] bg-gray-700 w-full"></div>
+                    <div className="h-px bg-gray-700 w-full"></div>
 
                     <div className="w-full flex flex-col gap-2">
                         {Object.values(PRIORITY_LEVELS).map((item) => {
@@ -377,10 +377,10 @@ const Filter = ({ open, setOpen }) => {
                         })}
                     </div>
 
-                    <div className="h-[1px] bg-black w-full"></div>
+                    <div className="h-px bg-black w-full"></div>
 
                     <div
-                        className="text-[0.75rem] cursor-pointer w-full py-1 px-3 text-green-800 font-medium bg-green-100 border-[2px] border-green-800 hover:brightness-105"
+                        className="text-[0.75rem] cursor-pointer w-full py-1 px-3 text-green-800 font-medium bg-green-100 border-2 border-green-800 hover:brightness-105"
                         style={{
                             textDecoration:
                                 searchParams.get("verified") === "true"
@@ -392,10 +392,10 @@ const Filter = ({ open, setOpen }) => {
                         VERIFIED
                     </div>
 
-                    <div className="h-[1px] bg-black w-full"></div>
+                    <div className="h-px bg-black w-full"></div>
 
                     <div
-                        className="text-[0.75rem] cursor-pointer w-full py-1 px-3 text-pink-800 font-medium bg-pink-100 border-[2px] border-pink-800 hover:brightness-105"
+                        className="text-[0.75rem] cursor-pointer w-full py-1 px-3 text-pink-800 font-medium bg-pink-100 border-2 border-pink-800 hover:brightness-105"
                         style={{
                             textDecoration:
                                 searchParams.get("stale") === "true"
@@ -409,10 +409,10 @@ const Filter = ({ open, setOpen }) => {
 
                     {hasFilter && (
                         <>
-                            <div className="h-[1px] bg-black w-full"></div>
+                            <div className="h-px bg-black w-full"></div>
                             <button
                                 type="button"
-                                className="hover:bg-gray-200 mx-auto w-full button--style border-[2px] py-2 text-[0.75rem] shadow-[0_3px_0_0] shadow-gray-600 bg-gray-100"
+                                className="hover:bg-gray-200 mx-auto w-full button--style border-2 py-2 text-[0.75rem] shadow-[0_3px_0_0] shadow-gray-600 bg-gray-100"
                                 onClick={() => {
                                     setSearchInputValue("");
                                     setSearchParams({}, { replace: true });

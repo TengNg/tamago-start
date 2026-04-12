@@ -78,10 +78,10 @@ const JoinBoardRequestForm = ({ open, setOpen }) => {
     return (
         <dialog
             ref={dialog}
-            className="relative z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 pb-4 h-fit min-w-[350px] max-h-[500px] border-black border-[2px] bg-gray-200"
+            className="relative z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 pb-4 h-fit min-w-[350px] max-h-[500px] border-black border-2 bg-gray-200"
             onClick={handleCloseOnOutsideClick}
         >
-            <div className="flex w-full justify-between items-center border-b-[1px] border-black pb-3">
+            <div className="flex w-full justify-between items-center border-b border-black pb-3">
                 <p className="font-normal text-[1rem] text-gray-700">
                     send join request
                 </p>
@@ -100,7 +100,7 @@ const JoinBoardRequestForm = ({ open, setOpen }) => {
                             type="text"
                             name="boardCode"
                             ref={boardCodeInput}
-                            className={`p-3 w-full overflow-hidden shadow-[0_3px_0_0] shadow-gray-600 whitespace-nowrap text-ellipsis border-[2px] bg-gray-100 border-gray-600 text-gray-600 select-none font-mono focus:outline-none`}
+                            className={`p-3 w-full overflow-hidden shadow-[0_3px_0_0] shadow-gray-600 whitespace-nowrap text-ellipsis border-2 bg-gray-100 border-gray-600 text-gray-600 select-none font-mono focus:outline-hidden`}
                             placeholder="enter board code..."
                         />
                     </div>
