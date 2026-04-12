@@ -40,9 +40,12 @@ const getAllRequests = async (req, res) => {
 
     const perPage = MAX_REQUEST_PAGE;
     let { page } = req.query;
-    page = +page || 1;
+    const pageNum = Number(Array.isArray(page) ? page[0] : page) || 1;
 
     const ownedBoardIds = await Board.find({ createdBy: userId }).distinct('_id').lean();
+    const total = await JoinBoardRequest.countDocuments({
+        boardId: { $in: ownedBoardIds }
+    });
 
     const joinRequests = await JoinBoardRequest
         .find({
@@ -61,11 +64,13 @@ const getAllRequests = async (req, res) => {
             }
         })
         .sort({ createdAt: -1 })
-        .skip((page - 1) * perPage)
+        .skip((pageNum - 1) * perPage)
         .limit(perPage)
         .lean();
 
-    return res.json({ joinRequests });
+    const hasMore = pageNum * perPage < total;
+
+    return res.json({ joinRequests, hasMore });
 };
 
 /**
