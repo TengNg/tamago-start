@@ -55,6 +55,10 @@ function App() {
     );
 
     useEffect(() => {
+        if ("scrollRestoration" in window.history) {
+            window.history.scrollRestoration = "manual";
+        }
+
         const handleKeyDown = (event) => {
             if (event.ctrlKey && event.key === "e") {
                 event.preventDefault();
@@ -65,6 +69,7 @@ function App() {
                 setOpenPinnedBoards(false);
             }
         };
+
         document.addEventListener("keydown", handleKeyDown);
 
         return () => {

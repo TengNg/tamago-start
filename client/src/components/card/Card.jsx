@@ -91,6 +91,7 @@ export default function Card({ card }) {
             style={style}
             {...attributes}
             {...(isLargeScreen ? listeners : {})}
+            data-card-item={`${card._id}-${card.listId}`}
             className={`card__item
                 ${focusedCard?.id === card._id && focusedCard?.focused ? "focused" : ""}
                 ${card.hiddenByFilter ? "hidden" : ""}
@@ -98,7 +99,7 @@ export default function Card({ card }) {
                 ${isLargeScreen ? "touch-none" : ""}
                 ${dateToCompare(card?.dueDate) ? "past__due__card" : ""}
                 relative select-none w-full group border-[2px] border-gray-600 p-4 flex flex-col gap-2
-                shadow-[0_2px_0_0] shadow-gray-600 hover:shadow-[0_4px_0_0]
+                shadow-[0_2px_0_0] shadow-gray-600 hover:shadow-[0_4px_0_0] scroll-mx-7
             `}
             onKeyDown={(e) => {
                 if (e.key == "Enter") {

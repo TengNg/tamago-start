@@ -1,12 +1,61 @@
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState, useEffect } from "react";
+import { chatKeys } from "../../queries/chatKeys";
+import { sendMessage } from "../../api/chatApi";
+import { useParams } from "react-router-dom";
+import useBoardState from "../../hooks/useBoardState";
 
-const ChatInput = ({
-    sendMessage,
-    withSentButton = false,
-    setHasReceivedNewMessage,
-}) => {
+const ChatInput = () => {
+    const { boardId } = useParams();
+    const queryClient = useQueryClient();
+    const { socket } = useBoardState();
     const [message, setMessage] = useState("");
     const textAreaRef = useRef();
+
+    const sendMessageMutation = useMutation({
+        mutationFn: (content) => sendMessage({ boardId, content }),
+        onSuccess: async (data, _variables, _context) => {
+            const chatMessage = data.chatMessage;
+            queryClient.setQueryData(chatKeys.messages(boardId), (old) => {
+                if (!old) {
+                    return old;
+                }
+
+                const currentPages = [...old.pages];
+                const currentFirstPage = currentPages[0];
+                const newFirstPage = {
+                    ...currentFirstPage,
+                    messages: [
+                        chatMessage,
+                        ...currentFirstPage.messages.slice(
+                            0,
+                            currentFirstPage.messages.length - 1,
+                        ),
+                    ],
+                };
+
+                if (old.pages.length === 1) {
+                    return {
+                        ...old,
+                        pages: [newFirstPage],
+                    };
+                }
+
+                currentPages[0] = newFirstPage;
+                return {
+                    ...old,
+                    pages: currentPages,
+                };
+            });
+
+            socket.emit("sendMessage", { chatMessage });
+        },
+        onError: (err) => {
+            const errMsg =
+                err.response?.data?.message || "Failed to send message";
+            toast.error(errMsg);
+        },
+    });
 
     useEffect(() => {
         const textarea = textAreaRef.current;
@@ -15,7 +64,8 @@ const ChatInput = ({
     }, []);
 
     const send = () => {
-        sendMessage(textAreaRef.current.value.trim());
+        const messageContent = textAreaRef.current.value.trim();
+        sendMessageMutation.mutate(messageContent);
         setMessage("");
         textAreaRef.current.style.height = "2.5rem";
     };
@@ -37,31 +87,30 @@ const ChatInput = ({
 
     const handleSentButtonOnClick = () => {
         if (message) {
-            setHasReceivedNewMessage(true);
             send(message);
         }
     };
 
     return (
-        <div className="flex w-full py-2 gap-1 bg-slate-100 justify-start items-start">
-            <textarea
-                id="chat-input"
-                className="text-[1rem] sm:text-[0.75rem] text-gray-700 bg-gray-100 sm:min-h-[2.5rem] min-h-[2.75rem] max-h-[100px] border border-gray-600 leading-normal overflow-y-auto resize-none w-full py-2 px-3 font-medium placeholder-gray-500 focus:outline-none focus:bg-white"
-                placeholder="Write something..."
-                ref={textAreaRef}
-                value={message}
-                onChange={handleTextAreaChanged}
-                onKeyDown={handleKeyDown}
-            ></textarea>
+        <div className="px-2 border-t-2 border-gray-600">
+            <div className="flex w-full py-2 gap-1 justify-start items-start">
+                <textarea
+                    id="chat-input"
+                    className="text-[1rem] sm:text-[0.75rem] text-gray-700 sm:min-h-[2.5rem] min-h-[2.75rem] max-h-[100px] border border-gray-600 leading-normal overflow-y-auto resize-none w-full py-2 px-3 font-medium placeholder-gray-500 focus:outline-none bg-transparent"
+                    placeholder="Write something..."
+                    ref={textAreaRef}
+                    value={message}
+                    onChange={handleTextAreaChanged}
+                    onKeyDown={handleKeyDown}
+                ></textarea>
 
-            {withSentButton && (
                 <button
                     className="h-[2.75rem] sm:h-[2.5rem] d-flex justify-center items-center text-[12px] text-gray-600 border-[1px] border-gray-600 px-3 hover:text-white hover:bg-gray-500"
                     onClick={handleSentButtonOnClick}
                 >
                     send
                 </button>
-            )}
+            </div>
         </div>
     );
 };

@@ -4,7 +4,6 @@ const useKeyBinds = () => {
     const [openMembers, setOpenMembers] = useState(false);
     const [openFilter, setOpenFilter] = useState(false);
     const [openChatBox, setOpenChatBox] = useState(false);
-    const [openFloatingChat, setOpenFloatingChat] = useState(false);
 
     const [openInvitationForm, setOpenInvitationForm] = useState(false);
     const [openAddList, setOpenAddList] = useState(false);
@@ -17,12 +16,6 @@ const useKeyBinds = () => {
         const handleKeyDown = (event) => {
             const key = event.key;
 
-            if (key === "Escape") {
-                setOpenFloatingChat(false);
-                setOpenChatBox(false);
-                return;
-            }
-
             const isTextFieldFocused = document.querySelector("input:focus");
             const isTextAreaFocused = document.querySelector("textarea:focus");
 
@@ -30,11 +23,7 @@ const useKeyBinds = () => {
                 return;
             }
 
-            const formOpen =
-                openFilter ||
-                openFloatingChat ||
-                openInvitationForm ||
-                openAddList;
+            const formOpen = openFilter || openInvitationForm || openAddList;
 
             if (event.ctrlKey) {
                 if (
@@ -122,9 +111,6 @@ const useKeyBinds = () => {
 
                 if (key === ".") {
                     event.preventDefault();
-                    if (openFloatingChat) {
-                        setOpenFloatingChat(false);
-                    }
                     setOpenChatBox((prev) => !prev);
                     return;
                 }
@@ -134,7 +120,6 @@ const useKeyBinds = () => {
                     if (openChatBox) {
                         setOpenChatBox(false);
                     }
-                    setOpenFloatingChat((prev) => !prev);
                     return;
                 }
             }
@@ -156,9 +141,6 @@ const useKeyBinds = () => {
 
         openChatBox,
         setOpenChatBox,
-
-        openFloatingChat,
-        setOpenFloatingChat,
 
         openInvitationForm,
         setOpenInvitationForm,

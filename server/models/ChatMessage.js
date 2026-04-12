@@ -30,13 +30,8 @@ const chatSchema = new Schema({
         required: true,
         default: Date.now,
     },
+}, { collection: 'chat_messages' });
 
-    trackedId: {
-        type: String,
-        required: true,
-    },
-});
+const ChatMessage = model('ChatMessage', chatSchema);
 
-const Chat = model('Chat', chatSchema);
-
-export default Chat;
+export default ChatMessage;

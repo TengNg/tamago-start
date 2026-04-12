@@ -13,10 +13,6 @@ const KeyBindings = ({ open, setOpen }) => {
                 </li>
 
                 <li>
-                    <span className="key">&gt;</span> open chat (floating)
-                </li>
-
-                <li>
                     <span className="key">a</span>{" "}
                     <span className="key">d</span> scroll left right
                 </li>

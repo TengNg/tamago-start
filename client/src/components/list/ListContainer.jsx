@@ -35,7 +35,7 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
-                distance: 10,
+                distance: 5,
             },
         }),
     );

@@ -23,6 +23,10 @@ const getInvitations = async (req, res) => {
     let { page } = req.query;
     const pageNum = Number(Array.isArray(page) ? page[0] : page) || 1;
 
+    const total = await Invitation.countDocuments({
+        invitedUserId: userId
+    });
+
     const invitations = await Invitation
         .find({ invitedUserId: userId })
         .populate({
@@ -38,7 +42,9 @@ const getInvitations = async (req, res) => {
         .limit(perPage)
         .lean();
 
-    res.status(200).json({ invitations });
+    const hasMore = pageNum * perPage < total;
+
+    res.status(200).json({ invitations, hasMore });
 };
 
 /**

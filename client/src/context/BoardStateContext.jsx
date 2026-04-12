@@ -9,12 +9,16 @@ import { useParams, useSearchParams } from "react-router-dom";
 import useWindowSize from "../hooks/useWindowSize";
 import { useQueryClient } from "@tanstack/react-query";
 import useCurrentUserContext from "../hooks/useCurrentUserContext";
+import { chatKeys } from "../queries/chatKeys";
+import useToast from "../hooks/useToast";
 
 const BoardStateContext = createContext({});
 
 export const BoardStateContextProvider = ({ children }) => {
     const { currentUser } = useCurrentUserContext();
     const queryClient = useQueryClient();
+
+    const toast = useToast();
 
     const { width: windowWidth } = useWindowSize();
     const isLargeScreen = windowWidth >= 769;
@@ -23,7 +27,6 @@ export const BoardStateContextProvider = ({ children }) => {
     const [searchParams] = useSearchParams();
 
     const [boardState, setBoardState] = useState({});
-    const [chats, setChats] = useState([]);
     const [isRemoved, setIsRemoved] = useState(false);
     const [openMoveListForm, setOpenMoveListForm] = useState(false);
     const [focusedCard, setFocusedCard] = useState();
@@ -34,6 +37,8 @@ export const BoardStateContextProvider = ({ children }) => {
     const [listToMove, setListToMove] = useState();
     const [hasFilter, setHasFilter] = useState(false);
 
+    const [isAtBottomOfChatBox, setIsAtBottomOfChatBox] = useState(true);
+
     const [theme, setTheme] = useLocalStorage(
         LOCAL_STORAGE_KEYS.BOARD_ITEM_THEME,
         {},
@@ -43,21 +48,7 @@ export const BoardStateContextProvider = ({ children }) => {
         {},
     );
 
-    const [hasReceivedNewMessage, setHasReceivedNewMessage] = useState(true);
-    const [isAtBottomOfChat, setIsAtBottomOfChat] = useState(true);
-    const [chatMessageToast, setChatMessageToast] = useState({
-        open: false,
-        message: "",
-        duration: null,
-        timeSent: null,
-        from: null,
-    });
-
     const [isConnected, setIsConnected] = useState(false);
-
-    const notify = ({ message, timeSent, duration, from }) => {
-        setChatMessageToast({ open: true, message, timeSent, duration, from });
-    };
 
     const searchParamsFn = useCallback(() => {
         const search = searchParams.get("search");
@@ -343,28 +334,86 @@ export const BoardStateContextProvider = ({ children }) => {
             setCardDueDate(data.id, data.listId, data.dueDate);
         });
 
-        socket.on("receiveMessage", (data) => {
-            setChats((prev) => [...prev, data]);
+        // CHAT_MESSGAGE =======================================================
 
-            // donnot notify message from self
-            if (currentUser.username === data.sentBy.user) {
-                return;
-            }
+        socket.on("messageReceived", (data) => {
+            const { chatMessage } = data;
+            queryClient.setQueryData(chatKeys.messages(boardId), (old) => {
+                if (!old) {
+                    return old;
+                }
 
-            notify({
-                from: { username: data.sentBy.username },
-                message: data.content,
-                timeSent: data.createdAt,
-                duration: null,
+                const currentPages = [...old.pages];
+                const currentFirstPage = currentPages[0];
+                const newFirstPage = {
+                    ...currentFirstPage,
+                    messages: [
+                        chatMessage,
+                        ...currentFirstPage.messages.slice(
+                            0,
+                            currentFirstPage.messages.length - 1,
+                        ),
+                    ],
+                };
+
+                if (old.pages.length === 1) {
+                    return {
+                        ...old,
+                        pages: [newFirstPage],
+                    };
+                }
+
+                currentPages[0] = newFirstPage;
+                return {
+                    ...old,
+                    pages: currentPages,
+                };
             });
 
-            setHasReceivedNewMessage(true);
+            if (!isAtBottomOfChatBox) {
+                toast.success(
+                    `new message from ${chatMessage.sentBy.username}`,
+                    3000,
+                );
+            }
         });
 
         socket.on("messageDeleted", (data) => {
-            setChats((prev) => {
-                return prev.filter((chat) => chat.trackedId !== data.trackedId);
+            const { id } = data;
+            queryClient.setQueryData(chatKeys.messages(boardId), (old) => {
+                if (!old) {
+                    return old;
+                }
+
+                const newPages = old.pages.map((page) => {
+                    return {
+                        ...page,
+                        messages: [...page.messages].filter((message) => {
+                            return message._id !== id;
+                        }),
+                    };
+                });
+
+                return {
+                    ...old,
+                    pages: newPages,
+                };
             });
+        });
+
+        socket.on("messagesCleared", (_data) => {
+            queryClient.setQueryData(chatKeys.messages(boardId), (old) => {
+                if (!old) {
+                    return old;
+                }
+
+                return {
+                    pages: [],
+                    pageParams: [],
+                };
+            });
+
+            toast.success("Chat cleared");
         });
 
         // CARD_COMMENT ========================================================
@@ -669,13 +718,6 @@ export const BoardStateContextProvider = ({ children }) => {
     };
 
     const addCardToList = (listId, card) => {
-        // const currentBoardState = { ...boardState };
-        // const list = currentBoardState.lists.find(list => list._id === listId);
-        // if (list) {
-        //     list.cards.push(card);
-        //     setBoardState(currentBoardState);
-        // }
-
         setBoardState((prev) => {
             return {
                 ...prev,
@@ -817,9 +859,6 @@ export const BoardStateContextProvider = ({ children }) => {
                 removeMemberFromBoard,
                 addMemberToBoard,
 
-                setChats,
-                chats,
-
                 isRemoved,
                 setIsRemoved,
 
@@ -857,13 +896,16 @@ export const BoardStateContextProvider = ({ children }) => {
                 isConnected,
                 setIsConnected,
 
-                chatMessageToast,
-                setChatMessageToast,
+                isAtBottomOfChatBox,
+                setIsAtBottomOfChatBox,
 
-                hasReceivedNewMessage,
-                setHasReceivedNewMessage,
-                isAtBottomOfChat,
-                setIsAtBottomOfChat,
+                // chatMessageToast,
+                // setChatMessageToast,
+                //
+                // hasReceivedNewMessage,
+                // setHasReceivedNewMessage,
+                // isAtBottomOfChat,
+                // setIsAtBottomOfChat,
 
                 windowWidth,
                 isLargeScreen,

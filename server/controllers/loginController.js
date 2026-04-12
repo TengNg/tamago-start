@@ -14,12 +14,12 @@ const handleLogin = async (req, res) => {
 
     const foundUser = await User.findOne({ username });
     if (!foundUser) {
-        return res.status(401).json({ message: "Username not found" });
+        return res.status(401).json({ message: "Invalid username or password" });
     }
 
     const validPwd = await bcrypt.compare(password, foundUser.password);
     if (!validPwd) {
-        return res.status(400).json({ message: "Password is incorrect" });
+        return res.status(401).json({ message: "Invalid username or password" });
     }
 
     sendAuthCookies(res, {

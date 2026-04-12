@@ -62,7 +62,7 @@ const Activities = () => {
         queryKey: ["invitations"],
         queryFn: ({ pageParam = 1 }) => fetchInvitations({ page: pageParam }),
         getNextPageParam: (lastPage, pages) => {
-            return lastPage.length ? pages.length + 1 : undefined;
+            return lastPage.hasMore ? pages.length + 1 : undefined;
         },
     });
 
@@ -80,7 +80,7 @@ const Activities = () => {
         queryKey: ["boardRequests"],
         queryFn: ({ pageParam = 1 }) => fetchBoardRequests({ page: pageParam }),
         getNextPageParam: (lastPage, pages) => {
-            return lastPage.length ? pages.length + 1 : undefined;
+            return lastPage.hasMore ? pages.length + 1 : undefined;
         },
     });
 
@@ -256,14 +256,14 @@ const Activities = () => {
         const response = await axiosPrivate.get(
             `/invitations?page=${page}&status=${status}`,
         );
-        return response?.data?.invitations || [];
+        return response?.data;
     }
 
     async function fetchBoardRequests({ page, status = "all" }) {
         const response = await axiosPrivate.get(
             `/join_board_requests?page=${page}&status=${status}`,
         );
-        return response?.data?.joinRequests || [];
+        return response?.data;
     }
 
     async function handleAcceptInvitation(invitationId) {
@@ -311,19 +311,15 @@ const Activities = () => {
     // ==================================================
 
     const invitations = useMemo(() => {
-        return (
-            invitationData?.pages.reduce((acc, page) => {
-                return [...acc, ...page];
-            }, []) || []
-        );
+        return invitationData
+            ? invitationData.pages.flatMap((page) => page.invitations)
+            : [];
     }, [invitationData]);
 
     const boardRequests = useMemo(() => {
-        return (
-            boardRequestData?.pages.reduce((acc, page) => {
-                return [...acc, ...page];
-            }, []) || []
-        );
+        return boardRequestData
+            ? boardRequestData.pages.flatMap((page) => page.joinRequests)
+            : [];
     }, [boardRequestData]);
 
     return (

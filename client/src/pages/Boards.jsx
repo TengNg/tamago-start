@@ -6,7 +6,8 @@ import Title from "../components/ui/Title";
 import JoinBoardRequestForm from "../components/board/JoinBoardRequestForm";
 import BoardsHelp from "../components/ui/BoardsHelp";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getBoards } from "../api/boardApi";
+import { fetchBoards } from "../api/boardApi";
+import { boardKeys } from "../queries/boardKeys";
 
 const FILTERS = Object.freeze({
     ALL: "all",
@@ -31,8 +32,8 @@ const Boards = () => {
     const createBoardButtonRef = useRef();
 
     const boardsQuery = useQuery({
-        queryKey: ["boards", boardFilter],
-        queryFn: () => getBoards({ filter: boardFilter }),
+        queryKey: boardKeys.all(boardFilter),
+        queryFn: () => fetchBoards({ filter: boardFilter }),
     });
 
     useEffect(() => {

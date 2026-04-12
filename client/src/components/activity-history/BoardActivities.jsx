@@ -165,7 +165,7 @@ const BoardActivities = ({ open, setOpen }) => {
 
                 {!allActivitiesFetched && activities.length > 0 && (
                     <button
-                        className="text-gray-600 flex justify-center items-center bg-gray-200 hover:bg-gray-300 p-2"
+                        className="text-gray-50 flex justify-center items-center bg-gray-400 font-medium hover:bg-gray-400/80 p-2"
                         onClick={() => {
                             if (!loading) fetchBoardActivities();
                         }}

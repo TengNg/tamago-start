@@ -169,10 +169,10 @@ export default function Invitations({
                         );
                     })}
 
-                    {invitations.length >= MAX_INVITATION_PAGE && (
+                    {hasNextPage && (
                         <button
                             onClick={() => fetchNextPage()}
-                            disabled={!hasNextPage || isFetchingNextPage}
+                            disabled={isFetchingNextPage}
                             className="button--style--rounded rounded-none text-gray-700 border-gray-700 text-sm p-1"
                         >
                             {isFetchingNextPage

@@ -11,6 +11,8 @@ const useCardActions = ({ stateHooks, effectDeps }) => {
         document.addEventListener("keydown", handleKeydown);
         document.addEventListener("mousedown", handleMouseDown);
 
+        handleScrollToFocusedCard(focusedCard);
+
         return () => {
             document.removeEventListener("keydown", handleKeydown);
             document.removeEventListener("mousedown", handleMouseDown);
@@ -45,6 +47,21 @@ const useCardActions = ({ stateHooks, effectDeps }) => {
         }
     }
 
+    function handleScrollToFocusedCard(card) {
+        if (!card) {
+            return;
+        }
+
+        const cardEl = document.querySelector(
+            `[data-card-item="${card.id}-${card.listId}"]`,
+        );
+        if (!cardEl) {
+            return;
+        }
+
+        cardEl.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+
     function handleMouseDown(e) {
         const el = e.target;
         if (el && el.hasAttribute("data-card-item")) {
@@ -70,7 +87,23 @@ const useCardActions = ({ stateHooks, effectDeps }) => {
 
         if (e.key === "q") {
             e.preventDefault();
-            handleOpenCardQuickEditor(focusedCard);
+
+            let foundCard;
+            if (focusedCard) {
+                const foundList = boardState.lists.find(
+                    (l) => l._id == focusedCard.listId,
+                );
+                if (foundList) {
+                    foundCard = foundList.cards.find(
+                        (c) => c._id == focusedCard.id,
+                    );
+                }
+            }
+
+            handleOpenCardQuickEditor({
+                ...focusedCard,
+                title: foundCard.title,
+            });
             return;
         }
 
