@@ -16,6 +16,14 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
   }
+
+  dialog {
+    margin: auto;
+  }
+
+  button {
+    cursor: pointer;
+  }
 }
 
 @utility flex--center {
@@ -55,7 +63,7 @@
 }
 
 @utility board--hover {
-  @apply hover:mt-[6px] hover:shadow-none hover:brightness-110 transition-all;
+  @apply hover:mt-1.5 hover:shadow-none hover:brightness-110 transition-all;
 }
 
 @utility button--style {
@@ -87,7 +95,7 @@
 }
 
 @utility card--details--button {
-  @apply flex items-center justify-center gap-1 w-fit min-w-[40px] h-[35px] border-2 shadow-[0_2px_0_0] bg-gray-100 text-[9px] sm:text-[0.75rem] p-2 font-semibold hover:shadow-[0_1px_0_0] hover:mt-px;
+  @apply flex items-center justify-center gap-1 w-fit min-w-10 h-8.75 border-2 shadow-[0_2px_0_0] bg-gray-100 text-[9px] sm:text-[0.75rem] p-2 font-semibold hover:shadow-[0_1px_0_0] hover:mt-px;
 }
 
 @utility card__item {

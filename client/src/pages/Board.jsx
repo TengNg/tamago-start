@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { lexorank } from "../lib/lexorank";
 import useBoardState from "../hooks/useBoardState";
-import useKeyBinds from "../hooks/useKeyBinds";
 import useCardActions from "../hooks/useCardActions";
 import useFetchCardDetail from "../hooks/useFetchCardDetail";
 import ListContainer from "../components/list/ListContainer";
@@ -68,10 +67,6 @@ const Board = () => {
         // socket connection state
         isConnected,
 
-        socket,
-    } = useBoardState();
-
-    const {
         openMembers,
         setOpenMembers,
         openFilter,
@@ -80,15 +75,14 @@ const Board = () => {
         setOpenChatBox,
         openInvitationForm,
         setOpenInvitationForm,
-        openAddList,
-        setOpenAddList,
-        openKeyBindings,
         setOpenKeyBindings,
-        openConfiguration: openBoardConfiguration,
         setOpenConfiguration: setOpenBoardConfiguration,
-        openBoardActivities,
         setOpenBoardActivities,
-    } = useKeyBinds();
+        openVisibilityConfig,
+        setOpenVisibilityConfig,
+
+        socket,
+    } = useBoardState();
 
     const [openBoardOptions, setOpenBoardOptions] = useState(false);
     const [openCopyBoardForm, setOpenCopyBoardForm] = useState(false);
@@ -98,7 +92,6 @@ const Board = () => {
 
     const [initialTitle, setInitialTitle] = useState("");
 
-    const [openVisibilityConfig, setOpenVisibilityConfig] = useState(false);
     const [processingCard, setProcessingCard] = useState({
         msg: "loading...",
         processing: false,
@@ -493,46 +486,27 @@ const Board = () => {
                 />
             )}
 
-            <BoardActivities
-                open={openBoardActivities}
-                setOpen={setOpenBoardActivities}
-            />
-
-            <KeyBindings open={openKeyBindings} setOpen={setOpenKeyBindings} />
-
+            <BoardActivities />
+            <KeyBindings />
             <MoveListForm />
-
+            <Filter />
+            <VisibilityConfig />
+            <Members />
+            <InvitationForm />
+            <ChatBox />
             <Configuration
-                open={openBoardConfiguration}
-                setOpen={setOpenBoardConfiguration}
                 theme={theme}
                 debugModeEnabled={debugModeEnabled}
                 handleChangeTheme={handleChangeTheme}
                 handleToggleEnableDebugMode={handleToggleEnableDebugMode}
             />
 
-            <Filter open={openFilter} setOpen={setOpenFilter} />
-
-            <VisibilityConfig
-                open={openVisibilityConfig}
-                setOpen={setOpenVisibilityConfig}
-            />
-
-            <Members open={openMembers} setOpen={setOpenMembers} />
-
-            <InvitationForm
-                open={openInvitationForm}
-                setOpen={setOpenInvitationForm}
-            />
-
-            <ChatBox open={openChatBox} setOpen={setOpenChatBox} />
-
             <div className="w-full h-[calc(100vh-8rem)] flex flex-col justify-start gap-3 items-start bg-transparent">
                 <div className="flex flex-wrap justify-between w-full z-20 px-4">
                     <div>
                         <input
                             maxLength={80}
-                            className={`flex-1 bg-transparent overflow-hidden text-gray-700 whitespace-nowrap text-ellipsis border-b-2 bg-gray-100 border-gray-700 py-1 font-medium sm:font-bold select-none mb-2 focus:outline-hidden`}
+                            className={`flex-1 bg-transparent overflow-hidden text-gray-700 whitespace-nowrap text-ellipsis border-b-2 border-gray-700 py-1 font-medium sm:font-bold select-none mb-2 focus:outline-hidden`}
                             id="board-title-input"
                             style={{
                                 width: `${boardState.board.title.length}ch`,
@@ -553,8 +527,8 @@ const Board = () => {
                         <div>
                             <div
                                 onClick={() => setOpenChatBox((prev) => !prev)}
-                                className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-[80px] px-4 border-2 text-[0.75rem] text-gray-600 font-medium
-                                        ${openChatBox ? "shadow-[0_1px_0_0] mt-[2px]" : "shadow-[0_3px_0_0]"}`}
+                                className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-20 px-4 border-2 text-[0.75rem] text-gray-600 font-medium
+                                        ${openChatBox ? "shadow-[0_1px_0_0] mt-0.5" : "shadow-[0_3px_0_0]"}`}
                             >
                                 chat
                             </div>
@@ -563,8 +537,8 @@ const Board = () => {
                         <div>
                             <div
                                 onClick={() => setOpenFilter((prev) => !prev)}
-                                className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-[80px] px-4 border-2 text-[0.75rem] text-gray-600 font-medium
-                                        ${openFilter ? "shadow-[0_1px_0_0] mt-[2px]" : "shadow-[0_3px_0_0]"} ${hasFilter ? "text-white bg-teal-600" : ""}`}
+                                className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-20 px-4 border-2 text-[0.75rem] text-gray-600 font-medium
+                                        ${openFilter ? "shadow-[0_1px_0_0] mt-0.5" : "shadow-[0_3px_0_0]"} ${hasFilter ? "text-white bg-teal-600" : ""}`}
                             >
                                 filter
                             </div>
@@ -573,8 +547,8 @@ const Board = () => {
                         <div>
                             <div
                                 onClick={() => setOpenInvitationForm(true)}
-                                className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-[80px] px-4 border-2 text-[0.75rem] text-gray-600 font-medium
-                                        ${openInvitationForm ? "shadow-[0_1px_0_0] mt-[2px]" : "shadow-[0_3px_0_0]"}`}
+                                className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-20 px-4 border-2 text-[0.75rem] text-gray-600 font-medium
+                                        ${openInvitationForm ? "shadow-[0_1px_0_0] mt-0.5" : "shadow-[0_3px_0_0]"}`}
                             >
                                 invite
                             </div>
@@ -587,8 +561,8 @@ const Board = () => {
                                         setOpenBoardOptions((prev) => !prev);
                                     }
                                 }}
-                                className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-[80px] px-4 border-2 text-[0.75rem] text-gray-600 font-medium
-                                    ${openBoardOptions ? "shadow-[0_1px_0_0] mt-[2px]" : "shadow-[0_3px_0_0]"}`}
+                                className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-20 px-4 border-2 text-[0.75rem] text-gray-600 font-medium
+                                    ${openBoardOptions ? "shadow-[0_1px_0_0] mt-0.5" : "shadow-[0_3px_0_0]"}`}
                             >
                                 options
                             </button>
@@ -612,20 +586,17 @@ const Board = () => {
                 </div>
 
                 <div className="w-screen">
-                    <ListContainer
-                        openAddList={openAddList}
-                        setOpenAddList={setOpenAddList}
-                    />
+                    <ListContainer />
                 </div>
             </div>
 
             <div
                 id="bottom-buttons"
-                className="flex items-center h-[50px] px-4 gap-2"
+                className="flex items-center h-12.5 px-4 gap-2"
             >
                 <button
                     className={`
-                        w-[100px] ${openMembers ? "mt-1 text-gray-100 shadow-[0_1px_0_0]" : "shadow-gray-600 shadow-[0_3px_0_0]"}
+                        w-25 ${openMembers ? "mt-1 text-gray-100 shadow-[0_1px_0_0]" : "shadow-gray-600 shadow-[0_3px_0_0]"}
                         bg-[rgb(var(--card-item-bg))] border-2 border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium
                     `}
                     onClick={() => {
@@ -638,7 +609,7 @@ const Board = () => {
                 <button
                     onClick={handlePinBoard}
                     className={`
-                        w-[100px] ${currentUser.pinnedBoardIdCollection?.hasOwnProperty(boardId) ? "mt-1 text-gray-100 shadow-[0_1px_0_0]" : "shadow-gray-600 shadow-[0_3px_0_0]"}
+                        w-25 ${currentUser.pinnedBoardIdCollection?.hasOwnProperty(boardId) ? "mt-1 text-gray-100 shadow-[0_1px_0_0]" : "shadow-gray-600 shadow-[0_3px_0_0]"}
                         bg-[rgb(var(--card-item-bg))] border-2 border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium
                     `}
                 >

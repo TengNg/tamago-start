@@ -23,7 +23,7 @@ const ModalDialog = ({ children, ...props }) => {
             dialog.current.addEventListener("close", handleOnClose);
             dialog.current.addEventListener("keydown", handleKeyDown);
 
-            () => {
+            return () => {
                 dialog.current.removeEventListener("close", handleOnClose);
                 dialog.current.removeEventListener("keydown", handleKeyDown);
             };

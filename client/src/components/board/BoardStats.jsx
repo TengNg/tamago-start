@@ -26,7 +26,7 @@ const BoardStats = ({ boardStatsModal, setBoardStatsModal }) => {
 
             dialog.current.addEventListener("close", handleOnClose);
 
-            () => {
+            return () => {
                 dialog.current.removeEventListener("close", handleOnClose);
             };
         } else {

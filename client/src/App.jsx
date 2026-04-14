@@ -60,7 +60,7 @@ function App() {
         }
 
         const handleKeyDown = (event) => {
-            if (event.ctrlKey && event.key === "e") {
+            if (event.ctrlKey && event.key === "p") {
                 event.preventDefault();
                 setOpenPinnedBoards((prev) => !prev);
             }

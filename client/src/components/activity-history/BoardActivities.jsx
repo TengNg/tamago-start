@@ -7,12 +7,18 @@ import Icon from "../shared/Icon";
 import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 import { axiosPrivate } from "../../api/axios";
 import useToast from "../../hooks/useToast";
+import { useKeybind } from "../../hooks/useKeybind";
+import { kb } from "../../data/keybinds";
 
 const ACTIVITIES_PER_PAGE = 50;
 
-const BoardActivities = ({ open, setOpen }) => {
+const BoardActivities = () => {
     const { currentUser } = useCurrentUserContext();
-    const { boardState } = useBoardState();
+    const {
+        boardState,
+        openBoardActivities: open,
+        setOpenBoardActivities: setOpen,
+    } = useBoardState();
 
     const [activities, setActivities] = useState([]);
     const [activitiesPage, setActivitiesPage] = useState(1);
@@ -22,6 +28,10 @@ const BoardActivities = ({ open, setOpen }) => {
     const dialog = useRef();
 
     const toast = useToast();
+
+    useKeybind(kb.openBoardActivities, () => {
+        setOpen((prev) => !prev);
+    });
 
     useEffect(() => {
         if (open) {
@@ -45,7 +55,7 @@ const BoardActivities = ({ open, setOpen }) => {
             dialog.current.addEventListener("close", handleOnClose);
             dialog.current.addEventListener("keydown", handleKeyDown);
 
-            () => {
+            return () => {
                 dialog.current.removeEventListener("close", handleOnClose);
                 dialog.current.removeEventListener("keydown", handleKeyDown);
             };
@@ -113,7 +123,7 @@ const BoardActivities = ({ open, setOpen }) => {
     return (
         <dialog
             ref={dialog}
-            className="z-40 backdrop:bg-black/15 box--style gap-4 items-start h-fit min-w-[350px] w-[500px] border-black border-2 bg-gray-50"
+            className="z-40 backdrop:bg-black/15 box--style gap-4 items-start h-fit min-w-87.5 w-125 border-black border-2 bg-gray-50"
             onClick={handleCloseOnOutsideClick}
         >
             <div className="flex w-full justify-between items-center border-black p-3">

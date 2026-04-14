@@ -1,20 +1,27 @@
 import { useEffect, useRef } from "react";
 import Icon from "../shared/Icon";
+import { useKeybind } from "../../hooks/useKeybind";
+import { kb } from "../../data/keybinds";
+import useBoardState from "../../hooks/useBoardState";
 
 const Configuration = ({
-    open,
-    setOpen,
     handleChangeTheme,
     handleToggleEnableDebugMode,
     theme,
     debugModeEnabled,
 }) => {
+    const { openConfiguration: open, setOpenConfiguration: setOpen } =
+        useBoardState();
     const dialog = useRef();
 
     const themeStyle =
         !theme.itemTheme || theme.itemTheme === "squared"
             ? "squared"
             : "rounded-sm";
+
+    useKeybind(kb.openConfiguration, () => {
+        setOpen((prev) => !prev);
+    });
 
     useEffect(() => {
         if (open) {
@@ -26,7 +33,7 @@ const Configuration = ({
 
             dialog.current.addEventListener("close", handleOnClose);
 
-            () => {
+            return () => {
                 dialog.current.removeEventListener("close", handleOnClose);
             };
         } else {
@@ -48,7 +55,7 @@ const Configuration = ({
         <>
             <dialog
                 ref={dialog}
-                className="z-40 backdrop:bg-black/15 fixed top-0 right-0 box--style gap-4 items-start p-3 pb-5 h-fit min-w-[300px] max-h-[500px] border-black border-2 bg-gray-200"
+                className="z-40 backdrop:bg-black/15 fixed top-0 right-0 box--style gap-4 items-start p-3 pb-5 h-fit min-w-75 max-h-125 border-black border-2 bg-gray-200"
                 onClick={handleCloseOnOutsideClick}
             >
                 <div className="flex w-full justify-between items-center border-b border-black pb-3 mb-3">

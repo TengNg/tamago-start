@@ -5,10 +5,18 @@ import Member from "./Member";
 import Icon from "../shared/Icon";
 import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 import { axiosPrivate } from "../../api/axios";
+import { useKeybind } from "../../hooks/useKeybind";
+import { kb } from "../../data/keybinds";
 
-const InvitationForm = ({ open, setOpen }) => {
+const InvitationForm = () => {
     const { currentUser } = useCurrentUserContext();
-    const { boardState, removeMemberFromBoard, socket } = useBoardState();
+    const {
+        boardState,
+        removeMemberFromBoard,
+        openInvitationForm: open,
+        setOpenInvitationForm: setOpen,
+        socket,
+    } = useBoardState();
 
     const [username, setUsername] = useState("");
     const [errMsg, setErrMsg] = useState("");
@@ -17,6 +25,10 @@ const InvitationForm = ({ open, setOpen }) => {
 
     const usernameInputRef = useRef();
     const dialog = useRef();
+
+    useKeybind(kb.openInvitationForm, () => {
+        setOpen((prev) => !prev);
+    });
 
     useEffect(() => {
         if (open) {
@@ -37,7 +49,7 @@ const InvitationForm = ({ open, setOpen }) => {
             dialog.current.addEventListener("close", handleOnClose);
             dialog.current.addEventListener("keydown", handleKeyDown);
 
-            () => {
+            return () => {
                 dialog.current.removeEventListener("close", handleOnClose);
                 dialog.current.removeEventListener("keydown", handleKeyDown);
             };

@@ -4,13 +4,23 @@ import useBoardState from "../../hooks/useBoardState";
 import dateFormatter from "../../utils/dateFormatter";
 import Icon from "../shared/Icon";
 import useCurrentUserContext from "../../hooks/useCurrentUserContext";
+import { useKeybind } from "../../hooks/useKeybind";
+import { kb } from "../../data/keybinds";
 
-const Members = ({ open, setOpen }) => {
+const Members = () => {
     const dialog = useRef();
 
     const { currentUser } = useCurrentUserContext();
 
-    const { boardState } = useBoardState();
+    const {
+        boardState,
+        openMembers: open,
+        setOpenMembers: setOpen,
+    } = useBoardState();
+
+    useKeybind(kb.openMembers, () => {
+        setOpen((prev) => !prev);
+    });
 
     useEffect(() => {
         if (open) {
@@ -22,7 +32,7 @@ const Members = ({ open, setOpen }) => {
 
             dialog.current.addEventListener("close", handleOnClose);
 
-            () => {
+            return () => {
                 dialog.current.removeEventListener("close", handleOnClose);
             };
         } else {
@@ -44,7 +54,7 @@ const Members = ({ open, setOpen }) => {
         <>
             <dialog
                 ref={dialog}
-                className="z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 h-fit min-w-[300px] border-black border-2 bg-gray-200"
+                className="z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 h-fit min-w-75 border-black border-2 bg-gray-200"
                 onClick={handleCloseOnOutsideClick}
             >
                 <div className="flex w-full justify-between items-center border-b border-black pb-3">
@@ -59,7 +69,7 @@ const Members = ({ open, setOpen }) => {
                     </button>
                 </div>
 
-                <div className="flex flex-col justify-start items-start gap-4 mt-4 pb-3 overflow-auto max-h-[600px] w-[90%] sm:w-[400px]">
+                <div className="flex flex-col justify-start items-start gap-4 mt-4 pb-3 overflow-auto max-h-150 w-[90%] sm:w-100">
                     {boardState.members.map((m, index) => {
                         return (
                             <div

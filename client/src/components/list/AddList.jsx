@@ -4,23 +4,24 @@ import { lexorank } from "../../lib/lexorank";
 import { axiosPrivate } from "../../api/axios";
 import useToast from "../../hooks/useToast";
 
-const AddList = ({ open, setOpen }) => {
+const AddList = () => {
     const [listTitle, setListTitle] = useState("");
     const [addingList, setAddingList] = useState(false);
     const titleInputRef = useRef();
     const containerRef = useRef();
 
-    const { theme, boardState, addListToBoard, socket } = useBoardState();
+    const {
+        openAddList: open,
+        setOpenAddList: setOpen,
+        theme,
+        boardState,
+        addListToBoard,
+        socket,
+    } = useBoardState();
 
     const toast = useToast();
 
     useEffect(() => {
-        const closeOnEscape = (e) => {
-            if (e.key === "Escape") {
-                setOpen(false);
-            }
-        };
-
         const handleClickOutside = (event) => {
             if (
                 containerRef.current &&
@@ -30,17 +31,15 @@ const AddList = ({ open, setOpen }) => {
             }
         };
 
-        window.addEventListener("keydown", closeOnEscape);
-        window.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("mousedown", handleClickOutside);
 
         return () => {
-            window.removeEventListener("keydown", closeOnEscape);
-            window.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);
 
     useEffect(() => {
-        if (titleInputRef.current && open === true) {
+        if (titleInputRef.current && open) {
             titleInputRef.current.focus();
             containerRef.current.scrollIntoView({ block: "end" });
         }

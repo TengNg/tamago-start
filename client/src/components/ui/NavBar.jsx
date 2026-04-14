@@ -50,7 +50,7 @@ const NavBar = ({ setOpenPinnedBoards }) => {
 
         document.addEventListener("keydown", handleOnKeyDown);
 
-        () => {
+        return () => {
             document.removeEventListener("keydown", handleOnKeyDown);
         };
     }, [currentUser]);

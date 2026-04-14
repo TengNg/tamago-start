@@ -4,7 +4,7 @@ import HighlightPicker from "./HighlightPicker";
 import CardModalInfo from "./CardModalInfo";
 import Loading from "../ui/Loading";
 
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import Icon from "../shared/Icon";
 import CardComments from "./CardComments";
 import { axiosPrivate } from "../../api/axios";
@@ -81,7 +81,12 @@ const CardModal = ({
                         descTextArea.focus();
                     }
                 } else if (e.key === "Escape") {
-                    handleCancel(e);
+                    const openNativeDialogs =
+                        document.querySelectorAll("dialog[open]");
+                    if (openNativeDialogs.length === 0) {
+                        handleCancel(e);
+                    }
+                    return;
                 }
             };
 

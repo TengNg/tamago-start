@@ -6,11 +6,19 @@ import { dateToCompare } from "../../utils/dateFormatter";
 import PRIORITY_LEVELS from "../../data/priorityLevels";
 import Icon from "../shared/Icon";
 import useToast from "../../hooks/useToast";
+import { useKeybind } from "../../hooks/useKeybind";
+import { kb } from "../../data/keybinds";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
-const Filter = ({ open, setOpen }) => {
-    const { boardState, setBoardState, setHasFilter } = useBoardState();
+const Filter = () => {
+    const {
+        openFilter: open,
+        setOpenFilter: setOpen,
+        boardState,
+        setBoardState,
+        setHasFilter,
+    } = useBoardState();
 
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -25,6 +33,10 @@ const Filter = ({ open, setOpen }) => {
     );
 
     const toast = useToast();
+
+    useKeybind(kb.openFilter, () => {
+        setOpen((prev) => !prev);
+    });
 
     useEffect(() => {
         const id = setTimeout(() => {
@@ -261,7 +273,7 @@ const Filter = ({ open, setOpen }) => {
     return (
         <dialog
             ref={dialog}
-            className="z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 min-w-[350px] h-fit border-black border-2 bg-gray-200"
+            className="z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 min-w-87.5 h-fit border-black border-2 bg-gray-200"
             onClick={handleCloseOnOutsideClick}
         >
             <div className="flex w-full justify-between items-center border-b border-black pb-3">

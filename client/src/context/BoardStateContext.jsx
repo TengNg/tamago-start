@@ -50,6 +50,18 @@ export const BoardStateContextProvider = ({ children }) => {
 
     const [isConnected, setIsConnected] = useState(false);
 
+    const [openMembers, setOpenMembers] = useState(false);
+    const [openFilter, setOpenFilter] = useState(false);
+    const [openChatBox, setOpenChatBox] = useState(false);
+
+    const [openInvitationForm, setOpenInvitationForm] = useState(false);
+    const [openAddList, setOpenAddList] = useState(false);
+
+    const [openKeyBindings, setOpenKeyBindings] = useState(false);
+    const [openConfiguration, setOpenConfiguration] = useState(false);
+    const [openBoardActivities, setOpenBoardActivities] = useState(false);
+    const [openVisibilityConfig, setOpenVisibilityConfig] = useState(false);
+
     const searchParamsFn = useCallback(() => {
         const search = searchParams.get("search");
         const priority = searchParams.get("priority");
@@ -899,16 +911,35 @@ export const BoardStateContextProvider = ({ children }) => {
                 isAtBottomOfChatBox,
                 setIsAtBottomOfChatBox,
 
-                // chatMessageToast,
-                // setChatMessageToast,
-                //
-                // hasReceivedNewMessage,
-                // setHasReceivedNewMessage,
-                // isAtBottomOfChat,
-                // setIsAtBottomOfChat,
-
                 windowWidth,
                 isLargeScreen,
+
+                openMembers,
+                setOpenMembers,
+
+                openFilter,
+                setOpenFilter,
+
+                openChatBox,
+                setOpenChatBox,
+
+                openInvitationForm,
+                setOpenInvitationForm,
+
+                openAddList,
+                setOpenAddList,
+
+                openKeyBindings,
+                setOpenKeyBindings,
+
+                openConfiguration,
+                setOpenConfiguration,
+
+                openBoardActivities,
+                setOpenBoardActivities,
+
+                openVisibilityConfig,
+                setOpenVisibilityConfig,
 
                 socket,
             }}

@@ -5,9 +5,16 @@ import useBoardState from "../../hooks/useBoardState";
 import Icon from "../shared/Icon";
 import { axiosPrivate } from "../../api/axios";
 import useToast from "../../hooks/useToast";
+import { useKeybind } from "../../hooks/useKeybind";
+import { kb } from "../../data/keybinds";
 
-const VisibilityConfig = ({ open, setOpen }) => {
-    const { boardState, setBoardVisibility } = useBoardState();
+const VisibilityConfig = () => {
+    const {
+        boardState,
+        setBoardVisibility,
+        openVisibilityConfig: open,
+        setOpenVisibilityConfig: setOpen,
+    } = useBoardState();
 
     const [updating, setUpdating] = useState(false);
 
@@ -17,6 +24,10 @@ const VisibilityConfig = ({ open, setOpen }) => {
     const visiblityOptions = Object.keys(VISIBILITY_MAP);
 
     const toast = useToast();
+
+    useKeybind(kb.openVisibilityConfig, () => {
+        setOpen((prev) => !prev);
+    });
 
     useEffect(() => {
         if (open) {
@@ -28,7 +39,7 @@ const VisibilityConfig = ({ open, setOpen }) => {
 
             dialog.current.addEventListener("close", handleOnClose);
 
-            () => {
+            return () => {
                 dialog.current.removeEventListener("close", handleOnClose);
             };
         } else {

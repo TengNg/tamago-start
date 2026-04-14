@@ -13,13 +13,17 @@ import useBoardState from "../../hooks/useBoardState";
 import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 import { chatKeys } from "../../queries/chatKeys";
 import useToast from "../../hooks/useToast";
+import { useKeybind } from "../../hooks/useKeybind";
+import { kb } from "../../data/keybinds";
 
-const ChatBox = ({ open, setOpen }) => {
+const ChatBox = () => {
     const queryClient = useQueryClient();
     const { currentUser } = useCurrentUserContext();
     const {
         boardState,
         socket,
+        openChatBox: open,
+        setOpenChatBox: setOpen,
         isAtBottomOfChatBox: isAtBottom,
         setIsAtBottomOfChatBox: setIsAtBottom,
     } = useBoardState();
@@ -29,6 +33,10 @@ const ChatBox = ({ open, setOpen }) => {
     const messagesRef = useRef(null);
     const previousScrollHeightRef = useRef(0);
     const [expanded, setExpanded] = useState(false);
+
+    useKeybind(kb.openChatBox, () => {
+        setOpen((prev) => !prev);
+    });
 
     const isOwner = useMemo(() => {
         return boardState.members.indexOf((m) => {

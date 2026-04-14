@@ -56,7 +56,7 @@ const Pinned = ({
             style={style}
             {...attributes}
             {...listeners}
-            className={`${isInCurrentBoard ? "underline" : ""} ${isDeleting ? "opacity-20 bg-red-200 line-through" : ""} select-none touch-none flex items-center justify-between relative max-w-[300px] overflow-hidden whitespace-nowrap text-ellipsis top-left-auto bg-gray-200 text-[0.75rem] flex-1 border-2 border-b-4 border-gray-700 shadow-gray-700 p-3`}
+            className={`${isInCurrentBoard ? "underline" : ""} ${isDeleting ? "opacity-20 bg-red-200 line-through" : ""} select-none touch-none flex items-center justify-between relative max-w-75 overflow-hidden whitespace-nowrap text-ellipsis top-left-auto bg-gray-200 text-[0.75rem] flex-1 border-2 border-b-4 border-gray-700 shadow-gray-700 p-3 cursor-pointer`}
             onClick={() => handleOpenBoard(boardId)}
         >
             <p>{title}</p>
@@ -126,7 +126,7 @@ const PinnedBoards = ({ setOpen }) => {
         try {
             setLoading(true);
             await axiosPrivate.delete(`/me/pinned-boards`);
-
+            await currentUserQuery.refetch();
             setLoading(false);
             setCleaned(true);
         } catch (err) {
@@ -217,7 +217,7 @@ const PinnedBoards = ({ setOpen }) => {
                 className="select-none fixed box-border top-0 left-0 text-gray-600 font-bold h-screen text-[1.25rem] w-full bg-gray-500 opacity-40 z-50 cursor-auto"
             ></div>
 
-            <div className="fixed box--style flex flex-col gap-4 items-start p-3 top-1/2 right-1/2 left-[50%] -translate-x-[50%] -translate-y-1/2 w-fit min-w-[300px] max-h-120 max-w-[400px] border-black border-2 z-50 cursor-auto bg-gray-200">
+            <div className="fixed box--style flex flex-col gap-4 items-start p-3 top-1/2 right-1/2 left-[50%] -translate-x-[50%] -translate-y-1/2 w-fit min-w-75 max-h-120 max-w-100 border-black border-2 z-50 cursor-auto bg-gray-200">
                 <Loading
                     loading={loading}
                     position={"absolute"}
@@ -234,9 +234,9 @@ const PinnedBoards = ({ setOpen }) => {
                         {pinnedBoards.length > 0 && (
                             <button
                                 onClick={handleCleanPinnedBoards}
-                                className={`button--style--sm text-[0.75rem] px-1 underline hover:bg-pink-200 ${cleaned ? "text-blue-600" : "text-pink-600"}`}
+                                className="me-auto text-[0.65rem] badge text-red-600 bg-red-100 cursor-pointer"
                             >
-                                clean
+                                clear
                             </button>
                         )}
                     </div>

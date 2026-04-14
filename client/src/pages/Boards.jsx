@@ -39,7 +39,7 @@ const Boards = () => {
     useEffect(() => {
         boardsQuery.refetch();
         document.addEventListener("keydown", handleKeyDown);
-        () => {
+        return () => {
             document.removeEventListener("keydown", handleKeyDown);
         };
     }, []);

@@ -57,16 +57,17 @@ const CardQuickEditor = ({
                 "keydown",
                 handleCloseOnKeydown,
             );
-            document.addEventListener("mousedown", handleClickOutside);
-        }
 
-        () => {
-            quickEditorRef.current.removeEventListener(
-                "keydown",
-                handleCloseOnKeydown,
-            );
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
+            document.addEventListener("mousedown", handleClickOutside);
+
+            return () => {
+                quickEditorRef.current?.removeEventListener(
+                    "keydown",
+                    handleCloseOnKeydown,
+                );
+                document.removeEventListener("mousedown", handleClickOutside);
+            };
+        }
     }, [open]);
 
     const close = () => {
@@ -90,14 +91,14 @@ const CardQuickEditor = ({
 
         try {
             const newTitle = textAreaRef.current.value;
-            setCardTitle(card._id, card.listId, newTitle);
+            setCardTitle(card.id, card.listId, newTitle);
             setInitialTitle(newTitle);
             await axiosPrivate.patch(
-                `/cards/${card._id}/new-title`,
+                `/cards/${card.id}/new-title`,
                 JSON.stringify({ title: newTitle }),
             );
             socket.emit("updateCardTitle", {
-                id: card._id,
+                id: card.id,
                 listId: card.listId,
                 title: newTitle,
             });
@@ -114,13 +115,13 @@ const CardQuickEditor = ({
         try {
             setIsVerifying(true);
             const response = await axiosPrivate.patch(
-                `/cards/${card._id}/toggle-verified`,
+                `/cards/${card.id}/toggle-verified`,
             );
             const { verified } = response.data;
             card.verified = verified;
-            setCardVerifiedStatus(card._id, card.listId, verified);
+            setCardVerifiedStatus(card.id, card.listId, verified);
             socket.emit("updateCardVerifiedStatus", {
-                id: card._id,
+                id: card.id,
                 listId: card.listId,
                 verified,
             });
@@ -159,13 +160,13 @@ const CardQuickEditor = ({
     };
 
     const handleOpenCardModal = () => {
-        searchParams.set("card", card._id);
+        searchParams.set("card", card.id);
         setSearchParams(searchParams, { replace: true });
         close();
     };
 
     const handleOpenCardInNewTab = () => {
-        window.open(`/b/${card.boardId}?card=${card._id}`, "_blank");
+        window.open(`/b/${card.boardId}?card=${card.id}`, "_blank");
     };
 
     const handleToggleHighlightPicker = () => {

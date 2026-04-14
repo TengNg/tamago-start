@@ -1,290 +1,199 @@
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useKeybind } from "./useKeybind";
 
 const useCardActions = ({ stateHooks, effectDeps }) => {
     const { setFocusedCard, setOpenedCardQuickEditor } = stateHooks;
-    const { boardState, focusedCard, hasFilter } = effectDeps;
+    const { boardState, focusedCard } = effectDeps;
 
     const [searchParams, setSearchParams] = useSearchParams();
 
-    useEffect(() => {
-        document.addEventListener("keydown", handleKeydown);
-        document.addEventListener("mousedown", handleMouseDown);
+    const getVisibleLists = useCallback(() => {
+        return boardState.lists.filter((list) => {
+            const hasVisibleCards =
+                list.cards?.filter((card) => !card.hiddenByFilter).length > 0;
+            return !list.collapsed && hasVisibleCards;
+        });
+    }, [boardState.lists]);
 
-        handleScrollToFocusedCard(focusedCard);
+    const getVisibleCards = useCallback((list) => {
+        return list.cards?.filter((card) => !card.hiddenByFilter) ?? [];
+    }, []);
 
-        return () => {
-            document.removeEventListener("keydown", handleKeydown);
-            document.removeEventListener("mousedown", handleMouseDown);
-        };
-    }, [boardState?.lists, focusedCard, hasFilter]);
+    const getCardPosition = useCallback(
+        (cardId, listId) => {
+            const list = getVisibleLists().find((l) => l._id === listId);
+            if (!list) return null;
+            const cards = getVisibleCards(list);
+            const index = cards.findIndex((c) => c._id === cardId);
+            return { list, cards, index };
+        },
+        [getVisibleLists, getVisibleCards],
+    );
 
-    function handleOpenCardDetail(card) {
-        if (card && card.focused) {
-            searchParams.set("card", card.id);
-            setSearchParams(searchParams, { replace: true });
-        }
-    }
+    const moveFocus = useCallback(
+        (direction) => {
+            const visibleLists = getVisibleLists();
+            if (
+                !boardState?.lists ||
+                visibleLists.length === 0 ||
+                visibleLists[0].cards.length === 0
+            ) {
+                return;
+            }
 
-    function handleOpenCardQuickEditor(card) {
-        if (card && card.focused) {
+            const isFocusedListCollapsed =
+                focusedCard &&
+                !visibleLists.find((list) => list._id === focusedCard.listId);
+
+            if (isFocusedListCollapsed) {
+                setFocusedCard(undefined);
+                return;
+            }
+
+            if (!focusedCard) {
+                const firstCard = getVisibleCards(visibleLists[0])[0];
+                setFocusedCard({
+                    id: firstCard._id,
+                    listId: firstCard.listId,
+                    focused: true,
+                });
+                return;
+            }
+
+            const pos = getCardPosition(focusedCard.id, focusedCard.listId);
+            if (!pos) return;
+
+            const { list: currList, cards: currCards, index: currIndex } = pos;
+            const currListIndex = visibleLists.indexOf(currList);
+
+            let nextCard = null;
+
+            if (direction === "right") {
+                const nextList = visibleLists[currListIndex + 1];
+                if (!nextList || nextList.cards.length === 0) return;
+                const nextCards = getVisibleCards(nextList);
+                nextCard =
+                    nextCards[currIndex] ?? nextCards[nextCards.length - 1];
+            } else if (direction === "left") {
+                const prevList = visibleLists[currListIndex - 1];
+                if (!prevList || prevList.cards.length === 0) return;
+                const prevCards = getVisibleCards(prevList);
+                nextCard =
+                    prevCards[currIndex] ?? prevCards[prevCards.length - 1];
+            } else if (direction === "down") {
+                nextCard = currCards[currIndex + 1];
+            } else if (direction === "up") {
+                nextCard = currCards[currIndex - 1];
+            }
+
+            if (nextCard) {
+                setFocusedCard({
+                    id: nextCard._id,
+                    listId: nextCard.listId,
+                    focused: true,
+                });
+
+                const cardEl = document.querySelector(
+                    `[data-card-item="${nextCard._id}-${nextCard.listId}"]`,
+                );
+                if (!cardEl) {
+                    return;
+                }
+                cardEl.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        },
+        [
+            boardState?.lists,
+            focusedCard,
+            getVisibleLists,
+            getVisibleCards,
+            getCardPosition,
+            setFocusedCard,
+        ],
+    );
+
+    const handleOpenCardDetail = useCallback(
+        (card) => {
+            if (card?.focused) {
+                searchParams.set("card", card.id);
+                setSearchParams(searchParams, { replace: true });
+            }
+        },
+        [searchParams, setSearchParams],
+    );
+
+    const handleOpenCardQuickEditor = useCallback(
+        (card) => {
+            if (!card?.focused) return;
+
             const cardEl = document.querySelector(
                 `[data-card-item="${card.id}-${card.listId}"]`,
             );
-            if (cardEl) {
-                const rect = cardEl.getBoundingClientRect();
-                const top = rect.bottom + window.scrollY;
-                const left = rect.left + window.scrollX;
-                const width = rect.width;
-                const height = rect.height;
+            if (!cardEl) return;
 
-                setOpenedCardQuickEditor({
-                    open: true,
-                    card: card,
-                    attribute: { top, left, width, height },
-                });
+            const rect = cardEl.getBoundingClientRect();
+            setOpenedCardQuickEditor({
+                open: true,
+                card,
+                attribute: {
+                    top: rect.bottom + window.scrollY,
+                    left: rect.left + window.scrollX,
+                    width: rect.width,
+                    height: rect.height,
+                },
+            });
+        },
+        [setOpenedCardQuickEditor],
+    );
+
+    const handleMouseDown = useCallback(
+        (e) => {
+            const el = e.target;
+            if (el?.hasAttribute("data-card-item")) {
+                const [id, listId] = el
+                    .getAttribute("data-card-item")
+                    .split("-");
+                setFocusedCard({ id, listId, focused: true });
+            } else {
+                setFocusedCard((prev) => ({ ...prev, focused: false }));
             }
-        }
-    }
+        },
+        [setFocusedCard],
+    );
 
-    function handleScrollToFocusedCard(card) {
-        if (!card) {
+    useKeybind(["ctrl+j", "ctrl+down"], () => moveFocus("down"));
+    useKeybind(["ctrl+k", "ctrl+up"], () => moveFocus("up"));
+    useKeybind(["ctrl+h", "ctrl+left"], () => moveFocus("left"));
+    useKeybind(["ctrl+l", "ctrl+right"], () => moveFocus("right"));
+    useKeybind("Enter", () => handleOpenCardDetail(focusedCard), {
+        ignoreInInputs: true,
+    });
+
+    useKeybind("q", () => {
+        if (!focusedCard) {
             return;
         }
 
-        const cardEl = document.querySelector(
-            `[data-card-item="${card.id}-${card.listId}"]`,
-        );
-        if (!cardEl) {
-            return;
-        }
-
-        cardEl.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-
-    function handleMouseDown(e) {
-        const el = e.target;
-        if (el && el.hasAttribute("data-card-item")) {
-            const [id, listId] = el.getAttribute("data-card-item").split("-");
-            setFocusedCard({ id, listId, focused: true });
-        }
-
-        setFocusedCard((prev) => {
-            return { ...prev, focused: false };
-        });
-    }
-
-    function handleKeydown(e) {
-        const key = e.key;
-
-        const isTextFieldFocused = document.querySelector("input:focus");
-        const isTextAreaFocused = document.querySelector("textarea:focus");
-
-        if (e.key === "Enter") {
-            handleOpenCardDetail(focusedCard);
-            return;
-        }
-
-        if (e.key === "q") {
-            e.preventDefault();
-
-            let foundCard;
-            if (focusedCard) {
-                const foundList = boardState.lists.find(
-                    (l) => l._id == focusedCard.listId,
-                );
-                if (foundList) {
-                    foundCard = foundList.cards.find(
-                        (c) => c._id == focusedCard.id,
-                    );
-                }
-            }
-
+        const pos = getCardPosition(focusedCard.id, focusedCard.listId);
+        if (pos) {
+            const foundCard = pos.cards[pos.index];
+            console.log(focusedCard);
             handleOpenCardQuickEditor({
                 ...focusedCard,
                 title: foundCard.title,
             });
-            return;
         }
+    });
 
-        if (!e.ctrlKey || isTextAreaFocused || isTextFieldFocused) {
-            return;
-        }
+    useEffect(() => {
+        document.addEventListener("mousedown", handleMouseDown);
+        return () => document.removeEventListener("mousedown", handleMouseDown);
+    }, [handleMouseDown]);
 
-        // check if board has opened(or not-collapsed) lists or visible(or not-hidden-by-filter) cards
-        const currentLists = boardState.lists.filter((list) => {
-            const isListHasCards =
-                list.cards &&
-                list.cards.filter((card) => !card.hiddenByFilter).length > 0;
-            return !list.collapsed && isListHasCards;
-        });
-
-        // check if board has any lists or cards
-        if (
-            !boardState?.lists ||
-            currentLists.length === 0 ||
-            currentLists[0].cards.length === 0
-        ) {
-            return;
-        }
-
-        // check if list of focusedCard is collapsed or not
-        if (
-            focusedCard &&
-            currentLists.find((list) => list._id === focusedCard.listId) ===
-                undefined
-        ) {
-            setFocusedCard(undefined);
-            return;
-        }
-
-        // move right -> set focusedCard by increment list-index
-        if (key === "l" || key === "ArrowRight") {
-            if (focusedCard) {
-                const currList = currentLists.find(
-                    (list) => list._id === focusedCard.listId,
-                );
-                const currListIndex = currentLists.indexOf(currList);
-
-                const currtListCards = currList.cards.filter(
-                    (card) => !card.hiddenByFilter,
-                );
-                const currCardIndex = currtListCards.findIndex(
-                    (card) => card._id === focusedCard.id,
-                );
-
-                const nextList = currentLists[currListIndex + 1];
-                if (!nextList || nextList.cards.length === 0) {
-                    return;
-                }
-
-                const nextListCards = nextList.cards.filter(
-                    (card) => !card.hiddenByFilter,
-                );
-                const nextCard =
-                    nextListCards[currCardIndex] ||
-                    nextListCards[nextListCards.length - 1];
-                setFocusedCard({
-                    id: nextCard._id,
-                    listId: nextCard.listId,
-                    focused: true,
-                });
-            } else {
-                const currList = currentLists[0];
-                const currListCards = currList.cards.filter(
-                    (card) => !card.hiddenByFilter,
-                );
-                const currCard = currListCards[0];
-                setFocusedCard({
-                    id: currCard._id,
-                    listId: currCard.listId,
-                    focused: true,
-                });
-            }
-        }
-
-        // move left -> set focusedCard by decrement list-index
-        if (key === "h" || key === "ArrowLeft") {
-            if (focusedCard) {
-                const currList = currentLists.find(
-                    (list) => list._id === focusedCard.listId,
-                );
-                const currListIndex = currentLists.indexOf(currList);
-
-                const currListCards = currList.cards.filter(
-                    (card) => !card.hiddenByFilter,
-                );
-                const currCardIndex = currListCards.findIndex(
-                    (card) => card._id === focusedCard.id,
-                );
-
-                const prevList = currentLists[currListIndex - 1];
-                if (!prevList || prevList.cards.length === 0) {
-                    return;
-                }
-
-                const prevListCards = prevList.cards.filter(
-                    (card) => !card.hiddenByFilter,
-                );
-                const prevCard =
-                    prevListCards[currCardIndex] ||
-                    prevListCards[prevListCards.length - 1];
-                setFocusedCard({
-                    id: prevCard._id,
-                    listId: prevCard.listId,
-                    focused: true,
-                });
-            }
-            return;
-        }
-
-        // move down -> set focusedCard by increment card-index
-        if (key === "j" || key === "ArrowDown") {
-            if (focusedCard) {
-                const currList = currentLists.find(
-                    (list) => list._id === focusedCard.listId,
-                );
-
-                const currListCards = currList.cards.filter(
-                    (card) => !card.hiddenByFilter,
-                );
-                const currCardIndex = currListCards.findIndex(
-                    (card) => card._id === focusedCard.id,
-                );
-
-                const nextCard = currListCards[currCardIndex + 1];
-                if (!nextCard) {
-                    return;
-                }
-
-                setFocusedCard({
-                    id: nextCard._id,
-                    listId: nextCard.listId,
-                    focused: true,
-                });
-            } else {
-                const currList = currentLists[0];
-                const currListCards = currList.cards.filter(
-                    (card) => !card.hiddenByFilter,
-                );
-                const currCard = currListCards[0];
-                setFocusedCard({
-                    id: currCard._id,
-                    listId: currCard.listId,
-                    focused: true,
-                });
-            }
-            return;
-        }
-
-        // move up -> set focusedCard by decrement card-index
-        if (key === "k" || key === "ArrowUp") {
-            if (focusedCard) {
-                const currList = currentLists.find(
-                    (list) => list._id === focusedCard.listId,
-                );
-
-                const currListCards = currList.cards.filter(
-                    (card) => !card.hiddenByFilter,
-                );
-                const currCardIndex = currListCards.findIndex(
-                    (card) => card._id === focusedCard.id,
-                );
-
-                const prevCard = currListCards[currCardIndex - 1];
-                if (!prevCard) {
-                    return;
-                }
-
-                setFocusedCard({
-                    id: prevCard._id,
-                    listId: prevCard.listId,
-                    focused: true,
-                });
-            }
-            return;
-        }
-    }
+    // useEffect(() => {
+    //     handleScrollToFocusedCard(focusedCard);
+    // }, [focusedCard, handleScrollToFocusedCard]);
 };
 
 export default useCardActions;

@@ -20,9 +20,12 @@ import Card from "../card/Card";
 import { useMouseDragScroll } from "../../hooks/useMouseDragScroll";
 import { axiosPrivate } from "../../api/axios";
 import useToast from "../../hooks/useToast";
+import { useKeybind } from "../../hooks/useKeybind";
+import { kb } from "../../data/keybinds";
 
-const ListContainer = ({ openAddList, setOpenAddList }) => {
-    const { boardState, setBoardState, socket } = useBoardState();
+const ListContainer = () => {
+    const { boardState, setBoardState, openAddList, setOpenAddList, socket } =
+        useBoardState();
     const [clonedBoardState, setClonedBoardState] = useState(null);
 
     const [activeList, setActiveList] = useState(undefined);
@@ -30,7 +33,7 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
 
     const toast = useToast();
 
-    const listContainerRef = useMouseDragScroll();
+    const { ref: listContainerRef, scrollEl } = useMouseDragScroll();
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -39,6 +42,32 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
             },
         }),
     );
+
+    useKeybind(
+        kb.scrollLeft,
+        () => {
+            scrollEl.current?.scrollBy({
+                left: -400,
+                behavior: "smooth",
+            });
+        },
+        { ignoreInInputs: true, preventDefault: false },
+    );
+
+    useKeybind(
+        kb.scrollRight,
+        () => {
+            scrollEl.current?.scrollBy({
+                left: 400,
+                behavior: "smooth",
+            });
+        },
+        { ignoreInInputs: true, preventDefault: false },
+    );
+
+    useKeybind(kb.openAddList, () => {
+        setOpenAddList((prev) => !prev);
+    });
 
     async function handleOnDragEnd(e) {
         setActiveCard(null);
@@ -414,7 +443,7 @@ const ListContainer = ({ openAddList, setOpenAddList }) => {
                         />
                     ))}
                 </SortableContext>
-                <AddList open={openAddList} setOpen={setOpenAddList} />
+                <AddList />
             </div>
 
             {createPortal(

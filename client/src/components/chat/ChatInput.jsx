@@ -8,7 +8,7 @@ import useBoardState from "../../hooks/useBoardState";
 const ChatInput = () => {
     const { boardId } = useParams();
     const queryClient = useQueryClient();
-    const { socket } = useBoardState();
+    const { openChatBox, socket } = useBoardState();
     const [message, setMessage] = useState("");
     const textAreaRef = useRef();
 
@@ -63,6 +63,12 @@ const ChatInput = () => {
         textarea.style.height = `${textarea.scrollHeight}px`;
     }, []);
 
+    useEffect(() => {
+        if (textAreaRef.current && openChatBox) {
+            textAreaRef.current.focus();
+        }
+    }, [openChatBox]);
+
     const send = () => {
         const messageContent = textAreaRef.current.value.trim();
         sendMessageMutation.mutate(messageContent);
@@ -96,7 +102,7 @@ const ChatInput = () => {
             <div className="flex w-full py-2 gap-1 justify-start items-start">
                 <textarea
                     id="chat-input"
-                    className="text-[1rem] sm:text-[0.75rem] text-gray-700 sm:min-h-10 min-h-11 max-h-[100px] border border-gray-600 leading-normal overflow-y-auto resize-none w-full py-2 px-3 font-medium placeholder-gray-500 focus:outline-hidden bg-transparent"
+                    className="text-[1rem] sm:text-[0.75rem] text-gray-700 sm:min-h-10 min-h-11 max-h-25 border border-gray-600 leading-normal overflow-y-auto resize-none w-full py-2 px-3 font-medium placeholder-gray-500 focus:outline-hidden bg-transparent"
                     placeholder="Write something..."
                     ref={textAreaRef}
                     value={message}

@@ -24,7 +24,7 @@ const JoinBoardRequestForm = ({ open, setOpen }) => {
 
             dialog.current.addEventListener("close", handleOnClose);
 
-            () => {
+            return () => {
                 dialog.current.removeEventListener("close", handleOnClose);
             };
         } else {

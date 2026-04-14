@@ -1,6 +1,20 @@
+import { kb } from "../../data/keybinds";
+import useBoardState from "../../hooks/useBoardState";
+import { useKeybind } from "../../hooks/useKeybind";
 import ModalDialog from "./ModalDialog";
 
-const KeyBindings = ({ open, setOpen }) => {
+const KeyBindings = () => {
+    const { openKeyBindings: open, setOpenKeyBindings: setOpen } =
+        useBoardState();
+
+    useKeybind(
+        kb.openKeyBindings,
+        () => {
+            setOpen((prev) => !prev);
+        },
+        { ignoreInInputs: true },
+    );
+
     return (
         <ModalDialog title={"help"} open={open} setOpen={setOpen}>
             <ul className="flex flex-col gap-4 list-disc">
@@ -9,7 +23,8 @@ const KeyBindings = ({ open, setOpen }) => {
                 </li>
 
                 <li>
-                    <span className="key">.</span> open chat
+                    <span className="key">q</span> open card's quick editor (if
+                    it's focused)
                 </li>
 
                 <li>
@@ -18,17 +33,13 @@ const KeyBindings = ({ open, setOpen }) => {
                 </li>
 
                 <li>
-                    <span className="key">Esc</span> close opened
-                </li>
-
-                <li>
                     <span className="key">Enter</span> open selected card / send
                     message
                 </li>
 
                 <li>
-                    <span className="key">q</span> open quick editor of a
-                    selected card
+                    <span className="key">Ctrl</span> +{" "}
+                    <span className="key">Enter</span> open chat
                 </li>
 
                 <li>
@@ -53,7 +64,7 @@ const KeyBindings = ({ open, setOpen }) => {
 
                 <li>
                     <span className="key">Ctrl</span> +{" "}
-                    <span className="key">p</span> open filter
+                    <span className="key">f</span> open filter
                 </li>
 
                 <li>
@@ -63,53 +74,52 @@ const KeyBindings = ({ open, setOpen }) => {
 
                 <li>
                     <span className="key">Ctrl</span> +{" "}
-                    <span className="key">m</span> open membership
+                    <span className="key">m</span> open members
                 </li>
 
                 <li>
                     <span className="key">Ctrl</span> +{" "}
-                    <span className="key">e</span> open pinned boards
+                    <span className="key">p</span> open pinned boards
                 </li>
 
                 <li>
                     <span className="key">Ctrl</span> + <span> </span>
-                    <span className="key">↑</span>
+                    <span className="key">←</span>
                     <span> </span>
                     <span className="key">↓</span>
                     <span> </span>
-                    <span className="key">←</span>
+                    <span className="key">↑</span>
                     <span> </span>
                     <span className="key">→</span>
                     <span> </span>
-                    select card
+                    navigate &amp; focus card
                     <br />
                     <br />
                     <span className="key">Ctrl</span> + <span> </span>
-                    <span className="key">k</span>
+                    <span className="key">h</span>
                     <span> </span>
                     <span className="key">j</span>
                     <span> </span>
-                    <span className="key">h</span>
+                    <span className="key">k</span>
                     <span> </span>
                     <span className="key">l</span>
                     <span> </span>
-                    (vim-like)
                 </li>
             </ul>
 
             <div className="h-px bg-black w-full mt-4"></div>
 
-            <div className="pt-3 text-[12px] sm:text-[0.8rem] text-gray-500">
-                format chat message:
+            <div className="pt-2 text-[12px] sm:text-[0.8rem] text-gray-500">
+                format chat message with:
                 <ul className="flex flex-col gap-3 list-disc ms-4 mt-2">
                     <li className="font-medium">
-                        <span className="py-1 px-2 bg-gray-500 rounded-sm text-gray-50">
-                            !c [card_code] [?message]
+                        <span className="py-1 px-2 bg-gray-500 text-gray-50">
+                            !c [card_code] [your_message]
                         </span>
                     </li>
                     <li className="font-medium">
-                        <span className="py-1 px-2 bg-gray-500 rounded-sm text-gray-50">
-                            !b [board_code] [?message]
+                        <span className="py-1 px-2 bg-gray-500 text-gray-50">
+                            !b [board_code] [your_message]
                         </span>
                     </li>
                 </ul>
