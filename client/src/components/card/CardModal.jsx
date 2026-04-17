@@ -9,6 +9,7 @@ import Icon from "../shared/Icon";
 import CardComments from "./CardComments";
 import { axiosPrivate } from "../../api/axios";
 import useToast from "../../hooks/useToast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const CardModal = ({
     open,
@@ -33,6 +34,8 @@ const CardModal = ({
         socket,
     } = useBoardState();
 
+    const queryClient = useQueryClient();
+
     const [openHighlightPicker, setOpenHighlightPicker] = useState(false);
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState(card?.description);
@@ -46,10 +49,44 @@ const CardModal = ({
     const modalRef = useRef();
     const cardTitleInput = useRef();
     const cardDescriptionInput = useRef();
+    const abortControllerRef = useRef(null);
 
     const [searchParams, setSearchParams] = useSearchParams();
 
     const toast = useToast();
+
+    const fileUploadMutation = useMutation({
+        mutationFn: async (formData) => {
+            abortControllerRef.current = new AbortController();
+            const response = await axiosPrivate.post(
+                "/attachments/upload",
+                formData,
+                {
+                    headers: { "Content-Type": "multipart/form-data" },
+                    signal: abortControllerRef.current.signal,
+                },
+            );
+            return response.data;
+        },
+        onSuccess: (data) => {
+            queryClient.setQueryData(["card-attachments", card._id], (old) => {
+                if (!old) return old;
+                return [...old, data];
+            });
+
+            toast.success("Attachment uploaded successfully");
+            socket.emit("addCardAttachment", { attachment: data });
+        },
+        onError: (err) => {
+            if (err.name === "CanceledError" || err.name === "AbortError") {
+                return;
+            }
+
+            const errMsg =
+                err.response?.data?.message || "Failed to upload attachment";
+            toast.error(errMsg);
+        },
+    });
 
     useEffect(() => {
         if (open && card && cardDescriptionInput.current) {
@@ -348,6 +385,40 @@ const CardModal = ({
         setPosition(insertedIndex);
     };
 
+    const paste = (e) => {
+        const items = e.clipboardData?.items || [];
+        let attachmentFile = null;
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (item.kind === "file" && item.type.startsWith("image/")) {
+                const file = item.getAsFile();
+                if (file) {
+                    attachmentFile = item.getAsFile();
+                    break;
+                }
+            }
+        }
+
+        if (!attachmentFile) {
+            return;
+        }
+
+        e.preventDefault();
+
+        const pastedFile = new File(
+            [attachmentFile],
+            `pasted-${Date.now()}.${attachmentFile.type.split("/")[1] || "png"}`,
+            { type: attachmentFile.type },
+        );
+
+        const formData = new FormData();
+        formData.append("attachment", pastedFile);
+        formData.append("docModel", "Card");
+        formData.append("doc", card._id);
+
+        fileUploadMutation.mutate(formData);
+    };
+
     if (!open) return null;
 
     if (card === undefined) {
@@ -357,10 +428,10 @@ const CardModal = ({
                 onClick={handleCancel}
             >
                 <div
-                    className="overflow-y-auto overflow-x-hidden box--style text-gray-600 p-3 gap-3 pb-4 w-[350px] h-[350px] border-gray-600 border-2 bg-gray-200"
+                    className="overflow-y-auto overflow-x-hidden box--style text-gray-600 p-3 gap-3 pb-4 w-87.5 h-87.5 border-gray-600 border-2 bg-gray-200"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="w-full h-[300px] text-center flex flex-col items-center justify-center">
+                    <div className="w-full h-75 text-center flex flex-col items-center justify-center">
                         <span>getting card data</span>
                         <div className="loader mx-auto mt-8"></div>
                     </div>
@@ -376,10 +447,10 @@ const CardModal = ({
                 onClick={handleCancel}
             >
                 <div
-                    className="overflow-y-auto overflow-x-hidden box--style text-gray-600 p-3 gap-3 pb-4 w-[350px] h-[350px] border-gray-600 border-2 bg-gray-200"
+                    className="overflow-y-auto overflow-x-hidden box--style text-gray-600 p-3 gap-3 pb-4 w-87.5 h-87.5 border-gray-600 border-2 bg-gray-200"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="w-full h-[300px] text-center grid items-center">
+                    <div className="w-full h-75 text-center flex flex-col items-center justify-center">
                         <span>{card?.errMsg}</span>
                     </div>
                 </div>
@@ -394,7 +465,7 @@ const CardModal = ({
         >
             <div
                 ref={modalRef}
-                className="full-in-small-screen bg-[rgb(var(--card-item-bg))] p-0 overflow-y-auto overflow-x-hidden box--style gap-3 min-w-[350px] w-[90%] xl:w-[800px] md:w-[80%] h-fit max-h-[90%]"
+                className="full-in-small-screen bg-[rgb(var(--card-item-bg))] p-0 overflow-y-auto overflow-x-hidden box--style gap-3 min-w-87.5 w-[90%] xl:w-200 md:w-[80%] h-fit max-h-[90%]"
                 style={{
                     boxShadow: "6px 8px 0 0 #4b5563",
                     border: "3px solid #4b5563",
@@ -522,13 +593,14 @@ const CardModal = ({
                                 <textarea
                                     ref={cardDescriptionInput}
                                     id="card__detail__description__textarea"
-                                    className="overflow-y-auto border-2 shadow-[0_2px_0_0] border-gray-600 shadow-gray-600 min-h-[250px] wrap-break-word box-border text-sm py-2 px-3 w-full text-gray-600 bg-gray-100 leading-normal font-medium placeholder-gray-400 focus:outline-hidden"
+                                    className="overflow-y-auto border-2 shadow-[0_2px_0_0] border-gray-600 shadow-gray-600 min-h-62.5 wrap-break-word box-border text-sm py-2 px-3 w-full text-gray-600 bg-gray-100 leading-normal font-medium placeholder-gray-400 focus:outline-hidden"
                                     autoFocus={true}
                                     placeholder={"add description..."}
                                     value={description}
                                     onChange={(e) =>
                                         setDescription(e.target.value)
                                     }
+                                    onPaste={paste}
                                 />
                             </div>
 
@@ -561,7 +633,7 @@ const CardModal = ({
 
                                 <div className="flex gap-3">
                                     {/* change highlight button */}
-                                    <div className="relative h-[40px]">
+                                    <div className="relative h-10">
                                         <button
                                             title="change highlight color"
                                             onClick={() =>
@@ -589,7 +661,7 @@ const CardModal = ({
                                         )}
                                     </div>
 
-                                    <div className="h-[40px]">
+                                    <div className="h-10">
                                         <button
                                             title="create a copy of this card"
                                             onClick={copyCard}
@@ -605,7 +677,7 @@ const CardModal = ({
                                         </button>
                                     </div>
 
-                                    <div className="h-[40px]">
+                                    <div className="h-10">
                                         <button
                                             className={`card--details--button border-green-700 w-fit text-green-700 ${card.verified ? "bg-teal-100" : ""}`}
                                             onClick={handleToggleVerified}
@@ -629,7 +701,7 @@ const CardModal = ({
                                         </button>
                                     </div>
 
-                                    <div className="relative h-[40px]">
+                                    <div className="relative h-10">
                                         <button
                                             title="delete this card"
                                             onClick={() =>
@@ -651,7 +723,7 @@ const CardModal = ({
                                         {openCardDeleteConfirm && (
                                             <div
                                                 id="card__detail__delete__confirm"
-                                                className="bg-gray-100 border-2 shadow-[0_3px_0_0] border-gray-600 shadow-gray-600 absolute text-sm w-[200px] right-0 top-[120%] p-2"
+                                                className="bg-gray-100 border-2 shadow-[0_3px_0_0] border-gray-600 shadow-gray-600 absolute text-sm w-50 right-0 top-[120%] p-2"
                                             >
                                                 This action cannot be undone.
                                                 Are you sure you want to delete

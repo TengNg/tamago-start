@@ -178,7 +178,6 @@ const useCardActions = ({ stateHooks, effectDeps }) => {
         const pos = getCardPosition(focusedCard.id, focusedCard.listId);
         if (pos) {
             const foundCard = pos.cards[pos.index];
-            console.log(focusedCard);
             handleOpenCardQuickEditor({
                 ...focusedCard,
                 title: foundCard.title,
