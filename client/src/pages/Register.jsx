@@ -144,7 +144,7 @@ export default function Register() {
                                 : "Sign up"}
                         </button>
                         <a
-                            className="button--style border-0 text-gray-50 bg-indigo-700 hover:bg-indigo-500 flex--center"
+                            className="button--style border-0 text-gray-50! bg-indigo-700 hover:bg-indigo-500 flex--center"
                             href={`${import.meta.env.VITE_SERVER_URL || "http://localhost:3001"}/auth/discord`}
                         >
                             Log in with Discord
