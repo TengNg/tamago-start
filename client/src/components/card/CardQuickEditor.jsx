@@ -44,28 +44,16 @@ const CardQuickEditor = ({
                 }
             };
 
-            const handleClickOutside = (event) => {
-                if (
-                    quickEditorRef.current &&
-                    !quickEditorRef.current.contains(event.target)
-                ) {
-                    close();
-                }
-            };
-
             quickEditorRef.current.addEventListener(
                 "keydown",
                 handleCloseOnKeydown,
             );
-
-            document.addEventListener("mousedown", handleClickOutside);
 
             return () => {
                 quickEditorRef.current?.removeEventListener(
                     "keydown",
                     handleCloseOnKeydown,
                 );
-                document.removeEventListener("mousedown", handleClickOutside);
             };
         }
     }, [open]);
@@ -188,6 +176,10 @@ const CardQuickEditor = ({
     return (
         <>
             <div
+                onClick={close}
+                className="fixed bg-gray-600 opacity-20 w-full h-full z-9"
+            ></div>
+            <div
                 ref={quickEditorRef}
                 className="absolute z-10"
                 style={{
@@ -212,51 +204,44 @@ const CardQuickEditor = ({
                         value={initialTitle}
                         maxLength={200}
                     />
-                    <div className="flex flex-col gap-2 absolute top-0 -right-1 translate-x-full justify-start items-start w-[200px]">
+                    <div className="flex flex-col gap-2 absolute top-0 -right-1 translate-x-full justify-start items-start w-50">
                         {openHighlightPicker && (
                             <QuickEditorHighlightPicker card={card} />
                         )}
 
                         <button
                             onClick={handleOpenCardModal}
-                            className="hover:ms-1 text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80"
+                            className="hover:bg-gray-700 text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80"
                         >
                             open
                         </button>
 
                         <button
                             onClick={handleOpenCardInNewTab}
-                            className="hover:ms-1 text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80"
+                            className="hover:bg-gray-700 text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80"
                         >
                             open in new tab
                         </button>
 
                         <button
                             onClick={handleToggleHighlightPicker}
-                            className={`${openHighlightPicker ? "bg-gray-600" : "bg-gray-800"} hover:ms-1 text-[0.75rem] text-white px-3 py-1 flex--center opacity-80 z-30`}
+                            className={`${openHighlightPicker ? "bg-gray-700" : "bg-gray-800"} hover:bg-gray-700 text-[0.75rem] text-white px-3 py-1 flex--center opacity-80 z-30`}
                         >
                             highlight
                         </button>
 
                         <button
                             onClick={copyCard}
-                            className="hover:ms-1 text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80"
+                            className="hover:bg-gray-700 text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80"
                         >
                             duplicate
                         </button>
 
                         <button
                             onClick={deleteCard}
-                            className="hover:ms-1 text-[0.75rem] relative text-white bg-gray-800 px-3 py-1 flex--center opacity-80 z-30"
+                            className="hover:bg-rose-700 text-[0.75rem] relative text-white bg-rose-800 px-3 py-1 flex--center opacity-80 z-30"
                         >
                             delete
-                        </button>
-
-                        <button
-                            onClick={handleClose}
-                            className="hover:ms-1 text-[0.75rem] text-white bg-gray-800 px-3 py-1 flex--center opacity-80 z-0"
-                        >
-                            close
                         </button>
                     </div>
                 </div>
@@ -264,14 +249,14 @@ const CardQuickEditor = ({
                 <div className="flex gap-2">
                     <button
                         onClick={handleSaveButtonOnClick}
-                        className="w-[110px] text-[0.75rem] text-white hover:bg-gray-700 bg-gray-800 px-4 py-2 flex--center opacity-80 z-0"
+                        className="w-27.5 text-[0.75rem] text-white hover:bg-gray-700 bg-gray-800 px-4 py-2 flex--center opacity-80 z-0"
                     >
                         save
                     </button>
 
                     <button
                         onClick={handleVerifyButtonOnClick}
-                        className={`${card.verified ? "bg-rose-800" : "bg-teal-800"} w-[110px] text-[0.75rem] text-white px-4 py-2 flex--center opacity-90 hover:opacity-80 z-0`}
+                        className={`${card.verified ? "bg-rose-800" : "bg-teal-800"} w-27.5 text-[0.75rem] text-white px-4 py-2 flex--center opacity-90 hover:opacity-80 z-0`}
                     >
                         {isVerifying
                             ? "..."

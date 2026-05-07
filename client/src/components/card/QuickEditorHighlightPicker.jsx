@@ -30,12 +30,12 @@ const QuickEditorHighlightPicker = ({ card }) => {
     };
 
     return (
-        <div className="absolute top-0 left-0 w-[100px] translate-x-[150%] flex flex-col gap-1 cursor-pointer">
+        <div className="absolute top-0 left-0 w-25 translate-x-[150%] flex flex-col gap-1 cursor-pointer">
             {highlightColors.map((hl) => {
                 return (
                     <div
                         key={hl}
-                        className={`box-border w-full h-[25px] border-2 hover:border-blue-700`}
+                        className={`box-border w-full h-6.25 border-2 border-gray-500 hover:border-blue-700`}
                         style={{ background: hl }}
                         onClick={() => handleSetCardHighlight(hl)}
                     ></div>
@@ -43,7 +43,7 @@ const QuickEditorHighlightPicker = ({ card }) => {
             })}
 
             <div
-                className={`w-full h-[25px] mt-1 bg-transparent flex--center font-bold border-2 hover:border-blue-700 hover:text-blue-700 text-gray-400 border-gray-400 text-[0.75rem]`}
+                className={`w-full h-6.25 mt-1 bg-transparent flex--center font-bold border-2 hover:border-blue-700 hover:text-blue-700 text-gray-500 border-gray-500 text-[0.75rem]`}
                 onClick={() => handleSetCardHighlight(null)}
             >
                 <Icon className="w-3 h-3" name="xmark" />
