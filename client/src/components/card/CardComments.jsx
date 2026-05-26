@@ -194,7 +194,7 @@ const CardComments = ({ card }) => {
         );
     }
 
-    if (commentsQuery.isLoading) {
+    if (commentsQuery.isError) {
         return (
             <div className="relative flex flex-col gap-4 text-[0.65rem] sm:text-[0.8rem] text-gray-700 p-4 border border-gray-700">
                 <div>failed to load comments :( please try again.</div>
