@@ -546,10 +546,10 @@ const CardModal = ({
                                         handleMoveCardOnListOptionChanged(e);
                                     }}
                                 >
-                                    {listSelectOptions.map((option, index) => {
+                                    {listSelectOptions.map((option) => {
                                         const { value, title } = option;
                                         return (
-                                            <option key={index} value={value}>
+                                            <option key={title} value={value}>
                                                 {title}
                                             </option>
                                         );

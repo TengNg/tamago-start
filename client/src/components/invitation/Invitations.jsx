@@ -61,7 +61,7 @@ export default function Invitations({
                         </div>
                     )}
 
-                    {invitations.map((item, index) => {
+                    {invitations.map((item) => {
                         const {
                             _id,
                             invitedByUserId: sender,
@@ -71,7 +71,7 @@ export default function Invitations({
                         } = item;
                         return (
                             <div
-                                key={index}
+                                key={_id}
                                 className={`button--style--rounded rounded-none border-gray-700 shadow-gray-700 flex justify-between flex-wrap sm:flex-nowrap items-center p-4
                                            ${status === "accepted" ? "bg-blue-100 cursor-pointer" : status === "rejected" ? "bg-red-200" : "bg-gray-100/30"}`}
                                 onClick={() =>

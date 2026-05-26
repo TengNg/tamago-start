@@ -60,7 +60,7 @@ export default function JoinRequests({
                         </div>
                     )}
 
-                    {requests.map((item, index) => {
+                    {requests.map((item) => {
                         const {
                             _id,
                             boardId: board,
@@ -76,7 +76,7 @@ export default function JoinRequests({
 
                         return (
                             <div
-                                key={index}
+                                key={_id}
                                 className={`button--style--rounded rounded-none border-gray-700 shadow-gray-700 flex justify-between flex-wrap sm:flex-nowrap items-center p-4
                                         ${status === "accepted" ? "bg-blue-100" : status === "rejected" ? "bg-red-200" : "bg-gray-100/30"}`}
                             >

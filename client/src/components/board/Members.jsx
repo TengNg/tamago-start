@@ -70,14 +70,14 @@ const Members = () => {
                 </div>
 
                 <div className="flex flex-col justify-start items-start gap-4 mt-4 pb-3 overflow-auto max-h-150 w-[90%] sm:w-100">
-                    {boardState.members.map((m, index) => {
+                    {boardState.members.map((m) => {
                         return (
                             <div
                                 key={m.username}
                                 className="flex gap-2 items-center"
                             >
                                 <Avatar
-                                    key={index}
+                                    key={m.username}
                                     username={m.username}
                                     profileImage={m.profileImage}
                                     withBorder={

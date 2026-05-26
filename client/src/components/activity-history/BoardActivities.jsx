@@ -166,8 +166,13 @@ const BoardActivities = () => {
                 />
 
                 {activities.length > 0 ? (
-                    activities.map((activity, index) => {
-                        return <ActivityItem key={index} activity={activity} />;
+                    activities.map((activity) => {
+                        return (
+                            <ActivityItem
+                                key={activity._id}
+                                activity={activity}
+                            />
+                        );
                     })
                 ) : (
                     <div>no activities found in this board.</div>

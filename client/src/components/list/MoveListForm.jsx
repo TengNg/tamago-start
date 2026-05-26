@@ -255,10 +255,10 @@ const MoveListForm = () => {
                             value={selectedBoardId}
                             className={`appearance-none cursor-pointer border-gray-300 text-sm w-full py-2 px-4 text-gray-100 ${boards.length === 0 ? "bg-gray-500" : "bg-gray-600"}`}
                         >
-                            {boards.map((board, index) => {
+                            {boards.map((board) => {
                                 const { _id, title } = board;
                                 return (
-                                    <option key={index} value={_id}>
+                                    <option key={_id} value={_id}>
                                         board: {title}
                                     </option>
                                 );

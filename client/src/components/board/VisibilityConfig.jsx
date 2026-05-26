@@ -104,10 +104,10 @@ const VisibilityConfig = () => {
             </div>
 
             <div className="w-full relative flex flex-col items-start gap-4 py-2 mt-2">
-                {visiblityOptions.map((option, index) => {
+                {visiblityOptions.map((option) => {
                     return (
                         <button
-                            key={index}
+                            key={option}
                             className={`button--style shadow-[0_2px_0_0] shadow-gray-700 text-sm flex justify-between w-full ${visibility == option ? "bg-gray-500 text-gray-50" : ""}`}
                             onClick={() => {
                                 handleSetBoardVisibility(option);
