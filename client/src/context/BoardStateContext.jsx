@@ -152,12 +152,6 @@ export const BoardStateContextProvider = ({ children }) => {
             });
         });
 
-        socket.on("getBoardWithUpdatedLists", (data) => {
-            setBoardState((prev) => {
-                return { ...prev, lists: data };
-            });
-        });
-
         socket.on("getBoardWithUpdatedTitle", (data) => {
             setBoardState((prev) => {
                 return { ...prev, board: { ...prev.board, title: data } };
