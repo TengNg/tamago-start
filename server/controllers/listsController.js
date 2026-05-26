@@ -66,7 +66,7 @@ const reorder = async (req, res) => {
     }
 
     foundList.order = rank;
-    foundList.save();
+    await foundList.save();
 
     if (
         sourceIndex
@@ -107,7 +107,7 @@ const updateTitle = async (req, res) => {
     })
 
     foundList.title = title;
-    foundList.save();
+    await foundList.save();
 
     res.status(200).json({ newList: foundList });
 };

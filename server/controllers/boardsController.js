@@ -189,7 +189,7 @@ const getBoard = async (req, res) => {
     const foundUser = await User.findById(userId);
     if (foundUser.recentlyViewedBoardId !== board._id) {
         foundUser.recentlyViewedBoardId = board._id;
-        foundUser.save();
+        await foundUser.save();
     }
 
     const memberships = await boardMemberships(board._id);
@@ -315,7 +315,7 @@ const updateTitle = async (req, res) => {
 
     const currentTitle = board.title;
     board.title = title;
-    board.save();
+    await board.save();
 
     if (title !== currentTitle) {
         await saveBoardActivity({
@@ -352,7 +352,7 @@ const updateDescription = async (req, res) => {
 
     const currentDescription = board.description;
     board.description = description;
-    board.save();
+    await board.save();
 
     if (description !== currentDescription) {
         await saveBoardActivity({
@@ -388,7 +388,7 @@ const updateVisibility = async (req, res) => {
     });
 
     board.visibility = visibility;
-    board.save();
+    await board.save();
 
     return res.status(200).json({ newBoard: board });
 };

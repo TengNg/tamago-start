@@ -113,6 +113,9 @@ const acceptInvitation = async (req, res) => {
         return res.status(404);
     }
 
+    invitation.status = "accepted";
+    await invitation.save();
+
     await BoardMembership.create({
         boardId,
         userId: invitedUserId,
