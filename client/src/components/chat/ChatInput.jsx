@@ -4,6 +4,7 @@ import { chatKeys } from "../../queries/chatKeys";
 import { sendMessage } from "../../api/chatApi";
 import { useParams } from "react-router-dom";
 import useBoardState from "../../hooks/useBoardState";
+import useToast from "../../hooks/useToast";
 
 const ChatInput = () => {
     const { boardId } = useParams();
@@ -11,6 +12,7 @@ const ChatInput = () => {
     const { openChatBox, socket } = useBoardState();
     const [message, setMessage] = useState("");
     const textAreaRef = useRef();
+    const toast = useToast();
 
     const sendMessageMutation = useMutation({
         mutationFn: (content) => sendMessage({ boardId, content }),
