@@ -262,7 +262,7 @@ const moveList = async (req, res) => {
         return l._id.toString() === foundList._id.toString();
     });
     const srcOrder =
-        movedListIndex < +index && foundList.toString() === boardId
+        movedListIndex < +index && foundList.boardId.toString() === boardId
             ? sortedLists[+indexToMove]?.order
             : sortedLists[+indexToMove - 1]?.order
     const dstOrder =
