@@ -30,7 +30,6 @@ const UserSchema = new Schema({
     username: {
         type: String,
         required: true,
-        dropDups: true,
         unique: true,
         validate: {
             /** @param {any} value */
