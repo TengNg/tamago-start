@@ -36,7 +36,7 @@ const handleRegister = async (req, res) => {
             password: hashedPwd,
         });
         await newUser.save();
-        return res.status(204);
+        return res.sendStatus(204);
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }

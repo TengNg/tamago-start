@@ -4,7 +4,7 @@
  * @param {import('express').NextFunction} _next
  */
 const notFoundHandler = (_req, res, _next) => {
-    return res.status(404);
+    return res.sendStatus(404);
 }
 
 export default notFoundHandler;

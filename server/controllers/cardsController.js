@@ -102,7 +102,7 @@ const reorder = async (req, res) => {
 
     const foundList = await listById(listId);
     if (!foundList) {
-        return res.sendStatus(403).json({ message: "list not found" });
+        return res.status(403).json({ message: "list not found" });
     }
 
     if (foundCard.order === rank) {
