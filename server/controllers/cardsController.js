@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import Card from '../models/Card.js';
+import Board from '../models/Board.js';
 
 import { checkBoardPermission } from '../services/boardPermissionService.js';
 import saveBoardActivity from '../services/saveBoardActivity.js';
@@ -57,6 +58,8 @@ const addCard = async (req, res) => {
     });
 
     await newCard.save();
+
+    await Board.updateOne({ _id: foundList.boardId }, { $inc: { cardCount: 1 } });
 
     await saveBoardActivity({
         userId,

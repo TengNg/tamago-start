@@ -108,12 +108,6 @@ cardSchema.pre('save', async function(next) {
     next();
 });
 
-cardSchema.post('save', async function(doc, next) {
-    const Board = model('Board');
-    await Board.updateOne({ _id: doc.boardId }, { $inc: { cardCount: 1 } });
-    next();
-});
-
 cardSchema.post('findOneAndDelete', async function(doc) {
     const Board = model('Board');
     const foundBoard = await Board.findById(doc.boardId);

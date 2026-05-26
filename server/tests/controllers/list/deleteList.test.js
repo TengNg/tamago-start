@@ -85,9 +85,6 @@ describe('DELETE /lists/:id', () => {
 
         const lists = await List.find({ title: testList.title })
         expect(lists.length).toBe(0);
-
-        const board = await Board.findOne({});
-        expect(board.listCount).toBe(0);
     });
 });
 

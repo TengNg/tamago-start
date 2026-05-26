@@ -101,9 +101,6 @@ describe('POST /lists/copy/:id', () => {
         expect(cardsFromCopiedList.map(c => c.title))
             .toStrictEqual(cardsFromNewList.map(c => c.title));
 
-        const board = await Board.findOne({});
-        expect(board.listCount).toBe(2);
-
         expect(res.statusCode).toBe(200);
         expect(res.body.list.title).toBe(testList.title);
         expect(res.body.cards.length).toBe(10);

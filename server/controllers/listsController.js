@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import List from '../models/List.js';
 import Card from '../models/Card.js';
+import Board from '../models/Board.js';
 import { lexorank } from '../lib/lexorank.js';
 
 import { saveList } from '../services/listService.js';
@@ -29,6 +30,8 @@ const addList = async (req, res) => {
     });
 
     await newList.save();
+
+    await Board.updateOne({ _id: boardId }, { $inc: { listCount: 1 } });
 
     await saveBoardActivity({
         boardId,
@@ -191,6 +194,8 @@ const copyList = async (req, res) => {
         newCards.push(newCard);
     }
 
+    await Board.updateOne({ _id: boardId }, { $inc: { listCount: 1 } });
+
     await saveBoardActivity({
         boardId,
         userId,
@@ -223,7 +228,8 @@ const moveList = async (req, res) => {
     // check for both sides, move on current board or move to another board
     // if move to different board, it's like remove from current and create from new
 
-    const isMovedToDifferentBoard = foundList.boardId.toString() !== boardId;
+    const initialBoardId = foundList.boardId.toString();
+    const isMovedToDifferentBoard = initialBoardId !== boardId;
     let boardToMove = null;
     if (isMovedToDifferentBoard) {
         const { board: _currentBoard } = await checkBoardPermission({
@@ -280,6 +286,11 @@ const moveList = async (req, res) => {
 
     await Card.updateMany({ listId: id }, { boardId: boardToMove._id });
     const newCards = await Card.find({ listId: id, boardId: boardToMove._id }).sort({ order: 'asc' });
+
+    if (isMovedToDifferentBoard) {
+        await Board.updateOne({ _id: initialBoardId }, { $inc: { listCount: -1 } });
+        await Board.updateOne({ _id: boardToMove._id }, { $inc: { listCount: 1 } });
+    }
 
     return res.status(200).json({ list: foundList, cards: newCards });
 };

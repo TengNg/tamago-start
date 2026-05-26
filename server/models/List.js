@@ -39,12 +39,6 @@ listSchema.pre('save', async function(next) {
     next();
 });
 
-listSchema.post('save', async function(doc, next) {
-    const Board = model('Board');
-    await Board.updateOne({ _id: doc.boardId }, { $inc: { listCount: 1 } });
-    next();
-});
-
 listSchema.post('findOneAndDelete', async function(doc) {
     const session = await startSession();
     session.startTransaction();
