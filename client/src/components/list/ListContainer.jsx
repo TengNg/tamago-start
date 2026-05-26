@@ -24,7 +24,7 @@ import { useKeybind } from "../../hooks/useKeybind";
 import { kb } from "../../data/keybinds";
 
 const ListContainer = () => {
-    const { boardState, setBoardState, openAddList, setOpenAddList, socket } =
+    const { boardState, setBoardState, setOpenAddList, socket } =
         useBoardState();
     const [clonedBoardState, setClonedBoardState] = useState(null);
 
@@ -399,7 +399,7 @@ const ListContainer = () => {
 
     function handleOnDragCancel() {
         if (clonedBoardState) {
-            setClonedBoardState(clonedBoardState);
+            setBoardState(clonedBoardState);
             return;
         }
 
