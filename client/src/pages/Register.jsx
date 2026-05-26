@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Title from "../components/ui/Title";
 import { register } from "../api/authApi";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 // const USER_REGEX = /^[A-z][A-z0-9-_]{3,23}$/;
 // const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/;
@@ -11,6 +11,8 @@ const USERNAME_REGEX = /^[a-zA-Z0-9._-]{3,20}$/;
 const PWD_REGEX = /^.{8,24}$/;
 
 export default function Register() {
+    const queryClient = useQueryClient();
+
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [confirmedPassword, setConfirmedPassword] = useState("");
@@ -114,7 +116,10 @@ export default function Register() {
                         required
                     />
 
-                    <label className="text-gray-700" htmlFor="password">
+                    <label
+                        className="text-gray-700"
+                        htmlFor="confirmed-password"
+                    >
                         Confirm Password
                     </label>
                     <input
