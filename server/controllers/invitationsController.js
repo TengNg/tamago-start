@@ -3,32 +3,22 @@ import User from "../models/User.js";
 import Board from "../models/Board.js";
 import BoardMembership from "../models/BoardMembership.js";
 
-import { MAX_INVITATION_PAGE } from '../data/limits.js';
-
-/**
- * @param {string} username
- */
-const getUser = (username) => {
-    const foundUser = User.findOne({ username }).lean();
-    return foundUser;
-};
-
 /**
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  */
 const getInvitations = async (req, res) => {
+    const perPage = 10;
+
     const { userId } = req.user;
-    const perPage = MAX_INVITATION_PAGE;
+
     let { page } = req.query;
     const pageNum = Number(Array.isArray(page) ? page[0] : page) || 1;
 
-    const total = await Invitation.countDocuments({
-        invitedUserId: userId
-    });
-
     const invitations = await Invitation
-        .find({ invitedUserId: userId })
+        .find({
+            invitedUserId: userId
+        })
         .populate({
             path: 'invitedUserId',
             select: 'username profileImage createdAt'
@@ -39,12 +29,14 @@ const getInvitations = async (req, res) => {
         })
         .sort({ createdAt: -1 })
         .skip((pageNum - 1) * perPage)
-        .limit(perPage)
+        .limit(perPage + 1)
         .lean();
 
-    const hasMore = pageNum * perPage < total;
+    const hasMore = invitations.length > perPage;
+    const items = hasMore ? invitations.slice(0, perPage) : invitations;
+    const nextPage = hasMore ? pageNum + 1 : null;
 
-    res.status(200).json({ invitations, hasMore });
+    res.status(200).json({ invitations: items, nextPage });
 };
 
 /**
@@ -52,15 +44,10 @@ const getInvitations = async (req, res) => {
  * @param {import('express').Response} res
  */
 const sendInvitation = async (req, res) => {
-    const { username } = req.user;
+    const { userId, username } = req.user;
     const { boardId, receiverName } = req.body;
 
-    const sender = await getUser(username);
-    if (!sender) {
-        return res.status(403).json({ message: "can't send invitation" });
-    }
-
-    const receiver = await getUser(receiverName);
+    const receiver = await User.findOne({ username: receiverName }).lean();
     if (!receiver) {
         return res.status(403).json({ message: "username is not found" });
     }
@@ -77,18 +64,20 @@ const sendInvitation = async (req, res) => {
     const foundInvitation = await Invitation
         .findOne({
             boardId,
-            invitedByUserId: sender._id,
+            invitedByUserId: userId,
             invitedUserId: receiver._id,
             status: { $in: ['pending'] }
         })
         .sort({ createdAt: -1 })
 
-    if (foundInvitation) return res.status(409).json({ message: "invitation is already sent" }); // Conflict
+    if (foundInvitation) {
+        return res.status(409).json({ message: "invitation is already sent" }); // Conflict
+    }
 
     const invitation = new Invitation({
         boardId,
         invitedUserId: receiver._id,
-        invitedByUserId: sender._id,
+        invitedByUserId: userId,
     })
 
     await invitation.save();

@@ -6,6 +6,7 @@ import Icon from "../shared/Icon";
 import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 import { axiosPrivate } from "../../api/axios";
 import useToast from "../../hooks/useToast";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 const BoardOptions = ({
     setOpen,
@@ -34,7 +35,7 @@ const BoardOptions = ({
                 `/boards/${boardState.board._id}/members/leave`,
             );
             removeMemberFromBoard(currentUser.username);
-            socket.emit("leaveBoard");
+            socket.emit(SOCKET_EVENTS.BOARD_LEAVE);
             navigate("/boards");
         } catch (err) {
             const errMsg =
@@ -50,7 +51,7 @@ const BoardOptions = ({
         ) {
             try {
                 await axiosPrivate.delete(`/boards/${boardState.board._id}`);
-                socket.emit("closeBoard");
+                socket.emit(SOCKET_EVENTS.BOARD_CLOSE);
                 navigate("/boards");
             } catch (err) {
                 const errMsg =
@@ -68,7 +69,10 @@ const BoardOptions = ({
                 `/boards/${boardState.board._id}/new-description`,
                 JSON.stringify({ description: e.target.value.trim() }),
             );
-            socket.emit("updateBoardDescription", e.target.value.trim());
+            socket.emit(
+                SOCKET_EVENTS.BOARD_UPDATE_DESCRIPTION,
+                e.target.value.trim(),
+            );
         } catch (err) {
             const errMsg =
                 err.response?.data?.message || "Failed to update board title";
@@ -163,7 +167,7 @@ const BoardOptions = ({
                 )}
 
                 <div
-                    className={`bg-[rgb(var(--card-item-bg))] absolute w-full h-fit min-h-full pb-4 top-0 right-0 flex flex-col px-5 transition-all ${showDescription === true ? "translate-x-0" : "-translate-x-full"}`}
+                    className={`bg-[rgb(var(--card-item-bg))] absolute w-full h-fit min-h-full pb-4 top-0 right-0 flex flex-col px-5 transition-all ${showDescription ? "translate-x-0" : "-translate-x-full"}`}
                 >
                     <button
                         onClick={() => setShowDescription(false)}

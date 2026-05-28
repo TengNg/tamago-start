@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose';
-import { MAX_BOARD_MEMBER_COUNT } from '../data/limits.js';
-import { DEFAULT_BOARD_PERMISSIONS } from '../data/permissions.js';
+import { MAX_BOARD_MEMBER_COUNT } from '../constants/limits.js';
+import { DEFAULT_BOARD_PERMISSIONS } from '../constants/permissions.js';
 
 const boardMembershipSchema = new Schema({
     boardId: {

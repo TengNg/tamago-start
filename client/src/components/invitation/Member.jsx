@@ -26,7 +26,7 @@ const Member = ({ member, handleRemoveMemberFromBoard }) => {
                 {member.role !== "owner" && (
                     <button
                         onClick={() =>
-                            handleRemoveMemberFromBoard(member.username)
+                            handleRemoveMemberFromBoard(member.userId)
                         }
                         className="text-gray-400 me-2"
                         title="remove member"

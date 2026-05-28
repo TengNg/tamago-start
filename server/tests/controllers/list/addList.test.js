@@ -3,7 +3,6 @@ import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
 import app from '../../../index.js';
 import List from '../../../models/List.js';
-import Board from '../../../models/Board.js';
 import {
     createTestUser,
     createTestBoard,
@@ -79,8 +78,8 @@ describe('POST /lists', () => {
         expect(listInDb.boardId.toString()).toEqual(testBoard._id.toString());
         expect(listInDb.order).toEqual("0");
 
-        const board = await Board.findOne({});
-        expect(board.listCount).toBe(1);
+        const listCount = await List.countDocuments({ boardId: testBoard._id });
+        expect(listCount).toBe(1);
     });
 });
 

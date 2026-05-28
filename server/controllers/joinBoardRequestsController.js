@@ -1,51 +1,21 @@
-import mongoose from 'mongoose';
+import User from "../models/User.js";
 import Board from "../models/Board.js";
 import BoardMembership from "../models/BoardMembership.js";
 import JoinBoardRequest from "../models/JoinBoardRequest.js";
-import { userByUsername as getUser } from '../services/userService.js';
-import { MAX_REQUEST_PAGE } from '../data/limits.js';
 
-const findUser = async (req, res) => {
-    const { username } = req.user;
-    const foundUser = await getUser(username);
-    if (!foundUser) return res.status(403).json({ message: "user not found" });
-    return foundUser;
-};
-
-const findBoard = async (req, res) => {
-    const { boardId } = req.body;
-
-    if (!mongoose.Types.ObjectId.isValid(boardId)) return res.status(403).json({ message: "board not found, invalid id" });
-
-    const foundBoard = await Board.findById(boardId);
-    if (!foundBoard) return res.status(403).json({ message: "board not found" });
-    return foundBoard;
-};
-
-const findUserAndBoard = async (req, res) => {
-    const foundUser = await findUser(req, res);
-    const foundBoard = await findBoard(req, res);
-    return { foundUser, foundBoard };
-};
-
-const findRequest = async (req, res) => {
-    const { requestId } = req.params;
-    const foundRequest = await JoinBoardRequest.findById(requestId);
-    if (!foundRequest) return res.status(403).json({ message: "request not found" });
-    return foundRequest;
-};
-
+/**
+ * @param {import('express').Request} req
+ * @param {import('express').Response} res
+ */
 const getAllRequests = async (req, res) => {
+    const perPage = 10;
+
     const { userId } = req.user;
 
-    const perPage = MAX_REQUEST_PAGE;
     let { page } = req.query;
     const pageNum = Number(Array.isArray(page) ? page[0] : page) || 1;
 
     const ownedBoardIds = await Board.find({ createdBy: userId }).distinct('_id').lean();
-    const total = await JoinBoardRequest.countDocuments({
-        boardId: { $in: ownedBoardIds }
-    });
 
     const joinRequests = await JoinBoardRequest
         .find({
@@ -65,12 +35,14 @@ const getAllRequests = async (req, res) => {
         })
         .sort({ createdAt: -1 })
         .skip((pageNum - 1) * perPage)
-        .limit(perPage)
+        .limit(perPage + 1)
         .lean();
 
-    const hasMore = pageNum * perPage < total;
+    const hasMore = joinRequests.length > perPage;
+    const items = hasMore ? joinRequests.slice(0, perPage) : joinRequests;
+    const nextPage = hasMore ? pageNum + 1 : null;
 
-    return res.json({ joinRequests, hasMore });
+    return res.json({ joinRequests: items, nextPage });
 };
 
 /**
@@ -78,8 +50,17 @@ const getAllRequests = async (req, res) => {
  * @param {import('express').Response} res
  */
 const getBoardRequests = async (req, res) => {
-    const { foundUser: _foundUser, foundBoard } = await findUserAndBoard(req, res);
-    const joinRequests = await JoinBoardRequest.find({ boardId: foundBoard._id }).populate('requester').lean();
+    const { boardId } = req.body;
+    const foundBoard = await Board.findById(boardId);
+    if (!foundBoard) {
+        return res.status(403).json({ message: "board not found" });
+    }
+
+    const joinRequests = await JoinBoardRequest
+        .find({ boardId: foundBoard._id })
+        .populate('requester')
+        .lean();
+
     return res.json({ joinRequests });
 };
 
@@ -88,28 +69,35 @@ const getBoardRequests = async (req, res) => {
  * @param {import('express').Response} res
  */
 const sendRequest = async (req, res) => {
-    const { foundUser, foundBoard } = await findUserAndBoard(req, res);
+    const { userId } = req.user;
+    const { boardId } = req.body;
 
-    const boardMembership = await BoardMembership.findOne({ boardId: foundBoard._id, foundUser: foundUser._id });
+    const foundBoard = await Board.findById(boardId);
+    if (!foundBoard) {
+        return res.status(403).json({ message: "board not found" });
+    }
+
+    const boardMembership = await BoardMembership.findOne({ boardId: foundBoard._id, userId });
     if (boardMembership) {
         return res.status(409).json({ message: "you're already a member of this board" });
     }
 
     const joinRequestExists = await JoinBoardRequest.findOne({
         boardId: foundBoard._id,
-        requester: foundUser._id,
+        requester: userId,
         status: 'pending',
     });
-
-    if (joinRequestExists) return res.status(409).json({ message: 'join request already sent' });
+    if (joinRequestExists) {
+        return res.status(409).json({ message: 'join request already sent' });
+    }
 
     const joinRequest = new JoinBoardRequest({
         boardId: foundBoard._id,
-        requester: foundUser._id
+        requester: userId
     });
 
     await joinRequest.save();
-    return res.status(201).json({ message: 'join request sent' });
+    return res.sendStatus(201);
 };
 
 /**
@@ -117,24 +105,28 @@ const sendRequest = async (req, res) => {
  * @param {import('express').Response} res
  */
 const acceptRequest = async (req, res) => {
-    const { boardId, requesterName } = req.body;
-    const requester = await getUser(requesterName);
-    if (!requester) return res.status(403).json({ message: "requester not found" });
+    const { boardId, requesterId } = req.body;
+
+    const requester = await User.findById(requesterId);
+    if (!requester) {
+        return res.status(403).json({ message: "requester not found" });
+    }
 
     const requesterBoardMembership = await BoardMembership.findOne({ boardId, userId: requester._id });
     if (requesterBoardMembership) {
         return res.status(409).json({ message: 'requester is already a member' });
     }
 
-    const acceptedRequest = await findRequest(req, res);
+    const { requestId } = req.params;
+    const acceptedRequest = await JoinBoardRequest.findById(requestId);
     if (!acceptedRequest) {
-        return res.status(403).json({ message: "request not found" });
+        return res.sendStatus(404);
     }
 
     acceptedRequest.status = 'accepted';
     acceptedRequest.save();
 
-    return res.json({ message: 'request accepted' });
+    return res.sendStatus(204);
 };
 
 /**
@@ -142,23 +134,28 @@ const acceptRequest = async (req, res) => {
  * @param {import('express').Response} res
  */
 const rejectRequest = async (req, res) => {
-    const { boardId, requesterName } = req.body;
-    const requester = await getUser(requesterName);
-    if (!requester) return res.status(403).json({ message: "requester not found" });
+    const { boardId, requesterId } = req.body;
 
+    const requester = await User.findById(requesterId);
+    if (!requester) {
+        return res.status(403).json({ message: "requester not found" });
+    }
 
     const requesterBoardMembership = await BoardMembership.findOne({ boardId, userId: requester._id });
     if (requesterBoardMembership) {
         return res.status(409).json({ message: 'requester is already a member' });
     }
 
-    const rejectedRequest = await findRequest(req, res);
-    if (!rejectedRequest) return res.status(403).json({ message: "request not found" });
+    const { requestId } = req.params;
+    const rejectedRequest = await JoinBoardRequest.findById(requestId);
+    if (!rejectedRequest) {
+        return res.sendStatus(404);
+    }
 
     rejectedRequest.status = 'rejected';
     rejectedRequest.save();
 
-    return res.json({ message: 'request rejected' });
+    return res.sendStatus(204);
 };
 
 /**
@@ -166,12 +163,15 @@ const rejectRequest = async (req, res) => {
  * @param {import('express').Response} res
  */
 const removeRequest = async (req, res) => {
-    const removedRequest = await findRequest(req, res);
-    if (!removedRequest) return res.status(403).json({ message: "request not found" });
+    const { requestId } = req.params;
+    const removedRequest = await JoinBoardRequest.findById(requestId);
+    if (!removedRequest) {
+        return res.sendStatus(404);
+    }
 
     await JoinBoardRequest.deleteOne({ _id: removedRequest._id });
 
-    return res.json({ message: 'request removed' });
+    return res.sendStatus(204);
 };
 
 export {

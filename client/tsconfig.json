@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["../shared/*"]
+    },
+    "allowJs": true
+  },
+  "include": [
+    "../shared/**/*"
+  ]
+}

@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import app from '../../../index.js';
 import Board from '../../../models/Board.js';
 import List from '../../../models/List.js';
+import Card from '../../../models/Card.js';
 import BoardMembership from '../../../models/BoardMembership.js';
 import {
     createTestUser,
@@ -94,7 +95,7 @@ describe('DELETE /boards/:id', () => {
 
         const boards = await Board.countDocuments({});
         const lists = await List.countDocuments({});
-        const cards = await List.countDocuments({});
+        const cards = await Card.countDocuments({});
         const memberships = await BoardMembership.countDocuments({});
         expect(boards).toBe(0);
         expect(lists).toBe(0);

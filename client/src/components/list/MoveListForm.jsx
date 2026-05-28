@@ -5,6 +5,8 @@ import Loading from "../ui/Loading";
 import Icon from "../shared/Icon";
 import { axiosPrivate } from "../../api/axios";
 import useToast from "../../hooks/useToast";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
+import { BOARD_ACTIONS } from "../../state/boardActionTypes";
 
 const MoveListForm = () => {
     const [boards, setBoards] = useState([]);
@@ -16,7 +18,7 @@ const MoveListForm = () => {
     const {
         socket,
         boardState,
-        setBoardState,
+        dispatch,
         listToMove,
         setListToMove,
         openMoveListForm: open,
@@ -112,17 +114,13 @@ const MoveListForm = () => {
                 );
                 const { list, cards } = response.data;
 
-                setBoardState((prev) => {
-                    return {
-                        ...prev,
-                        lists: prev.lists.filter(
-                            (list) => list._id != listToMove._id,
-                        ),
-                    };
+                dispatch({
+                    type: BOARD_ACTIONS.DELETE_LIST,
+                    payload: { listId: list._id },
                 });
 
-                socket.emit("deleteList", list._id);
-                socket.emit("addMovedListToBoard", {
+                socket.emit(SOCKET_EVENTS.LIST_DELETE, list._id);
+                socket.emit(SOCKET_EVENTS.LIST_MOVE_TO_BOARD, {
                     boardId: selectedBoardId,
                     list,
                     cards,
@@ -132,6 +130,7 @@ const MoveListForm = () => {
                 setOpen(false);
                 setListToMove(undefined);
             } catch (err) {
+                console.log(err);
                 setOpen(false);
                 setListToMove(undefined);
                 const errMsg =
@@ -184,8 +183,9 @@ const MoveListForm = () => {
 
             removed.order = rank;
 
-            setBoardState((prev) => {
-                return { ...prev, lists: newLists };
+            dispatch({
+                type: BOARD_ACTIONS.SET_LISTS,
+                payload: { lists: newLists },
             });
 
             const removedId = removed._id;
@@ -197,7 +197,7 @@ const MoveListForm = () => {
                     destinationIndex: selectedIndex,
                 }),
             );
-            socket.emit("moveList", {
+            socket.emit(SOCKET_EVENTS.LIST_MOVE, {
                 listId: removedId,
                 fromIndex: +currentIndex,
                 toIndex: +selectedIndex,

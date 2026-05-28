@@ -32,6 +32,8 @@ const chatSchema = new Schema({
     },
 }, { collection: 'chat_messages' });
 
+chatSchema.index({ boardId: 1, createdAt: -1 });
+
 const ChatMessage = model('ChatMessage', chatSchema);
 
 export default ChatMessage;

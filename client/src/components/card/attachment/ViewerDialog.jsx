@@ -45,7 +45,7 @@ function ViewerDialog({ viewedAttachment, setViewedAttachment }) {
 
     return (
         <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
             onClick={() => setViewedAttachment(null)}
         >
             <div
@@ -87,7 +87,7 @@ function ViewerDialog({ viewedAttachment, setViewedAttachment }) {
                                     href={`/api/attachments/${viewedAttachment.id}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="text-blue-800 underline border px-2 py-1"
+                                    className="text-blue-800! underline! border px-2 py-1"
                                     download={viewedAttachment.originalname}
                                 >
                                     Download

@@ -19,4 +19,11 @@ export const boardKeys = {
     stats: (boardId) => {
         return ["boards", "detail", boardId, "stats"];
     },
+
+    /**
+     * @param {string} boardId
+     */
+    activities: (boardId) => {
+        return ["boards", "detail", boardId, "activities"];
+    },
 };

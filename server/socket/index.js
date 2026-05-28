@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { Server } from "socket.io";
-import state from './state.js';
+import { SOCKET_EVENTS } from '../../shared/socket-events.js';
 
 // handlers
 import registerBoardHandlers from './handlers/board.js';
@@ -86,31 +86,29 @@ const initSocket = (server) => {
 
     io.on('connection', (socket) => {
         // register all feature handlers
-        registerBoardHandlers(io, socket, state);
-        registerListHandlers(socket, state);
-        registerCardHandlers(socket, state);
-        registerChatHandlers(socket, state);
-        registerCardCommentHandlers(socket, state);
-        registerCardAttachmentHandlers(socket, state);
+        registerBoardHandlers(io, socket);
+        registerListHandlers(socket);
+        registerCardHandlers(socket);
+        registerChatHandlers(socket);
+        registerCardCommentHandlers(socket);
+        registerCardAttachmentHandlers(socket);
 
-        socket.on("disconnectFromBoard", () => {
-            const { boardIdMap } = state;
-            const boardId = boardIdMap.get(socket.id);
+        socket.on(SOCKET_EVENTS.BOARD_DISCONNECT, () => {
+            const boardId = socket.boardId;
             if (boardId) {
                 socket.leave(boardId);
-                boardIdMap.delete(socket.id);
+                delete socket.boardId;
             }
         });
 
         socket.on("disconnect", (reason, details) => {
-            const { boardIdMap } = state;
             console.log('DisconnectReason', reason);
             console.log('DisconnectDetails', details);
 
-            const boardId = boardIdMap.get(socket.id);
+            const boardId = socket.boardId;
             if (boardId) {
                 socket.leave(boardId);
-                boardIdMap.delete(socket.id);
+                delete socket.boardId;
                 console.log(`User with socket ID ${socket.id} disconnected from board ${boardId}`);
             } else {
                 console.log(`User with socket ID ${socket.id} disconnected without joining a board`);

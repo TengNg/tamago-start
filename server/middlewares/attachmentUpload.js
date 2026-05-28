@@ -1,6 +1,6 @@
 import multer, { memoryStorage } from 'multer';
 import { extname } from 'path';
-import { MAX_FILESIZE_IN_MB } from "../data/limits.js";
+import { MAX_FILESIZE_IN_MB } from "../constants/limits.js";
 
 // Dangerous extensions to BLOCK — subset inspired by Mimecast's policy (high-risk only)
 const blockedExtensions = [

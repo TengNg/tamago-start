@@ -1,7 +1,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import useBoardState from "../../hooks/useBoardState";
 import dateFormatter, { dateToCompare } from "../../utils/dateFormatter";
-import PRIORITY_LEVELS from "../../data/priorityLevels";
+import PRIORITY_LEVELS from "../../constants/priorityLevels";
 import { useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import Icon from "../shared/Icon";
@@ -28,7 +28,6 @@ export default function Card({ card }) {
     });
 
     const style = {
-        boxShadow: `${card.highlight == null ? "0 3px 0 0 #4b5563" : `0 3px 0 0 ${card.highlight}`}`,
         borderColor: `${card.highlight == null ? "#4b5563" : `${card.highlight}`}`,
         opacity: isDragging ? 0.25 : 1,
     };
@@ -62,10 +61,10 @@ export default function Card({ card }) {
         setFocusedCard({ id: card._id, listId: card.listId, focused: true });
     };
 
-    if (card.onLoading === true) {
+    if (card.onLoading) {
         return (
             <div
-                className={`card__item ${card.hiddenByFilter && "hidden"} relative d-flex justify-center items-center text-[0.75rem] text-gray-500 w-full h-27.5 border-2 border-b-4 border-gray-600 px-2 py-4 flex flex-col shadow-gray-600 cursor-not-allowed`}
+                className={`card__item relative d-flex justify-center items-center text-[0.75rem] text-gray-500 w-full h-27.5 border-2 border-b-4 border-gray-600 px-2 py-4 flex flex-col shadow-gray-600 cursor-not-allowed`}
             >
                 <p className="w-full h-full bg-inherit font-medium text-gray-600 py-1 px-2 focus:outline-hidden text-sm wrap-break-word whitespace-pre-line">
                     {card.title}
@@ -98,8 +97,7 @@ export default function Card({ card }) {
                 ${theme.itemTheme == "rounded-sm" ? "rounded-sm" : ""}
                 ${isLargeScreen ? "touch-none" : ""}
                 ${dateToCompare(card?.dueDate) ? "past__due__card" : ""}
-                relative select-none w-full group border-2 border-gray-600 p-4 flex flex-col gap-2
-                shadow-[0_2px_0_0] shadow-gray-600 hover:shadow-[0_4px_0_0] cursor-pointer scroll-mx-7
+                relative select-none w-full group border-2 border-b-5 border-gray-600 p-4 flex flex-col gap-2 cursor-pointer scroll-mx-7
             `}
             onKeyDown={(e) => {
                 if (e.key == "Enter") {

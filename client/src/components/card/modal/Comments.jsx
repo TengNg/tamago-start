@@ -3,16 +3,17 @@ import {
     useMutation,
     useQueryClient,
 } from "@tanstack/react-query";
-import useBoardState from "../../hooks/useBoardState";
-import dateFormatter from "../../utils/dateFormatter";
+import useBoardState from "../../../hooks/useBoardState";
+import dateFormatter from "../../../utils/dateFormatter";
 import { useState, useRef, useMemo, useEffect } from "react";
-import Icon from "../shared/Icon";
+import Icon from "../../shared/Icon";
 import { useSearchParams } from "react-router-dom";
-import useCurrentUserContext from "../../hooks/useCurrentUserContext";
-import { axiosPrivate } from "../../api/axios";
-import useToast from "../../hooks/useToast";
+import useCurrentUserContext from "../../../hooks/useCurrentUserContext";
+import { axiosPrivate } from "../../../api/axios";
+import useToast from "../../../hooks/useToast";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
-const CardComments = ({ card }) => {
+const Comments = ({ card }) => {
     const queryClient = useQueryClient();
     const { socket } = useBoardState();
     const { currentUser } = useCurrentUserContext();
@@ -105,7 +106,7 @@ const CardComments = ({ card }) => {
             queryClient.invalidateQueries({
                 queryKey: ["card-comments", card._id],
             });
-            socket.emit("addCardComment", { comment: data });
+            socket.emit(SOCKET_EVENTS.COMMENT_CREATE, { comment: data });
         },
         onError: (err) => {
             const errMsg =
@@ -120,7 +121,10 @@ const CardComments = ({ card }) => {
             queryClient.invalidateQueries({
                 queryKey: ["card-comments", card._id],
             });
-            socket.emit("deleteCardComment", { commentId, cardId: card._id });
+            socket.emit(SOCKET_EVENTS.COMMENT_DELETE, {
+                commentId,
+                cardId: card._id,
+            });
         },
         onError: (err) => {
             const errMsg =
@@ -449,4 +453,4 @@ const CardComments = ({ card }) => {
     );
 };
 
-export default CardComments;
+export default Comments;

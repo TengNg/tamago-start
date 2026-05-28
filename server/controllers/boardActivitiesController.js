@@ -6,13 +6,14 @@ import BoardActivity from "../models/BoardActivity.js";
  * @param {import('express').Response} res
  */
 const getBoardActivities = async (req, res) => {
-    const { boardId } = req.params;
+    const { id: boardId } = req.params;
     const foundBoard = await Board.findById(boardId).lean();
-    if (!foundBoard) return res.status(404).json({ message: "board not found" });
+    if (!foundBoard) {
+        return res.sendStatus(404);
+    }
 
-    const { perPage, page } = req.query;
-    const perPageNum = typeof perPage === 'string' ? parseInt(perPage, 10) : 10;
-    const pageNum = typeof page === 'string' ? parseInt(page, 10) : 1;
+    const perPage = 20;
+    const page = typeof req.query.page === 'string'? parseInt(req.query.page, 10) : 1;
 
     const activities = await BoardActivity
         .find({ board: boardId })
@@ -21,19 +22,19 @@ const getBoardActivities = async (req, res) => {
             select: '-_id username createdAt'
         })
         .populate({
-            path: 'card',
-            select: 'title'
-        })
-        .populate({
-            path: 'list',
-            select: '-_id title'
+            path: 'doc',
+            select: '_id title',
         })
         .sort({ createdAt: 'desc' })
-        .skip((pageNum - 1) * perPageNum)
-        .limit(perPageNum)
-        .lean()
+        .skip((page - 1) * perPage)
+        .limit(perPage + 1)
+        .lean();
 
-    return res.json({ activities });
+    const hasMore = activities.length > perPage;
+    const items = hasMore ? activities.slice(0, perPage) : activities;
+    const nextPage = hasMore ? page + 1 : null;
+
+    return res.json({ activities: items, nextPage });
 };
 
 /**
@@ -42,15 +43,17 @@ const getBoardActivities = async (req, res) => {
  */
 const deleteAllBoardActivities = async (req, res) => {
     const { userId } = req.user;
-    const { boardId } = req.params;
+    const { id: boardId } = req.params;
     const foundBoard = await Board.findById(boardId);
-    if (!foundBoard) return res.status(404).json({ message: "board not found" });
+    if (!foundBoard) {
+        return res.sendStatus(404);
+    }
 
     if (foundBoard.createdBy.toString() !== userId) {
         return res.status(401).json({ message: 'Not authorize' });
     }
 
-    await BoardActivity.deleteMany({ board: foundBoard._id });
+    // await BoardActivity.deleteMany({ board: foundBoard._id });
     return res.status(200).json({ message: "activities removed" });
 };
 

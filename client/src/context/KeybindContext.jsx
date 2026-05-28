@@ -43,28 +43,21 @@ const normalizeCombo = (combo) => {
     return [...sortedMods, normKey].join("+");
 };
 
-const getComboString = (e) => {
+const getComboStr = (e) => {
     const parts = [];
 
-    if (e.ctrlKey) {
-        parts.push("ctrl");
-    }
+    if (e.ctrlKey) parts.push("ctrl");
+    if (e.altKey) parts.push("alt");
+    if (e.metaKey) parts.push("meta");
 
-    if (e.altKey) {
-        parts.push("alt");
-    }
-
-    if (e.metaKey) {
-        parts.push("meta");
-    }
-
-    let key = normalizeKey(e.key);
+    const key = normalizeKey(e.key);
 
     if (["ctrl", "alt", "meta"].includes(key)) {
         return "";
     }
 
     parts.push(key);
+
     return parts.join("+");
 };
 
@@ -74,26 +67,60 @@ export default KeybindContext;
 export const KeybindProvider = ({ children }) => {
     const keybindsRef = useRef(new Map());
 
-    const registerKeybind = useCallback((combo, handler, userOptions = {}) => {
-        const normalized = normalizeCombo(combo);
+    /**
+     * Registers a keyboard shortcut and binds it to a handler.
+     *
+     * @example
+     * const unregister = registerKeybind("ctrl+k", () => moveFocus("up"), { ignoreInInputs: true });
+     * unregister(); // later on unmount
+     */
+    const bind = useCallback(
+        /**
+         * @param {string} combo - Key combination to bind (e.g. `"ctrl+k"`, `"alt+shift+j"`)
+         * @param {() => void} handler - Function to call when the combo is pressed
+         * @param {object} [opts={}]
+         * @param {boolean} [opts.preventDefault=true] - Call `e.preventDefault()` when the combo fires
+         * @param {boolean} [opts.stopPropagation=false] - Call `e.stopPropagation()` when the combo fires
+         * @param {boolean} [opts.ignoreInInputs=false] - Skip the handler when an input, textarea, select, or contenteditable element has focus
+         * @param {string} [opts.desc] - Keybind's description
+         * @returns {() => void} Cleanup function that unregisters the keybind. Call it on unmount
+         */
+        function (combo, handler, opts = {}) {
+            const normalizedCombo = normalizeCombo(combo);
 
-        const options = {
-            preventDefault: true,
-            stopPropagation: false,
-            ignoreInInputs: false,
-            ...userOptions,
-        };
+            keybindsRef.current.set(normalizedCombo, {
+                handler,
+                options: {
+                    preventDefault: true,
+                    stopPropagation: false,
+                    ignoreInInputs: false,
+                    ...opts,
+                },
+            });
 
-        keybindsRef.current.set(normalized, { handler, options });
+            return () => {
+                keybindsRef.current.delete(normalizedCombo);
+            };
+        },
+        [],
+    );
 
-        return () => {
-            keybindsRef.current.delete(normalized);
-        };
+    const unbind = useCallback((combo) => {
+        keybindsRef.current.delete(combo);
+    }, []);
+
+    const getKeybinds = useCallback(() => {
+        return [...keybindsRef.current.entries()].map(
+            ([combo, { options }]) => ({
+                combo,
+                options,
+            }),
+        );
     }, []);
 
     useEffect(() => {
         const handleKeyDown = (e) => {
-            const combo = getComboString(e);
+            const combo = getComboStr(e);
             if (!combo) {
                 return;
             }
@@ -108,7 +135,7 @@ export const KeybindProvider = ({ children }) => {
                 target.tagName === "INPUT" ||
                 target.tagName === "TEXTAREA" ||
                 target.tagName === "SELECT" ||
-                target.isContentEditable === true ||
+                target.isContentEditable ||
                 target.getAttribute("contenteditable") === "true";
 
             if (isInputFocused && entry.options.ignoreInInputs) {
@@ -118,15 +145,23 @@ export const KeybindProvider = ({ children }) => {
             if (entry.options.preventDefault) e.preventDefault();
             if (entry.options.stopPropagation) e.stopPropagation();
 
-            entry.handler(e);
+            entry.handler();
         };
 
         window.addEventListener("keydown", handleKeyDown, { passive: false });
-        return () => window.removeEventListener("keydown", handleKeyDown);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
     }, []);
 
     return (
-        <KeybindContext.Provider value={registerKeybind}>
+        <KeybindContext.Provider
+            value={{
+                bind,
+                unbind,
+                getKeybinds,
+            }}
+        >
             {children}
         </KeybindContext.Provider>
     );

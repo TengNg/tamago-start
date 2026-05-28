@@ -23,8 +23,8 @@ import { BoardStateContextProvider } from "./context/BoardStateContext";
 
 import useLocalStorage from "./hooks/useLocalStorage";
 
-import PAGES from "./data/pages";
-import LOCAL_STORAGE_KEYS from "./data/localStorageKeys";
+import PAGES from "./constants/pages";
+import LOCAL_STORAGE_KEYS from "./constants/localStorageKeys";
 import Icon from "./components/shared/Icon";
 import PinnedBoards from "./components/board/PinnedBoards";
 import Public from "./components/auth/Public";
@@ -78,8 +78,8 @@ function App() {
     }, []);
 
     useEffect(() => {
-        document.querySelector("#root").style.backgroundColor =
-            backgroundTheme?.hex || "#f1f1f1";
+        const root = document.querySelector("#root");
+        root.style.backgroundColor = backgroundTheme?.hex || "#f1f1f1";
         document.documentElement.setAttribute(
             "data-theme",
             backgroundTheme.theme,
@@ -133,7 +133,7 @@ function App() {
 
             <button
                 onClick={() => setOpenThemesDialog(true)}
-                className="fixed grid place-items-center sm:right-4 sm:bottom-4 text-[13px] sm:text-[1rem] right-2.5 bottom-2.5 sm:w-[35px] sm:h-[35px] w-[30px] h-[30px] rounded-full bg-gray-500 text-transparent hover:bg-gray-500/75"
+                className="fixed grid place-items-center sm:right-4 sm:bottom-4 text-[14px] sm:text-[1rem] right-2.5 bottom-2.5 sm:w-8.75 sm:h-8.75 w-7.5 h-7.5 rounded-full bg-gray-500 text-transparent hover:bg-gray-500/75"
                 style={{ color: backgroundTheme?.hex || "#f1f1f1" }}
                 title={backgroundTheme?.theme}
             >

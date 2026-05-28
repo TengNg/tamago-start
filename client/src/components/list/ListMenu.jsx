@@ -13,8 +13,13 @@ export default function ListMenu({
 }) {
     const containerRef = useRef();
 
-    const { setListToMove, setOpenMoveListForm, collapseList, theme } =
-        useBoardState();
+    const {
+        boardState,
+        setListToMove,
+        setOpenMoveListForm,
+        updateListField,
+        theme,
+    } = useBoardState();
 
     useEffect(() => {
         containerRef.current.focus();
@@ -63,7 +68,7 @@ export default function ListMenu({
 
     const collapse = () => {
         setOpen(false);
-        collapseList(list._id);
+        updateListField({ id: list._id, field: "collapsed", value: true });
     };
 
     const handleOpenMoveListForm = () => {
@@ -75,7 +80,7 @@ export default function ListMenu({
     return (
         <div
             ref={containerRef}
-            className={`list__menu absolute top-0 left-0 outline-hidden z-10 border-gray-700 border-2 w-full py-2 px-3 ${theme.itemTheme == "rounded-sm" ? "rounded-md" : ""}`}
+            className={`list__menu absolute top-0 left-0 outline-hidden z-11 border-gray-700 border-2 w-full py-2 px-3 ${theme.itemTheme == "rounded-sm" ? "rounded-md" : ""}`}
         >
             <button
                 className="absolute right-3 top-2.5 text-gray-600 flex justify-center items-center"
@@ -84,8 +89,8 @@ export default function ListMenu({
                 <Icon className="w-4 h-4" name="xmark" />
             </button>
             <div className="border-b border-b-black pb-2 text-gray-700">
-                <div className="text-[12px] sm:text-base">
-                    <span className="font-medium">{list.title}</span>
+                <div className="text-[12px] sm:text-base font-medium wrap-break-word whitespace-pre-line pe-8">
+                    {list.title}
                 </div>
                 <div className="text-[12px] mt-1 opacity-80">
                     created:{" "}
@@ -96,7 +101,9 @@ export default function ListMenu({
 
                 <div className="text-[12px] mt-1 opacity-80">
                     cards:{" "}
-                    <span className="font-medium">{list.cards.length}</span>
+                    <span className="font-medium">
+                        {boardState.cards[list._id].length}
+                    </span>
                 </div>
             </div>
 

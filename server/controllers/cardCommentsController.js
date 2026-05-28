@@ -1,6 +1,6 @@
 import CardComment from "../models/CardComment.js";
+import Card from "../models/Card.js";
 import { checkBoardPermission } from '../services/boardPermissionService.js';
-import { cardById } from "../services/cardService.js";
 import saveBoardActivity from '../services/saveBoardActivity.js';
 
 const COMMENTS_PER_PAGE = 20;
@@ -9,14 +9,10 @@ const COMMENTS_PER_PAGE = 20;
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  */
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
 const getCardComments = async (req, res) => {
     const { userId } = req.user;
     const { cardId } = req.params;
-    const foundCard = await cardById(cardId, { lean: true });
+    const foundCard = await Card.findById(cardId).lean();
     if (!foundCard) {
         return res.sendStatus(404);
     }
@@ -52,7 +48,7 @@ const getCardComments = async (req, res) => {
 const getCardComment = async (req, res) => {
     const { userId } = req.user;
     const { cardId, commentId } = req.params;
-    const foundCard = await cardById(cardId, { lean: true });
+    const foundCard = await Card.findById(cardId).lean();
     if (!foundCard) {
         return res.sendStatus(404);
     }
@@ -95,7 +91,7 @@ const createCardComment = async (req, res) => {
     const { cardId } = req.params;
     const { userId } = req.user;
     const { content } = req.body;
-    const foundCard = await cardById(cardId, { lean: true });
+    const foundCard = await Card.findById(cardId).lean();
     if (!foundCard) {
         return res.sendStatus(404);
     }
@@ -122,15 +118,18 @@ const createCardComment = async (req, res) => {
     let truncatedContent = "";
     if (commentWithUser.content.length > 500) {
         truncatedContent = commentWithUser.content.slice(0, 500) + '...';
+    } else {
+        truncatedContent = commentWithUser.content
     }
 
     await saveBoardActivity({
         boardId: foundCard.boardId,
         userId,
-        cardId: foundCard._id,
-        action: "add new comment to",
+        docId: foundCard._id,
+        action: "comment.created",
         description: truncatedContent,
-        type: "card",
+        docModel: "Card",
+        docTitle: foundCard.title,
     });
 
     res.status(200).json({ comment: commentWithUser });

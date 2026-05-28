@@ -32,6 +32,8 @@ const joinBoardRequestSchema = new Schema({
     },
 });
 
+joinBoardRequestSchema.index({ boardId: 1, createdAt: -1 });
+
 // update 'updatedAt' field when 'status' is modified
 joinBoardRequestSchema.pre('save', function(next) {
     if (!this.isNew) {

@@ -5,6 +5,7 @@ import { sendMessage } from "../../api/chatApi";
 import { useParams } from "react-router-dom";
 import useBoardState from "../../hooks/useBoardState";
 import useToast from "../../hooks/useToast";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 const ChatInput = () => {
     const { boardId } = useParams();
@@ -50,7 +51,7 @@ const ChatInput = () => {
                 };
             });
 
-            socket.emit("sendMessage", { chatMessage });
+            socket.emit(SOCKET_EVENTS.CHAT_SEND, { chatMessage });
         },
         onError: (err) => {
             const errMsg =

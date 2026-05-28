@@ -1,4 +1,4 @@
-import { kb } from "../../data/keybinds";
+import { kb } from "../../constants/keybinds";
 import useBoardState from "../../hooks/useBoardState";
 import { useKeybind } from "../../hooks/useKeybind";
 import ModalDialog from "./ModalDialog";

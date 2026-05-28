@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import Icon from "../shared/Icon";
 import { useKeybind } from "../../hooks/useKeybind";
-import { kb } from "../../data/keybinds";
+import { kb } from "../../constants/keybinds";
 import useBoardState from "../../hooks/useBoardState";
 
 const Configuration = ({

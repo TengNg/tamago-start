@@ -3,11 +3,12 @@ import useBoardState from "../../hooks/useBoardState";
 import { useSearchParams } from "react-router-dom";
 
 import { dateToCompare } from "../../utils/dateFormatter";
-import PRIORITY_LEVELS from "../../data/priorityLevels";
+import PRIORITY_LEVELS from "../../constants/priorityLevels";
 import Icon from "../shared/Icon";
 import useToast from "../../hooks/useToast";
 import { useKeybind } from "../../hooks/useKeybind";
-import { kb } from "../../data/keybinds";
+import { kb } from "../../constants/keybinds";
+import { BOARD_ACTIONS } from "../../state/boardActionTypes";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -16,7 +17,7 @@ const Filter = () => {
         openFilter: open,
         setOpenFilter: setOpen,
         boardState,
-        setBoardState,
+        dispatch,
         setHasFilter,
     } = useBoardState();
 
@@ -99,69 +100,66 @@ const Filter = () => {
             : [];
         const verified = searchParams.get("verified");
 
-        setBoardState((prev) => {
-            return {
-                ...prev,
-                lists: prev.lists.map((list) => {
-                    const newCards = [...list.cards].map((card) => {
-                        let hiddenByFilter = true;
+        const newCards = Object.fromEntries(
+            Object.entries({ ...boardState.cards }).map((entry) => {
+                const [listId, cardList] = entry;
+                const updated = cardList.map((c) => {
+                    let hiddenByFilter = true;
 
-                        const isFilteredByTitle =
-                            card.title
-                                .toLowerCase()
-                                .includes(searchValue?.toLowerCase() || "") ||
-                            card._id
-                                .toLowerCase()
-                                .includes(searchValue?.toLowerCase() || "");
+                    const isFilteredByTitle =
+                        c.title
+                            .toLowerCase()
+                            .includes(searchValue?.toLowerCase() || "") ||
+                        c._id
+                            .toLowerCase()
+                            .includes(searchValue?.toLowerCase() || "");
 
-                        const isFilteredByPriority = priorities.includes(
-                            card.priorityLevel,
-                        );
+                    const isFilteredByPriority = priorities.includes(
+                        c.priorityLevel,
+                    );
+                    const isFilteredByStale = dateToCompare(c.dueDate);
 
-                        const isFilteredByStale = dateToCompare(card.dueDate);
+                    const lowerOwner = c.owner ? c.owner.toLowerCase() : null;
+                    const isFilteredByOwner =
+                        (owners.includes("unassigned") && !lowerOwner) ||
+                        (lowerOwner && owners.includes(lowerOwner));
 
-                        const lowerOwner = card.owner
-                            ? card.owner.toLowerCase()
-                            : null;
-                        const isFilteredByOwner =
-                            (owners.includes("unassigned") && !lowerOwner) ||
-                            (lowerOwner && owners.includes(lowerOwner));
+                    const isFilteredByVerified = c.verified;
 
-                        const isFilteredByVerified = card.verified;
+                    const hasActiveFilter =
+                        searchValue ||
+                        priorities.length > 0 ||
+                        stale === "true" ||
+                        owners.length > 0 ||
+                        verified === "true";
 
-                        const hasActiveFilter =
-                            searchValue ||
-                            priorities.length > 0 ||
-                            stale === "true" ||
-                            owners.length > 0 ||
-                            verified === "true";
-
-                        if (!hasActiveFilter) {
+                    if (!hasActiveFilter) {
+                        hiddenByFilter = false;
+                    } else {
+                        if (searchValue && isFilteredByTitle)
                             hiddenByFilter = false;
-                        } else {
-                            if (searchValue && isFilteredByTitle) {
-                                hiddenByFilter = false;
-                            }
-                            if (priorities.length > 0 && isFilteredByPriority) {
-                                hiddenByFilter = false;
-                            }
-                            if (stale === "true" && isFilteredByStale) {
-                                hiddenByFilter = false;
-                            }
-                            if (owners.length > 0 && isFilteredByOwner) {
-                                hiddenByFilter = false;
-                            }
-                            if (verified === "true" && isFilteredByVerified) {
-                                hiddenByFilter = false;
-                            }
-                        }
+                        if (priorities.length > 0 && isFilteredByPriority)
+                            hiddenByFilter = false;
+                        if (stale === "true" && isFilteredByStale)
+                            hiddenByFilter = false;
+                        if (owners.length > 0 && isFilteredByOwner)
+                            hiddenByFilter = false;
+                        if (verified === "true" && isFilteredByVerified)
+                            hiddenByFilter = false;
+                    }
 
-                        return { ...card, hiddenByFilter };
-                    });
+                    return { ...c, hiddenByFilter };
+                });
 
-                    return { ...list, cards: newCards };
-                }),
-            };
+                return [listId, updated];
+            }),
+        );
+
+        dispatch({
+            type: BOARD_ACTIONS.SET_CARDS,
+            payload: {
+                cards: newCards,
+            },
         });
     }, [searchParams, debouncedSearchValue]);
 

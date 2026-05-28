@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { axiosPrivate } from "../../../api/axios";
 import useToast from "../../../hooks/useToast";
 import useBoardState from "../../../hooks/useBoardState";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 function Uploader({ card }) {
     const queryClient = useQueryClient();
@@ -39,7 +40,7 @@ function Uploader({ card }) {
             toast.success("Attachment uploaded");
             fileInputRef.current.value = "";
             setSelectedFileName("");
-            socket.emit("addCardAttachment", { attachment: data });
+            socket.emit(SOCKET_EVENTS.ATTACHMENT_CREATE, { attachment: data });
         },
         onError: (err, _, _context) => {
             if (err.name === "CanceledError" || err.name === "AbortError") {
@@ -98,7 +99,7 @@ function Uploader({ card }) {
             >
                 <label
                     htmlFor="attachment-upload"
-                    className="m-0 cursor-pointer text-sm text-gray-600 font-medium underline"
+                    className="m-0! cursor-pointer text-sm text-gray-600 font-medium underline"
                 >
                     Browse
                     <input
@@ -116,19 +117,19 @@ function Uploader({ card }) {
                 </label>
                 {selectedFileName ? (
                     <span
-                        className="text-gray-600 truncate max-w-48"
+                        className="text-gray-600 truncate"
                         title={selectedFileName}
                     >
-                        {selectedFileName}
+                        :: {selectedFileName}
                     </span>
                 ) : (
-                    <span className="text-gray-400 text-sm truncate max-w-48">
+                    <span className="text-gray-400 truncate">
                         (maximum 5MB)
                     </span>
                 )}
 
                 {selectedFileName && (
-                    <div className="flex ms-2 gap-2">
+                    <div className="flex gap-2">
                         <button
                             type="button"
                             onClick={handleRemoveFile}

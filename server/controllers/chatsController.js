@@ -4,14 +4,6 @@ import Board from "../models/Board.js";
 import BoardMembership from "../models/BoardMembership.js";
 
 /**
- * @param {string} boardId
- */
-const boardById = (boardId) => {
-    const foundBoard = Board.findById(boardId).lean();
-    return foundBoard;
-};
-
-/**
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  */
@@ -20,7 +12,7 @@ const getMessages = async (req, res) => {
     const limit = typeof req.query.limit === 'string' ? parseInt(req.query.limit) : 20;
     const before = typeof req.query.before === 'string' && req.query.before;
 
-    const foundBoard = await boardById(boardId);
+    const foundBoard = await Board.findById(boardId).lean();
     if (!foundBoard) {
         return res.sendStatus(404);
     }
@@ -60,7 +52,7 @@ const sendMessage = async (req, res) => {
     const { content } = req.body;
     const { boardId } = req.params;
 
-    const foundBoard = await boardById(boardId);
+    const foundBoard = await Board.findById(boardId).lean();
     if (!foundBoard) {
         return res.sendStatus(404);
     }
@@ -132,7 +124,7 @@ const clearMessages = async (req, res) => {
     const { userId } = req.user;
     const { boardId } = req.params;
 
-    const foundBoard = await boardById(boardId);
+    const foundBoard = await Board.findById(boardId).lean();
     if (!foundBoard) {
         return res.sendStatus(404);
     }

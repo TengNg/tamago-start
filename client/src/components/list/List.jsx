@@ -1,6 +1,6 @@
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, useCallback, useEffect } from "react";
 import Card from "../card/Card";
 import useBoardState from "../../hooks/useBoardState";
 import CardComposer from "../card/CardComposer";
@@ -9,6 +9,8 @@ import { lexorank } from "../../lib/lexorank";
 import { axiosPrivate } from "../../api/axios";
 import Icon from "../shared/Icon";
 import useToast from "../../hooks/useToast";
+import { BOARD_ACTIONS } from "../../state/boardActionTypes";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 const List = ({ index, list, cards }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } =
@@ -22,10 +24,9 @@ const List = ({ index, list, cards }) => {
 
     const {
         boardState,
-        setBoardState,
-        setListTitle,
+        dispatch,
+        updateListField,
         deleteList,
-        collapseList,
         theme,
         debugModeEnabled,
         hasFilter,
@@ -44,7 +45,38 @@ const List = ({ index, list, cards }) => {
     const textAreaRef = useRef(null);
     const titleRef = useRef(null);
 
+    const scrollRef = useRef(null);
+    const [scrollState, setScrollState] = useState({
+        top: true,
+        bottom: true,
+    });
+
     const toast = useToast();
+
+    const handleScroll = useCallback(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        const atTop = el.scrollTop <= 0;
+        const hasOverflow = el.scrollHeight > el.clientHeight;
+        const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1;
+        setScrollState((prev) => {
+            const next = {
+                top: atTop,
+                bottom: !hasOverflow || atBottom,
+            };
+            return prev.top !== next.top || prev.bottom !== next.bottom
+                ? next
+                : prev;
+        });
+    }, []);
+
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (!el) return;
+        el.addEventListener("scroll", handleScroll, { passive: true });
+        handleScroll();
+        return () => el.removeEventListener("scroll", handleScroll);
+    }, [handleScroll]);
 
     const onInputConfirm = async () => {
         if (textAreaRef.current.value.trim() === initialListTitle) {
@@ -52,7 +84,11 @@ const List = ({ index, list, cards }) => {
         }
 
         if (textAreaRef.current.value.trim() === "") {
-            setListTitle(list._id, initialListTitle);
+            updateListField({
+                id: list._id,
+                field: "title",
+                value: initialListTitle,
+            });
             return;
         }
 
@@ -66,12 +102,16 @@ const List = ({ index, list, cards }) => {
                 JSON.stringify({ title: textAreaRef.current.value }),
             );
             setInitialListTitle(textAreaRef.current.value);
-            socket.emit("updateListTitle", {
+            socket.emit(SOCKET_EVENTS.LIST_UPDATE_TITLE, {
                 listId: list._id,
                 title: textAreaRef.current.value,
             });
         } catch (err) {
-            setListTitle(list._id, initialListTitle);
+            updateListField({
+                id: list._id,
+                field: "title",
+                value: initialListTitle,
+            });
             const errMsg =
                 err.response?.data?.message || "Failed to update title";
             toast.error(errMsg);
@@ -92,7 +132,11 @@ const List = ({ index, list, cards }) => {
         const textarea = textAreaRef.current;
         textarea.style.height = "24px";
         textarea.style.height = `${textarea.scrollHeight}px`;
-        setListTitle(list._id, textAreaRef.current.value);
+        updateListField({
+            id: list._id,
+            field: "title",
+            value: textAreaRef.current.value,
+        });
     };
 
     const handleTextAreaOnFocus = () => {
@@ -116,7 +160,7 @@ const List = ({ index, list, cards }) => {
             try {
                 await axiosPrivate.delete(`/lists/${list._id}`);
                 deleteList(list._id);
-                socket.emit("deleteList", list._id);
+                socket.emit(SOCKET_EVENTS.LIST_DELETE, list._id);
             } catch (err) {
                 toast.error("Failed to delete list");
             }
@@ -145,7 +189,7 @@ const List = ({ index, list, cards }) => {
             );
 
             if (!ok) {
-                toast.error("Failed to create a copy of this list");
+                toast.error("Failed to duplicate, rank is not valid");
                 return;
             }
 
@@ -156,25 +200,34 @@ const List = ({ index, list, cards }) => {
             const newList = response.data.list;
             const newCards = response.data.cards;
             newCards.sort((a, b) => (a.order > b.order ? 1 : -1));
-            newList.cards = newCards;
-
             lists.splice(index + 1, 0, newList);
 
-            setBoardState((prev) => {
-                return { ...prev, lists };
+            dispatch({
+                type: BOARD_ACTIONS.SET_STATE,
+                payload: {
+                    data: {
+                        ...boardState,
+                        lists,
+                        cards: {
+                            ...boardState.cards,
+                            [newList._id]: newCards,
+                        },
+                    },
+                },
             });
 
             setProcessingList({ msg: "", processing: false });
 
-            socket.emit("updateLists", lists);
+            socket.emit(SOCKET_EVENTS.LIST_UPDATE_ALL, lists);
         } catch (err) {
             const errMsg = err.response?.data?.message || err.message;
             toast.error(errMsg);
 
             setProcessingList({ msg: "", processing: false });
 
-            setBoardState((prev) => {
-                return { ...prev, lists: tempLists };
+            dispatch({
+                type: BOARD_ACTIONS.SET_LISTS,
+                payload: { lists: tempLists },
             });
         }
     };
@@ -203,15 +256,19 @@ const List = ({ index, list, cards }) => {
                     className={`list__item ${theme.itemTheme == "rounded-sm" ? "rounded-sm shadow-[0_3px_0_0]" : "shadow-[3px_4px_0_0]"} border-2 border-gray-700 shadow-gray-700 p-2 relative`}
                 >
                     <div
-                        className="text-center bg-gray-400 p-2 text-[10px] hover:bg-gray-400/75 grid place-items-center rounded-xs cursor-pointer"
+                        className="text-center bg-gray-400 p-2 text-[10px] hover:bg-gray-400/75 grid place-items-center cursor-pointer"
                         onClick={() => {
-                            collapseList(list._id, false);
+                            updateListField({
+                                id: list._id,
+                                field: "collapsed",
+                                value: false,
+                            });
                         }}
                     >
-                        <div className="w-[10px] h-[10px] rounded-full bg-gray-200"></div>
+                        <div className="w-2.5 h-2.5 rounded-full bg-gray-200"></div>
                     </div>
                     <div
-                        className="font-medium sm:font-semibold text-gray-700 whitespace-nowrap px-3 h-[250px]"
+                        className="font-medium sm:font-semibold text-gray-700 whitespace-nowrap px-3 h-62.5"
                         style={{
                             transform: "rotate(-90deg)",
                             transformOrigin: "135px 50%",
@@ -231,7 +288,7 @@ const List = ({ index, list, cards }) => {
             ref={setNodeRef}
             {...attributes}
             style={style}
-            className="list__item__wrapper relative select-none w-[300px] min-w-[300px]"
+            className="list__item__wrapper relative select-none w-75 min-w-75"
         >
             {openListMenu && (
                 <ListMenu
@@ -247,23 +304,23 @@ const List = ({ index, list, cards }) => {
             <div
                 className={`
                     ${theme.itemTheme == "rounded-sm" ? "rounded-md shadow-[0_4px_0_0]" : "box--style"}
-                    list__item relative flex flex-col justify-start w-[300px] max-h-full overflow-auto border-2 select-none pt-2 border-gray-700 shadow-gray-700
+                    list__item relative flex flex-col justify-start w-75 max-h-full overflow-hidden border-2 select-none pt-2 border-gray-700 shadow-gray-700
                 `}
             >
                 <div
                     {...listeners}
-                    className="w-full bg-transparent flex justify-between items-center px-3 cursor-pointer touch-none"
+                    className="w-full bg-transparent flex justify-between items-center px-3 pb-1 cursor-pointer touch-none"
                 >
                     <div
                         ref={titleRef}
-                        className="w-[240px] font-medium sm:font-semibold text-gray-700 wrap-break-word whitespace-pre-line"
+                        className="w-60 font-medium sm:font-semibold text-gray-700 wrap-break-word whitespace-pre-line"
                         onMouseUp={handleMouseUp}
                     >
                         <p>{list.title}</p>
                     </div>
 
                     <textarea
-                        className="hidden bg-transparent h-fit w-[240px] focus:outline-hidden font-medium sm:font-semibold text-gray-700 leading-normal overflow-y-hidden resize-none"
+                        className="hidden bg-transparent h-fit w-60 focus:outline-hidden font-medium sm:font-semibold text-gray-700 leading-normal overflow-y-hidden resize-none"
                         value={list.title}
                         ref={textAreaRef}
                         onFocus={handleTextAreaOnFocus}
@@ -282,10 +339,16 @@ const List = ({ index, list, cards }) => {
                     </button>
                 </div>
 
-                <div className="h-px mt-1 mb-2 mx-3 bg-gray-600"></div>
+                <div
+                    ref={scrollRef}
+                    className="overflow-y-auto min-h-0 flex-1 flex flex-col"
+                >
+                    {/* scroll shadow top */}
+                    <div
+                        className={`sticky top-0 left-0 right-0 h-px bg-gray-400 backdrop-blur-[2px] pointer-events-none shrink-0 z-10 transition-opacity duration-150 ${scrollState.top ? "opacity-0" : "opacity-100"}`}
+                    />
 
-                <div className="max-h-full overflow-y-auto flex flex-col">
-                    <div className="flex flex-1 flex-col gap-2 overflow-y-auto px-3 py-1">
+                    <div className="flex flex-1 flex-col gap-2 px-3">
                         <SortableContext items={cardIds}>
                             {cards.map((card) => {
                                 return (
@@ -307,17 +370,22 @@ const List = ({ index, list, cards }) => {
                         )}
                     </div>
 
-                    {openCardComposer === false && (
-                        <div className="mx-3 mt-2 mb-3 group">
-                            <button
-                                className="w-full py-2 px-4 flex text-gray-400 text-sm group-hover:bg-gray-600/10 font-medium rounded-xs text-start"
-                                onClick={() => setOpenCardComposer(true)}
-                            >
-                                <span>+ new card</span>
-                            </button>
-                        </div>
-                    )}
+                    {/* scroll shadow bottom */}
+                    <div
+                        className={`sticky bottom-0 left-0 right-0 h-px bg-gray-400 backdrop-blur-[2px] pointer-events-none shrink-0 z-10 transition-opacity duration-150 ${scrollState.bottom ? "opacity-0" : "opacity-100"}`}
+                    />
                 </div>
+
+                {!openCardComposer && (
+                    <div className="mx-3 mt-2 mb-3 group">
+                        <button
+                            className="w-full py-2 px-4 flex text-gray-400 text-sm group-hover:bg-gray-600/10 font-medium text-start"
+                            onClick={() => setOpenCardComposer(true)}
+                        >
+                            <span>+ new card</span>
+                        </button>
+                    </div>
+                )}
 
                 {debugModeEnabled.enabled ||
                     (hasFilter && (
@@ -330,11 +398,13 @@ const List = ({ index, list, cards }) => {
                                 <span>
                                     found:
                                     {
-                                        list.cards.filter((card) => {
-                                            return !card.hiddenByFilter;
-                                        }).length
+                                        boardState.cards[list._id].filter(
+                                            (card) => {
+                                                return !card.hiddenByFilter;
+                                            },
+                                        ).length
                                     }
-                                    /{list.cards.length}
+                                    /{boardState.cards[list._id].length}
                                 </span>
                             )}
                         </div>
