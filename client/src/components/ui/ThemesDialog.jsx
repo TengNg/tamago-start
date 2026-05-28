@@ -1,5 +1,5 @@
 import ModalDialog from "./ModalDialog";
-import backgroundThemes from "../../data/backgroundThemes";
+import backgroundThemes from "../../constants/backgroundThemes";
 
 const ThemesDialog = ({
     open,

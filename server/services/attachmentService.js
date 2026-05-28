@@ -1,5 +1,5 @@
-import { cardById } from '../services/cardService.js';
-import { findWritedown } from '../services/writedownService.js';
+import Card from '../models/Card.js';
+import Writedown from '../models/Writedown.js';
 import { checkBoardPermission } from './boardPermissionService.js';
 
 /**
@@ -24,7 +24,7 @@ async function authorize({ docModel, doc, userId, resource, action }) {
     }
 
     if (docModel === "Writedown") {
-        const foundWritedown = await findWritedown(doc);
+        const foundWritedown = await Writedown.findById(doc);
         if (!foundWritedown) {
             const message = "Writedown not found";
             throw { status: 403, message };
@@ -33,7 +33,7 @@ async function authorize({ docModel, doc, userId, resource, action }) {
         return;
     }
 
-    const foundCard = await cardById(doc);
+    const foundCard = await Card.findById(doc).lean();
     if (!foundCard) {
         const message = "Card not found";
         throw { status: 403, message };

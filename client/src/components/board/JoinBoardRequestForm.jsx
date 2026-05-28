@@ -34,12 +34,14 @@ const JoinBoardRequestForm = ({ open, setOpen }) => {
 
     useEffect(() => {
         let id = null;
-        if (success === true) {
+        if (success) {
             id = setTimeout(() => {
                 setSuccess(false);
             }, 2000);
         }
-        return () => clearTimeout(id);
+        return () => {
+            clearTimeout(id);
+        };
     }, [success]);
 
     const handleCloseOnOutsideClick = (e) => {

@@ -1,12 +1,13 @@
 import mongoose from 'mongoose';
 import List from '../models/List.js';
 import Card from '../models/Card.js';
-import Board from '../models/Board.js';
+import CardComment from '../models/CardComment.js';
+import Attachment from '../models/Attachment.js';
 import { lexorank } from '../lib/lexorank.js';
 
-import { saveList } from '../services/listService.js';
 import saveBoardActivity from '../services/saveBoardActivity.js';
 import { checkBoardPermission } from '../services/boardPermissionService.js';
+import { MAX_CARD_COUNT, MAX_LIST_COUNT } from '../constants/limits.js';
 
 /**
  * @param {import('express').Request} req
@@ -31,14 +32,13 @@ const addList = async (req, res) => {
 
     await newList.save();
 
-    await Board.updateOne({ _id: boardId }, { $inc: { listCount: 1 } });
-
     await saveBoardActivity({
         boardId,
         userId,
-        listId: newList._id,
-        action: "add new list",
-        type: "list",
+        docId: newList._id,
+        action: "list.created",
+        docModel: "List",
+        docTitle: newList.title,
         description: '',
     })
 
@@ -72,18 +72,19 @@ const reorder = async (req, res) => {
     await foundList.save();
 
     if (
-        sourceIndex
-        && destinationIndex
+        sourceIndex !== undefined
+        && destinationIndex !== undefined
         && !isNaN(+sourceIndex)
         && !isNaN(+destinationIndex)
     ) {
         await saveBoardActivity({
             userId,
             boardId: foundList.boardId,
-            listId: foundList._id,
-            action: "update list rank",
-            type: "list",
-            description: `(${+sourceIndex + 1}) > (${+destinationIndex + 1})`,
+            docId: foundList._id,
+            action: "list.reordered",
+            docModel: "List",
+            docTitle: foundList.title,
+            description: `(${+sourceIndex + 1}) → (${+destinationIndex + 1})`,
         });
     }
 
@@ -100,7 +101,9 @@ const updateTitle = async (req, res) => {
     const { title } = req.body;
 
     const foundList = await List.findById(id);
-    if (!foundList) return res.sendStatus(404);
+    if (!foundList) {
+        return res.sendStatus(404);
+    }
 
     await checkBoardPermission({
         boardId: foundList.boardId.toString(),
@@ -109,8 +112,19 @@ const updateTitle = async (req, res) => {
         action: "edit"
     })
 
+    const prevTitle = foundList.title;
     foundList.title = title;
     await foundList.save();
+
+    await saveBoardActivity({
+        userId,
+        boardId: foundList.boardId,
+        docId: foundList._id,
+        action: "list.title_updated",
+        docModel: "List",
+        docTitle: foundList.title,
+        description: `"${prevTitle}" → "${foundList.title}"`,
+    });
 
     res.status(200).json({ newList: foundList });
 };
@@ -120,30 +134,52 @@ const updateTitle = async (req, res) => {
  * @param {import('express').Response} res
  */
 const deleteList = async (req, res) => {
-    const { userId } = req.user;
-    const { id } = req.params;
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    const foundList = await List.findById(id);
-    if (!foundList) return res.sendStatus(404);
+    try {
+        const { userId } = req.user;
+        const { id } = req.params;
 
-    await checkBoardPermission({
-        boardId: foundList.boardId.toString(),
-        userId,
-        resource: "list",
-        action: "delete"
-    })
+        const foundList = await List.findById(id);
+        if (!foundList) {
+            return res.sendStatus(404);
+        }
 
-    await List.findByIdAndDelete(id);
+        await checkBoardPermission({
+            boardId: foundList.boardId.toString(),
+            userId,
+            resource: "list",
+            action: "delete"
+        })
 
-    await saveBoardActivity({
-        userId,
-        boardId: foundList.boardId,
-        action: "delete list",
-        type: "list",
-        description: `list with title "${foundList.title}" deleted`,
-    });
+        const cardIds = await Card.find({ listId: foundList._id }).distinct('_id');
+        if (cardIds.length > 0) {
+            await Attachment.deleteMany({ docModel: 'Card', doc: { $in: cardIds } });
+            await CardComment.deleteMany({ cardId: { $in: cardIds } });
+            await Card.deleteMany({ _id: { $in: cardIds } });
+        }
 
-    res.sendStatus(204);
+        await List.findByIdAndDelete(id);
+
+        await saveBoardActivity({
+            userId,
+            boardId: foundList.boardId,
+            docId: foundList._id,
+            action: "list.deleted",
+            docModel: "List",
+            docTitle: foundList.title,
+            description: `list with title "${foundList.title}" deleted`,
+        });
+
+        res.sendStatus(204);
+    } catch (error) {
+        await session.abortTransaction();
+        const status = error.status || 500;
+        res.status(status).json({ message: error.message });
+    } finally {
+        session.endSession();
+    }
 };
 
 /**
@@ -176,36 +212,31 @@ const copyList = async (req, res) => {
         boardId,
     };
 
-    const list = await saveList(listData);
+    const list = new List(listData);
+    await list.save();
 
-    const copiedCards = await Card.find({ listId: id }).lean();
-    const newCards = [];
+    const cards = await Card.find({ boardId, listId: id }).lean();
 
-    for (const card of copiedCards) {
-        const newCard = new Card({
-            ...card,
-            _id: new mongoose.Types.ObjectId(),
-            trackedId: crypto.randomUUID(),
-            listId: list._id,
-            boardId: list.boardId
-        });
+    const cardDocs = cards.map(card => ({
+        ...card,
+        _id: new mongoose.Types.ObjectId(),
+        listId: list._id,
+        boardId: list.boardId,
+    }));
 
-        await newCard.save();
-        newCards.push(newCard);
-    }
-
-    await Board.updateOne({ _id: boardId }, { $inc: { listCount: 1 } });
+    const copiedCards = cardDocs.length > 0 ? await Card.insertMany(cardDocs) : [];
 
     await saveBoardActivity({
         boardId,
         userId,
-        listId: foundList._id,
-        action: "copy list",
-        type: "list",
-        description: `[important] create a copy of list with title "${foundList.title}"`,
+        docId: foundList._id,
+        action: "list.copied",
+        docModel: "List",
+        docTitle: foundList.title,
+        description: `a copy of "${foundList.title}" created`,
     })
 
-    res.status(200).json({ list, cards: newCards, message: 'list copied' });
+    res.status(200).json({ list, cards: copiedCards, message: 'list copied' });
 };
 
 /**
@@ -217,7 +248,7 @@ const moveList = async (req, res) => {
     const { id, boardId, index } = req.params;
 
     if (isNaN(+index)) {
-        return res.sendStatus(422).json({ message: "index must be a number" });
+        return res.status(422).json({ message: "index must be a number" });
     }
 
     const foundList = await List.findById(id);
@@ -245,6 +276,20 @@ const moveList = async (req, res) => {
             resource: "list",
             action: "create"
         })
+
+        const [listCount, existingCardCount] = await Promise.all([
+            List.countDocuments({ boardId: newBoard._id }),
+            Card.countDocuments({ boardId: newBoard._id }),
+        ]);
+        if (listCount >= MAX_LIST_COUNT) {
+            const errMsg = `Maximum list count reached for board ${newBoard.title} (maximum: ${MAX_LIST_COUNT})`;
+            return res.status(429).json({ message: errMsg })
+        }
+        const movedCardCount = await Card.countDocuments({ boardId: newBoard._id, listId: foundList._id });
+        if (existingCardCount + movedCardCount > MAX_CARD_COUNT) {
+            const errMsg = `Maximum card count reached for board ${newBoard.title} (maximum: ${MAX_CARD_COUNT})`;
+            return res.status(429).json({ message: errMsg })
+        }
 
         boardToMove = newBoard;
     } else {
@@ -286,11 +331,6 @@ const moveList = async (req, res) => {
 
     await Card.updateMany({ listId: id }, { boardId: boardToMove._id });
     const newCards = await Card.find({ listId: id, boardId: boardToMove._id }).sort({ order: 'asc' });
-
-    if (isMovedToDifferentBoard) {
-        await Board.updateOne({ _id: initialBoardId }, { $inc: { listCount: -1 } });
-        await Board.updateOne({ _id: boardToMove._id }, { $inc: { listCount: 1 } });
-    }
 
     return res.status(200).json({ list: foundList, cards: newCards });
 };

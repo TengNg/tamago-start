@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Title from "../components/ui/Title";
 import { register } from "../api/authApi";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import useToast from "../hooks/useToast";
 
 // const USER_REGEX = /^[A-z][A-z0-9-_]{3,23}$/;
 // const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/;
@@ -26,11 +27,14 @@ export default function Register() {
 
     const navigate = useNavigate();
 
+    const toast = useToast();
+
     const registerMutation = useMutation({
         mutationFn: () => register({ username, password, confirmedPassword }),
         onSuccess: (_data, _variables, _context) => {
             queryClient.resetQueries({ queryKey: ["me"], exact: true });
-            navigate(from, { replace: true });
+            navigate("/login");
+            toast.success("account successfully registered", 5000);
         },
         onMutate: () => {
             usernameInputEl.current.readOnly = true;
@@ -61,7 +65,7 @@ export default function Register() {
             return;
         }
 
-        if (passwordMatched === false) {
+        if (!passwordMatched) {
             setErrMsg("Password must be at least 8 characters");
             passwordInputEl.current.focus();
             return;
@@ -133,7 +137,7 @@ export default function Register() {
                         required
                     />
 
-                    {success === false && (
+                    {!success && (
                         <p className="text-[0.65rem] text-red-700 ms-1 mt-1 font-medium select-none">
                             {errMsg}
                         </p>

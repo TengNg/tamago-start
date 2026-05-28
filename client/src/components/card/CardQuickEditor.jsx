@@ -4,6 +4,7 @@ import QuickEditorHighlightPicker from "./QuickEditorHighlightPicker";
 import { axiosPrivate } from "../../api/axios";
 import { useSearchParams } from "react-router-dom";
 import useToast from "../../hooks/useToast";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 const CardQuickEditor = ({
     open,
@@ -12,13 +13,8 @@ const CardQuickEditor = ({
     handleCopyCard,
     handleDeleteCard,
 }) => {
-    const {
-        setOpenedCardQuickEditor,
-        setCardTitle,
-        setCardVerifiedStatus,
-        theme,
-        socket,
-    } = useBoardState();
+    const { setOpenedCardQuickEditor, updateCardField, theme, socket } =
+        useBoardState();
 
     const [initialTitle, setInitialTitle] = useState(card.title);
     const [openHighlightPicker, setOpenHighlightPicker] = useState(true);
@@ -32,7 +28,7 @@ const CardQuickEditor = ({
     const toast = useToast();
 
     useEffect(() => {
-        if (quickEditorRef.current && textAreaRef.current && open === true) {
+        if (quickEditorRef.current && textAreaRef.current && open) {
             textAreaRef.current.focus();
             textAreaRef.current.selectionStart =
                 textAreaRef.current.value.length;
@@ -64,13 +60,6 @@ const CardQuickEditor = ({
         });
     };
 
-    const handleClose = (e) => {
-        if (e.target === e.currentTarget) {
-            setInitialTitle(textAreaRef.current.value);
-            close();
-        }
-    };
-
     const handleSetCardTitle = async () => {
         if (textAreaRef.current.value === "") {
             setInitialTitle(card.title);
@@ -79,14 +68,21 @@ const CardQuickEditor = ({
 
         try {
             const newTitle = textAreaRef.current.value;
-            setCardTitle(card.id, card.listId, newTitle);
+
+            updateCardField({
+                id: card._id,
+                listId: card.listId,
+                field: "title",
+                value: newTitle,
+            });
+
             setInitialTitle(newTitle);
             await axiosPrivate.patch(
-                `/cards/${card.id}/new-title`,
+                `/cards/${card._id}/new-title`,
                 JSON.stringify({ title: newTitle }),
             );
-            socket.emit("updateCardTitle", {
-                id: card.id,
+            socket.emit(SOCKET_EVENTS.CARD_UPDATE_TITLE, {
+                id: card._id,
                 listId: card.listId,
                 title: newTitle,
             });
@@ -103,13 +99,19 @@ const CardQuickEditor = ({
         try {
             setIsVerifying(true);
             const response = await axiosPrivate.patch(
-                `/cards/${card.id}/toggle-verified`,
+                `/cards/${card._id}/toggle-verified`,
             );
             const { verified } = response.data;
-            card.verified = verified;
-            setCardVerifiedStatus(card.id, card.listId, verified);
-            socket.emit("updateCardVerifiedStatus", {
-                id: card.id,
+
+            updateCardField({
+                id: card._id,
+                listId: card.listId,
+                field: "verified",
+                value: verified,
+            });
+
+            socket.emit(SOCKET_EVENTS.CARD_UPDATE_VERIFIED, {
+                id: card._id,
                 listId: card.listId,
                 verified,
             });
@@ -148,13 +150,13 @@ const CardQuickEditor = ({
     };
 
     const handleOpenCardModal = () => {
-        searchParams.set("card", card.id);
+        searchParams.set("card", card._id);
         setSearchParams(searchParams, { replace: true });
         close();
     };
 
     const handleOpenCardInNewTab = () => {
-        window.open(`/b/${card.boardId}?card=${card.id}`, "_blank");
+        window.open(`/b/${card.boardId}?card=${card._id}`, "_blank");
     };
 
     const handleToggleHighlightPicker = () => {
@@ -177,11 +179,11 @@ const CardQuickEditor = ({
         <>
             <div
                 onClick={close}
-                className="fixed bg-gray-600 opacity-20 w-full h-full z-9"
+                className="fixed bg-gray-600 opacity-20 w-full h-full z-21"
             ></div>
             <div
                 ref={quickEditorRef}
-                className="absolute z-10"
+                className="absolute z-21"
                 style={{
                     top: `${attribute.top}px`,
                     left: `${attribute.left}px`,

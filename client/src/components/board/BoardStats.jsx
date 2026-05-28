@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Loading from "../ui/Loading";
 import dateFormatter from "../../utils/dateFormatter";
-import PRIORITY_LEVELS from "../../data/priorityLevels";
+import PRIORITY_LEVELS from "../../constants/priorityLevels";
 import Icon from "../shared/Icon";
 import useToast from "../../hooks/useToast";
 

@@ -1,18 +1,23 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import ActivityItem from "./ActivityItem";
 import Loading from "../ui/Loading";
 
 import useBoardState from "../../hooks/useBoardState";
 import Icon from "../shared/Icon";
 import useCurrentUserContext from "../../hooks/useCurrentUserContext";
-import { axiosPrivate } from "../../api/axios";
 import useToast from "../../hooks/useToast";
 import { useKeybind } from "../../hooks/useKeybind";
-import { kb } from "../../data/keybinds";
-
-const ACTIVITIES_PER_PAGE = 50;
+import { kb } from "../../constants/keybinds";
+import {
+    useInfiniteQuery,
+    useMutation,
+    useQueryClient,
+} from "@tanstack/react-query";
+import { boardKeys } from "../../queries/boardKeys";
+import { cleanBoardActivities, fetchBoardActivities } from "../../api/boardApi";
 
 const BoardActivities = () => {
+    const queryClient = useQueryClient();
     const { currentUser } = useCurrentUserContext();
     const {
         boardState,
@@ -20,14 +25,46 @@ const BoardActivities = () => {
         setOpenBoardActivities: setOpen,
     } = useBoardState();
 
-    const [activities, setActivities] = useState([]);
-    const [activitiesPage, setActivitiesPage] = useState(1);
-    const [loading, setLoading] = useState(false);
-    const [allActivitiesFetched, setAllActivitiesFetched] = useState(false);
-
     const dialog = useRef();
 
     const toast = useToast();
+
+    const {
+        data,
+        refetch,
+        fetchNextPage,
+        isFetchingNextPage,
+        hasNextPage,
+        isLoading,
+        isError,
+    } = useInfiniteQuery({
+        staleTime: Infinity,
+        queryKey: boardKeys.activities(boardState.board._id),
+        queryFn: ({ pageParam = 1 }) => {
+            return fetchBoardActivities({
+                boardId: boardState.board._id,
+                page: pageParam,
+            });
+        },
+        getNextPageParam: (lastPage, _pages) => {
+            return lastPage.nextPage;
+        },
+        enabled: open,
+    });
+
+    const cleanMutation = useMutation({
+        mutationFn: () => cleanBoardActivities(boardState.board._id),
+        onSuccess: async (_data, _variables, _context) => {
+            queryClient.invalidateQueries(
+                boardKeys.activities(boardState.board._id),
+            );
+        },
+        onError: (err) => {
+            const errMsg =
+                err.response?.data?.message || "Failed to clean activities";
+            toast.error(errMsg);
+        },
+    });
 
     useKeybind(kb.openBoardActivities, () => {
         setOpen((prev) => !prev);
@@ -35,9 +72,9 @@ const BoardActivities = () => {
 
     useEffect(() => {
         if (open) {
-            dialog.current.showModal();
+            refetch();
 
-            fetchBoardActivities();
+            dialog.current.showModal();
 
             const handleKeyDown = (e) => {
                 if (e.ctrlKey && e.key === "/") {
@@ -47,9 +84,6 @@ const BoardActivities = () => {
 
             const handleOnClose = () => {
                 setOpen(false);
-                setAllActivitiesFetched(false);
-                setActivities([]);
-                setActivitiesPage(1);
             };
 
             dialog.current.addEventListener("close", handleOnClose);
@@ -64,51 +98,9 @@ const BoardActivities = () => {
         }
     }, [open]);
 
-    const fetchBoardActivities = async () => {
-        try {
-            setLoading(true);
-
-            const response = await axiosPrivate.get(
-                `/board_activities/${boardState?.board?._id}?perPage=${ACTIVITIES_PER_PAGE}&page=${activitiesPage}`,
-            );
-
-            if (response.data.activities.length === 0) {
-                setAllActivitiesFetched(true);
-                return;
-            }
-
-            setActivities((prev) => {
-                return [...prev, ...response.data.activities];
-            });
-
-            setActivitiesPage((prevPage) => {
-                return prevPage + 1;
-            });
-        } catch (err) {
-            const errMsg =
-                err?.response?.data?.message || "Failed to fetch history";
-            toast.error(errMsg);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleCleanBoardActivities = async () => {
-        try {
-            if (
-                confirm("Are you sure you want to clear all board activities ?")
-            ) {
-                await axiosPrivate.delete(
-                    `/board_activities/${boardState?.board?._id}`,
-                );
-                setActivities([]);
-            }
-        } catch (err) {
-            const errMsg =
-                err?.response?.data?.message || "Failed to clear activities";
-            toast.error(errMsg);
-        }
-    };
+    const activities = useMemo(() => {
+        return data ? data.pages.flatMap((page) => page.activities) : [];
+    }, [data]);
 
     const handleCloseOnOutsideClick = (e) => {
         if (e.target === dialog.current) {
@@ -140,7 +132,7 @@ const BoardActivities = () => {
                         <div
                             className="badge text-red-500 bg-rose-100 cursor-pointer"
                             onClick={() => {
-                                handleCleanBoardActivities();
+                                cleanMutation.mutate();
                             }}
                             title="remove all activities"
                         >
@@ -158,14 +150,16 @@ const BoardActivities = () => {
 
             <div className="border-b border-gray-300"></div>
 
-            <div className="relative flex flex-col gap-3 p-3 text-gray-600 text-[0.65rem] sm:text-[0.75rem] max-h-[600px] overflow-auto">
+            <div className="relative flex flex-col gap-3 p-3 text-gray-600 text-[0.65rem] sm:text-[0.75rem] max-h-150 overflow-auto">
                 <Loading
-                    loading={loading}
+                    loading={isLoading}
                     position={"absolute"}
                     displayText="loading..."
                 />
 
-                {activities.length > 0 ? (
+                {isError ? (
+                    <div>failed to load activities</div>
+                ) : activities.length > 0 ? (
                     activities.map((activity) => {
                         return (
                             <ActivityItem
@@ -178,14 +172,16 @@ const BoardActivities = () => {
                     <div>no activities found in this board.</div>
                 )}
 
-                {!allActivitiesFetched && activities.length > 0 && (
+                {hasNextPage && (
                     <button
                         className="text-gray-50 flex justify-center items-center bg-gray-400 font-medium hover:bg-gray-400/80 p-2"
                         onClick={() => {
-                            if (!loading) fetchBoardActivities();
+                            if (!isFetchingNextPage) {
+                                fetchNextPage();
+                            }
                         }}
                     >
-                        {loading ? "loading..." : "load more"}
+                        {isFetchingNextPage ? "loading..." : "load more"}
                     </button>
                 )}
             </div>

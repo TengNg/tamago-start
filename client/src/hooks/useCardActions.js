@@ -9,22 +9,31 @@ const useCardActions = ({ stateHooks, effectDeps }) => {
     const [searchParams, setSearchParams] = useSearchParams();
 
     const getVisibleLists = useCallback(() => {
-        return boardState.lists.filter((list) => {
-            const hasVisibleCards =
-                list.cards?.filter((card) => !card.hiddenByFilter).length > 0;
+        const lists = boardState.lists ?? [];
+        return lists.filter((list) => {
+            const hasVisibleCards = boardState.cards[list._id]?.some(
+                (card) => !card.hiddenByFilter,
+            );
             return !list.collapsed && hasVisibleCards;
         });
-    }, [boardState.lists]);
+    }, [boardState.lists, boardState.cards]);
 
-    const getVisibleCards = useCallback((list) => {
-        return list.cards?.filter((card) => !card.hiddenByFilter) ?? [];
-    }, []);
+    const getVisibleCards = useCallback(
+        (listId) => {
+            return (
+                boardState.cards?.[listId]?.filter(
+                    (card) => !card.hiddenByFilter,
+                ) ?? []
+            );
+        },
+        [boardState.cards],
+    );
 
     const getCardPosition = useCallback(
         (cardId, listId) => {
             const list = getVisibleLists().find((l) => l._id === listId);
             if (!list) return null;
-            const cards = getVisibleCards(list);
+            const cards = getVisibleCards(listId);
             const index = cards.findIndex((c) => c._id === cardId);
             return { list, cards, index };
         },
@@ -34,13 +43,7 @@ const useCardActions = ({ stateHooks, effectDeps }) => {
     const moveFocus = useCallback(
         (direction) => {
             const visibleLists = getVisibleLists();
-            if (
-                !boardState?.lists ||
-                visibleLists.length === 0 ||
-                visibleLists[0].cards.length === 0
-            ) {
-                return;
-            }
+            if (visibleLists.length === 0) return;
 
             const isFocusedListCollapsed =
                 focusedCard &&
@@ -52,7 +55,7 @@ const useCardActions = ({ stateHooks, effectDeps }) => {
             }
 
             if (!focusedCard) {
-                const firstCard = getVisibleCards(visibleLists[0])[0];
+                const firstCard = getVisibleCards(visibleLists[0]._id)[0];
                 setFocusedCard({
                     id: firstCard._id,
                     listId: firstCard.listId,
@@ -71,14 +74,14 @@ const useCardActions = ({ stateHooks, effectDeps }) => {
 
             if (direction === "right") {
                 const nextList = visibleLists[currListIndex + 1];
-                if (!nextList || nextList.cards.length === 0) return;
-                const nextCards = getVisibleCards(nextList);
+                const nextCards = nextList ? getVisibleCards(nextList._id) : [];
+                if (!nextList || nextCards.length === 0) return;
                 nextCard =
                     nextCards[currIndex] ?? nextCards[nextCards.length - 1];
             } else if (direction === "left") {
                 const prevList = visibleLists[currListIndex - 1];
-                if (!prevList || prevList.cards.length === 0) return;
-                const prevCards = getVisibleCards(prevList);
+                const prevCards = prevList ? getVisibleCards(prevList._id) : [];
+                if (!prevList || prevCards.length === 0) return;
                 nextCard =
                     prevCards[currIndex] ?? prevCards[prevCards.length - 1];
             } else if (direction === "down") {
@@ -97,14 +100,13 @@ const useCardActions = ({ stateHooks, effectDeps }) => {
                 const cardEl = document.querySelector(
                     `[data-card-item="${nextCard._id}-${nextCard.listId}"]`,
                 );
-                if (!cardEl) {
-                    return;
-                }
+                if (!cardEl) return;
                 cardEl.scrollIntoView({ behavior: "smooth", block: "center" });
             }
         },
         [
             boardState?.lists,
+            boardState?.cards,
             focusedCard,
             getVisibleLists,
             getVisibleCards,
@@ -162,37 +164,52 @@ const useCardActions = ({ stateHooks, effectDeps }) => {
         [setFocusedCard],
     );
 
+    useKeybind(["j", "down"], () => moveFocus("down"), {
+        ignoreInInputs: true,
+    });
+
+    useKeybind(["k", "up"], () => moveFocus("up"), {
+        ignoreInInputs: true,
+    });
+
+    useKeybind(["h", "left"], () => moveFocus("left"), {
+        ignoreInInputs: true,
+    });
+
+    useKeybind(["l", "right"], () => moveFocus("right"), {
+        ignoreInInputs: true,
+    });
+
     useKeybind(["ctrl+j", "ctrl+down"], () => moveFocus("down"));
     useKeybind(["ctrl+k", "ctrl+up"], () => moveFocus("up"));
     useKeybind(["ctrl+h", "ctrl+left"], () => moveFocus("left"));
     useKeybind(["ctrl+l", "ctrl+right"], () => moveFocus("right"));
-    useKeybind("Enter", () => handleOpenCardDetail(focusedCard), {
+
+    useKeybind("enter", () => handleOpenCardDetail(focusedCard), {
         ignoreInInputs: true,
     });
 
-    useKeybind("q", () => {
-        if (!focusedCard) {
-            return;
-        }
-
-        const pos = getCardPosition(focusedCard.id, focusedCard.listId);
-        if (pos) {
-            const foundCard = pos.cards[pos.index];
-            handleOpenCardQuickEditor({
-                ...focusedCard,
-                title: foundCard.title,
-            });
-        }
-    });
+    useKeybind(
+        "q",
+        () => {
+            if (!focusedCard) return;
+            const pos = getCardPosition(focusedCard.id, focusedCard.listId);
+            if (pos) {
+                handleOpenCardQuickEditor({
+                    ...focusedCard,
+                    title: pos.cards[pos.index].title,
+                });
+            }
+        },
+        { ignoreInInputs: true },
+    );
 
     useEffect(() => {
         document.addEventListener("mousedown", handleMouseDown);
-        return () => document.removeEventListener("mousedown", handleMouseDown);
+        return () => {
+            document.removeEventListener("mousedown", handleMouseDown);
+        };
     }, [handleMouseDown]);
-
-    // useEffect(() => {
-    //     handleScrollToFocusedCard(focusedCard);
-    // }, [focusedCard, handleScrollToFocusedCard]);
 };
 
 export default useCardActions;

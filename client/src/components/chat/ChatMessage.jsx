@@ -8,6 +8,7 @@ import useToast from "../../hooks/useToast";
 import { deleteMessage } from "../../api/chatApi";
 import useBoardState from "../../hooks/useBoardState";
 import { chatKeys } from "../../queries/chatKeys";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 const ChatMessage = ({ chatMessage }) => {
     const location = useLocation();
@@ -46,7 +47,7 @@ const ChatMessage = ({ chatMessage }) => {
                 };
             });
 
-            socket.emit("deleteMessage", { id: _id });
+            socket.emit(SOCKET_EVENTS.CHAT_DELETE, { id: _id });
         },
         onError: (err) => {
             const errMsg =

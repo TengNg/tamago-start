@@ -4,8 +4,10 @@ import List from "../models/List.js";
 import Card from "../models/Card.js";
 import User from "../models/User.js";
 import BoardMembership from "../models/BoardMembership.js";
-import { userByUsername as getUser } from '../services/userService.js';
+import Attachment from "../models/Attachment.js";
+import CardComment from "../models/CardComment.js";
 import saveBoardActivity from '../services/saveBoardActivity.js';
+import { checkAllowedRoles } from '../services/boardPermissionService.js';
 
 /**
  * @param {import('mongoose').Types.ObjectId} boardId
@@ -32,25 +34,6 @@ const boardMemberships = async (boardId) => {
         }
     ]);
     return memberships;
-}
-
-/**
- * @param {Object} params
- * @param {("owner" | "member")[]} params.roles
- * @param {string | import("mongoose").ObjectId} params.userId
- * @param {string | import("mongoose").ObjectId} params.boardId
- */
-const checkAllowedRoles = async ({ roles, userId, boardId }) => {
-    const allowed = await BoardMembership.findOne({
-        userId,
-        boardId,
-        role: { $in: roles }
-    });
-    if (!allowed) {
-        throw { status: 403, message: "unauthorized" }
-    }
-
-    return allowed;
 }
 
 /**
@@ -144,46 +127,18 @@ const getBoard = async (req, res) => {
         return res.status(403).json({ message: 'You do not have permission to access this board' });
     }
 
-    // // sync list count
-    // const listCount = await List.countDocuments({ boardId: id });
-    // board.listCount = listCount;
-    //
-    // // sync card count
-    // const cardCount = await Card.countDocuments({ boardId: id });
-    // board.cardCount = cardCount;
-    //
-    // await board.save();
-
-    const listsWithCards = await List.aggregate([
-        {
-            $match: {
-                boardId: board._id
-            }
-        },
-        {
-            $lookup: {
-                from: 'cards',
-                let: { id: '$_id' },
-                as: 'cards',
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: { $eq: ['$listId', '$$id'] }
-                        }
-                    },
-                    {
-                        $sort: { order: 1 }
-                    },
-                    {
-                        $project: { updatedAt: 0 }
-                    }
-                ]
-            }
-        },
-        {
-            $sort: { order: 1 }
-        },
-    ]);
+    const lists = await List.find({ boardId: board._id }).sort({ order: "asc" });
+    const cards = await Card.find({ boardId: board._id }).sort({ order: "asc" });
+    const cardsByListId = cards.reduce((acc, card) => {
+        const listId = card.listId ? card.listId.toString() : "unknown";
+        if (!acc[listId]) acc[listId] = [];
+        acc[listId].push(card);
+        return acc;
+    }, {});
+    lists.forEach(list => {
+        const listId = list._id.toString();
+        cardsByListId[listId] ??= [];
+    });
 
     // update recently viewed board
     const foundUser = await User.findById(userId);
@@ -206,7 +161,8 @@ const getBoard = async (req, res) => {
 
     return res.json({
         board,
-        lists: listsWithCards,
+        lists,
+        cards: cardsByListId,
         members: memberships,
     });
 }
@@ -284,12 +240,19 @@ const getBoardStats = async (req, res) => {
 const createBoard = async (req, res) => {
     const { userId } = req.user;
     const { title, description } = req.body;
-    const newBoard = new Board({
+
+    const newBoard = await Board.create({
         title,
         description,
         createdBy: userId
     });
-    await newBoard.save();
+
+    await BoardMembership.create({
+        boardId: newBoard._id,
+        userId: newBoard.createdBy,
+        role: 'owner',
+    });
+
     return res.status(201).json({ newBoard });
 };
 
@@ -321,9 +284,11 @@ const updateTitle = async (req, res) => {
         await saveBoardActivity({
             boardId: id,
             userId,
-            action: "update board title",
-            type: "board",
-            description: `${currentTitle} > ${title}`,
+            docId: id,
+            action: "board.title_updated",
+            docModel: "Board",
+            docTitle: title,
+            description: `"${currentTitle}" → "${title}"`,
         })
     }
 
@@ -358,9 +323,11 @@ const updateDescription = async (req, res) => {
         await saveBoardActivity({
             boardId: id,
             userId,
-            action: "update board description",
-            type: "board",
-            description: board.description,
+            docId: id,
+            action: "board.description_updated",
+            docModel: "Board",
+            docTitle: board.title,
+            description: `"${currentDescription}" → "${board.description}"`,
         })
     }
 
@@ -387,8 +354,19 @@ const updateVisibility = async (req, res) => {
         boardId: board._id.toString()
     });
 
+    const prevVisibility = board.visibility;
     board.visibility = visibility;
     await board.save();
+
+    await saveBoardActivity({
+        boardId: id,
+        userId,
+        docId: id,
+        action: "board.visibility_updated",
+        docModel: "Board",
+        docTitle: board.title,
+        description: `"${prevVisibility}" → "${board.visibility}"`,
+    })
 
     return res.status(200).json({ newBoard: board });
 };
@@ -412,12 +390,30 @@ const leaveBoard = async (req, res) => {
         boardId: board._id.toString()
     });
 
-    const foundBoardMembership = await BoardMembership.findOne({ boardId: board._id, userId });
+    const foundBoardMembership = await BoardMembership
+        .findOne({ boardId: board._id, userId })
+        .populate({
+            path: "userId",
+            select: "username",
+        })
     if (!foundBoardMembership) {
         return res.sendStatus(404);
     }
 
+    const username = /** @type any */(foundBoardMembership.userId).username;
+
     await BoardMembership.deleteOne({ boardId: board._id, userId });
+
+    await saveBoardActivity({
+        boardId: id,
+        userId,
+        docId: id,
+        action: "board.member_left",
+        docModel: "Board",
+        docTitle: "",
+        description: `${username} left`,
+    })
+
     res.status(200).json({ message: 'Member removed from the board successfully' });
 };
 
@@ -427,7 +423,7 @@ const leaveBoard = async (req, res) => {
  */
 const removeMemberFromBoard = async (req, res) => {
     const { userId } = req.user;
-    const { id, memberName } = req.params;
+    const { id, memberId } = req.params;
 
     const board = await Board.findById(id);
     if (!board) {
@@ -440,12 +436,12 @@ const removeMemberFromBoard = async (req, res) => {
         boardId: board._id.toString()
     });
 
-    const foundMember = await getUser(memberName);
+    const foundMember = await User.findById(memberId);
     if (!foundMember) {
         return res.status(403).json({ message: 'member not found' });
     }
 
-    if (foundMember._id.toString() === membership.userId.toString()) {
+    if (foundMember._id.toString() === /** @type any */(membership).userId.toString()) {
         return res.status(403).json({ message: 'cannot remove yourself' });
     }
 
@@ -484,6 +480,13 @@ const closeBoard = async (req, res) => {
         await Card.deleteMany({ boardId: id }, { session });
         await List.deleteMany({ boardId: id }, { session });
         await BoardMembership.deleteMany({ boardId: id }, { session });
+
+        const cardIds = await Card.find({ boardId: id }).distinct('_id').session(session);
+        if (cardIds.length > 0) {
+            await Attachment.deleteMany({ docModel: 'Card', doc: { $in: cardIds } }, { session });
+            await CardComment.deleteMany({ cardId: { $in: cardIds } }, { session });
+        }
+
         await Board.deleteOne({ _id: id }, { session });
 
         await session.commitTransaction();
@@ -534,33 +537,29 @@ const copyBoard = async (req, res) => {
 
         await newBoard.save({ session });
 
-        for (const list of lists) {
+        const oldToNewListId = new Map();
+        const listDocs = lists.map(list => {
             const newListId = new mongoose.Types.ObjectId();
-            const { _id, title, order } = list;
-            const newList = new List({
-                _id: newListId,
-                title,
-                order,
-                boardId: newBoardId,
-            });
+            oldToNewListId.set(list._id.toString(), newListId);
+            return { _id: newListId, title: list.title, order: list.order, boardId: newBoardId };
+        });
 
-            await newList.save({ session });
+        await List.insertMany(listDocs, { session });
 
-            const cards = await Card.find({ listId: _id });
-            for (const card of cards) {
-                const { title, description, order, highlight, priorityLevel } = card;
-                const newCard = new Card({
-                    title,
-                    description,
-                    order,
-                    highlight,
-                    priorityLevel,
-                    boardId: newBoardId,
-                    listId: newListId,
-                });
+        const allCards = await Card.find({ listId: { $in: lists.map(l => l._id) } }).lean();
 
-                await newCard.save({ session });
-            }
+        const cardDocs = allCards.map(card => ({
+            title: card.title,
+            description: card.description,
+            order: card.order,
+            highlight: card.highlight,
+            priorityLevel: card.priorityLevel,
+            boardId: newBoardId,
+            listId: oldToNewListId.get(card.listId.toString()),
+        }));
+
+        if (cardDocs.length > 0) {
+            await Card.insertMany(cardDocs, { session });
         }
 
         await session.commitTransaction();

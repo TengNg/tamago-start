@@ -7,7 +7,7 @@ import {
     UNAUTHORIZED_NAV_PAGES,
     AUTHORIZED_KEYS,
     UNAUTHORIZED_KEYS,
-} from "../../data/pages";
+} from "../../constants/pages";
 import Icon from "../shared/Icon";
 import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 
@@ -24,14 +24,21 @@ const NavBar = ({ setOpenPinnedBoards }) => {
             const isTextFieldFocused = document.querySelector(
                 "input:focus, textarea:focus",
             );
-            if (isTextFieldFocused || e.ctrlKey) return;
+            if (isTextFieldFocused || e.ctrlKey) {
+                return;
+            }
 
             const activeElement = document.activeElement;
-            if (
+            const isInputFocused =
                 activeElement &&
-                activeElement.getAttribute("contenteditable") === "true"
-            )
+                (activeElement.tagName === "INPUT" ||
+                    activeElement.tagName === "TEXTAREA" ||
+                    activeElement.tagName === "SELECT" ||
+                    activeElement.isContentEditable ||
+                    activeElement.getAttribute("contenteditable") === "true");
+            if (isInputFocused) {
                 return;
+            }
 
             if (e.key === "5") {
                 const recentlyViewedBoardId = currentUser.recentlyViewedBoardId;

@@ -1,15 +1,26 @@
+import BoardMembership from '../../models/BoardMembership.js';
+import { SOCKET_EVENTS } from '../../../shared/socket-events.js';
+
 /**
  * @param {import('socket.io').Server} io
  * @param {import('socket.io').Socket} socket
- * @param {SocketSharedState} state
  */
-export default function registerBoardHandlers(io, socket, state) {
-    const { boardIdMap } = state;
+export default function registerBoardHandlers(io, socket) {
 
-    socket.on("joinBoard", (data) => {
+    socket.on(SOCKET_EVENTS.BOARD_JOIN, async (data) => {
         const { boardId } = data;
-        boardIdMap.set(socket.id, boardId);
 
+        const membership = await BoardMembership.findOne({
+            boardId,
+            userId: socket.user.id
+        });
+
+        if (!membership) {
+            socket.emit(SOCKET_EVENTS.BOARD_UNAUTHORIZED, { message: "You are not a member of this board" });
+            return;
+        }
+
+        socket.boardId = boardId;
         socket.join(boardId);
 
         if (process.env.NODE_ENV === "development") {
@@ -17,41 +28,44 @@ export default function registerBoardHandlers(io, socket, state) {
         }
     });
 
-    socket.on("leaveBoard", (_data) => {
-        const boardId = boardIdMap.get(socket.id);
+    socket.on(SOCKET_EVENTS.BOARD_LEAVE, (_data) => {
+        const boardId = socket.boardId;
         if (!boardId) return;
 
         const user = socket.user;
-        socket.to(boardId).emit("memberLeaved", { username: user.username });
+        socket.to(boardId).emit(SOCKET_EVENTS.BOARD_MEMBER_LEFT, { username: user.username });
+
+        delete socket.boardId;
+        socket.leave(boardId);
     });
 
-    socket.on("kickMember", (memberName) => {
-        const boardId = boardIdMap.get(socket.id);
+    socket.on(SOCKET_EVENTS.BOARD_KICK, (memberId) => {
+        const boardId = socket.boardId;
         if (!boardId) return;
 
         const connectedSockets = io.sockets.sockets;
-        const targetSocket = Array.from(connectedSockets.values()).find(s => s.user && s.user.username === memberName);
+        const targetSocket = Array.from(connectedSockets.values()).find(s => s.user && s.user.username === memberId);
         if (!targetSocket) return;
-        socket.to(boardId).emit("memberKicked", { userSocketId: targetSocket.id });
+        socket.to(boardId).emit(SOCKET_EVENTS.BOARD_MEMBER_KICKED, { userSocketId: targetSocket.id });
     });
 
-    socket.on("closeBoard", (_) => {
-        const boardId = boardIdMap.get(socket.id);
+    socket.on(SOCKET_EVENTS.BOARD_CLOSE, (_) => {
+        const boardId = socket.boardId;
         if (!boardId) return;
-        boardIdMap.delete(socket.id);
+        delete socket.boardId;
         socket.leave(boardId);
-        socket.to(boardId).emit("boardClosed");
+        socket.to(boardId).emit(SOCKET_EVENTS.BOARD_CLOSED);
     });
 
-    socket.on("updateBoardTitle", (data) => {
-        const boardId = boardIdMap.get(socket.id);
+    socket.on(SOCKET_EVENTS.BOARD_UPDATE_TITLE, (data) => {
+        const boardId = socket.boardId;
         if (!boardId) return;
-        socket.to(boardId).emit("getBoardWithUpdatedTitle", data);
+        socket.to(boardId).emit(SOCKET_EVENTS.BOARD_TITLE_UPDATED, data);
     });
 
-    socket.on("updateBoardDescription", (data) => {
-        const boardId = boardIdMap.get(socket.id);
+    socket.on(SOCKET_EVENTS.BOARD_UPDATE_DESCRIPTION, (data) => {
+        const boardId = socket.boardId;
         if (!boardId) return;
-        socket.to(boardId).emit("getBoardWithUpdatedDescription", data);
+        socket.to(boardId).emit(SOCKET_EVENTS.BOARD_DESCRIPTION_UPDATED, data);
     });
 }

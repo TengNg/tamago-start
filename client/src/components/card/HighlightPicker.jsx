@@ -1,12 +1,12 @@
-import highlightColors from "../../data/highlights";
+import highlightColors from "../../constants/highlights";
 import useBoardState from "../../hooks/useBoardState";
 import Icon from "../shared/Icon";
 import { axiosPrivate } from "../../api/axios";
 import useToast from "../../hooks/useToast";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 const HighlightPicker = ({ setOpen, card }) => {
-    const { setCardDetailHighlight, setCardHighlight, socket } =
-        useBoardState();
+    const { setCardDetailHighlight, updateCardField, socket } = useBoardState();
 
     const toast = useToast();
 
@@ -18,12 +18,17 @@ const HighlightPicker = ({ setOpen, card }) => {
         if (card.highlight === value) return;
 
         try {
-            setCardHighlight(card._id, card.listId, value);
+            updateCardField({
+                id: card._id,
+                listId: card.listId,
+                field: "highlight",
+                value,
+            });
             setCardDetailHighlight(value);
             await axiosPrivate.patch(`/cards/${card._id}/new-highlight`, {
                 highlight: value,
             });
-            socket.emit("updateCardHighlight", {
+            socket.emit(SOCKET_EVENTS.CARD_UPDATE_HIGHLIGHT, {
                 id: card._id,
                 listId: card.listId,
                 highlight: value,

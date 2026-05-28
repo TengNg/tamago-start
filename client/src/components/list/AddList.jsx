@@ -3,9 +3,10 @@ import useBoardState from "../../hooks/useBoardState";
 import { lexorank } from "../../lib/lexorank";
 import { axiosPrivate } from "../../api/axios";
 import useToast from "../../hooks/useToast";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 const AddList = () => {
-    const [listTitle, setListTitle] = useState("");
+    const [title, setTitle] = useState("");
     const [addingList, setAddingList] = useState(false);
     const titleInputRef = useRef();
     const containerRef = useRef();
@@ -46,7 +47,7 @@ const AddList = () => {
     }, [open]);
 
     const handleAddList = async () => {
-        if (listTitle.trim() === "" || addingList) {
+        if (title.trim() === "" || addingList) {
             return;
         }
 
@@ -58,7 +59,7 @@ const AddList = () => {
         const [rank, _] = lexorank.insert(prevOrder);
 
         const newList = {
-            title: listTitle,
+            title: title,
             order: rank,
             boardId: boardState.board._id,
         };
@@ -70,9 +71,9 @@ const AddList = () => {
                 "/lists",
                 JSON.stringify(newList),
             );
-            socket.emit("addList", response.data.newList);
+            socket.emit(SOCKET_EVENTS.LIST_CREATE, response.data.newList);
             addListToBoard(response.data.newList);
-            setListTitle("");
+            setTitle("");
             titleInputRef.current.focus();
         } catch (err) {
             const errMsg =
@@ -96,16 +97,16 @@ const AddList = () => {
     };
 
     const handleInputChange = (e) => {
-        setListTitle(e.target.value);
+        setTitle(e.target.value);
     };
 
     return (
         <div
             ref={containerRef}
-            className={`${theme.itemTheme == "rounded-sm" ? "rounded-md" : ""} group board--style--sm overflow-hidden bg-gray-100 w-[300px] min-w-[300px] border-2 min-h-12 select-none cursor-pointer border-gray-500 shadow-gray-500 text-gray-500 font-medium`}
+            className={`${theme.itemTheme == "rounded-sm" ? "rounded-md" : ""} group board--style--sm overflow-hidden bg-gray-100 w-75 min-w-75 border-2 min-h-12 select-none cursor-pointer border-gray-500 shadow-gray-500 text-gray-500 font-medium`}
             style={{ backgroundColor: "rgba(241, 241, 241, 0.75)" }}
         >
-            {open === false && (
+            {!open && (
                 <button
                     className="w-full h-full text-start p-3 flex gap-2 text-sm hover:bg-gray-500/10"
                     onClick={handleOpenAddListForm}
@@ -115,14 +116,14 @@ const AddList = () => {
             )}
 
             <div
-                className={`flex-col flex h-[113px] py-2 px-2 gap-3 -mt-[100%] ${open && "mt-0"}`}
+                className={`flex-col flex h-27.75 py-2 px-2 gap-3 -mt-[100%] ${open && "mt-0"}`}
             >
                 <input
-                    className="border text-sm border-gray-500 text-gray-500 font-medium p-2 focus:outline-hidden"
+                    className="border text-sm border-gray-500 text-gray-700 font-medium p-2 focus:outline-hidden"
                     type="text"
                     autoComplete="off"
                     placeholder="list title goes here..."
-                    value={listTitle}
+                    value={title}
                     ref={titleInputRef}
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}

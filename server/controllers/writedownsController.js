@@ -1,8 +1,4 @@
 import Writedown from "../models/Writedown.js";
-import {
-    saveNewWritedown,
-    writedownsByUserId,
-} from '../services/writedownService.js';
 
 /**
  * @param {import('express').Request} req
@@ -10,7 +6,7 @@ import {
  */
 const getWritedowns = async (req, res) => {
     const { userId } = req.user;
-    const writedowns = await writedownsByUserId(userId);
+    const writedowns = await Writedown.find({ owner: userId }).sort({ order: 'asc' }).lean();
     return res.status(200).json({ writedowns });
 };
 
@@ -22,7 +18,7 @@ const getWritedown = async (req, res) => {
     const writedown = await Writedown.findOne({
         _id: req.params.writedownId,
         owner: req.user.userId
-    });
+    }).lean();
     if (!writedown) {
         return res.sendStatus(404);
     }
@@ -37,7 +33,7 @@ const getWritedown = async (req, res) => {
 const createWritedown = async (req, res) => {
     const { userId } = req.user;
     const { rank } = req.body;
-    const newWritedown = await saveNewWritedown({ owner: userId, order: rank });
+    const newWritedown = await Writedown.create({ owner: userId, order: rank });
     return res.status(200).json({ newWritedown });
 };
 

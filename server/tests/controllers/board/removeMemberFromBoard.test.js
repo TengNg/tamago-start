@@ -9,7 +9,7 @@ import {
 } from '../../helpers/generateDoc.js';
 import { objectId } from '../../helpers/common.js';
 
-describe('DELETE /boards/:id/members/:memberName (removeMemberFromBoard)', () => {
+describe('DELETE /boards/:id/members/:memberId (removeMemberFromBoard)', () => {
     let cookieName = process.env.ACCESS_TOKEN_COOKIE_NAME;
     let accessToken;
     let testUser;
@@ -87,18 +87,17 @@ describe('DELETE /boards/:id/members/:memberName (removeMemberFromBoard)', () =>
         expect(res.statusCode).toBe(403);
     });
 
-    it('should return 403 if memberName does not exist', async () => {
+    it('should return 403 if memberId does not exist', async () => {
         const res = await request(app)
-            .delete(`/api/boards/${ownedBoard._id}/members/nonexistentuser`)
+            .delete(`/api/boards/${ownedBoard._id}/members/${objectId()}`)
             .set('Cookie', `${cookieName}=${accessToken}`);
-
         expect(res.statusCode).toBe(403);
         expect(res.body.message).toBe('member not found');
     });
 
     it('should return 403 if trying to remove yourself', async () => {
         const res = await request(app)
-            .delete(`/api/boards/${ownedBoard._id}/members/${testUser.username}`)
+            .delete(`/api/boards/${ownedBoard._id}/members/${testUser._id}`)
             .set('Cookie', `${cookieName}=${accessToken}`);
 
         expect(res.statusCode).toBe(403);
@@ -107,7 +106,7 @@ describe('DELETE /boards/:id/members/:memberName (removeMemberFromBoard)', () =>
 
     it('should successfully remove a member', async () => {
         const res = await request(app)
-            .delete(`/api/boards/${ownedBoard._id}/members/testmember123`)
+            .delete(`/api/boards/${ownedBoard._id}/members/${memberUser._id}`)
             .set('Cookie', `${cookieName}=${accessToken}`);
 
         expect(res.statusCode).toBe(200);

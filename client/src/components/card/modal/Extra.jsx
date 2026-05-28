@@ -1,18 +1,18 @@
 import { useState, useMemo } from "react";
-import useBoardState from "../../hooks/useBoardState";
-import dateFormatter from "../../utils/dateFormatter";
-import PRIORITY_LEVELS from "../../data/priorityLevels";
+import useBoardState from "../../../hooks/useBoardState";
+import dateFormatter from "../../../utils/dateFormatter";
+import PRIORITY_LEVELS from "../../../constants/priorityLevels";
 
-import { formatDateToYYYYMMDD } from "../../utils/dateFormatter";
+import { formatDateToYYYYMMDD } from "../../../utils/dateFormatter";
 
-import { dateToCompare } from "../../utils/dateFormatter";
-import Icon from "../shared/Icon";
-import useToast from "../../hooks/useToast";
-import Attachments from "./attachment/Attachments";
-import Uploader from "./attachment/Uploader";
-import ViewerDialog from "./attachment/ViewerDialog";
+import { dateToCompare } from "../../../utils/dateFormatter";
+import Icon from "../../shared/Icon";
+import useToast from "../../../hooks/useToast";
+import Attachments from "../attachment/Attachments";
+import Uploader from "../attachment/Uploader";
+import ViewerDialog from "../attachment/ViewerDialog";
 
-const CardModalInfo = ({
+const Extra = ({
     card,
     handleCardOwnerChange,
     handleCardPriorityLevelChange,
@@ -154,4 +154,4 @@ const CardModalInfo = ({
     );
 };
 
-export default CardModalInfo;
+export default Extra;

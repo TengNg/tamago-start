@@ -1,14 +1,7 @@
 import { Schema, model } from 'mongoose';
-import { randomUUID } from 'crypto';
-import { MAX_CARD_COUNT } from '../data/limits.js';
+import { MAX_CARD_COUNT } from '../constants/limits.js';
 
 const cardSchema = new Schema({
-    trackedId: {
-        type: String,
-        default: randomUUID(),
-        required: true,
-    },
-
     listId: {
         type: Schema.Types.ObjectId,
         ref: 'List',
@@ -91,9 +84,8 @@ cardSchema.index({ listId: 1, order: 1 });
 
 cardSchema.pre('save', async function(next) {
     if (this.isNew) {
-        const Board = model('Board');
-        const foundBoard = await Board.findById(this.boardId)
-        if (foundBoard && foundBoard.cardCount >= MAX_CARD_COUNT) {
+        const count = await model('Card').countDocuments({ boardId: this.boardId });
+        if (count >= MAX_CARD_COUNT) {
             const error = new Error(`Maximum card count reached for this board (maximum: ${MAX_CARD_COUNT})`);
             return next(error);
         }
@@ -101,25 +93,20 @@ cardSchema.pre('save', async function(next) {
         this.updatedAt = new Date();
     }
 
-    if (this.dueDate) {
-        this.dueDate.setHours(0, 0, 0, 0);
+    try {
+        if (this.dueDate) {
+            this.dueDate.setHours(0, 0, 0, 0);
+        }
+    } catch (err) {
+        console.log(err);
     }
 
     next();
 });
 
 cardSchema.post('findOneAndDelete', async function(doc) {
-    const Board = model('Board');
-    const foundBoard = await Board.findById(doc.boardId);
-    if (foundBoard) {
-        await Board.updateOne({ _id: doc.boardId }, { $inc: { cardCount: -1 } });
-    }
-
-    const Attachment = model('Attachment');
-    await Attachment.deleteMany({ type: "card", refId: doc._id });
-
-    const CardComment = model('CardComment');
-    await CardComment.deleteMany({ cardId: doc._id });
+    await model('Attachment').deleteMany({ docModel: "Card", doc: doc._id });
+    await model('CardComment').deleteMany({ cardId: doc._id });
 });
 
 export default model('Card', cardSchema);

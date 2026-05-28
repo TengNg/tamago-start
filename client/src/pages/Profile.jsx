@@ -48,7 +48,9 @@ const Profile = () => {
                 setMsg({ error: false, content: "" });
             }, 3000);
         }
-        return () => clearTimeout(id);
+        return () => {
+            clearTimeout(id);
+        };
     }, [msg]);
 
     const ownedBoardsQuery = useQuery({
@@ -356,7 +358,7 @@ const Profile = () => {
                                     />
                                 </div>
                             )}
-                            {currentUser.loginWithDiscord == false && (
+                            {!currentUser.loginWithDiscord && (
                                 <div className="flex flex-col gap-4">
                                     {!changePassword ? (
                                         <button

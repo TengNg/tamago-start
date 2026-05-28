@@ -1,17 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import Loading from "../ui/Loading";
-import VISIBILITY_MAP from "../../data/visibility";
+import VISIBILITY_MAP from "../../constants/visibility";
 import useBoardState from "../../hooks/useBoardState";
 import Icon from "../shared/Icon";
 import { axiosPrivate } from "../../api/axios";
 import useToast from "../../hooks/useToast";
 import { useKeybind } from "../../hooks/useKeybind";
-import { kb } from "../../data/keybinds";
+import { kb } from "../../constants/keybinds";
 
 const VisibilityConfig = () => {
     const {
         boardState,
-        setBoardVisibility,
+        updateBoardField,
         openVisibilityConfig: open,
         setOpenVisibilityConfig: setOpen,
     } = useBoardState();
@@ -25,9 +25,13 @@ const VisibilityConfig = () => {
 
     const toast = useToast();
 
-    useKeybind(kb.openVisibilityConfig, () => {
-        setOpen((prev) => !prev);
-    });
+    useKeybind(
+        kb.openVisibilityConfig,
+        () => {
+            setOpen((prev) => !prev);
+        },
+        { ignoreInInputs: true },
+    );
 
     useEffect(() => {
         if (open) {
@@ -56,8 +60,10 @@ const VisibilityConfig = () => {
                 `/boards/${boardState.board._id}/new-visibility`,
                 JSON.stringify({ visibility }),
             );
-            const { newBoard } = response.data;
-            setBoardVisibility(newBoard?.visibility);
+            updateBoardField({
+                field: "visibility",
+                value: response.data.newBoard.visibility,
+            });
             setUpdating(false);
         } catch (err) {
             setUpdating(false);
@@ -81,7 +87,7 @@ const VisibilityConfig = () => {
     return (
         <dialog
             ref={dialog}
-            className="z-40 relative backdrop:bg-black/15 box--style gap-4 items-start p-3 pb-4 h-fit min-w-[300px] max-h-[500px] border-black border-2 bg-gray-200"
+            className="z-40 relative backdrop:bg-black/15 box--style gap-4 items-start p-3 pb-4 h-fit min-w-75 max-h-125 border-black border-2 bg-gray-200"
             onClick={handleCloseOnOutsideClick}
         >
             <Loading

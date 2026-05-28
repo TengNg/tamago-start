@@ -1,6 +1,6 @@
 import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
-import { usernameRegex } from '../data/regex.js';
+import { usernameRegex } from '../constants/regex.js';
 
 /**
  * @param {import('express').Request} req

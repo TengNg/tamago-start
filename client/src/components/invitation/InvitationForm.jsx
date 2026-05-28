@@ -6,7 +6,8 @@ import Icon from "../shared/Icon";
 import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 import { axiosPrivate } from "../../api/axios";
 import { useKeybind } from "../../hooks/useKeybind";
-import { kb } from "../../data/keybinds";
+import { kb } from "../../constants/keybinds";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 const InvitationForm = () => {
     const { currentUser } = useCurrentUserContext();
@@ -119,14 +120,14 @@ const InvitationForm = () => {
         }
     };
 
-    const handleRemoveMemberFromBoard = async (memberName) => {
+    const handleRemoveMemberFromBoard = async (memberId) => {
         try {
             setLoading(true);
             await axiosPrivate.delete(
-                `/boards/${boardState.board._id}/members/${memberName}`,
+                `/boards/${boardState.board._id}/members/${memberId}`,
             );
-            removeMemberFromBoard(memberName);
-            socket.emit("kickMember", memberName);
+            removeMemberFromBoard(memberId);
+            socket.emit(SOCKET_EVENTS.BOARD_KICK, memberId);
             setLoading(false);
         } catch (err) {
             setLoading(false);
@@ -150,7 +151,7 @@ const InvitationForm = () => {
         <>
             <dialog
                 ref={dialog}
-                className="z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 h-fit min-w-[350px] border-black border-2 bg-gray-200 overflow-hidden"
+                className="z-40 backdrop:bg-black/15 box--style gap-4 items-start p-3 h-fit min-w-87.5 border-black border-2 bg-gray-200 overflow-hidden"
                 onClick={handleCloseOnOutsideClick}
             >
                 <Loading
@@ -200,7 +201,7 @@ const InvitationForm = () => {
                     )}
                 </div>
 
-                <div className="flex flex-col gap-3 w-full max-w-[400px] max-h-[250px] overflow-auto border border-t-gray-600 p-0 py-3">
+                <div className="flex flex-col gap-3 w-full max-w-100 max-h-62.5 overflow-auto border border-t-gray-600 p-0 py-3">
                     {boardState.members.map((member) => {
                         return (
                             <Member

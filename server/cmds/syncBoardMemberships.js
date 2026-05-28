@@ -3,7 +3,7 @@ import "dotenv/config";
 import mongoose from 'mongoose';
 import Board from '../models/Board.js';
 import BoardMembership from '../models/BoardMembership.js';
-import { DEFAULT_BOARD_PERMISSIONS } from '../data/permissions.js';
+import { DEFAULT_BOARD_PERMISSIONS } from '../constants/permissions.js';
 
 mongoose.set("strictQuery", true);
 mongoose

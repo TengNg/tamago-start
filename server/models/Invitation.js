@@ -32,4 +32,6 @@ const invitationSchema = new Schema({
     },
 });
 
+invitationSchema.index({ invitedUserId: 1, createdAt: -1 });
+
 export default model('Invitation', invitationSchema);

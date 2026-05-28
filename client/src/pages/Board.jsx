@@ -23,15 +23,17 @@ import useToast from "../hooks/useToast";
 import { fetchBoard } from "../api/boardApi";
 import { useQuery } from "@tanstack/react-query";
 import ChatBox from "../components/chat/ChatBox";
+import { BOARD_ACTIONS } from "../state/boardActionTypes";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 const Board = () => {
     const { currentUser, currentUserQuery } = useCurrentUserContext();
 
     const {
         boardState,
-        setBoardState,
+        dispatch,
 
-        setBoardTitle,
+        updateBoardField,
 
         // check if board is deleted or not
         isRemoved,
@@ -101,6 +103,26 @@ const Board = () => {
     const navigate = useNavigate();
 
     const toast = useToast();
+    const boardQuery = useQuery({
+        queryKey: ["boards", boardId],
+        queryFn: () => fetchBoard(boardId),
+    });
+
+    useEffect(() => {
+        if (boardQuery.isSuccess && boardQuery.data) {
+            socket.connect();
+            dispatch({
+                type: BOARD_ACTIONS.SET_STATE,
+                payload: {
+                    data: boardQuery.data,
+                },
+            });
+        }
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [boardQuery.isSuccess, boardQuery.data]);
 
     useEffect(() => {
         if (isRemoved) {
@@ -129,22 +151,6 @@ const Board = () => {
         },
     });
 
-    const boardQuery = useQuery({
-        queryKey: ["boards", boardId],
-        queryFn: () => fetchBoard(boardId),
-    });
-
-    useEffect(() => {
-        if (boardQuery.isSuccess && boardQuery.data) {
-            socket.connect();
-            setBoardState(boardQuery.data);
-        }
-
-        return () => {
-            socket.disconnect();
-        };
-    }, [boardQuery.isSuccess, boardQuery.data]);
-
     // card process wrapper => set loading state =======================================================================
     const withCardProcessWrapper = (handleFunction) => {
         return async (...args) => {
@@ -172,7 +178,7 @@ const Board = () => {
 
     const handleConfirmBoardTitle = async (value) => {
         if (value === "") {
-            setBoardTitle(initialTitle);
+            updateBoardField({ field: "title", value: initialTitle });
             return;
         }
 
@@ -182,14 +188,17 @@ const Board = () => {
                 JSON.stringify({ title: value }),
             );
             setInitialTitle(response.data.newBoard.title);
-            setBoardTitle(response.data.newBoard.title);
+            updateBoardField({
+                field: "title",
+                value: response.data.newBoard.title,
+            });
 
-            socket.emit("updateBoardTitle", value);
+            socket.emit(SOCKET_EVENTS.BOARD_UPDATE_TITLE, value);
         } catch (err) {
             const errMsg =
                 err.response?.data?.message || "Failed to update board title";
             toast.error(errMsg);
-            setBoardTitle(initialTitle);
+            updateBoardField({ field: "title", value: initialTitle });
         }
     };
 
@@ -222,7 +231,7 @@ const Board = () => {
         try {
             await axiosPrivate.delete(`/cards/${card._id}`);
             deleteCard(card.listId, card._id);
-            socket.emit("deleteCard", {
+            socket.emit(SOCKET_EVENTS.CARD_DELETE, {
                 listId: card.listId,
                 cardId: card._id,
             });
@@ -238,22 +247,19 @@ const Board = () => {
             try {
                 const { _id: cardId, listId: oldListId } = card;
 
-                const oldList = boardState.lists.find(
-                    (list) => list._id === oldListId,
-                );
-                const currentIndex = oldList.cards.findIndex(
+                const currentIndex = boardState.cards[oldListId].findIndex(
                     (el) => el._id == card._id,
                 );
 
-                const currentList = boardState.lists.find(
+                const newList = boardState.lists.find(
                     (list) => list._id === newListId,
                 );
-                const cards = currentList.cards;
+
+                const cardsFromNewList = boardState.cards[newList._id];
                 const [rank, ok] = lexorank.insert(
-                    cards[cards.length - 1]?.order,
+                    cardsFromNewList[cardsFromNewList.length - 1]?.order,
                     undefined,
                 );
-
                 if (!ok) {
                     throw new Error("Failed to reorder card");
                 }
@@ -264,9 +270,10 @@ const Board = () => {
                         rank,
                         listId: newListId,
                         sourceIndex: currentIndex,
-                        destinationIndex: cards.length - 1,
+                        destinationIndex: cardsFromNewList.length - 1,
                     }),
                 );
+
                 const { newCard } = response.data;
 
                 // delete card from old list, and add the current card to the new list
@@ -276,7 +283,7 @@ const Board = () => {
                 // [card details is opened] => update list id
                 setCardDetailListId(newListId);
 
-                socket.emit("moveCard", {
+                socket.emit(SOCKET_EVENTS.CARD_MOVE, {
                     oldListId,
                     newListId,
                     cardId,
@@ -292,11 +299,7 @@ const Board = () => {
 
     const handleCopyCard = withCardProcessWrapper(async (card) => {
         try {
-            const currentList = [...boardState.lists].find(
-                (list) => list._id == card.listId,
-            );
-            const cards = currentList.cards;
-
+            const cards = boardState.cards[card.listId];
             const currentIndex = cards.findIndex((el) => el._id == card._id);
             const [rank, ok] = lexorank.insert(
                 cards[currentIndex]?.order,
@@ -318,7 +321,10 @@ const Board = () => {
 
             addCopiedCard(newCard, currentIndex);
 
-            socket.emit("copyCard", { card: newCard, index: currentIndex });
+            socket.emit(SOCKET_EVENTS.CARD_COPY, {
+                card: newCard,
+                index: currentIndex,
+            });
         } catch (err) {
             if (err.response?.status === 503) {
                 toast.error(
@@ -334,16 +340,12 @@ const Board = () => {
     const handleMoveCardByIndex = withCardProcessWrapper(
         async (card, insertedIndex) => {
             try {
-                const currentList = boardState.lists.find(
-                    (list) => list._id == card.listId,
-                );
-                const cards = currentList.cards;
+                const cards = boardState.cards[card.listId];
                 const currentIndex = cards.findIndex(
                     (el) => el._id == card._id,
                 );
                 const prev = insertedIndex - 1;
                 const next = insertedIndex;
-
                 const [rank, ok] = lexorank.insert(
                     cards[prev]?.order,
                     cards[next]?.order,
@@ -354,15 +356,13 @@ const Board = () => {
                 moved.order = rank;
 
                 cards.splice(insertedIndex, 0, moved);
-                setBoardState((prev) => {
-                    return {
-                        ...prev,
-                        lists: prev.lists.map((list) =>
-                            list._id === card.listId
-                                ? { ...list, cards }
-                                : list,
-                        ),
-                    };
+
+                dispatch({
+                    type: BOARD_ACTIONS.SET_LIST_CARDS,
+                    payload: {
+                        listId: card.listId,
+                        cards,
+                    },
                 });
 
                 await axiosPrivate.patch(
@@ -374,7 +374,10 @@ const Board = () => {
                         destinationIndex: insertedIndex,
                     }),
                 );
-                socket.emit("moveCardByIndex", { cards, listId: card.listId });
+                socket.emit(SOCKET_EVENTS.CARD_MOVE_BY_INDEX, {
+                    cards,
+                    listId: card.listId,
+                });
             } catch (err) {
                 const errMsg =
                     err?.response?.data?.message || "Failed to move this card";
@@ -423,6 +426,16 @@ const Board = () => {
                     getting board data
                 </div>
                 <div className="loader mx-auto my-8"></div>
+            </>
+        );
+    }
+
+    if (Object.keys(boardState).length === 0) {
+        return (
+            <>
+                <div className="font-medium mx-auto text-center mt-20 text-gray-600">
+                    no data found
+                </div>
             </>
         );
     }
@@ -514,7 +527,12 @@ const Board = () => {
                                 maxWidth: "400px",
                             }}
                             onKeyDown={(e) => handleBoardTitleInputOnKeyDown(e)}
-                            onChange={(e) => setBoardTitle(e.target.value)}
+                            onChange={(e) =>
+                                updateBoardField({
+                                    field: "title",
+                                    value: e.target.value,
+                                })
+                            }
                             onBlur={(e) => handleBoardTitleInputOnBlur(e)}
                             value={boardState.board.title}
                         />

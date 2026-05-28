@@ -12,24 +12,59 @@ const boardActivitySchema = new Schema({
         ref: 'User',
     },
 
-    card: {
-        type: Schema.Types.ObjectId,
-        ref: 'Card',
-    },
-
-    list: {
-        type: Schema.Types.ObjectId,
-        ref: 'List',
-    },
-
-    type: {
+    docModel: {
         type: String,
-        enum: ['board', 'list', 'card'],
+        enum: ['Board', 'Card', 'List'],
         required: true,
+    },
+
+    doc: {
+        type: Schema.Types.ObjectId,
+        required: true,
+        refPath: 'docModel',
+    },
+
+    docTitle: {
+        type: String,
+        default: "",
     },
 
     action: {
         type: String,
+        enum: [
+            // card
+            'card.created',
+            'card.moved',
+            'card.title_updated',
+            'card.description_updated',
+            'card.highlight_updated',
+            'card.priority_updated',
+            'card.owner_updated',
+            'card.due_date_updated',
+            'card.verified',
+            'card.unverified',
+            'card.deleted',
+            'card.copied',
+
+            // list
+            'list.created',
+            'list.title_updated',
+            'list.reordered',
+            'list.moved',
+            'list.deleted',
+            'list.copied',
+
+            // board
+            'board.created',
+            'board.title_updated',
+            'board.description_updated',
+            'board.visibility_updated',
+            'board.member_left',
+
+            // comment
+            'comment.created',
+        ],
+        required: true,
     },
 
     description: {
@@ -43,5 +78,8 @@ const boardActivitySchema = new Schema({
         required: true,
     },
 }, { collection: 'board_activities' });
+
+boardActivitySchema.index({ board: 1, createdAt: -1 });
+boardActivitySchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 86400 });
 
 export default model('BoardActivity', boardActivitySchema);

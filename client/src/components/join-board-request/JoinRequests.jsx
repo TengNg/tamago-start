@@ -1,25 +1,131 @@
 import Avatar from "../avatar/Avatar";
 import { useNavigate } from "react-router-dom";
 import dateFormatter from "../../utils/dateFormatter";
+import {
+    acceptJoinRequest,
+    fetchJoinRequests,
+    rejectJoinRequest,
+    removeJoinRequest,
+} from "../../api/joinRequest";
+import {
+    useInfiniteQuery,
+    useMutation,
+    useQueryClient,
+} from "@tanstack/react-query";
+import { useMemo } from "react";
 
-const MAX_REQUEST_PAGE = 3;
-
-export default function JoinRequests({
-    show,
-    requests,
-    loading,
-    error,
-    fetchRequests,
-    fetchNextPage,
-    isFetchingNextPage,
-    hasNextPage,
-    accept,
-    reject,
-    remove,
-}) {
+export default function JoinRequests({ show }) {
     const navigate = useNavigate();
 
-    if (error) {
+    const queryClient = useQueryClient();
+
+    const {
+        data,
+        refetch,
+        fetchNextPage,
+        isLoading,
+        isFetchingNextPage,
+        hasNextPage,
+        isRefetching,
+        isError,
+    } = useInfiniteQuery({
+        staleTime: Infinity,
+        queryKey: ["boardRequests"],
+        queryFn: ({ pageParam = 1 }) => fetchJoinRequests({ page: pageParam }),
+        getNextPageParam: (lastPage, _pages) => {
+            return lastPage.nextPage;
+        },
+    });
+
+    const acceptMutation = useMutation({
+        mutationFn: ({ id, boardId, requesterId }) =>
+            acceptJoinRequest({ id, boardId, requesterId }),
+        onSuccess: (_data, variables, _context) => {
+            const { id: requestId } = variables;
+            queryClient.setQueryData(["boardRequests"], (old) => {
+                return {
+                    ...old,
+                    pages: [...old.pages].map((page) => {
+                        return {
+                            ...page,
+                            joinRequests: [...page.joinRequests].map((item) => {
+                                return item._id === requestId
+                                    ? { ...item, status: "accepted" }
+                                    : item;
+                            }),
+                        };
+                    }),
+                };
+            });
+        },
+        onError: (err, _, _context) => {
+            const errMsg =
+                err.response?.data?.message || "Failed to accept this request";
+            toast.error(errMsg);
+        },
+    });
+
+    const rejectMutation = useMutation({
+        mutationFn: ({ id, boardId, requesterId }) =>
+            rejectJoinRequest({ id, boardId, requesterId }),
+        onSuccess: (_data, variables, _context) => {
+            const { id: requestId } = variables;
+            queryClient.setQueryData(["boardRequests"], (old) => {
+                return {
+                    ...old,
+                    pages: [...old.pages].map((page) => {
+                        return {
+                            ...page,
+                            joinRequests: [...page.joinRequests].map((item) => {
+                                return item._id === requestId
+                                    ? { ...item, status: "rejected" }
+                                    : item;
+                            }),
+                        };
+                    }),
+                };
+            });
+        },
+        onError: (err, _, _context) => {
+            const errMsg =
+                err.response?.data?.message || "Failed to accept this request";
+            toast.error(errMsg);
+        },
+    });
+
+    const removeMutation = useMutation({
+        mutationFn: ({ id, boardId, requesterId }) =>
+            removeJoinRequest({ id, boardId, requesterId }),
+        onSuccess: (_data, variables, _context) => {
+            const { id: requestId } = variables;
+            queryClient.setQueryData(["boardRequests"], (old) => {
+                return {
+                    ...old,
+                    pages: [...old.pages].map((page) => {
+                        return {
+                            ...page,
+                            joinRequests: [...page.joinRequests].filter(
+                                (item) => {
+                                    return item._id !== requestId;
+                                },
+                            ),
+                        };
+                    }),
+                };
+            });
+        },
+        onError: (err, _, _context) => {
+            const errMsg =
+                err.response?.data?.message || "Failed to accept this request";
+            toast.error(errMsg);
+        },
+    });
+
+    const requests = useMemo(() => {
+        return data ? data.pages.flatMap((page) => page.joinRequests) : [];
+    }, [data]);
+
+    if (isError) {
         return (
             <div
                 className={`mx-auto lg:w-1/2 md:w-3/4 w-[90%] ${show ? "" : "hidden"}`}
@@ -43,17 +149,19 @@ export default function JoinRequests({
                         received requests [{requests.length}]
                     </p>
                     <button
-                        disabled={loading}
+                        disabled={isLoading || isRefetching}
                         className="underline text-[0.75rem] text-gray-700 me-1"
                         onClick={() => {
-                            fetchRequests();
+                            refetch();
                         }}
                     >
-                        {loading ? "refreshing..." : "refresh"}
+                        {isLoading || isRefetching
+                            ? "refreshing..."
+                            : "refresh"}
                     </button>
                 </div>
 
-                <div className="relative box--style border-2 border-gray-600 shadow-gray-600 h-[350px] mx-auto overflow-auto p-4 md:p-8 bg-gray-100/30 flex flex-col gap-4">
+                <div className="relative box--style border-2 border-gray-600 shadow-gray-600 h-87.5 mx-auto overflow-auto p-4 md:p-8 bg-gray-100/30 flex flex-col gap-4">
                     {requests.length === 0 && (
                         <div className="text-gray-500 text-center text-[0.85rem] mt-30">
                             no requests found.
@@ -70,6 +178,7 @@ export default function JoinRequests({
                             updatedAt,
                         } = item;
                         const {
+                            _id: requesterId,
                             username: requesterName,
                             createdAt: requesterCreatedAt,
                         } = requester;
@@ -90,12 +199,12 @@ export default function JoinRequests({
                                     </div>
                                     <div className="flex flex-col justify-start text-gray-800">
                                         <div className="text-[0.75rem] md:text-[0.9rem] text-gray-700">
-                                            <span className="max-w-[200px] font-medium underline overflow-hidden whitespace-nowrap text-ellipsis">
+                                            <span className="max-w-50 font-medium underline overflow-hidden whitespace-nowrap text-ellipsis">
                                                 {requesterName}
                                             </span>
                                             <span> </span>
                                             <span>
-                                                sends you a join-request
+                                                requested to join this board
                                             </span>
                                         </div>
 
@@ -145,39 +254,41 @@ export default function JoinRequests({
                                     <div className="ms-auto flex gap-2">
                                         <button
                                             disabled={
-                                                accept.isLoading &&
-                                                accept.variables.id === _id
+                                                acceptMutation.isLoading &&
+                                                acceptMutation.variables.id ===
+                                                    _id
                                             }
                                             onClick={() =>
-                                                accept.mutate({
+                                                acceptMutation.mutate({
                                                     id: _id,
                                                     boardId: board._id,
-                                                    requesterName,
+                                                    requesterId,
                                                 })
                                             }
-                                            className="button--style--rounded rounded-none px-3 py-2 bg-white text-[0.65rem] sm:text-[0.75rem] text-blue-700 border-blue-700 bg-gray-100"
+                                            className="button--style--rounded rounded-none px-3 py-2 text-[0.65rem] sm:text-[0.75rem] text-blue-700 border-blue-700 bg-gray-100"
                                         >
-                                            {accept.isLoading &&
-                                            accept.variables.id === _id
+                                            {acceptMutation.isLoading &&
+                                            acceptMutation.variables.id === _id
                                                 ? "Accepting..."
                                                 : "Accept"}
                                         </button>
                                         <button
                                             disabled={
-                                                reject.isLoading &&
-                                                reject.variables.id === _id
+                                                rejectMutation.isLoading &&
+                                                rejectMutation.variables.id ===
+                                                    _id
                                             }
                                             onClick={() =>
-                                                reject.mutate({
+                                                rejectMutation.mutate({
                                                     id: _id,
                                                     boardId: board._id,
-                                                    requesterName,
+                                                    requesterId,
                                                 })
                                             }
-                                            className="button--style--rounded rounded-none px-3 py-2 bg-white text-[0.65rem] sm:text-[0.75rem] text-red-700 border-red-700 bg-gray-100"
+                                            className="button--style--rounded rounded-none px-3 py-2 bg-white text-[0.65rem] sm:text-[0.75rem] text-red-700 border-red-700"
                                         >
-                                            {reject.isLoading &&
-                                            reject.variables.id === _id
+                                            {rejectMutation.isLoading &&
+                                            rejectMutation.variables.id === _id
                                                 ? "Rejecting..."
                                                 : "Reject"}
                                         </button>
@@ -185,20 +296,20 @@ export default function JoinRequests({
                                 ) : (
                                     <button
                                         disabled={
-                                            remove.isLoading &&
-                                            remove.variables.id === _id
+                                            removeMutation.isLoading &&
+                                            removeMutation.variables.id === _id
                                         }
                                         onClick={() =>
-                                            remove.mutate({
+                                            removeMutation.mutate({
                                                 id: _id,
                                                 boardId: board._id,
-                                                requesterName,
+                                                requesterId,
                                             })
                                         }
                                         className="ms-auto button--style--rounded rounded-none px-3 py-2 border-gray-600 text-[0.65rem] sm:text-[0.75rem] text-gray-600 bg-gray-100"
                                     >
-                                        {reject.isLoading &&
-                                        reject.variables.id === _id
+                                        {rejectMutation.isLoading &&
+                                        rejectMutation.variables.id === _id
                                             ? "Removing..."
                                             : "Remove"}
                                     </button>

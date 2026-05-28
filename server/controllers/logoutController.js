@@ -29,7 +29,7 @@ const handleLogoutOfAllDevices = async (req, res) => {
     );
 
     await User.findOneAndUpdate(
-        { username: data.username },
+        { _id: data.userId },
         { $inc: { refreshTokenVersion: 1 } }
     );
 

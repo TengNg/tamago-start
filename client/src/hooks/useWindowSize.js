@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const useWindowSize = (delay = 0) => {
+const useWindowSize = (delay = 200) => {
     const [windowSize, setWindowSize] = useState({
         width: window.innerWidth,
         height: window.innerHeight,

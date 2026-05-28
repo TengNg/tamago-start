@@ -1,12 +1,10 @@
 import mongoose from 'mongoose';
 import Card from '../models/Card.js';
-import Board from '../models/Board.js';
+import List from '../models/List.js';
 
 import { checkBoardPermission } from '../services/boardPermissionService.js';
 import saveBoardActivity from '../services/saveBoardActivity.js';
-
-import { listById } from '../services/listService.js';
-import { cardById } from '../services/cardService.js';
+import dateFormatter from '../utils/dateFormatter.js';
 
 /**
  * @param {import('express').Request} req
@@ -16,7 +14,7 @@ const getCard = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
 
-    const foundCard = await cardById(id);
+    const foundCard = await Card.findById(id).lean();
     if (!foundCard) {
         return res.sendStatus(404);
     }
@@ -37,10 +35,12 @@ const getCard = async (req, res) => {
  */
 const addCard = async (req, res) => {
     const { userId } = req.user;
-    const { trackedId, title, order, listId } = req.body;
+    const { title, order, listId } = req.body;
 
-    const foundList = await listById(listId);
-    if (!foundList) return res.status(403).json({ message: "list not found" });
+    const foundList = await List.findById(listId).lean();
+    if (!foundList) {
+        return res.status(403).json({ message: "list not found" });
+    }
 
     await checkBoardPermission({
         boardId: foundList.boardId.toString(),
@@ -50,7 +50,6 @@ const addCard = async (req, res) => {
     });
 
     const newCard = new Card({
-        trackedId,
         title,
         order,
         listId,
@@ -59,15 +58,13 @@ const addCard = async (req, res) => {
 
     await newCard.save();
 
-    await Board.updateOne({ _id: foundList.boardId }, { $inc: { cardCount: 1 } });
-
     await saveBoardActivity({
         userId,
         boardId: foundList.boardId,
-        cardId: newCard._id,
-        listId: foundList._id,
-        action: "add new card",
-        type: "card",
+        docId: newCard._id,
+        action: "card.created",
+        docModel: "Card",
+        docTitle: newCard.title,
         description: `created in list "${foundList.title}"`,
         createdAt: newCard.updatedAt,
     })
@@ -103,7 +100,7 @@ const reorder = async (req, res) => {
     const currentListId = populatedList._id;
     const currentCardListTitle = populatedList.title;
 
-    const foundList = await listById(listId);
+    const foundList = await List.findById(listId).lean();
     if (!foundList) {
         return res.status(403).json({ message: "list not found" });
     }
@@ -123,12 +120,11 @@ const reorder = async (req, res) => {
     await saveBoardActivity({
         userId,
         boardId: foundList.boardId,
-        cardId: foundCard._id,
-        listId: foundList._id,
-        action: "update card position",
-        type: "card",
-        description: `${currentCardListTitle} (${oldPos}) > ${foundList.title} (${newPos})`,
-        createdAt: foundCard.updatedAt,
+        docId: foundCard._id,
+        action: "card.moved",
+        docModel: "Card",
+        docTitle: foundCard.title,
+        description: `${currentCardListTitle} (${oldPos}) →  ${foundList.title} (${newPos})`,
     });
 
     res.status(200).json({
@@ -146,8 +142,10 @@ const updateTitle = async (req, res) => {
     const { id } = req.params;
     const { title } = req.body;
 
-    const foundCard = await cardById(id, { lean: false });
-    if (!foundCard) return res.sendStatus(404);
+    const foundCard = await Card.findById(id);
+    if (!foundCard) {
+        return res.sendStatus(404);
+    }
 
     await checkBoardPermission({
         boardId: foundCard.boardId.toString(),
@@ -156,10 +154,21 @@ const updateTitle = async (req, res) => {
         action: "edit"
     });
 
+    const prevTitle = foundCard.title;
     foundCard.title = title.trim();
     await foundCard.save();
 
-    res.status(200).json({ message: 'card updated', newCard: foundCard });
+    await saveBoardActivity({
+        userId,
+        boardId: foundCard.boardId,
+        docId: foundCard._id,
+        docModel: "Card",
+        docTitle: foundCard.title,
+        action: "card.title_updated",
+        description: `"${prevTitle}" → "${foundCard.title}"`,
+    });
+
+    res.status(200).json({ newCard: foundCard });
 };
 
 /**
@@ -171,8 +180,10 @@ const updateDescription = async (req, res) => {
     const { id } = req.params;
     const { description } = req.body;
 
-    const foundCard = await cardById(id, { lean: false });
-    if (!foundCard) return res.sendStatus(404);
+    const foundCard = await Card.findById(id);
+    if (!foundCard) {
+        return res.sendStatus(404);
+    }
 
     await checkBoardPermission({
         boardId: foundCard.boardId.toString(),
@@ -181,8 +192,19 @@ const updateDescription = async (req, res) => {
         action: "edit"
     });
 
+    const prevDescription = foundCard.description;
     foundCard.description = description;
     await foundCard.save();
+
+    await saveBoardActivity({
+        userId,
+        boardId: foundCard.boardId,
+        docId: foundCard._id,
+        action: "card.description_updated",
+        docModel: "Card",
+        docTitle: foundCard.title,
+        description: `"${prevDescription}" → "${foundCard.description}"`,
+    });
 
     res.status(200).json({ newCard: foundCard });
 };
@@ -196,8 +218,10 @@ const updateHighlight = async (req, res) => {
     const { id } = req.params;
     const { highlight } = req.body;
 
-    const foundCard = await cardById(id, { lean: false });
-    if (!foundCard) return res.sendStatus(404);
+    const foundCard = await Card.findById(id);
+    if (!foundCard) {
+        return res.sendStatus(404);
+    }
 
     await checkBoardPermission({
         boardId: foundCard.boardId.toString(),
@@ -206,8 +230,19 @@ const updateHighlight = async (req, res) => {
         action: "edit"
     });
 
+    const prevHighlight = foundCard.highlight;
     foundCard.highlight = highlight;
     await foundCard.save();
+
+    await saveBoardActivity({
+        userId,
+        boardId: foundCard.boardId,
+        docId: foundCard._id,
+        action: "card.highlight_updated",
+        docModel: "Card",
+        docTitle: foundCard.title,
+        description: `${prevHighlight} → ${foundCard.highlight}`,
+    });
 
     res.status(200).json({ newCard: foundCard });
 };
@@ -221,10 +256,10 @@ const updatePriorityLevel = async (req, res) => {
     const { id } = req.params;
     const { priorityLevel } = req.body;
 
-    const foundCard = await cardById(id, { lean: false });
-    if (!foundCard) return res.sendStatus(404);
-
-    const currentPriorityLevel = foundCard.priorityLevel;
+    const foundCard = await Card.findById(id);
+    if (!foundCard) {
+        return res.sendStatus(404);
+    }
 
     await checkBoardPermission({
         boardId: foundCard.boardId.toString(),
@@ -233,17 +268,18 @@ const updatePriorityLevel = async (req, res) => {
         action: "edit"
     });
 
+    const prevPriority = foundCard.priorityLevel;
     foundCard.priorityLevel = priorityLevel;
     await foundCard.save();
 
     await saveBoardActivity({
         userId,
         boardId: foundCard.boardId,
-        cardId: foundCard._id,
-        action: "update card priority level",
-        type: "card",
-        description: `${currentPriorityLevel} > ${priorityLevel}`,
-        createdAt: foundCard.updatedAt,
+        docId: foundCard._id,
+        action: "card.priority_updated",
+        docModel: "Card",
+        docTitle: foundCard.title,
+        description: `${prevPriority} → ${foundCard.priorityLevel}`,
     })
 
     res.status(200).json({ newCard: foundCard });
@@ -257,8 +293,10 @@ const deleteCard = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
 
-    const foundCard = await cardById(id, { lean: true });
-    if (!foundCard) return res.sendStatus(404);
+    const foundCard = await Card.findById(id).lean();
+    if (!foundCard) {
+        return res.sendStatus(404);
+    }
 
     await checkBoardPermission({
         boardId: foundCard.boardId.toString(),
@@ -272,8 +310,10 @@ const deleteCard = async (req, res) => {
     await saveBoardActivity({
         userId,
         boardId: foundCard.boardId,
-        action: "delete card",
-        type: "card",
+        docId: foundCard._id,
+        action: "card.deleted",
+        docModel: "Card",
+        docTitle: foundCard.title,
         description: `card with title "${foundCard.title}" deleted`,
     });
 
@@ -289,8 +329,10 @@ const copyCard = async (req, res) => {
     const { id } = req.params;
     const { rank } = req.body;
 
-    const foundCard = await cardById(id, { lean: true });
-    if (!foundCard) return res.sendStatus(404);
+    const foundCard = await Card.findById(id).lean();
+    if (!foundCard) {
+        return res.sendStatus(404);
+    }
 
     await checkBoardPermission({
         boardId: foundCard.boardId.toString(),
@@ -302,18 +344,21 @@ const copyCard = async (req, res) => {
     const newCard = new Card({
         ...foundCard,
         _id: new mongoose.Types.ObjectId(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
         order: rank,
     });
 
     await newCard.save();
 
     await saveBoardActivity({
-        boardId: foundCard.boardId,
+        boardId: newCard.boardId,
         userId,
-        cardId: foundCard._id,
-        action: "copy card",
-        type: "card",
-        description: `[important] create a copy of card with title "${foundCard.title}"`,
+        docId: newCard._id,
+        action: "card.copied",
+        docModel: "Card",
+        docTitle: foundCard.title,
+        description: `a copy of "${foundCard.title}" created`,
     })
 
     return res.status(200).json({ newCard });
@@ -328,7 +373,7 @@ const updateOwner = async (req, res) => {
     const { id } = req.params;
     const { ownerName } = req.body;
 
-    const foundCard = await cardById(id, { lean: false });
+    const foundCard = await Card.findById(id);
     if (!foundCard) return res.sendStatus(404);
 
     await checkBoardPermission({
@@ -338,8 +383,19 @@ const updateOwner = async (req, res) => {
         action: "edit"
     });
 
+    const prevOwner = foundCard.owner;
     foundCard.owner = ownerName;
-    await foundCard.save();
+    const newCard = await foundCard.save();
+
+    await saveBoardActivity({
+        boardId: newCard.boardId,
+        userId,
+        docId: newCard._id,
+        action: "card.owner_updated",
+        docModel: "Card",
+        docTitle: foundCard.title,
+        description: `${prevOwner} →  ${foundCard.owner}`,
+    })
 
     res.status(200).json({ newCard: foundCard });
 };
@@ -352,7 +408,7 @@ const toggleVerified = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
 
-    const foundCard = await cardById(id, { lean: false });
+    const foundCard = await Card.findById(id);
     if (!foundCard) return res.sendStatus(404);
 
     await checkBoardPermission({
@@ -365,15 +421,13 @@ const toggleVerified = async (req, res) => {
     foundCard.verified = !foundCard.verified;
     await foundCard.save();
 
-    const action = foundCard.verified ? 'verify card' : 'unverified card';
-
     await saveBoardActivity({
         boardId: foundCard.boardId,
         userId,
-        cardId: foundCard._id,
-        action: action,
-        type: "card",
-        createdAt: foundCard.updatedAt,
+        docId: foundCard._id,
+        action: foundCard.verified ? 'card.verified' : 'card.unverified',
+        docModel: "Card",
+        docTitle: foundCard.title,
     })
 
     res.status(200).json({ verified: foundCard.verified });
@@ -387,7 +441,7 @@ const updateDueDate = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
 
-    const foundCard = await cardById(id, { lean: false });
+    const foundCard = await Card.findById(id);
     if (!foundCard) return res.sendStatus(404);
 
     await checkBoardPermission({
@@ -397,8 +451,19 @@ const updateDueDate = async (req, res) => {
         action: "edit"
     });
 
+    const prevDueDate = dateFormatter(foundCard.dueDate) || "none";
     foundCard.dueDate = req.body.dueDate;
-    await foundCard.save();
+    const newCard = await foundCard.save();
+
+    await saveBoardActivity({
+        boardId: newCard.boardId,
+        userId,
+        docId: newCard._id,
+        action: "card.due_date_updated",
+        docModel: "Card",
+        docTitle: foundCard.title,
+        description: `${prevDueDate} → ${dateFormatter(newCard.dueDate)}`,
+    })
 
     res.status(200).json({ dueDate: foundCard.dueDate });
 };

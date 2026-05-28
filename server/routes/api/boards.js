@@ -16,6 +16,11 @@ import {
     getListCount,
 } from '../../controllers/boardsController.js';
 
+import {
+    getBoardActivities,
+    deleteAllBoardActivities,
+} from '../../controllers/boardActivitiesController.js';
+
 router.route("/")
     .get(getBoards)
     .post(createBoard)
@@ -23,6 +28,10 @@ router.route("/")
 router.route("/:id")
     .get(getBoard)
     .delete(closeBoard)
+
+router.route("/:id/activities")
+    .get(getBoardActivities)
+    .delete(deleteAllBoardActivities)
 
 router.route("/:id/stats")
     .get(getBoardStats)
@@ -33,7 +42,7 @@ router.route("/:id/list-count")
 router.route("/:id/members/leave")
     .delete(leaveBoard)
 
-router.route("/:id/members/:memberName")
+router.route("/:id/members/:memberId")
     .delete(removeMemberFromBoard)
 
 router.route("/:id/new-title")

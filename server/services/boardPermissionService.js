@@ -16,7 +16,7 @@ const isActionAuthorized = async ({ boardId, userId, resource, action }) => {
         };
     }
 
-    const board = await Board.findById(boardId).select('visibility');
+    const board = await Board.findById(boardId);
     if (!board) {
         return {
             board,
@@ -118,7 +118,29 @@ const checkBoardPermission = async ({ boardId, userId, resource, action }) => {
     return { board };
 };
 
+/**
+ * @param {Object} params
+ * @param {("owner" | "member")[]} params.roles
+ * @param {string | import("mongoose").ObjectId} params.userId
+ * @param {string | import("mongoose").ObjectId} params.boardId
+ * @returns {Promise<import("mongoose").Document>}
+ * @throws {{ status: number, message: string }}
+ */
+const checkAllowedRoles = async ({ roles, userId, boardId }) => {
+    const allowed = await BoardMembership.findOne({
+        userId,
+        boardId,
+        role: { $in: roles }
+    });
+    if (!allowed) {
+        throw { status: 403, message: "unauthorized" }
+    }
+
+    return allowed;
+}
+
 export {
     isActionAuthorized,
     checkBoardPermission,
+    checkAllowedRoles,
 };

@@ -5,7 +5,7 @@ import dateFormatter from "../../utils/dateFormatter";
 import Icon from "../shared/Icon";
 import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 import { useKeybind } from "../../hooks/useKeybind";
-import { kb } from "../../data/keybinds";
+import { kb } from "../../constants/keybinds";
 
 const Members = () => {
     const dialog = useRef();

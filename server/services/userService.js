@@ -1,17 +1,3 @@
-import User from '../models/User.js';
-
-/**
- * @param {string} username
- * @param {Object} [option={ lean: true }]
- * @param {boolean} [option.lean=true]
- */
-const userByUsername = (username, option = { lean: true }) => {
-    const foundUser = User.findOne({ username });
-    if (option.lean) foundUser.lean();
-    return foundUser;
-};
-
-
 /**
  * @param {Object} user
  * @param {string|import('mongoose').Types.ObjectId} user._id
@@ -44,6 +30,5 @@ const sanitizeUser = (user) => {
 };
 
 export {
-    userByUsername,
     sanitizeUser,
 };

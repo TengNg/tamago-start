@@ -1,7 +1,7 @@
 import User from '../models/User.js';
 import Board from '../models/Board.js';
 import bcrypt from 'bcryptjs';
-import { usernameRegex } from '../data/regex.js';
+import { usernameRegex } from '../constants/regex.js';
 import { sanitizeUser } from '../services/userService.js';
 
 /**

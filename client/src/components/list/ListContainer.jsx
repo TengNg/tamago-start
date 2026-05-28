@@ -21,11 +21,12 @@ import { useMouseDragScroll } from "../../hooks/useMouseDragScroll";
 import { axiosPrivate } from "../../api/axios";
 import useToast from "../../hooks/useToast";
 import { useKeybind } from "../../hooks/useKeybind";
-import { kb } from "../../data/keybinds";
+import { kb } from "../../constants/keybinds";
+import { BOARD_ACTIONS } from "../../state/boardActionTypes";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 const ListContainer = () => {
-    const { boardState, setBoardState, setOpenAddList, socket } =
-        useBoardState();
+    const { boardState, dispatch, setOpenAddList, socket } = useBoardState();
     const [clonedBoardState, setClonedBoardState] = useState(null);
 
     const [activeList, setActiveList] = useState(undefined);
@@ -83,10 +84,6 @@ const ListContainer = () => {
         const activeType = activeData.type;
         const overType = overData.type;
 
-        if (activeType === "list" && overType === "card") {
-            return;
-        }
-
         if (activeType === "list") {
             let overId = "";
             if (overType === "list") {
@@ -95,34 +92,36 @@ const ListContainer = () => {
                 overId = over.data.current.card.listId;
             }
 
-            const srcIndex = lists.findIndex((l) => l._id == active.id);
-            const destIndex = lists.findIndex((l) => l._id == overId);
+            const srcIndex = boardState.lists.findIndex(
+                (l) => l._id == active.id,
+            );
+            const destIndex = boardState.lists.findIndex(
+                (l) => l._id == overId,
+            );
+
             if (destIndex === srcIndex) {
                 return;
             }
 
-            // deep copy, need this when failed to reorder
-            const initialLists = structuredClone(boardState.lists);
-
             const newLists = [...boardState.lists];
             const [removed] = newLists.splice(srcIndex, 1);
-
             newLists.splice(destIndex, 0, removed);
+
             let prevRank = newLists[destIndex - 1]?.order;
             let nextRank = newLists[destIndex + 1]?.order;
 
             let [rank, ok] = lexorank.insert(prevRank, nextRank);
-
-            // failed to reorder
             if (!ok) {
-                console.error("failed to reorder item");
+                toast.error("Failed to reorder list, rank is invalid");
                 return;
             }
 
+            removed.order = rank;
+
             try {
-                setBoardState((prev) => {
-                    removed.order = rank;
-                    return { ...prev, lists: newLists };
+                dispatch({
+                    type: BOARD_ACTIONS.SET_LISTS,
+                    payload: { lists: newLists },
                 });
 
                 await axiosPrivate.patch(
@@ -134,7 +133,7 @@ const ListContainer = () => {
                     }),
                 );
 
-                socket.emit("moveList", {
+                socket.emit(SOCKET_EVENTS.LIST_MOVE, {
                     listId: removed._id,
                     fromIndex: srcIndex,
                     toIndex: destIndex,
@@ -143,8 +142,9 @@ const ListContainer = () => {
                 const errMsg =
                     err.response.data.message || "Failed to reorder list";
                 toast.error(errMsg);
-                setBoardState((prev) => {
-                    return { ...prev, lists: initialLists };
+                dispatch({
+                    type: BOARD_ACTIONS.SET_STATE,
+                    payload: { data: clonedBoardState },
                 });
             }
 
@@ -155,16 +155,17 @@ const ListContainer = () => {
 
         // Note: for when user keep moving the card around containers fast
         if (Object.keys(active).length === 0) {
-            setBoardState(clonedBoardState);
+            dispatch({
+                type: BOARD_ACTIONS.SET_STATE,
+                payload: { data: clonedBoardState },
+            });
             return;
         }
 
         const activeId = active.id;
         const activeListId = activeData.card.listId;
 
-        const activeList = boardState.lists.find((l) => l._id === activeListId);
-        const cards = activeList.cards;
-
+        const cards = [...boardState.cards[activeListId]];
         const activeIndex = cards.findIndex((c) => c._id == activeId);
 
         const prevOrder = cards[activeIndex - 1]?.order;
@@ -173,7 +174,10 @@ const ListContainer = () => {
         const [rank, ok] = lexorank.insert(prevOrder, nextOrder);
         if (!ok) {
             toast.error("Failed to reorder card. Error: invalid order");
-            setBoardState(clonedBoardState);
+            dispatch({
+                type: BOARD_ACTIONS.SET_STATE,
+                payload: { data: clonedBoardState },
+            });
             return;
         }
 
@@ -192,33 +196,23 @@ const ListContainer = () => {
                     rank,
                     listId: activeListId,
                     timestamp: new Date(),
-                    oldPos: activeCard.srcIndex
-                        ? activeCard.srcIndex + 1
-                        : "...",
+                    oldPos: activeCard.srcIndex + 1,
                     newPos: activeIndex + 1,
                 }),
             );
 
             const newCard = response.data.newCard;
-            setBoardState((prev) => {
-                const lists = [...prev.lists];
-                return {
-                    ...prev,
-                    lists: lists.map((l) => {
-                        if (l._id === activeListId) {
-                            return {
-                                ...l,
-                                cards: l.cards.map((c) => {
-                                    return c._id == newCard._id ? newCard : c;
-                                }),
-                            };
-                        }
-                        return l;
-                    }),
-                };
+            dispatch({
+                type: BOARD_ACTIONS.SET_CARD,
+                payload: {
+                    card: {
+                        ...newCard,
+                        listId: activeListId,
+                    },
+                },
             });
 
-            socket.emit("moveCardToList", {
+            socket.emit(SOCKET_EVENTS.CARD_MOVE_TO_LIST, {
                 oldListId: response.data.oldListId,
                 newListId: newCard.listId,
                 insertedIndex: activeIndex,
@@ -228,7 +222,10 @@ const ListContainer = () => {
             const errMsg =
                 err.response.data.message || "Failed to reorder card";
             toast.error(errMsg);
-            setBoardState(clonedBoardState);
+            dispatch({
+                type: BOARD_ACTIONS.SET_STATE,
+                payload: { data: clonedBoardState },
+            });
         }
     }
 
@@ -250,17 +247,15 @@ const ListContainer = () => {
         }
 
         if (isActiveTypeCard && isOverACard) {
-            const newLists = [...boardState.lists];
-
             const activeListId = active.data.current.card.listId;
             const overListId = over.data.current.card.listId;
 
             if (activeListId === overListId) {
-                const currentList = newLists.find(
-                    (l) => l._id === activeListId,
-                );
-                const newCards = [...currentList.cards];
+                if (!boardState.cards[activeListId]) {
+                    return;
+                }
 
+                const newCards = [...boardState.cards[activeListId]];
                 const activeIndex = newCards.findIndex(
                     (c) => c._id === activeId,
                 );
@@ -268,34 +263,33 @@ const ListContainer = () => {
 
                 const [removed] = newCards.splice(activeIndex, 1);
                 newCards.splice(overIndex, 0, removed);
-
-                setBoardState((prev) => {
-                    return {
-                        ...prev,
-                        lists: prev.lists.map((l) => {
-                            if (l._id === activeListId) {
-                                l.cards = newCards;
-                            }
-                            return l;
-                        }),
-                    };
+                dispatch({
+                    type: BOARD_ACTIONS.SET_LIST_CARDS,
+                    payload: {
+                        listId: activeListId,
+                        cards: newCards,
+                    },
                 });
             } else {
-                const activeList = newLists.find((l) => l._id === activeListId);
-                const overList = newLists.find((l) => l._id === overListId);
-                if (!activeList || !overList) {
+                if (
+                    !boardState.cards[activeListId] ||
+                    !boardState.cards[overListId]
+                ) {
                     return;
                 }
 
-                const newActiveCards = [...activeList.cards];
-                const newOverCards = [...overList.cards];
+                const newActiveCards = [...boardState.cards[activeListId]];
+                const newOverCards = [...boardState.cards[overListId]];
 
                 const activeIndex = newActiveCards.findIndex(
                     (c) => c._id === activeId,
                 );
+                if (activeIndex === -1) {
+                    return;
+                }
 
                 const [removed] = newActiveCards.splice(activeIndex, 1);
-                const newCard = { ...removed, listId: overList._id };
+                const newCard = { ...removed, listId: overListId };
 
                 if (newOverCards.length === 0) {
                     newOverCards.push(newCard);
@@ -311,18 +305,15 @@ const ListContainer = () => {
                     }
                 }
 
-                setBoardState((prev) => {
-                    return {
-                        ...prev,
-                        lists: prev.lists.map((l) => {
-                            if (l._id === activeList._id) {
-                                l.cards = newActiveCards;
-                            } else if (l._id === overList._id) {
-                                l.cards = newOverCards;
-                            }
-                            return l;
-                        }),
-                    };
+                dispatch({
+                    type: BOARD_ACTIONS.SET_CARDS,
+                    payload: {
+                        cards: {
+                            ...boardState.cards,
+                            [activeListId]: newActiveCards,
+                            [overListId]: newOverCards,
+                        },
+                    },
                 });
             }
             return;
@@ -338,36 +329,34 @@ const ListContainer = () => {
             }
 
             const activeListId = active.data.current.card.listId;
+            if (!boardState.cards[over.id] || !boardState.cards[activeListId]) {
+                return;
+            }
+
             if (activeListId === over.id) {
                 return;
             }
 
-            const activeList = [...newLists].find(
-                (l) => l._id === activeListId,
-            );
-            const newActiveCards = [...activeList.cards];
-            const newOverCards = [...overList.cards];
+            const newActiveCards = [...boardState.cards[activeListId]];
+            const newOverCards = [...boardState.cards[over.id]];
 
             const activeIndex = newActiveCards.findIndex(
                 (c) => c._id === active.id,
             );
-            const [removed] = newActiveCards.splice(activeIndex, 1);
 
+            const [removed] = newActiveCards.splice(activeIndex, 1);
             removed.listId = overList._id;
             newOverCards.push(removed);
 
-            setBoardState((prev) => {
-                return {
-                    ...prev,
-                    lists: prev.lists.map((l) => {
-                        if (l._id === activeListId) {
-                            l.cards = newActiveCards;
-                        } else if (l._id === overList._id) {
-                            l.cards = newOverCards;
-                        }
-                        return l;
-                    }),
-                };
+            dispatch({
+                type: BOARD_ACTIONS.SET_CARDS,
+                payload: {
+                    cards: {
+                        ...boardState.cards,
+                        [activeListId]: newActiveCards,
+                        [over.id]: newOverCards,
+                    },
+                },
             });
         }
     }
@@ -382,24 +371,23 @@ const ListContainer = () => {
             return;
         }
         if (e.active.data.current?.type === "card") {
-            const srcList = boardState.lists.find((list) => {
-                return list._id === e.active.data.current.card.listId;
-            });
             const srcIndex =
-                srcList?.cards.findIndex((c) => {
-                    return c._id === e.active.id;
-                }) ?? -1;
-            setActiveCard({
-                ...e.active.data.current.card,
-                srcIndex,
-            });
+                boardState.cards[e.active.data.current.card.listId].findIndex(
+                    (c) => {
+                        return c._id === e.active.id;
+                    },
+                ) ?? -1;
+            setActiveCard({ ...e.active.data.current.card, srcIndex });
             return;
         }
     }
 
     function handleOnDragCancel() {
         if (clonedBoardState) {
-            setBoardState(clonedBoardState);
+            dispatch({
+                type: BOARD_ACTIONS.SET_STATE,
+                payload: { data: clonedBoardState },
+            });
             return;
         }
 
@@ -439,7 +427,7 @@ const ListContainer = () => {
                             key={list._id}
                             index={index}
                             list={list}
-                            cards={list.cards || []}
+                            cards={boardState.cards[list._id] || []}
                         />
                     ))}
                 </SortableContext>
@@ -449,7 +437,10 @@ const ListContainer = () => {
             {createPortal(
                 <DragOverlay>
                     {activeList && (
-                        <List list={activeList} cards={activeList.cards} />
+                        <List
+                            list={activeList}
+                            cards={boardState.cards[activeList._id]}
+                        />
                     )}
                     {activeCard && <Card card={activeCard} />}
                 </DragOverlay>,
