@@ -73,10 +73,10 @@ const UserAccount = () => {
                     </div>
                 </div>
 
-                {collapse === false && (
+                {!collapse && (
                     <div
                         ref={userInfoRef}
-                        className="account__menu absolute bottom-0 right-0 translate-y-[105%] flex flex-col box--style shadow-gray-700 border-2 border-gray-700 p-3 select-none gap-4 min-w-[220px]"
+                        className="account__menu absolute bottom-0 right-0 translate-y-[105%] flex flex-col box--style shadow-gray-700 border-2 border-gray-700 p-3 select-none gap-4 min-w-55"
                     >
                         {currentUser && (
                             <>

@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { Server } from "socket.io";
 import state from './state.js';
+import { SOCKET_EVENTS } from '../../shared/socket-events.js';
 
 // handlers
 import registerBoardHandlers from './handlers/board.js';
@@ -93,7 +94,7 @@ const initSocket = (server) => {
         registerCardCommentHandlers(socket, state);
         registerCardAttachmentHandlers(socket, state);
 
-        socket.on("disconnectFromBoard", () => {
+        socket.on(SOCKET_EVENTS.BOARD_DISCONNECT, () => {
             const { boardIdMap } = state;
             const boardId = boardIdMap.get(socket.id);
             if (boardId) {

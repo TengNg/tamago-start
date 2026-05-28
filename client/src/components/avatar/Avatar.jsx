@@ -73,10 +73,10 @@ const Avatar = ({
             </div>
 
             {isAdmin && (
-                <div className="rounded-full border-white bg-blue-700 border-2 w-[12px] h-[12px] absolute right-0 bottom-0"></div>
+                <div className="rounded-full border-white bg-blue-700 border-2 w-3 h-3 absolute right-0 bottom-0"></div>
             )}
 
-            {collapse === false && (
+            {!collapse && (
                 <div
                     ref={userInfoRef}
                     className="box--style--sm absolute flex flex-col border-2 border-black p-3 pe-8 select-none gap-4 bg-gray-100 left-1 -bottom-1 translate-y-full z-30"
@@ -84,7 +84,7 @@ const Avatar = ({
                 >
                     <div className="flex gap-2 items-center">
                         <div
-                            className={`bg-sky-700 text-white flex--center w-[45px] h-[45px] rounded-full bg-center bg-cover overflow-hidden cursor-pointer`}
+                            className={`bg-sky-700 text-white flex--center w-11.25 h-11.25 rounded-full bg-center bg-cover overflow-hidden cursor-pointer`}
                         >
                             {!profileImage ? (
                                 <div className="font-bold flex--center select-none">
@@ -95,11 +95,11 @@ const Avatar = ({
                             )}
                         </div>
 
-                        <div className="select-none text-gray-700 max-w-[200px] overflow-hidden whitespace-nowrap text-ellipsis">
+                        <div className="select-none text-gray-700 max-w-50 overflow-hidden whitespace-nowrap text-ellipsis">
                             <p className="text-[0.85rem] font-medium">
                                 @{username}
                             </p>
-                            {noShowRole === false && (
+                            {!noShowRole && (
                                 <p className="text-[0.65rem]">
                                     {!isAdmin ? "member" : "owner"}
                                 </p>

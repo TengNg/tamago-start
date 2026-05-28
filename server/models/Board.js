@@ -74,10 +74,4 @@ boardSchema.post('save', async function(doc) {
     }
 });
 
-// // delete all related board_memberships
-// boardSchema.post('findOneAndDelete', async function(doc, _next) {
-//     const BoardMembership = mongoose.model('BoardMembership');
-//     await BoardMembership.deleteMany({ boardId: doc._id, });
-// });
-
 export default model('Board', boardSchema);

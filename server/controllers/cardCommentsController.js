@@ -9,10 +9,6 @@ const COMMENTS_PER_PAGE = 20;
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  */
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
 const getCardComments = async (req, res) => {
     const { userId } = req.user;
     const { cardId } = req.params;

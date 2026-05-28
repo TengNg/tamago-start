@@ -144,46 +144,25 @@ const getBoard = async (req, res) => {
         return res.status(403).json({ message: 'You do not have permission to access this board' });
     }
 
-    // // sync list count
-    // const listCount = await List.countDocuments({ boardId: id });
-    // board.listCount = listCount;
-    //
-    // // sync card count
-    // const cardCount = await Card.countDocuments({ boardId: id });
-    // board.cardCount = cardCount;
-    //
-    // await board.save();
+    const lists = await List.find({ boardId: board._id }).sort({ order: "asc" });
+    const cards = await Card.find({ boardId: board._id }).sort({ order: "asc" });
+    const cardsByListId = cards.reduce((acc, card) => {
+        const listId = card.listId ? card.listId.toString() : "unknown";
+        if (!acc[listId]) acc[listId] = [];
+        acc[listId].push(card);
+        return acc;
+    }, {});
+    lists.forEach(list => {
+        const listId = list._id.toString();
+        cardsByListId[listId] ??= [];
+    });
 
-    const listsWithCards = await List.aggregate([
-        {
-            $match: {
-                boardId: board._id
-            }
-        },
-        {
-            $lookup: {
-                from: 'cards',
-                let: { id: '$_id' },
-                as: 'cards',
-                pipeline: [
-                    {
-                        $match: {
-                            $expr: { $eq: ['$listId', '$$id'] }
-                        }
-                    },
-                    {
-                        $sort: { order: 1 }
-                    },
-                    {
-                        $project: { updatedAt: 0 }
-                    }
-                ]
-            }
-        },
-        {
-            $sort: { order: 1 }
-        },
-    ]);
+    // sync list & card count
+    if (board.listCount !== lists.length || board.cardCount !== cards.length) {
+        board.listCount = lists.length;
+        board.cardCount = cards.length;
+        await board.save();
+    }
 
     // update recently viewed board
     const foundUser = await User.findById(userId);
@@ -206,7 +185,8 @@ const getBoard = async (req, res) => {
 
     return res.json({
         board,
-        lists: listsWithCards,
+        lists,
+        cards: cardsByListId,
         members: memberships,
     });
 }

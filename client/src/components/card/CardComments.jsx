@@ -11,6 +11,7 @@ import { useSearchParams } from "react-router-dom";
 import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 import { axiosPrivate } from "../../api/axios";
 import useToast from "../../hooks/useToast";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 const CardComments = ({ card }) => {
     const queryClient = useQueryClient();
@@ -105,7 +106,7 @@ const CardComments = ({ card }) => {
             queryClient.invalidateQueries({
                 queryKey: ["card-comments", card._id],
             });
-            socket.emit("addCardComment", { comment: data });
+            socket.emit(SOCKET_EVENTS.COMMENT_CREATE, { comment: data });
         },
         onError: (err) => {
             const errMsg =
@@ -120,7 +121,10 @@ const CardComments = ({ card }) => {
             queryClient.invalidateQueries({
                 queryKey: ["card-comments", card._id],
             });
-            socket.emit("deleteCardComment", { commentId, cardId: card._id });
+            socket.emit(SOCKET_EVENTS.COMMENT_DELETE, {
+                commentId,
+                cardId: card._id,
+            });
         },
         onError: (err) => {
             const errMsg =

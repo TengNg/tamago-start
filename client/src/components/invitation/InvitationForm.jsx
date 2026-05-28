@@ -7,6 +7,7 @@ import useCurrentUserContext from "../../hooks/useCurrentUserContext";
 import { axiosPrivate } from "../../api/axios";
 import { useKeybind } from "../../hooks/useKeybind";
 import { kb } from "../../data/keybinds";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 const InvitationForm = () => {
     const { currentUser } = useCurrentUserContext();
@@ -126,7 +127,7 @@ const InvitationForm = () => {
                 `/boards/${boardState.board._id}/members/${memberName}`,
             );
             removeMemberFromBoard(memberName);
-            socket.emit("kickMember", memberName);
+            socket.emit(SOCKET_EVENTS.BOARD_KICK, memberName);
             setLoading(false);
         } catch (err) {
             setLoading(false);

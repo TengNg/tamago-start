@@ -62,10 +62,10 @@ export default function Card({ card }) {
         setFocusedCard({ id: card._id, listId: card.listId, focused: true });
     };
 
-    if (card.onLoading === true) {
+    if (card.onLoading) {
         return (
             <div
-                className={`card__item ${card.hiddenByFilter && "hidden"} relative d-flex justify-center items-center text-[0.75rem] text-gray-500 w-full h-27.5 border-2 border-b-4 border-gray-600 px-2 py-4 flex flex-col shadow-gray-600 cursor-not-allowed`}
+                className={`card__item relative d-flex justify-center items-center text-[0.75rem] text-gray-500 w-full h-27.5 border-2 border-b-4 border-gray-600 px-2 py-4 flex flex-col shadow-gray-600 cursor-not-allowed`}
             >
                 <p className="w-full h-full bg-inherit font-medium text-gray-600 py-1 px-2 focus:outline-hidden text-sm wrap-break-word whitespace-pre-line">
                     {card.title}

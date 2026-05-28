@@ -356,7 +356,7 @@ const Profile = () => {
                                     />
                                 </div>
                             )}
-                            {currentUser.loginWithDiscord == false && (
+                            {!currentUser.loginWithDiscord && (
                                 <div className="flex flex-col gap-4">
                                     {!changePassword ? (
                                         <button

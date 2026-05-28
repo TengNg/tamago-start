@@ -58,13 +58,8 @@ const getComboString = (e) => {
         parts.push("meta");
     }
 
-    let key = normalizeKey(e.key);
+    parts.push(normalizeKey(e.key));
 
-    if (["ctrl", "alt", "meta"].includes(key)) {
-        return "";
-    }
-
-    parts.push(key);
     return parts.join("+");
 };
 
@@ -108,7 +103,7 @@ export const KeybindProvider = ({ children }) => {
                 target.tagName === "INPUT" ||
                 target.tagName === "TEXTAREA" ||
                 target.tagName === "SELECT" ||
-                target.isContentEditable === true ||
+                target.isContentEditable ||
                 target.getAttribute("contenteditable") === "true";
 
             if (isInputFocused && entry.options.ignoreInInputs) {

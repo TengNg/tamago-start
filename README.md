@@ -1,4 +1,4 @@
-## tamago start v2
+## tamago start
 
 My personal task manager built with the MERN stack and Socket.io. It includes features such as drag-and-drop lists and cards, real-time chat, notes, activity history, and keyboard shortcuts (including vim-like navigation).
 
@@ -28,37 +28,30 @@ Note: The application is hosted on a free-tier service, so initial connections (
 
 Requirements: Node.js v21.x or higher
 
-1. Clone this repository:
-   `git clone https://github.com/your-username/tamago-start.git`
+1. Clone this repository.
 
-2. Set up a MongoDB database. You can choose any database name.
+2. Set up a MongoDB database. See [`server/.env.example`](./server/.env.example) `DB_CONNECTION`
 
 3. Configure environment variables:
-   In the `server` folder, create a `.env` file. Refer to [`server/.env.example`](./server/.env.example) for guidance:
+   In the `server` folder, create a `.env` file. Refer to [`server/.env.example`](./server/.env.example)
 
 4. Install dependencies and start the services:
 
-   ```bash
-   # In the server folder
-   npm install
-   npm run dev
+    > Run services each folder
+    ```bash
+    cd server && npm install && npm run dev
+    cd client && npm install && npm run dev
+    ```
 
-   # In the client folder
-   npm install
-   npm run dev
-
-   # In the socket folder
-   npm install
-   npm run dev
-
-   # Alternatively, use the provided bash scripts to start all services
-   bin/dev  # run in dev mode
-   bin/dev2 # run in production mode
-   ```
+    > Alternatively, use the provided bash scripts to start all services
+    ```bash
+    bin/dev  # run in development mode
+    bin/prod # run in production mode
+    ```
 
 5. Open the application in your browser:
    - Visit [http://localhost:5173/](http://localhost:5173/) if run `bin/dev`
-   - Visit [http://localhost:3001/](http://localhost:3001/) if run `bin/dev2`
+   - Visit [http://localhost:3001/](http://localhost:3001/) if run `bin/prod`
 
 ---
 
@@ -67,12 +60,4 @@ Requirements: Node.js v21.x or higher
 ```bash
 cd server && npm test
 ```
-
-For test coverage reports:
-`cd server && npm test -- --coverage`
-Then open `server/coverage/lcov-report/index.html` in your browser.
-
----
-
-For questions or suggestions, feel free to reach out.
 

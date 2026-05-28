@@ -37,7 +37,7 @@ const getCard = async (req, res) => {
  */
 const addCard = async (req, res) => {
     const { userId } = req.user;
-    const { trackedId, title, order, listId } = req.body;
+    const { title, order, listId } = req.body;
 
     const foundList = await listById(listId);
     if (!foundList) return res.status(403).json({ message: "list not found" });
@@ -50,7 +50,6 @@ const addCard = async (req, res) => {
     });
 
     const newCard = new Card({
-        trackedId,
         title,
         order,
         listId,

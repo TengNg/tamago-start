@@ -1,14 +1,7 @@
 import { Schema, model } from 'mongoose';
-import { randomUUID } from 'crypto';
 import { MAX_CARD_COUNT } from '../data/limits.js';
 
 const cardSchema = new Schema({
-    trackedId: {
-        type: String,
-        default: randomUUID(),
-        required: true,
-    },
-
     listId: {
         type: Schema.Types.ObjectId,
         ref: 'List',
@@ -101,8 +94,12 @@ cardSchema.pre('save', async function(next) {
         this.updatedAt = new Date();
     }
 
-    if (this.dueDate) {
-        this.dueDate.setHours(0, 0, 0, 0);
+    try {
+        if (this.dueDate) {
+            this.dueDate.setHours(0, 0, 0, 0);
+        }
+    } catch (err) {
+        console.log(err);
     }
 
     next();

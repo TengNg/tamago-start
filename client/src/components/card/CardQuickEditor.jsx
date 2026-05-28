@@ -4,6 +4,7 @@ import QuickEditorHighlightPicker from "./QuickEditorHighlightPicker";
 import { axiosPrivate } from "../../api/axios";
 import { useSearchParams } from "react-router-dom";
 import useToast from "../../hooks/useToast";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 const CardQuickEditor = ({
     open,
@@ -12,13 +13,8 @@ const CardQuickEditor = ({
     handleCopyCard,
     handleDeleteCard,
 }) => {
-    const {
-        setOpenedCardQuickEditor,
-        setCardTitle,
-        setCardVerifiedStatus,
-        theme,
-        socket,
-    } = useBoardState();
+    const { setOpenedCardQuickEditor, updateCardField, theme, socket } =
+        useBoardState();
 
     const [initialTitle, setInitialTitle] = useState(card.title);
     const [openHighlightPicker, setOpenHighlightPicker] = useState(true);
@@ -32,7 +28,7 @@ const CardQuickEditor = ({
     const toast = useToast();
 
     useEffect(() => {
-        if (quickEditorRef.current && textAreaRef.current && open === true) {
+        if (quickEditorRef.current && textAreaRef.current && open) {
             textAreaRef.current.focus();
             textAreaRef.current.selectionStart =
                 textAreaRef.current.value.length;
@@ -64,13 +60,6 @@ const CardQuickEditor = ({
         });
     };
 
-    const handleClose = (e) => {
-        if (e.target === e.currentTarget) {
-            setInitialTitle(textAreaRef.current.value);
-            close();
-        }
-    };
-
     const handleSetCardTitle = async () => {
         if (textAreaRef.current.value === "") {
             setInitialTitle(card.title);
@@ -79,13 +68,19 @@ const CardQuickEditor = ({
 
         try {
             const newTitle = textAreaRef.current.value;
-            setCardTitle(card.id, card.listId, newTitle);
+            updateCardField({
+                id: card.id,
+                listId: card.listId,
+                field: "title",
+                value: newTitle,
+            });
+
             setInitialTitle(newTitle);
             await axiosPrivate.patch(
                 `/cards/${card.id}/new-title`,
                 JSON.stringify({ title: newTitle }),
             );
-            socket.emit("updateCardTitle", {
+            socket.emit(SOCKET_EVENTS.CARD_UPDATE_TITLE, {
                 id: card.id,
                 listId: card.listId,
                 title: newTitle,
@@ -106,9 +101,15 @@ const CardQuickEditor = ({
                 `/cards/${card.id}/toggle-verified`,
             );
             const { verified } = response.data;
-            card.verified = verified;
-            setCardVerifiedStatus(card.id, card.listId, verified);
-            socket.emit("updateCardVerifiedStatus", {
+
+            updateCardField({
+                id: card.id,
+                listId: card.listId,
+                field: "title",
+                value: verified,
+            });
+
+            socket.emit(SOCKET_EVENTS.CARD_UPDATE_VERIFIED, {
                 id: card.id,
                 listId: card.listId,
                 verified,

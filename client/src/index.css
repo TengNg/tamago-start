@@ -79,7 +79,7 @@
 }
 
 @utility anchor--style {
-  @apply flex justify-center items-center py-1 md:px-2 px-1 text-gray-700! hover:underline select-none;
+  @apply flex justify-center items-center py-1 md:px-2 px-1 text-gray-700! hover:underline! select-none;
 }
 
 @utility anchor--style--selected {

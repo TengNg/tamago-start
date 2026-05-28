@@ -8,6 +8,7 @@ import { axiosPrivate } from "../../../api/axios";
 import Icon from "../../shared/Icon";
 import useToast from "../../../hooks/useToast";
 import useBoardState from "../../../hooks/useBoardState";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 function Attachments({ card, setViewedAttachment }) {
     const queryClient = useQueryClient();
@@ -43,7 +44,7 @@ function Attachments({ card, setViewedAttachment }) {
                 const updated = [...old].filter((a) => a._id != data.id);
                 return updated;
             });
-            socket.emit("deleteCardAttachment", {
+            socket.emit(SOCKET_EVENTS.ATTACHMENT_DELETE, {
                 id: data.id,
                 cardId: card._id,
             });

@@ -11,7 +11,7 @@ import { kb } from "../../data/keybinds";
 const VisibilityConfig = () => {
     const {
         boardState,
-        setBoardVisibility,
+        updateBoardField,
         openVisibilityConfig: open,
         setOpenVisibilityConfig: setOpen,
     } = useBoardState();
@@ -56,8 +56,10 @@ const VisibilityConfig = () => {
                 `/boards/${boardState.board._id}/new-visibility`,
                 JSON.stringify({ visibility }),
             );
-            const { newBoard } = response.data;
-            setBoardVisibility(newBoard?.visibility);
+            updateBoardField({
+                field: "visibility",
+                value: response.data.newBoard.visibility,
+            });
             setUpdating(false);
         } catch (err) {
             setUpdating(false);

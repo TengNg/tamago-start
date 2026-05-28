@@ -10,6 +10,7 @@ import CardComments from "./CardComments";
 import { axiosPrivate } from "../../api/axios";
 import useToast from "../../hooks/useToast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 const CardModal = ({
     open,
@@ -25,12 +26,7 @@ const CardModal = ({
         openedCard: card,
         boardState,
         setOpenedCard,
-        setCardDescription,
-        setCardPriorityLevel,
-        setCardTitle,
-        setCardOwner,
-        setCardVerifiedStatus,
-        setCardDueDate,
+        updateCardField,
         socket,
     } = useBoardState();
 
@@ -75,7 +71,7 @@ const CardModal = ({
             });
 
             toast.success("Attachment uploaded successfully");
-            socket.emit("addCardAttachment", { attachment: data });
+            socket.emit(SOCKET_EVENTS.ATTACHMENT_CREATE, { attachment: data });
         },
         onError: (err) => {
             if (err.name === "CanceledError" || err.name === "AbortError") {
@@ -93,21 +89,18 @@ const CardModal = ({
             cardDescriptionInput.current.value = card?.description;
         }
 
-        if (open) {
+        if (open && card) {
             setIsScrolledDown(false);
             setOpenCardDeleteConfirm(false);
 
-            setTitle(card?.title);
-            setDescription(card?.description);
+            setTitle(card.title);
+            setDescription(card.description);
 
-            const cards = boardState?.lists?.find(
-                (list) => list._id === card?.listId,
-            )?.cards;
+            const cards = boardState.cards[card.listId];
             const cardCount = cards?.length || 0;
             const position = cards?.findIndex((el) => el._id === card._id) || 0;
             setCardCount(cardCount);
             setPosition(position);
-            setCardDescription(card?.description);
 
             const handleKeyDown = (e) => {
                 if (e.ctrlKey && e.key === "/") {
@@ -201,13 +194,19 @@ const CardModal = ({
                 JSON.stringify({ ownerName: memberName }),
             );
             const cardOwner = response?.data?.newCard?.owner || "";
-            setCardOwner(card._id, card.listId, cardOwner);
+
+            updateCardField({
+                id: card._id,
+                listId: card.listId,
+                field: "owner",
+                value: cardOwner,
+            });
 
             setOpenedCard((prev) => {
                 return { ...prev, owner: cardOwner };
             });
 
-            socket.emit("updateCardOwner", {
+            socket.emit(SOCKET_EVENTS.CARD_UPDATE_OWNER, {
                 cardId: card._id,
                 listId: card.listId,
                 username: cardOwner,
@@ -225,13 +224,19 @@ const CardModal = ({
             );
             const priorityLevel =
                 response?.data?.newCard?.priorityLevel || "none";
-            setCardPriorityLevel(card._id, card.listId, priorityLevel);
+
+            updateCardField({
+                id: card._id,
+                listId: card.listId,
+                field: "priorityLevel",
+                value: priorityLevel,
+            });
 
             setOpenedCard((prev) => {
                 return { ...prev, priorityLevel };
             });
 
-            socket.emit("updateCardPriorityLevel", {
+            socket.emit(SOCKET_EVENTS.CARD_UPDATE_PRIORITY, {
                 cardId: card._id,
                 listId: card.listId,
                 priorityLevel,
@@ -263,9 +268,15 @@ const CardModal = ({
                 `/cards/${card._id}/toggle-verified`,
             );
             const { verified } = response.data;
-            card.verified = verified;
-            setCardVerifiedStatus(card._id, card.listId, verified);
-            socket.emit("updateCardVerifiedStatus", {
+
+            updateCardField({
+                id: card._id,
+                listId: card.listId,
+                field: "verified",
+                value: verified,
+            });
+
+            socket.emit(SOCKET_EVENTS.CARD_UPDATE_VERIFIED, {
                 id: card._id,
                 listId: card.listId,
                 verified,
@@ -289,10 +300,14 @@ const CardModal = ({
                 return { ...prev, dueDate };
             });
 
-            card.dueDate = dueDate;
+            updateCardField({
+                id: card._id,
+                listId: card.listId,
+                field: "dueDate",
+                value: dueDate,
+            });
 
-            setCardDueDate(card._id, card.listId, dueDate);
-            socket.emit("updateCardDueDate", {
+            socket.emit(SOCKET_EVENTS.CARD_UPDATE_DUE_DATE, {
                 id: card._id,
                 listId: card.listId,
                 dueDate,
@@ -322,8 +337,15 @@ const CardModal = ({
                 `/cards/${card._id}/new-description`,
                 JSON.stringify({ description }),
             );
-            setCardDescription(card._id, card.listId, description);
-            socket.emit("updateCardDescription", {
+
+            updateCardField({
+                id: card._id,
+                listId: card.listId,
+                field: "description",
+                value: description,
+            });
+
+            socket.emit(SOCKET_EVENTS.CARD_UPDATE_DESCRIPTION, {
                 id: card._id,
                 listId: card.listId,
                 description,
@@ -353,9 +375,15 @@ const CardModal = ({
                 `/cards/${card._id}/new-title`,
                 JSON.stringify({ title: e.target.value.trim() }),
             );
-            setCardTitle(card._id, card.listId, e.target.value.trim());
 
-            socket.emit("updateCardTitle", {
+            updateCardField({
+                id: card._id,
+                listId: card.listId,
+                field: "title",
+                value: e.target.value,
+            });
+
+            socket.emit(SOCKET_EVENTS.CARD_UPDATE_TITLE, {
                 id: card._id,
                 listId: card.listId,
                 title: e.target.value.trim(),
@@ -549,7 +577,7 @@ const CardModal = ({
                                     {listSelectOptions.map((option) => {
                                         const { value, title } = option;
                                         return (
-                                            <option key={title} value={value}>
+                                            <option key={value} value={value}>
                                                 {title}
                                             </option>
                                         );
@@ -594,7 +622,6 @@ const CardModal = ({
                                     ref={cardDescriptionInput}
                                     id="card__detail__description__textarea"
                                     className="overflow-y-auto border-2 shadow-[0_2px_0_0] border-gray-600 shadow-gray-600 min-h-62.5 wrap-break-word box-border text-sm py-2 px-3 w-full text-gray-600 bg-gray-100 leading-normal font-medium placeholder-gray-400 focus:outline-hidden"
-                                    autoFocus={true}
                                     placeholder={"add description..."}
                                     value={description}
                                     onChange={(e) =>

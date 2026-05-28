@@ -13,8 +13,13 @@ export default function ListMenu({
 }) {
     const containerRef = useRef();
 
-    const { setListToMove, setOpenMoveListForm, collapseList, theme } =
-        useBoardState();
+    const {
+        boardState,
+        setListToMove,
+        setOpenMoveListForm,
+        updateListField,
+        theme,
+    } = useBoardState();
 
     useEffect(() => {
         containerRef.current.focus();
@@ -63,7 +68,7 @@ export default function ListMenu({
 
     const collapse = () => {
         setOpen(false);
-        collapseList(list._id);
+        updateListField({ id: list._id, field: "collapsed", collapsed: true });
     };
 
     const handleOpenMoveListForm = () => {
@@ -96,7 +101,9 @@ export default function ListMenu({
 
                 <div className="text-[12px] mt-1 opacity-80">
                     cards:{" "}
-                    <span className="font-medium">{list.cards.length}</span>
+                    <span className="font-medium">
+                        {boardState.cards[list._id].length}
+                    </span>
                 </div>
             </div>
 

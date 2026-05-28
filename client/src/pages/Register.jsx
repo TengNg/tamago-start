@@ -61,7 +61,7 @@ export default function Register() {
             return;
         }
 
-        if (passwordMatched === false) {
+        if (!passwordMatched) {
             setErrMsg("Password must be at least 8 characters");
             passwordInputEl.current.focus();
             return;
@@ -133,7 +133,7 @@ export default function Register() {
                         required
                     />
 
-                    {success === false && (
+                    {!success && (
                         <p className="text-[0.65rem] text-red-700 ms-1 mt-1 font-medium select-none">
                             {errMsg}
                         </p>

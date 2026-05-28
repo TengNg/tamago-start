@@ -16,7 +16,7 @@ const isActionAuthorized = async ({ boardId, userId, resource, action }) => {
         };
     }
 
-    const board = await Board.findById(boardId).select('visibility');
+    const board = await Board.findById(boardId);
     if (!board) {
         return {
             board,

@@ -6,7 +6,6 @@
 // lightTealAlert: "#2dd4bf",
 // lightGreenAlert: "#12d393",
 // tealAlert: "#0d9488",
-// lighterShade: "#8d97a5",
 
 const highlightColors = [
     "#d16179",
@@ -17,7 +16,6 @@ const highlightColors = [
     "#2dd4bf",
     "#12d393",
     "#0d9488",
-    "#8d97a5",
 ];
 
 export default highlightColors;

@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { axiosPrivate } from "../../../api/axios";
 import useToast from "../../../hooks/useToast";
 import useBoardState from "../../../hooks/useBoardState";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 function Uploader({ card }) {
     const queryClient = useQueryClient();
@@ -39,7 +40,7 @@ function Uploader({ card }) {
             toast.success("Attachment uploaded");
             fileInputRef.current.value = "";
             setSelectedFileName("");
-            socket.emit("addCardAttachment", { attachment: data });
+            socket.emit(SOCKET_EVENTS.ATTACHMENT_CREATE, { attachment: data });
         },
         onError: (err, _, _context) => {
             if (err.name === "CanceledError" || err.name === "AbortError") {

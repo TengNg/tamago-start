@@ -7,6 +7,7 @@ import { lexorank } from '../lib/lexorank.js';
 import { saveList } from '../services/listService.js';
 import saveBoardActivity from '../services/saveBoardActivity.js';
 import { checkBoardPermission } from '../services/boardPermissionService.js';
+import { MAX_CARD_COUNT, MAX_LIST_COUNT } from '../data/limits.js';
 
 /**
  * @param {import('express').Request} req
@@ -178,20 +179,19 @@ const copyList = async (req, res) => {
 
     const list = await saveList(listData);
 
-    const copiedCards = await Card.find({ listId: id }).lean();
-    const newCards = [];
+    const cards = await Card.find({ boardId, listId: id }).lean();
+    const copiedCards = [];
 
-    for (const card of copiedCards) {
+    for (const card of cards) {
         const newCard = new Card({
             ...card,
             _id: new mongoose.Types.ObjectId(),
-            trackedId: crypto.randomUUID(),
             listId: list._id,
             boardId: list.boardId
         });
 
         await newCard.save();
-        newCards.push(newCard);
+        copiedCards.push(newCard);
     }
 
     await Board.updateOne({ _id: boardId }, { $inc: { listCount: 1 } });
@@ -205,7 +205,7 @@ const copyList = async (req, res) => {
         description: `[important] create a copy of list with title "${foundList.title}"`,
     })
 
-    res.status(200).json({ list, cards: newCards, message: 'list copied' });
+    res.status(200).json({ list, cards: copiedCards, message: 'list copied' });
 };
 
 /**
@@ -217,7 +217,7 @@ const moveList = async (req, res) => {
     const { id, boardId, index } = req.params;
 
     if (isNaN(+index)) {
-        return res.sendStatus(422).json({ message: "index must be a number" });
+        return res.status(422).json({ message: "index must be a number" });
     }
 
     const foundList = await List.findById(id);
@@ -245,6 +245,17 @@ const moveList = async (req, res) => {
             resource: "list",
             action: "create"
         })
+
+        if (newBoard.listCount >= MAX_LIST_COUNT) {
+            const errMsg = `Maximum list count reached for board ${newBoard.title} (maximum: ${MAX_LIST_COUNT})`;
+            return res.status(429).json({ message: errMsg })
+        } else {
+            const cardCount = await Card.countDocuments({ boardId: newBoard._id, listId: foundList._id });
+            if (newBoard.cardCount + cardCount > MAX_CARD_COUNT) {
+                const errMsg = `Maximum card count reached for board ${newBoard.title} (maximum: ${MAX_CARD_COUNT})`;
+                return res.status(429).json({ message: errMsg })
+            }
+        }
 
         boardToMove = newBoard;
     } else {

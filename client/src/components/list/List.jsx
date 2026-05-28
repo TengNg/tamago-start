@@ -9,6 +9,8 @@ import { lexorank } from "../../lib/lexorank";
 import { axiosPrivate } from "../../api/axios";
 import Icon from "../shared/Icon";
 import useToast from "../../hooks/useToast";
+import { BOARD_ACTIONS } from "../../state/boardActionTypes";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 const List = ({ index, list, cards }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } =
@@ -22,10 +24,9 @@ const List = ({ index, list, cards }) => {
 
     const {
         boardState,
-        setBoardState,
-        setListTitle,
+        dispatch,
+        updateListField,
         deleteList,
-        collapseList,
         theme,
         debugModeEnabled,
         hasFilter,
@@ -52,7 +53,11 @@ const List = ({ index, list, cards }) => {
         }
 
         if (textAreaRef.current.value.trim() === "") {
-            setListTitle(list._id, initialListTitle);
+            updateListField({
+                id: list._id,
+                field: "title",
+                value: initialListTitle,
+            });
             return;
         }
 
@@ -66,12 +71,16 @@ const List = ({ index, list, cards }) => {
                 JSON.stringify({ title: textAreaRef.current.value }),
             );
             setInitialListTitle(textAreaRef.current.value);
-            socket.emit("updateListTitle", {
+            socket.emit(SOCKET_EVENTS.LIST_UPDATE_TITLE, {
                 listId: list._id,
                 title: textAreaRef.current.value,
             });
         } catch (err) {
-            setListTitle(list._id, initialListTitle);
+            updateListField({
+                id: list._id,
+                field: "title",
+                value: initialListTitle,
+            });
             const errMsg =
                 err.response?.data?.message || "Failed to update title";
             toast.error(errMsg);
@@ -92,7 +101,11 @@ const List = ({ index, list, cards }) => {
         const textarea = textAreaRef.current;
         textarea.style.height = "24px";
         textarea.style.height = `${textarea.scrollHeight}px`;
-        setListTitle(list._id, textAreaRef.current.value);
+        updateListField({
+            id: list._id,
+            field: "title",
+            value: textAreaRef.current.value,
+        });
     };
 
     const handleTextAreaOnFocus = () => {
@@ -116,7 +129,7 @@ const List = ({ index, list, cards }) => {
             try {
                 await axiosPrivate.delete(`/lists/${list._id}`);
                 deleteList(list._id);
-                socket.emit("deleteList", list._id);
+                socket.emit(SOCKET_EVENTS.LIST_DELETE, list._id);
             } catch (err) {
                 toast.error("Failed to delete list");
             }
@@ -145,7 +158,7 @@ const List = ({ index, list, cards }) => {
             );
 
             if (!ok) {
-                toast.error("Failed to create a copy of this list");
+                toast.error("Failed to duplicate, rank is not valid");
                 return;
             }
 
@@ -156,25 +169,34 @@ const List = ({ index, list, cards }) => {
             const newList = response.data.list;
             const newCards = response.data.cards;
             newCards.sort((a, b) => (a.order > b.order ? 1 : -1));
-            newList.cards = newCards;
-
             lists.splice(index + 1, 0, newList);
 
-            setBoardState((prev) => {
-                return { ...prev, lists };
+            dispatch({
+                type: BOARD_ACTIONS.SET_STATE,
+                payload: {
+                    data: {
+                        ...boardState,
+                        lists,
+                        cards: {
+                            ...boardState.cards,
+                            [newList._id]: newCards,
+                        },
+                    },
+                },
             });
 
             setProcessingList({ msg: "", processing: false });
 
-            socket.emit("updateLists", lists);
+            socket.emit(SOCKET_EVENTS.LIST_UPDATE_ALL, lists);
         } catch (err) {
             const errMsg = err.response?.data?.message || err.message;
             toast.error(errMsg);
 
             setProcessingList({ msg: "", processing: false });
 
-            setBoardState((prev) => {
-                return { ...prev, lists: tempLists };
+            dispatch({
+                type: BOARD_ACTIONS.SET_LISTS,
+                payload: { lists: tempLists },
             });
         }
     };
@@ -205,7 +227,11 @@ const List = ({ index, list, cards }) => {
                     <div
                         className="text-center bg-gray-400 p-2 text-[10px] hover:bg-gray-400/75 grid place-items-center rounded-xs cursor-pointer"
                         onClick={() => {
-                            collapseList(list._id, false);
+                            updateListField({
+                                id: list._id,
+                                field: "collapsed",
+                                collapsed: false,
+                            });
                         }}
                     >
                         <div className="w-[10px] h-[10px] rounded-full bg-gray-200"></div>
@@ -307,7 +333,7 @@ const List = ({ index, list, cards }) => {
                         )}
                     </div>
 
-                    {openCardComposer === false && (
+                    {!openCardComposer && (
                         <div className="mx-3 mt-2 mb-3 group">
                             <button
                                 className="w-full py-2 px-4 flex text-gray-400 text-sm group-hover:bg-gray-600/10 font-medium rounded-xs text-start"
@@ -330,11 +356,13 @@ const List = ({ index, list, cards }) => {
                                 <span>
                                     found:
                                     {
-                                        list.cards.filter((card) => {
-                                            return !card.hiddenByFilter;
-                                        }).length
+                                        boardState.cards[list._id].filter(
+                                            (card) => {
+                                                return !card.hiddenByFilter;
+                                            },
+                                        ).length
                                     }
-                                    /{list.cards.length}
+                                    /{boardState.cards[list._id].length}
                                 </span>
                             )}
                         </div>

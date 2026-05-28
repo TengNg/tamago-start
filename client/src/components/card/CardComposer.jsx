@@ -3,15 +3,11 @@ import useBoardState from "../../hooks/useBoardState";
 import { lexorank } from "../../lib/lexorank";
 import { axiosPrivate } from "../../api/axios";
 import useToast from "../../hooks/useToast";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 const CardComposer = ({ list, open, setOpen }) => {
     const [text, setText] = useState("");
-    const {
-        socket,
-        addCardToList: _,
-        setBoardState,
-        boardState,
-    } = useBoardState();
+    const { socket, addCardToList, deleteCard, boardState } = useBoardState();
 
     const textAreaRef = useRef();
     const composerRef = useRef();
@@ -48,7 +44,7 @@ const CardComposer = ({ list, open, setOpen }) => {
     }, []);
 
     useEffect(() => {
-        if (textAreaRef.current && open === true) {
+        if (textAreaRef.current && open) {
             textAreaRef.current.focus();
             composerRef.current.scrollIntoView({ block: "end" });
         }
@@ -79,44 +75,31 @@ const CardComposer = ({ list, open, setOpen }) => {
             return;
         }
 
-        const currentList = [...boardState.lists].find(
-            (el) => el._id === list._id,
+        const currentCards = boardState.cards[list._id];
+        const [rank, ok] = lexorank.insert(
+            currentCards[currentCards.length - 1]?.order,
         );
-
-        const [rank, _] = lexorank.insert(
-            currentList.cards[currentList.cards.length - 1]?.order,
-        );
+        if (!ok) {
+            toast.error("Failed to add new card - invalid rank");
+            return;
+        }
 
         const cardData = {
-            _id: crypto.randomUUID(),
-            trackedId: crypto.randomUUID(),
             boardId: boardId,
             listId: list._id,
             order: rank,
-            title: textAreaRef.current.value.trim(),
-            createdAt: Date.now(),
+            title: textAreaRef.current.value,
         };
 
-        let tempLists = undefined;
+        const tempCard = {
+            ...cardData,
+            _id: "temp-" + Date.now(),
+            onLoading: true,
+        };
 
         try {
-            // deep copy, need this when failed to add new card
-            tempLists = JSON.parse(JSON.stringify([...boardState.lists]));
-
-            // create temp card (with loading state)
-            const tmpCard = { ...cardData, onLoading: true };
-
             // add temp card to list
-            setBoardState((prev) => {
-                return {
-                    ...prev,
-                    lists: prev.lists.map((el) =>
-                        el._id === list._id
-                            ? { ...el, cards: [...el.cards, tmpCard] }
-                            : el,
-                    ),
-                };
-            });
+            addCardToList(list._id, tempCard);
 
             // reset card composer block
             setText("");
@@ -127,34 +110,18 @@ const CardComposer = ({ list, open, setOpen }) => {
                 "/cards",
                 JSON.stringify(cardData),
             );
-            const { newCard } = response.data;
 
-            setBoardState((prev) => {
-                return {
-                    ...prev,
-                    lists: prev.lists.map((el) => {
-                        if (el._id === newCard.listId) {
-                            const cards = el.cards;
-                            const newCards = [...cards].map((c) =>
-                                c.trackedId === newCard.trackedId ? newCard : c,
-                            );
-                            return { ...el, cards: newCards };
-                        } else {
-                            return el;
-                        }
-                    }),
-                };
-            });
+            const newCard = response.data.newCard;
+            deleteCard(list._id, tempCard._id);
+            addCardToList(list._id, newCard);
 
+            socket.emit(SOCKET_EVENTS.CARD_CREATE, newCard);
             setOpen(true);
-            socket.emit("addCard", newCard);
         } catch (err) {
             const errMsg =
                 err?.response?.data?.message || "Failed to add new card";
+            deleteCard(list._id, tempCard._id);
             toast.error(errMsg);
-            setBoardState((prev) => {
-                return { ...prev, lists: tempLists };
-            });
         }
 
         setIsAddingCard(false);

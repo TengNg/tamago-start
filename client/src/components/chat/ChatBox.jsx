@@ -15,6 +15,7 @@ import { chatKeys } from "../../queries/chatKeys";
 import useToast from "../../hooks/useToast";
 import { useKeybind } from "../../hooks/useKeybind";
 import { kb } from "../../data/keybinds";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 const ChatBox = () => {
     const queryClient = useQueryClient();
@@ -58,7 +59,7 @@ const ChatBox = () => {
             queryClient.invalidateQueries({
                 queryKey: chatKeys.messages(boardId),
             });
-            socket.emit("clearMessages");
+            socket.emit(SOCKET_EVENTS.CHAT_CLEAR);
             toast.success("Chat cleared");
         },
         onError: (err) => {
@@ -216,16 +217,14 @@ const ChatBox = () => {
                 onScroll={handleScroll}
                 className="relative flex-1 overflow-y-auto flex flex-col-reverse gap-0"
             >
-                {!isAtBottom && (
-                    <div className="sticky bottom-3 flex justify-center pr-3 z-10">
-                        <button
-                            onClick={scrollToBottom}
-                            className="p-3 -rotate-90 text-xs rounded-full shadow-md bg-gray-400 text-white"
-                        >
-                            <Icon name="arrow" className="w-2.5 h-2.5" />
-                        </button>
-                    </div>
-                )}
+                <div className="sticky bottom-3 h-0 overflow-visible flex justify-center z-10">
+                    <button
+                        onClick={scrollToBottom}
+                        className={`-translate-y-full ${isAtBottom ? "opacity-0 pointer-events-none" : ""} h-fit w-fit p-3 -rotate-90 text-xs rounded-full shadow-sm bg-gray-400 text-white transition-all`}
+                    >
+                        <Icon name="arrow" className="w-3 h-3" />
+                    </button>
+                </div>
 
                 {chatMessages.map((item) => (
                     <ChatMessage key={item._id} chatMessage={item} />
