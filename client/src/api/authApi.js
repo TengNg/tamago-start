@@ -1,24 +1,33 @@
-import { axiosPrivate } from "./axios";
+import { apiClient } from "../lib/api-client";
 
-export async function login({ username, password }) {
-    await axiosPrivate.post(
-        "/login",
-        JSON.stringify({ username: username.trim(), password }),
-    );
+/**
+ * @param {{ username: string, password: string }} params
+ * @returns {Promise<void>}
+ */
+export function login({ username, password }) {
+    return apiClient.post("/login", {
+        username: username.trim(),
+        password,
+    });
 }
 
-export async function register({ username, password, confirmedPassword }) {
-    await axiosPrivate.post(
-        "/register",
-        JSON.stringify({
-            username: username.trim(),
-            password,
-            confirmedPassword,
-        }),
-    );
+/**
+ * @param {{ username: string, password: string, confirmedPassword: string }} params
+ * @returns {Promise<void>}
+ */
+export function register({ username, password, confirmedPassword }) {
+    return apiClient.post("/register", {
+        username: username.trim(),
+        password,
+        confirmedPassword,
+    });
 }
 
-export async function logout(opts = { allDevices: false }) {
-    const endpoint = opts.allDevices ? "/logout/all-devices" : "/logout";
-    await axiosPrivate.get(endpoint);
+/**
+ * @param {{ allDevices?: boolean }} params
+ * @returns {Promise<void>}
+ */
+export function logout({ allDevices = false }) {
+    const endpoint = allDevices ? "/logout/all-devices" : "/logout";
+    return apiClient.get(endpoint);
 }

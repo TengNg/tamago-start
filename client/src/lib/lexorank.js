@@ -6,9 +6,9 @@ class Lexorank {
 
     /**
      *
-     * @param {string} prev
-     * @param {string} next
-     * @returns {Array} of [String, Boolean]
+     * @param {string} [prev]
+     * @param {string} [next]
+     * @returns {[string, boolean]}
      */
     insert(prev, next) {
         if (prev === "" || !prev) {

@@ -1,44 +1,42 @@
 import { useEffect, useRef, useState } from "react";
-import useBoardState from "../../hooks/useBoardState";
-import { lexorank } from "../../lib/lexorank";
-import { axiosPrivate } from "../../api/axios";
+import useBoardMutations from "../../hooks/useBoardMutations";
 import useToast from "../../hooks/useToast";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
+/**
+ * @param {{
+ *   list: List;
+ *   open: boolean;
+ *   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+ * }} props
+ */
 const CardComposer = ({ list, open, setOpen }) => {
+    const { createCard, isCreatingCard } = useBoardMutations();
+
+    /** @type {React.MutableRefObject<HTMLTextAreaElement | null>} */
+    const textAreaRef = useRef(null);
+
+    /** @type {React.MutableRefObject<HTMLDivElement | null>} */
+    const composerRef = useRef(null);
+
     const [text, setText] = useState("");
-    const { socket, addCardToList, deleteCard, boardState } = useBoardState();
-
-    const textAreaRef = useRef();
-    const composerRef = useRef();
-
-    const [isAddingCard, setIsAddingCard] = useState(false);
-
-    const boardId = boardState?.board?._id;
 
     const toast = useToast();
 
     useEffect(() => {
-        const closeOnEscape = (e) => {
-            if (e.key === "Escape") {
-                setOpen(false);
-            }
-        };
-
-        const handleClickOutside = (event) => {
+        const handleClickOutside = (/** @type {MouseEvent} */ event) => {
             if (
                 composerRef.current &&
-                !composerRef.current.contains(event.target)
+                !composerRef.current.contains(
+                    /** @type {Node} */ (event.target),
+                )
             ) {
                 setOpen(false);
             }
         };
 
-        window.addEventListener("keydown", closeOnEscape);
         window.addEventListener("mousedown", handleClickOutside);
 
         return () => {
-            window.removeEventListener("keydown", closeOnEscape);
             window.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);
@@ -46,85 +44,49 @@ const CardComposer = ({ list, open, setOpen }) => {
     useEffect(() => {
         if (textAreaRef.current && open) {
             textAreaRef.current.focus();
+        }
+
+        if (composerRef.current) {
             composerRef.current.scrollIntoView({ block: "end" });
         }
     }, [open]);
 
     const handleTextAreaChanged = () => {
         const textarea = textAreaRef.current;
-        setText(textarea.value);
-        textarea.style.height = "auto";
+        if (textarea) {
+            setText(textarea.value);
+            const littleOffset = 4; // prevent resizing when start typing
+            textarea.style.height = `${textarea.scrollHeight + littleOffset}px`;
+        }
 
-        const littleOffset = 4; // prevent resizing when start typing
-        textarea.style.height = `${textarea.scrollHeight + littleOffset}px`;
-        composerRef.current.scrollIntoView({ block: "end" });
+        if (composerRef.current) {
+            composerRef.current.scrollIntoView({ block: "end" });
+        }
     };
 
+    /** @param {React.KeyboardEvent<HTMLTextAreaElement>} e */
     const handleTextAreaOnEnter = (e) => {
-        if (!isAddingCard && e.key == "Enter" && !e.shiftKey) {
+        if (!isCreatingCard && e.key == "Enter" && !e.shiftKey) {
             e.preventDefault();
             handleAddCard();
         }
     };
 
     const handleAddCard = async () => {
-        setIsAddingCard(true);
-
         if (!text || text.trim() === "") {
             setOpen(false);
             return;
         }
 
-        const currentCards = boardState.cards[list._id];
-        const [rank, ok] = lexorank.insert(
-            currentCards[currentCards.length - 1]?.order,
-        );
-        if (!ok) {
-            toast.error("Failed to add new card - invalid rank");
-            return;
-        }
-
-        const cardData = {
-            boardId: boardId,
-            listId: list._id,
-            order: rank,
-            title: textAreaRef.current.value,
-        };
-
-        const tempCard = {
-            ...cardData,
-            _id: "temp-" + Date.now(),
-            onLoading: true,
-        };
+        setText("");
+        setOpen(false);
 
         try {
-            // add temp card to list
-            addCardToList(list._id, tempCard);
-
-            // reset card composer block
-            setText("");
-            setOpen(false);
-
-            // send post request
-            const response = await axiosPrivate.post(
-                "/cards",
-                JSON.stringify(cardData),
-            );
-
-            const newCard = response.data.newCard;
-            deleteCard(list._id, tempCard._id);
-            addCardToList(list._id, newCard);
-
-            socket.emit(SOCKET_EVENTS.CARD_CREATE, newCard);
+            await createCard({ listId: list._id, title: text });
             setOpen(true);
-        } catch (err) {
-            const errMsg =
-                err?.response?.data?.message || "Failed to add new card";
-            deleteCard(list._id, tempCard._id);
-            toast.error(errMsg);
+        } catch {
+            toast.error("Failed to add card");
         }
-
-        setIsAddingCard(false);
     };
 
     return (
@@ -133,9 +95,9 @@ const CardComposer = ({ list, open, setOpen }) => {
             className={`flex flex-col gap-2 items-start justify-start mb-2 scroll-mb-4`}
         >
             <textarea
-                disabled={isAddingCard}
+                disabled={isCreatingCard}
                 ref={textAreaRef}
-                className="sm:text-sm h-fit bg-gray-50 border-2 py-4 px-4 text-gray-600 border-gray-500 shadow-[0_3px_0_0] shadow-gray-500 leading-normal overflow-y-hidden resize-none w-full font-medium placeholder-gray-400 focus:outline-hidden focus:bg-gray-50"
+                className="sm:text-sm h-auto bg-gray-50 border-2 py-4 px-4 text-gray-600 border-gray-500 shadow-[0_3px_0_0] shadow-gray-500 leading-normal overflow-y-hidden resize-none w-full font-medium placeholder-gray-400 focus:outline-hidden focus:bg-gray-50"
                 placeholder="card title goes here..."
                 onChange={handleTextAreaChanged}
                 onKeyDown={handleTextAreaOnEnter}

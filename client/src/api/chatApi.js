@@ -1,27 +1,42 @@
-import { axiosPrivate } from "./axios";
+import { apiClient } from "../lib/api-client";
 
-export async function fetchChat({ boardId, limit = 20, before }) {
-    const beforeParam = before ? `&before=${encodeURIComponent(before)}` : "";
-    const url = `/chat/messages/b/${boardId}?limit=${limit}${beforeParam}`;
-    const response = await axiosPrivate.get(url);
-    return response.data;
+/**
+ * @param {{
+ *   boardId: string;
+ *   limit?: number;
+ *   before?: string;
+ * }} param
+ * @returns {Promise<GetChatResponse>}
+ */
+export function fetchChat({ boardId, limit = 20, before }) {
+    return apiClient.get(`/chat/messages/b/${boardId}`, {
+        query: { limit, ...(before ? { before } : {}) },
+    });
 }
 
-export async function sendMessage({ boardId, content }) {
-    const url = `/chat/messages/b/${boardId}`;
-    const payload = JSON.stringify({ content });
-    const response = await axiosPrivate.post(url, payload);
-    return response.data;
+/**
+ * @param {{
+ *   boardId: string;
+ *   content: string;
+ * }} param
+ * @returns {Promise<{ chatMessage: ChatMessage }>}
+ */
+export function sendMessage({ boardId, content }) {
+    return apiClient.post(`/chat/messages/b/${boardId}`, { content });
 }
 
-export async function deleteMessage({ id }) {
-    const url = `/chat/messages/${id}`;
-    const response = await axiosPrivate.delete(url);
-    return response.data;
+/**
+ * @param {string} id
+ * @returns {Promise<void>}
+ */
+export function deleteMessage(id) {
+    return apiClient.delete(`/chat/messages/${id}`);
 }
 
-export async function clearMessages({ boardId }) {
-    const url = `/chat/messages/b/${boardId}`;
-    const response = await axiosPrivate.delete(url);
-    return response.data;
+/**
+ * @param {string} boardId
+ * @returns {Promise<void>}
+ */
+export function clearMessages(boardId) {
+    return apiClient.delete(`/chat/messages/b/${boardId}`);
 }

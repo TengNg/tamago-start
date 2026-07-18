@@ -32,7 +32,7 @@ const getCardComments = async (req, res) => {
         .find({ cardId: foundCard._id })
         .skip((pageNum - 1) * perPageNum)
         .limit(perPageNum)
-        .populate('userId', '_id username')
+        .populate('userId', '_id username profileImage')
         .sort({ createdAt: -1 })
         .select('_id content createdAt')
         .lean();
@@ -63,7 +63,7 @@ const getCardComment = async (req, res) => {
     const foundComment = await CardComment.findOne({
         cardId: foundCard._id,
         _id: commentId,
-    }).populate('userId', '_id username avatar');
+    }).populate('userId', '_id username profileImage');
     if (!foundComment) {
         return res.sendStatus(404);
     }
@@ -80,7 +80,8 @@ const getCardComment = async (req, res) => {
         userId: foundComment.userId,
         onFirstPage: commentsBefore < COMMENTS_PER_PAGE,
     };
-    res.status(200).json({ comment });
+
+    res.status(201).json({ comment });
 };
 
 /**

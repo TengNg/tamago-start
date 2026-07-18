@@ -15,6 +15,23 @@ const AVATAR_BG_COLORS = {
     gray: "bg-gray-400",
 };
 
+/**
+ * @typedef {Object} AvatarProps
+ * @property {string} username
+ * @property {string} [profileImage]
+ * @property {"xsm" | "sm" | "md" | "lg" | "xl" | "xxl"} [size="sm"]
+ * @property {"blue" | "gray"} [bgColor="blue"]
+ * @property {boolean} [isAdmin=false]
+ * @property {boolean} [clickable=true]
+ * @property {boolean} [withBorder=false]
+ * @property {boolean} [noShowRole=false]
+ * @property {string | Date | number} createdAt
+ */
+
+/**
+ * @param {AvatarProps} props
+ * @returns {JSX.Element}
+ */
 const Avatar = ({
     username,
     profileImage,
@@ -28,15 +45,25 @@ const Avatar = ({
 }) => {
     const [collapse, setCollapse] = useState(true);
 
-    const userProfileImageRef = useRef();
-    const userInfoRef = useRef();
+    /** @type {React.MutableRefObject<HTMLDivElement | null>} */
+    const userProfileImageRef = useRef(null);
+
+    /** @type {React.MutableRefObject<HTMLDivElement | null>} */
+    const userInfoRef = useRef(null);
 
     useEffect(() => {
+        /**
+         * @param {MouseEvent} event
+         */
         const closeUserInfoBox = (event) => {
+            const profile = userProfileImageRef.current;
+            const info = userInfoRef.current;
+            const target = /** @type {Node} */ (event.target);
             if (
-                userInfoRef.current &&
-                !userProfileImageRef.current.contains(event.target) &&
-                !userInfoRef.current.contains(event.target)
+                profile &&
+                info &&
+                !profile.contains(target) &&
+                !info.contains(target)
             ) {
                 setCollapse(true);
             }
@@ -79,7 +106,7 @@ const Avatar = ({
             {!collapse && (
                 <div
                     ref={userInfoRef}
-                    className="box--style--sm absolute flex flex-col border-2 border-black p-3 pe-8 select-none gap-4 bg-gray-100 left-1 -bottom-1 translate-y-full z-30"
+                    className="box--style absolute flex flex-col border-2 border-black p-3 pe-8 select-none gap-4 bg-gray-100 left-1 -bottom-1 translate-y-full z-30"
                     onBlur={() => setCollapse(true)}
                 >
                     <div className="flex gap-2 items-center">

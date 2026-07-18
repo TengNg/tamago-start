@@ -148,7 +148,6 @@ const getBoard = async (req, res) => {
     }
 
     const memberships = await boardMemberships(board._id);
-
     const ownerFound = memberships.find(m => m.role === "owner");
     if (!ownerFound) {
         return res.status(400).json({ message: "abandoned board" });
@@ -218,6 +217,8 @@ const getBoardStats = async (req, res) => {
         }
     ]);
 
+    const listCount = await List.countDocuments({ boardId: id });
+
     const today = new Date();
     today.setHours(0, 0, 0, 0)
     const staleCardCount = await Card.countDocuments({
@@ -228,6 +229,7 @@ const getBoardStats = async (req, res) => {
     res.status(200).json({
         board: foundBoard,
         members: memberships,
+        listCount,
         priorityLevelStats,
         staleCardCount
     });
@@ -253,17 +255,22 @@ const createBoard = async (req, res) => {
         role: 'owner',
     });
 
-    return res.status(201).json({ newBoard });
+    return res.status(201).json(newBoard);
 };
 
 /**
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  */
-const updateTitle = async (req, res) => {
+const updateBoard = async (req, res) => {
     const { id } = req.params;
-    const { title } = req.body;
+    const { field, value } = req.body;
     const { userId } = req.user;
+
+    const allowedFields = ["title", "description", "visibility"];
+    if (!allowedFields.includes(field)) {
+        return res.status(400).json({ message: "Invalid field to update" });
+    }
 
     const board = await Board.findById(id);
     if (!board) {
@@ -276,99 +283,32 @@ const updateTitle = async (req, res) => {
         boardId: board._id.toString()
     });
 
-    const currentTitle = board.title;
-    board.title = title;
+    if (board[field] === value) {
+        return res.status(200).json(board);
+    }
+
+    const prevValue = board[field];
+    board[field] = value;
     await board.save();
 
-    if (title !== currentTitle) {
-        await saveBoardActivity({
-            boardId: id,
-            userId,
-            docId: id,
-            action: "board.title_updated",
-            docModel: "Board",
-            docTitle: title,
-            description: `"${currentTitle}" → "${title}"`,
-        })
-    }
-
-    return res.status(200).json({ newBoard: board });
-};
-
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
-const updateDescription = async (req, res) => {
-    const { id } = req.params;
-    const { description } = req.body;
-    const { userId } = req.user;
-
-    const board = await Board.findById(id);
-    if (!board) {
-        return res.sendStatus(404);
-    }
-
-    await checkAllowedRoles({
-        roles: ["owner"],
-        userId,
-        boardId: board._id.toString()
-    });
-
-    const currentDescription = board.description;
-    board.description = description;
-    await board.save();
-
-    if (description !== currentDescription) {
-        await saveBoardActivity({
-            boardId: id,
-            userId,
-            docId: id,
-            action: "board.description_updated",
-            docModel: "Board",
-            docTitle: board.title,
-            description: `"${currentDescription}" → "${board.description}"`,
-        })
-    }
-
-    return res.status(200).json({ newBoard: board });
-};
-
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
-const updateVisibility = async (req, res) => {
-    const { id } = req.params;
-    const { visibility } = req.body;
-    const { userId } = req.user;
-
-    const board = await Board.findById(id);
-    if (!board) {
-        return res.sendStatus(404);
-    }
-
-    await checkAllowedRoles({
-        roles: ["owner"],
-        userId,
-        boardId: board._id.toString()
-    });
-
-    const prevVisibility = board.visibility;
-    board.visibility = visibility;
-    await board.save();
+    const actionMap = {
+        title: "board.title_updated",
+        description: "board.description_updated",
+        visibility: "board.visibility_updated",
+    };
+    const description = `"${prevValue}" → "${value}"`.trim();
 
     await saveBoardActivity({
         boardId: id,
         userId,
         docId: id,
-        action: "board.visibility_updated",
+        action: actionMap[field] || "board.updated",
         docModel: "Board",
         docTitle: board.title,
-        description: `"${prevVisibility}" → "${board.visibility}"`,
-    })
+        description,
+    });
 
-    return res.status(200).json({ newBoard: board });
+    return res.json(board);
 };
 
 /**
@@ -414,7 +354,7 @@ const leaveBoard = async (req, res) => {
         description: `${username} left`,
     })
 
-    res.status(200).json({ message: 'Member removed from the board successfully' });
+    res.sendStatus(204);
 };
 
 /**
@@ -525,29 +465,38 @@ const copyBoard = async (req, res) => {
             boardId: board._id.toString()
         });
 
+        // create board
         const newBoardId = new mongoose.Types.ObjectId();
-        const lists = await List.find({ boardId: board._id });
-
         const newBoard = new Board({
             _id: newBoardId,
             title: title || board.title,
             description: description || board.description,
             createdBy: userId,
         });
-
         await newBoard.save({ session });
 
+        // create membership
+        const newMembership = new BoardMembership({
+            boardId: newBoardId,
+            userId,
+            role: 'owner',
+        });
+        await newMembership.save({ session });
+
+        // create lists
         const oldToNewListId = new Map();
+        const lists = await List.find({ boardId: board._id });
         const listDocs = lists.map(list => {
             const newListId = new mongoose.Types.ObjectId();
             oldToNewListId.set(list._id.toString(), newListId);
             return { _id: newListId, title: list.title, order: list.order, boardId: newBoardId };
         });
+        if (listDocs.length > 0) {
+            await List.insertMany(listDocs, { session });
+        }
 
-        await List.insertMany(listDocs, { session });
-
+        // create cards
         const allCards = await Card.find({ listId: { $in: lists.map(l => l._id) } }).lean();
-
         const cardDocs = allCards.map(card => ({
             title: card.title,
             description: card.description,
@@ -557,14 +506,13 @@ const copyBoard = async (req, res) => {
             boardId: newBoardId,
             listId: oldToNewListId.get(card.listId.toString()),
         }));
-
         if (cardDocs.length > 0) {
             await Card.insertMany(cardDocs, { session });
         }
 
         await session.commitTransaction();
 
-        return res.status(200).json({ message: 'board copied' });
+        return res.sendStatus(204);
     } catch (error) {
         await session.abortTransaction();
         const status = error.status || 500;
@@ -596,9 +544,7 @@ export {
     getBoardStats,
     createBoard,
     getBoard,
-    updateVisibility,
-    updateTitle,
-    updateDescription,
+    updateBoard,
     leaveBoard,
     removeMemberFromBoard,
     closeBoard,

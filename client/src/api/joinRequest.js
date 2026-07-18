@@ -1,27 +1,47 @@
-import { axiosPrivate } from "./axios";
+import { apiClient } from "../lib/api-client";
 
-export async function fetchJoinRequests({ page }) {
-    const res = await axiosPrivate.get(`/join_board_requests?page=${page}`);
-    return res.data;
+/**
+ * @param {{ page: string | number }} params
+ * @returns {Promise<GetJoinRequestsResponse>}
+ */
+export function fetchJoinRequests({ page }) {
+    return apiClient.get("/join_board_requests", { query: { page } });
 }
 
-export async function acceptJoinRequest({ id, boardId, requesterId }) {
-    return await axiosPrivate.patch(
-        `/join_board_requests/${id}/accept`,
-        JSON.stringify({ boardId, requesterId }),
-    );
+/**
+ * @param {{ id: string, boardId: string, requesterId: string }} params
+ * @returns {Promise<void>}
+ */
+export function acceptJoinRequest({ id, boardId, requesterId }) {
+    return apiClient.patch(`/join_board_requests/${id}/accept`, {
+        boardId,
+        requesterId,
+    });
 }
 
-export async function rejectJoinRequest({ id, boardId, requesterId }) {
-    return await axiosPrivate.patch(
-        `/join_board_requests/${id}/reject`,
-        JSON.stringify({ boardId, requesterId }),
-    );
+/**
+ * @param {{ id: string, boardId: string, requesterId: string }} params
+ * @returns {Promise<void>}
+ */
+export function rejectJoinRequest({ id, boardId, requesterId }) {
+    return apiClient.patch(`/join_board_requests/${id}/reject`, {
+        boardId,
+        requesterId,
+    });
 }
 
-export async function removeJoinRequest({ id, boardId, requesterId }) {
-    return await axiosPrivate.delete(
-        `/join_board_requests/${id}`,
-        JSON.stringify({ boardId, requesterId }),
-    );
+/**
+ * @param {string} id
+ * @returns {Promise<void>}
+ */
+export function removeJoinRequest(id) {
+    return apiClient.delete(`/join_board_requests/${id}`);
+}
+
+/**
+ * @param {string} boardId
+ * @returns {Promise<void>}
+ */
+export function sendJoinRequest(boardId) {
+    return apiClient.post("/join_board_requests/", { boardId });
 }

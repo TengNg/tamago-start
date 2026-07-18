@@ -1,28 +1,57 @@
-import { axiosPrivate } from "./axios";
+import { apiClient } from "../lib/api-client";
 
-export async function fetchCurrentUser() {
-    const response = await axiosPrivate.get(`/me`);
-    if (response.status !== 200) {
-        throw new Error("Failed to fetch current user data");
-    }
-
-    return response.data.user;
+/**
+ * @returns {Promise<{ user: CurrentUser }>}
+ */
+export function fetchCurrentUser() {
+    return apiClient.get("/me");
 }
 
-export async function updateUsername({ username }) {
-    const response = await axiosPrivate.patch(
-        `/me/username`,
-        JSON.stringify({ newUsername: username }),
-    );
-
-    return response.data;
+/**
+ * @param {{ username: string }} params
+ * @returns {Promise<void>}
+ */
+export function updateUsername({ username }) {
+    return apiClient.patch("/me/username", { newUsername: username });
 }
 
-export async function updatePassword({ currentPassword, newPassword }) {
-    const response = await axiosPrivate.patch(
-        `/me/password`,
-        JSON.stringify({ currentPassword, newPassword }),
-    );
+/**
+ * @param {{ currentPassword: string, newPassword: string }} params
+ * @returns {Promise<{ notice?: string; message?: string } | void>}
+ */
+export function updatePassword({ currentPassword, newPassword }) {
+    return apiClient.patch("/me/password", { currentPassword, newPassword });
+}
 
-    return response.data;
+/**
+ * @param {string} boardId
+ * @returns {Promise<{ pinnedBoards: Record<string, { title: string }> }>}
+ */
+export function pinBoard(boardId) {
+    return apiClient.patch(`/me/pinned-boards/${boardId}`);
+}
+
+/**
+ * @param {Record<string, { title: string }>} newPinnedBoards
+ * @returns {Promise<{ pinnedBoards: Record<string, { title: string }> }>}
+ */
+export function updatePinnedBoards(newPinnedBoards) {
+    return apiClient.patch("/me/pinned-boards", {
+        pinnedBoards: newPinnedBoards,
+    });
+}
+
+/**
+ * @param {string} boardId
+ * @returns {Promise<{ pinnedBoards: Record<string, { title: string }> }>}
+ */
+export function deletePinnedBoard(boardId) {
+    return apiClient.delete(`/me/pinned-boards/${boardId}`);
+}
+
+/**
+ * @returns {Promise<void>}
+ */
+export function cleanPinnedBoards() {
+    return apiClient.delete("/me/pinned-boards/");
 }

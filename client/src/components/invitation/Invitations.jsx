@@ -5,6 +5,7 @@ import {
     fetchInvitations,
     acceptInvitation,
     rejectInvitation,
+    removeInvitation,
 } from "../../api/invitation";
 import {
     useInfiniteQuery,
@@ -12,11 +13,24 @@ import {
     useQueryClient,
 } from "@tanstack/react-query";
 import { useMemo } from "react";
+import useToast from "../../hooks/useToast";
+import { getErrorMessage } from "../../utils/getErrorMessage";
+import { invitationKeys } from "../../queries/invitationKeys";
 
+/**
+ * @typedef {Object} InvitationsProps
+ * @property {boolean} show
+ */
+
+/**
+ * @param {InvitationsProps} props
+ */
 export default function Invitations({ show }) {
     const navigate = useNavigate();
 
     const queryClient = useQueryClient();
+
+    const toast = useToast();
 
     const {
         data,
@@ -30,89 +44,130 @@ export default function Invitations({ show }) {
     } = useInfiniteQuery({
         staleTime: Infinity,
         queryKey: ["invitations"],
-        queryFn: ({ pageParam = 1 }) => fetchInvitations({ page: pageParam }),
+        initialPageParam: 1,
+        queryFn: ({ pageParam }) => fetchInvitations({ page: pageParam }),
         getNextPageParam: (lastPage, _pages) => {
             return lastPage.nextPage;
         },
     });
 
     const acceptMutation = useMutation({
-        mutationFn: (invitationId) => acceptInvitation(invitationId),
+        mutationFn: (/** @type {string} */ invitationId) =>
+            acceptInvitation(invitationId),
         onSuccess: (_data, invitationId, _context) => {
-            queryClient.setQueryData(["invitations"], (old) => {
-                return {
-                    ...old,
-                    pages: [...old.pages].map((page) => {
-                        return {
-                            ...page,
-                            invitations: [...page.invitations].map((item) => {
-                                return item._id === invitationId
-                                    ? { ...item, status: "accepted" }
-                                    : item;
-                            }),
-                        };
-                    }),
-                };
-            });
+            queryClient.setQueryData(
+                invitationKeys.all(),
+                /**
+                 * @param {import("@tanstack/react-query").InfiniteData<GetInvitationsResponse> | undefined} old
+                 */
+                (old) => {
+                    if (!old) {
+                        return old;
+                    }
+
+                    return {
+                        ...old,
+                        pages: [...old.pages].map((page) => {
+                            return {
+                                ...page,
+                                invitations: [...page.invitations].map(
+                                    (item) => {
+                                        return item._id === invitationId
+                                            ? { ...item, status: "accepted" }
+                                            : item;
+                                    },
+                                ),
+                            };
+                        }),
+                    };
+                },
+            );
         },
         onError: (err, _, _context) => {
-            const errMsg =
-                err.response?.data?.message ||
-                "Failed to accept this invitation";
+            const errMsg = getErrorMessage(
+                err,
+                "Failed to accept this invitation",
+            );
             toast.error(errMsg);
         },
     });
 
     const rejectMutation = useMutation({
-        mutationFn: (invitationId) => rejectInvitation(invitationId),
+        mutationFn: (/** @type {string} */ invitationId) =>
+            rejectInvitation(invitationId),
         onSuccess: (_data, invitationId, _context) => {
-            queryClient.setQueryData(["invitations"], (old) => {
-                return {
-                    ...old,
-                    pages: [...old.pages].map((page) => {
-                        return {
-                            ...page,
-                            invitations: [...page.invitations].map((item) => {
-                                return item._id === invitationId
-                                    ? { ...item, status: "rejected" }
-                                    : item;
-                            }),
-                        };
-                    }),
-                };
-            });
+            queryClient.setQueryData(
+                invitationKeys.all(),
+                /**
+                 * @param {import("@tanstack/react-query").InfiniteData<GetInvitationsResponse> | undefined} old
+                 */
+                (old) => {
+                    if (!old) {
+                        return;
+                    }
+
+                    return {
+                        ...old,
+                        pages: [...old.pages].map((page) => {
+                            return {
+                                ...page,
+                                invitations: [...page.invitations].map(
+                                    (item) => {
+                                        return item._id === invitationId
+                                            ? { ...item, status: "rejected" }
+                                            : item;
+                                    },
+                                ),
+                            };
+                        }),
+                    };
+                },
+            );
         },
         onError: (err, _, _context) => {
-            const errMsg =
-                err.response?.data?.message ||
-                "Failed to accept this invitation";
+            const errMsg = getErrorMessage(
+                err,
+                "Failed to accept this invitation",
+            );
             toast.error(errMsg);
         },
     });
 
     const removeMutation = useMutation({
-        mutationFn: (invitationId) => handleRemoveInvitation(invitationId),
+        mutationFn: (/** @type {string} */ invitationId) =>
+            removeInvitation(invitationId),
         onSuccess: (_data, invitationId, _context) => {
-            queryClient.setQueryData(["invitations"], (old) => {
-                return {
-                    ...old,
-                    pages: [...old.pages].map((page) => {
-                        return {
-                            ...page,
-                            invitations: [...page.invitations].filter(
-                                (item) => {
-                                    return item._id === invitationId;
-                                },
-                            ),
-                        };
-                    }),
-                };
-            });
+            queryClient.setQueryData(
+                invitationKeys.all(),
+                /**
+                 * @param {import("@tanstack/react-query").InfiniteData<GetInvitationsResponse> | undefined} old
+                 */
+                (old) => {
+                    if (!old) {
+                        return;
+                    }
+
+                    return {
+                        ...old,
+                        pages: [...old.pages].map((page) => {
+                            return {
+                                ...page,
+                                invitations: [...page.invitations].filter(
+                                    (item) => {
+                                        return item._id === invitationId;
+                                    },
+                                ),
+                            };
+                        }),
+                    };
+                },
+            );
         },
         onError: (err, _, _context) => {
-            const errMsg =
-                err.response?.data?.message ||
-                "Failed to accept this invitation";
+            const errMsg = getErrorMessage(
+                err,
+                "Failed to remove this invitation",
+            );
             toast.error(errMsg);
         },
     });
@@ -224,26 +279,30 @@ export default function Invitations({ show }) {
                                     <div className="ms-auto flex gap-2">
                                         <button
                                             disabled={
-                                                acceptMutation.isLoading &&
+                                                acceptMutation.isPending &&
                                                 acceptMutation.variables === _id
                                             }
-                                            onClick={() => accept.mutate(_id)}
+                                            onClick={() =>
+                                                acceptMutation.mutate(_id)
+                                            }
                                             className="button--style--rounded rounded-none px-3 py-2 bg-gray-100 text-[0.65rem] sm:text-[0.75rem] text-blue-700 border-blue-700"
                                         >
-                                            {acceptMutation.isLoading &&
+                                            {acceptMutation.isPending &&
                                             acceptMutation.variables === _id
                                                 ? "Accepting..."
                                                 : "Accept"}
                                         </button>
                                         <button
                                             disabled={
-                                                rejectMutation.isLoading &&
+                                                rejectMutation.isPending &&
                                                 rejectMutation.variables === _id
                                             }
-                                            onClick={() => reject.mutate(_id)}
+                                            onClick={() =>
+                                                rejectMutation.mutate(_id)
+                                            }
                                             className="button--style--rounded rounded-none px-3 py-2 bg-gray-100 text-[0.65rem] sm:text-[0.75rem] text-red-700 border-red-700"
                                         >
-                                            {rejectMutation.isLoading &&
+                                            {rejectMutation.isPending &&
                                             rejectMutation.variables === _id
                                                 ? "Rejecting..."
                                                 : "Reject"}
@@ -252,7 +311,7 @@ export default function Invitations({ show }) {
                                 ) : (
                                     <button
                                         disabled={
-                                            removeMutation.isLoading &&
+                                            removeMutation.isPending &&
                                             removeMutation.variables === _id
                                         }
                                         onClick={(e) => {
@@ -261,7 +320,7 @@ export default function Invitations({ show }) {
                                         }}
                                         className="ms-auto button--style--rounded rounded-none px-3 py-2 border-gray-600 text-[0.65rem] sm:text-[0.75rem] text-gray-600 bg-gray-100"
                                     >
-                                        {removeMutation.isLoading &&
+                                        {removeMutation.isPending &&
                                         removeMutation.variables === _id
                                             ? "Removing..."
                                             : "Remove"}

@@ -4,12 +4,23 @@ import {
     useQuery,
     useQueryClient,
 } from "@tanstack/react-query";
-import { axiosPrivate } from "../../../api/axios";
+import { fetchAttachments, deleteAttachment } from "../../../api/attachmentApi";
 import Icon from "../../shared/Icon";
 import useToast from "../../../hooks/useToast";
 import useBoardState from "../../../hooks/useBoardState";
 import { SOCKET_EVENTS } from "@shared/socket-events.js";
+import { getErrorMessage } from "../../../utils/getErrorMessage";
+import { cardKeys } from "../../../queries/cardKeys";
 
+/**
+ * @typedef {Object} AttachmentsProps
+ * @property {Card} card
+ * @property {React.Dispatch<React.SetStateAction<Attachment | null>>} setViewedAttachment
+ */
+
+/**
+ * @param {AttachmentsProps} props
+ */
 function Attachments({ card, setViewedAttachment }) {
     const queryClient = useQueryClient();
     const toast = useToast();
@@ -20,40 +31,37 @@ function Attachments({ card, setViewedAttachment }) {
         isLoading: isAttachmentsLoading,
         isError: isAttachmentsError,
     } = useQuery({
-        queryKey: ["card-attachments", card._id],
+        queryKey: cardKeys.attachments(card._id),
         queryFn: async () => {
-            const res = await axiosPrivate.get(`/attachments/${card._id}/Card`);
-            return res.data;
+            return await fetchAttachments(card._id, "Card");
         },
     });
 
     const deleteAttachmentMutation = useMutation({
         mutationKey: ["delete-card-attachment"],
-        mutationFn: async (attachmentId) => {
-            const response = await axiosPrivate.delete(
-                `/attachments/${attachmentId}`,
-            );
-            return response.data;
+        mutationFn: async (/** @type {string} */ attachmentId) => {
+            return await deleteAttachment(attachmentId);
         },
         onSuccess: (data) => {
-            queryClient.setQueryData(["card-attachments", card._id], (old) => {
-                if (!old) {
-                    return old;
-                }
+            queryClient.setQueryData(
+                cardKeys.attachments(card._id),
+                /** @param {Attachment[]} old */
+                (old) => {
+                    if (!old) {
+                        return old;
+                    }
 
-                const updated = [...old].filter((a) => a._id != data.id);
-                return updated;
-            });
+                    const updated = [...old].filter((a) => a._id != data.id);
+                    return updated;
+                },
+            );
             socket.emit(SOCKET_EVENTS.ATTACHMENT_DELETE, {
                 id: data.id,
                 cardId: card._id,
             });
         },
         onError: (err) => {
-            const errMsg =
-                err.response?.data?.message ||
-                err.message ||
-                "Failed to delete attachment";
+            const errMsg = getErrorMessage(err, "Failed to delete attachment");
             toast.error(errMsg);
         },
     });
@@ -65,9 +73,6 @@ function Attachments({ card, setViewedAttachment }) {
         },
         select: (mutation) => mutation.state.variables,
     });
-
-    const isDeleting = (attachmentId) =>
-        pendingDeleteIds.includes(attachmentId);
 
     if (!card) {
         return null;
@@ -85,7 +90,7 @@ function Attachments({ card, setViewedAttachment }) {
             ) : (
                 <ul className="space-y-1 w-full">
                     {attachments.map((att) => {
-                        const deleting = isDeleting(att._id);
+                        const deleting = pendingDeleteIds.includes(att._id);
                         return (
                             <li
                                 key={att._id}

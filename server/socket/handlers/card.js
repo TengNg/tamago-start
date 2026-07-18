@@ -1,4 +1,7 @@
 import { SOCKET_EVENTS } from '../../../shared/socket-events.js';
+import { allowedFields } from '../validate.js';
+
+const CARD_UPDATE_ALLOWED = ['id', 'listId', 'field', 'value'];
 
 /**
  * @param {import('socket.io').Socket} socket
@@ -41,45 +44,10 @@ export default function registerCardHandlers(socket) {
         socket.to(boardId).emit(SOCKET_EVENTS.CARD_MOVED_TO_LIST, data);
     });
 
-    socket.on(SOCKET_EVENTS.CARD_UPDATE_OWNER, (data) => {
+    socket.on(SOCKET_EVENTS.CARD_UPDATE, (data) => {
         const boardId = socket.boardId;
         if (!boardId) return;
-        socket.to(boardId).emit(SOCKET_EVENTS.CARD_OWNER_UPDATED, { ...data });
-    });
-
-    socket.on(SOCKET_EVENTS.CARD_UPDATE_PRIORITY, (data) => {
-        const boardId = socket.boardId;
-        if (!boardId) return;
-        socket.to(boardId).emit(SOCKET_EVENTS.CARD_PRIORITY_UPDATED, { ...data });
-    });
-
-    socket.on(SOCKET_EVENTS.CARD_UPDATE_TITLE, (data) => {
-        const boardId = socket.boardId;
-        if (!boardId) return;
-        socket.to(boardId).emit(SOCKET_EVENTS.CARD_TITLE_UPDATED, data);
-    });
-
-    socket.on(SOCKET_EVENTS.CARD_UPDATE_HIGHLIGHT, (data) => {
-        const boardId = socket.boardId;
-        if (!boardId) return;
-        socket.to(boardId).emit(SOCKET_EVENTS.CARD_HIGHLIGHT_UPDATED, data);
-    });
-
-    socket.on(SOCKET_EVENTS.CARD_UPDATE_DESCRIPTION, (data) => {
-        const boardId = socket.boardId;
-        if (!boardId) return;
-        socket.to(boardId).emit(SOCKET_EVENTS.CARD_DESCRIPTION_UPDATED, data);
-    });
-
-    socket.on(SOCKET_EVENTS.CARD_UPDATE_VERIFIED, (data) => {
-        const boardId = socket.boardId;
-        if (!boardId) return;
-        socket.to(boardId).emit(SOCKET_EVENTS.CARD_VERIFIED_UPDATED, data);
-    });
-
-    socket.on(SOCKET_EVENTS.CARD_UPDATE_DUE_DATE, (data) => {
-        const boardId = socket.boardId;
-        if (!boardId) return;
-        socket.to(boardId).emit(SOCKET_EVENTS.CARD_DUE_DATE_UPDATED, data);
+        if (!allowedFields(data, CARD_UPDATE_ALLOWED)) return;
+        socket.to(boardId).emit(SOCKET_EVENTS.CARD_UPDATED, data);
     });
 }

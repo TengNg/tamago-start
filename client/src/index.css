@@ -50,8 +50,8 @@
   @apply shadow-[4px_6px_0_0];
 }
 
-@utility box--style--sm {
-  @apply shadow-[2px_4px_0_0];
+@utility modal--content {
+  @apply box--style flex flex-col border-gray-700 border-2 bg-gray-200 shadow-gray-700;
 }
 
 @utility board--style {
@@ -71,7 +71,7 @@
 }
 
 @utility button--style--dark {
-  @apply px-3 py-2 bg-gray-600 text-white hover:bg-gray-500 font-medium;
+  @apply p-3 bg-gray-600 text-white hover:bg-gray-500 font-medium text-sm;
 }
 
 @utility button--style--rounded {

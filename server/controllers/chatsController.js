@@ -28,7 +28,7 @@ const getMessages = async (req, res) => {
         .limit(limit)
         .populate({
             path: 'sentBy',
-            select: 'username'
+            select: '_id username'
         });
 
     const hasMore = messages.length === limit;
@@ -80,7 +80,7 @@ const sendMessage = async (req, res) => {
     await chatMessage.save()
     await chatMessage.populate({
         path: "sentBy",
-        select: "username"
+        select: "_id username"
     });
 
     res.status(201).json({ chatMessage });

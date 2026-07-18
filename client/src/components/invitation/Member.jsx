@@ -1,9 +1,18 @@
-import useCurrentUserContext from "../../hooks/useCurrentUserContext";
+import useCurrentUser from "../../hooks/useCurrentUser";
 import Avatar from "../avatar/Avatar";
 import Icon from "../shared/Icon";
 
-const Member = ({ member, handleRemoveMemberFromBoard }) => {
-    const { currentUser } = useCurrentUserContext();
+/**
+ * @typedef {Object} MemberProps
+ * @property {BoardMember} member
+ * @property {(memberId: string) => void} remove
+ */
+
+/**
+ * @param {MemberProps} props
+ */
+const Member = ({ member, remove }) => {
+    const currentUser = useCurrentUser();
 
     return (
         <>
@@ -13,6 +22,7 @@ const Member = ({ member, handleRemoveMemberFromBoard }) => {
                         username={member.username}
                         size="md"
                         clickable={false}
+                        createdAt={member.createdAt}
                     />
                     <div className="flex flex-col justify-center">
                         <p className="text-[0.75rem] text-gray-800 font-medium">
@@ -25,9 +35,7 @@ const Member = ({ member, handleRemoveMemberFromBoard }) => {
                 </div>
                 {member.role !== "owner" && (
                     <button
-                        onClick={() =>
-                            handleRemoveMemberFromBoard(member.userId)
-                        }
+                        onClick={() => remove(member.userId)}
                         className="text-gray-400 me-2"
                         title="remove member"
                     >

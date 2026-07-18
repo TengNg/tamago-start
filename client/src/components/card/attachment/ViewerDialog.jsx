@@ -1,102 +1,82 @@
-import { useEffect, useState } from "react";
-import { axiosPrivate } from "../../../api/axios";
-import Icon from "../../shared/Icon";
+import { useQuery } from "@tanstack/react-query";
+import { viewAttachment } from "../../../api/attachmentApi";
+import { attachmentKeys } from "../../../queries/attachmentKeys";
 
-function ViewerDialog({ viewedAttachment, setViewedAttachment }) {
-    const [attachmentDataUrl, setAttachmentDataUrl] = useState(null);
-    const [loadingAttachment, setLoadingAttachment] = useState(false);
-    const [attachmentError, setAttachmentError] = useState(null);
+/**
+ * @typedef {Object} ViewerDialogProps
+ * @property {Attachment} viewedAttachment
+ */
 
-    useEffect(() => {
-        if (viewedAttachment) {
-            setLoadingAttachment(true);
-            setAttachmentError(null);
-            setAttachmentDataUrl(null);
-            axiosPrivate
-                .get(`/attachments/${viewedAttachment._id}`, {
-                    responseType: "blob",
-                })
-                .then((res) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                        setAttachmentDataUrl(reader.result);
-                        setLoadingAttachment(false);
-                    };
-                    reader.onerror = () => {
-                        setAttachmentError("Failed to load image");
-                        setLoadingAttachment(false);
-                    };
-                    reader.readAsDataURL(res.data);
-                })
-                .catch(() => {
-                    setAttachmentError("Failed to load image");
-                    setLoadingAttachment(false);
-                });
-        } else {
-            setAttachmentDataUrl(null);
-            setLoadingAttachment(false);
-            setAttachmentError(null);
-        }
-    }, [viewedAttachment]);
+/**
+ * @param {ViewerDialogProps} viewwedAttachment
+ */
+function ViewerDialog({ viewedAttachment }) {
+    const {
+        data: attachmentDataUrl,
+        isLoading,
+        isError,
+        error,
+    } = useQuery({
+        queryKey: attachmentKeys.detail(viewedAttachment._id),
+        queryFn: async () => {
+            const blob = await viewAttachment(viewedAttachment._id);
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = () =>
+                    reject(new Error("Failed to load image"));
+                reader.readAsDataURL(blob);
+            });
+        },
+        staleTime: 5 * 60 * 1000,
+    });
 
-    if (!viewedAttachment) {
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center">
+                <div className="p-8">
+                    <div className="loader"></div>
+                </div>
+            </div>
+        );
+    }
+
+    if (isError) {
+        return (
+            <div className="flex flex-col items-center">
+                <div className="text-red-600 p-8">
+                    {error?.message || "Failed to load image"}
+                </div>
+            </div>
+        );
+    }
+
+    if (!attachmentDataUrl) {
         return null;
     }
 
     return (
-        <div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-            onClick={() => setViewedAttachment(null)}
-        >
-            <div
-                className="bg-gray-200 p-4 max-w-[90vw] max-h-[90vh] flex flex-col items-center"
-                onClick={(e) => e.stopPropagation()}
-            >
-                <div className="flex w-full justify-between items-center mb-2">
-                    <span
-                        className="font-semibold text-gray-600 truncate max-w-[60vw]"
-                        title={viewedAttachment.originalname}
+        <div className="flex flex-col items-center">
+            {viewedAttachment.mimetype.startsWith("image/") ? (
+                <img
+                    src={attachmentDataUrl}
+                    alt={viewedAttachment.originalname}
+                    className="max-w-[80vw] max-h-[80vh] object-contain border"
+                />
+            ) : (
+                <div className="flex flex-col items-center mt-4">
+                    <span className="mb-2">No preview available.</span>
+                    <a
+                        href={`/api/attachments/${viewedAttachment._id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-800! underline! border px-2 py-1"
+                        download={viewedAttachment.originalname}
                     >
-                        {viewedAttachment.originalname}
-                    </span>
-                    <button
-                        className="ml-4 p-1 text-gray-600"
-                        onClick={() => setViewedAttachment(null)}
-                    >
-                        <Icon name="xmark" className="w-5 h-5" />
-                    </button>
+                        Download
+                    </a>
                 </div>
-                {loadingAttachment ? (
-                    <div className="p-8">Loading image...</div>
-                ) : attachmentError ? (
-                    <div className="text-red-600 p-8">{attachmentError}</div>
-                ) : attachmentDataUrl ? (
-                    <>
-                        {viewedAttachment.mimetype.startsWith("image/") ? (
-                            <img
-                                src={attachmentDataUrl}
-                                alt={viewedAttachment.originalname}
-                                className="max-w-[80vw] max-h-[70vh] border"
-                            />
-                        ) : (
-                            <div className="flex flex-col items-center mt-4">
-                                <span className="mb-2">
-                                    No preview available.
-                                </span>
-                                <a
-                                    href={`/api/attachments/${viewedAttachment.id}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-800! underline! border px-2 py-1"
-                                    download={viewedAttachment.originalname}
-                                >
-                                    Download
-                                </a>
-                            </div>
-                        )}
-                    </>
-                ) : null}
-            </div>
+            )}
         </div>
     );
 }

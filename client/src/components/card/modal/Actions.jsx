@@ -1,20 +1,52 @@
+import { useState, useRef, useContext } from "react";
 import Icon from "../../shared/Icon";
-import HighlightPicker from "../HighlightPicker";
+import HighlightPicker from "./HighlightPicker";
+import useClickOutside from "../../../hooks/useClickOutside";
+import ModalStackContext from "../../../context/ModalStackContext";
 
+/**
+ * @param {object} props
+ * @param {Card} props.card
+ * @param {string} props.description
+ * @param {boolean} props.isSavingDescription
+ * @param {() => void} props.confirmDescription
+ * @param {() => void} props.copyCard
+ * @param {boolean} props.isVerifying
+ * @param {() => void} props.handleToggleVerified
+ * @param {() => void} props.deleteCard
+ * @param {(value: string | null) => void} props.onHighlightChange
+ */
 export default function Actions({
     card,
     description,
     isSavingDescription,
     confirmDescription,
-    openHighlightPicker,
-    setOpenHighlightPicker,
     copyCard,
     isVerifying,
     handleToggleVerified,
-    openCardDeleteConfirm,
-    setOpenCardDeleteConfirm,
     deleteCard,
+    onHighlightChange,
 }) {
+    const { isAnyModalOpen } = useContext(ModalStackContext);
+
+    const [openHighlightPicker, setOpenHighlightPicker] = useState(false);
+    const [openDeleteConfirmation, setOpenDeleteConfirmation] = useState(false);
+
+    const hlPickerRef = useRef(null);
+    const deleteConfirmRef = useRef(null);
+
+    useClickOutside(hlPickerRef, () => {
+        if (!isAnyModalOpen && openHighlightPicker) {
+            setOpenHighlightPicker(false);
+        }
+    });
+
+    useClickOutside(deleteConfirmRef, () => {
+        if (!isAnyModalOpen && openDeleteConfirmation) {
+            setOpenDeleteConfirmation(false);
+        }
+    });
+
     return (
         <div className="relative flex flex-row justify-between w-full gap-3">
             <div className="flex items-center gap-2">
@@ -37,8 +69,7 @@ export default function Actions({
             </div>
 
             <div className="flex gap-3">
-                {/* change highlight button */}
-                <div className="relative h-10">
+                <div className="relative h-10" ref={hlPickerRef}>
                     <button
                         title="change highlight color"
                         onClick={() => setOpenHighlightPicker((prev) => !prev)}
@@ -52,9 +83,9 @@ export default function Actions({
 
                     {openHighlightPicker && (
                         <HighlightPicker
-                            id="card__detail__highlight__picker"
                             setOpen={setOpenHighlightPicker}
                             card={card}
+                            onHighlightChange={onHighlightChange}
                         />
                     )}
                 </div>
@@ -93,34 +124,31 @@ export default function Actions({
                     </button>
                 </div>
 
-                <div className="relative h-10">
+                <div className="relative h-10" ref={deleteConfirmRef}>
                     <button
                         title="delete this card"
                         onClick={() =>
-                            setOpenCardDeleteConfirm((prev) => !prev)
+                            setOpenDeleteConfirmation((prev) => !prev)
                         }
-                        className={`card--details--button border-rose-700 text-rose-700 ${openCardDeleteConfirm && "bg-rose-100"}`}
+                        className={`card--details--button border-rose-700 text-rose-700 ${openDeleteConfirmation && "bg-rose-100"}`}
                     >
                         <Icon className="w-2.5 h-2.5" name="minus" />
                         <span className="hidden sm:inline-block">delete</span>
                     </button>
 
-                    {openCardDeleteConfirm && (
-                        <div
-                            id="card__detail__delete__confirm"
-                            className="bg-gray-100 border-2 shadow-[0_3px_0_0] border-gray-600 shadow-gray-600 absolute text-sm w-50 right-0 top-[120%] p-2"
-                        >
+                    {openDeleteConfirmation && (
+                        <div className="bg-gray-100 border-2 shadow-[0_3px_0_0] border-gray-600 shadow-gray-600 absolute text-sm w-50 -bottom-1 right-0 translate-y-full translate-x-0 p-2">
                             This action cannot be undone. Are you sure you want
                             to delete this card?
                             <button
-                                className="bg-rose-800 text-white font-medium p-2 w-full mt-1 hover:bg-rose-700"
+                                className="bg-rose-800 text-white font-medium p-2 w-full mt-2 hover:bg-rose-700"
                                 onClick={deleteCard}
                             >
                                 confirm delete
                             </button>
                             <button
                                 className="bg-gray-600 text-white font-medium p-2 w-full mt-1 hover:bg-gray-500"
-                                onClick={() => setOpenCardDeleteConfirm(false)}
+                                onClick={() => setOpenDeleteConfirmation(false)}
                             >
                                 cancel
                             </button>

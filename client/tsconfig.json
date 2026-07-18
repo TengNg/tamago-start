@@ -1,12 +1,22 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
       "@shared/*": ["../shared/*"]
     },
-    "allowJs": true
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "strict": true,
+    "jsx": "react-jsx",
+    "types": ["vite/client"],
+    "skipLibCheck": true
   },
   "include": [
-    "../shared/**/*"
+    "src/**/*.js",
+    "src/**/*.jsx",
+    "src/types/**/*.d.ts",
+    "src/types/*.d.ts",
+    "../shared/**/*",
+    "../server/types.d.ts"
   ]
 }

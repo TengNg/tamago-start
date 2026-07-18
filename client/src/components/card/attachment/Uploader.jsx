@@ -1,44 +1,60 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
-import { axiosPrivate } from "../../../api/axios";
+import { uploadAttachment } from "../../../api/attachmentApi";
 import useToast from "../../../hooks/useToast";
 import useBoardState from "../../../hooks/useBoardState";
 import { SOCKET_EVENTS } from "@shared/socket-events.js";
+import { cardKeys } from "../../../queries/cardKeys";
+import { getErrorMessage } from "../../../utils/getErrorMessage";
 
+/**
+ * @typedef {Object} UploaderProps
+ * @property {Card} card
+ */
+
+/**
+ * @param {UploaderProps} props
+ */
 function Uploader({ card }) {
     const queryClient = useQueryClient();
     const [selectedFileName, setSelectedFileName] = useState("");
-    const fileInputRef = useRef();
-    const abortControllerRef = useRef(null);
     const toast = useToast();
     const { socket } = useBoardState();
 
+    /** @type {React.MutableRefObject<HTMLInputElement | null>} */
+    const fileInputRef = useRef(null);
+
+    /** @type {React.MutableRefObject<AbortController | null>} */
+    const abortControllerRef = useRef(null);
+
     const fileUploadMutation = useMutation({
-        mutationFn: async (formData) => {
+        mutationFn: async (/** @type {FormData} */ formData) => {
             abortControllerRef.current = new AbortController();
-            const abortSignal = abortControllerRef.current.signal;
-            const response = await axiosPrivate.post(
-                "/attachments/upload",
-                formData,
-                {
-                    headers: { "Content-Type": "multipart/form-data" },
-                    signal: abortSignal,
-                },
-            );
-            return response.data;
+            return await uploadAttachment(formData, {
+                signal: abortControllerRef.current.signal,
+            });
         },
         onSuccess: (data) => {
-            queryClient.setQueryData(["card-attachments", card._id], (old) => {
-                if (!old) {
-                    return old;
-                }
+            queryClient.setQueryData(
+                cardKeys.attachments(card._id),
+                /**
+                 * @param {Attachment[]} old
+                 */
+                (old) => {
+                    if (!old) {
+                        return old;
+                    }
 
-                const updated = [...old, data];
-                return updated;
-            });
+                    const updated = [...old, data];
+                    return updated;
+                },
+            );
+
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
 
             toast.success("Attachment uploaded");
-            fileInputRef.current.value = "";
             setSelectedFileName("");
             socket.emit(SOCKET_EVENTS.ATTACHMENT_CREATE, { attachment: data });
         },
@@ -47,8 +63,7 @@ function Uploader({ card }) {
                 return;
             }
 
-            const errMsg =
-                err.response?.data?.message || "Failed to upload attachment";
+            const errMsg = getErrorMessage(err, "Failed to upload attachment");
             toast.error(errMsg);
             cleanupAfterUpload();
         },
@@ -73,30 +88,42 @@ function Uploader({ card }) {
         cleanupAfterUpload();
     };
 
+    /** @param {React.ChangeEvent<HTMLInputElement>} e */
+    const handleInputFile = (e) => {
+        const file = e.target.files?.[0];
+        setSelectedFileName(file ? file.name : "");
+    };
+
+    /** @param {React.FormEvent<HTMLFormElement>} e */
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        const input = fileInputRef.current;
+        if (!input) {
+            return;
+        }
+
+        const file = input.files?.[0];
+        if (!file) {
+            toast.error("No file selected");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("attachment", file);
+        formData.append("docModel", "Card");
+        formData.append("doc", card._id);
+
+        fileUploadMutation.mutate(formData);
+    };
+
     if (!card) {
         return null;
     }
 
     return (
         <div className="flex flex-col gap-2">
-            <form
-                onSubmit={(e) => {
-                    e.preventDefault();
-                    if (!fileInputRef.current.files[0]) {
-                        toast.error("No file selected");
-                        return;
-                    }
-                    const formData = new FormData();
-                    formData.append(
-                        "attachment",
-                        fileInputRef.current.files[0],
-                    );
-                    formData.append("docModel", "Card");
-                    formData.append("doc", card._id);
-                    fileUploadMutation.mutate(formData);
-                }}
-                className="flex items-center gap-2"
-            >
+            <form onSubmit={handleSubmit} className="flex items-center gap-2">
                 <label
                     htmlFor="attachment-upload"
                     className="m-0! cursor-pointer text-sm text-gray-600 font-medium underline"
@@ -109,10 +136,7 @@ function Uploader({ card }) {
                         accept="*"
                         ref={fileInputRef}
                         className="hidden"
-                        onChange={(e) => {
-                            const file = e.target.files[0];
-                            setSelectedFileName(file ? file.name : "");
-                        }}
+                        onChange={handleInputFile}
                     />
                 </label>
                 {selectedFileName ? (
@@ -130,6 +154,7 @@ function Uploader({ card }) {
 
                 {selectedFileName && (
                     <div className="flex gap-2">
+                        <span>::</span>
                         <button
                             type="button"
                             onClick={handleRemoveFile}

@@ -1,3 +1,11 @@
+/**
+ * @typedef {Object} TitleProps
+ * @property {string} titleName
+ */
+
+/**
+ * @param {TitleProps} props
+ */
 const Title = ({ titleName }) => {
     return (
         <div className="flex--center select-none m-[0_0_2rem_0]">

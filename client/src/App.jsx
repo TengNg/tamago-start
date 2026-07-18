@@ -23,12 +23,14 @@ import { BoardStateContextProvider } from "./context/BoardStateContext";
 
 import useLocalStorage from "./hooks/useLocalStorage";
 
-import PAGES from "./constants/pages";
+import { PAGES } from "./constants/pages";
 import LOCAL_STORAGE_KEYS from "./constants/localStorageKeys";
 import Icon from "./components/shared/Icon";
 import PinnedBoards from "./components/board/PinnedBoards";
+import Modal from "./components/ui/Modal";
 import Public from "./components/auth/Public";
 
+/** @type {Record<string, string>} */
 const titleMap = Object.values(PAGES).reduce((obj, p, index) => {
     const title = `0${index} ${p.title}`;
     return { ...obj, [p.path]: title };
@@ -59,14 +61,11 @@ function App() {
             window.history.scrollRestoration = "manual";
         }
 
+        /** @param {KeyboardEvent} event */
         const handleKeyDown = (event) => {
             if (event.ctrlKey && event.key === "p") {
                 event.preventDefault();
                 setOpenPinnedBoards((prev) => !prev);
-            }
-
-            if (event.key === "Escape") {
-                setOpenPinnedBoards(false);
             }
         };
 
@@ -78,8 +77,11 @@ function App() {
     }, []);
 
     useEffect(() => {
+        /** @type {HTMLDivElement | null} */
         const root = document.querySelector("#root");
-        root.style.backgroundColor = backgroundTheme?.hex || "#f1f1f1";
+        if (root) {
+            root.style.backgroundColor = backgroundTheme?.hex || "#f1f1f1";
+        }
         document.documentElement.setAttribute(
             "data-theme",
             backgroundTheme.theme,
@@ -89,7 +91,7 @@ function App() {
     useEffect(() => {
         if (pathname.includes("/b/")) return;
         document.title = titleMap[pathname] || "tamago-start";
-    }, [location]);
+    }, [pathname]);
 
     return (
         <>
@@ -124,12 +126,17 @@ function App() {
                 </Routes>
             </Suspense>
 
-            <ThemesDialog
+            <Modal
                 open={openThemesDialog}
                 setOpen={setOpenThemesDialog}
-                backgroundTheme={backgroundTheme}
-                setBackgroundTheme={setBackgroundTheme}
-            />
+                title="themes"
+                bodyClassName="px-0!"
+            >
+                <ThemesDialog
+                    backgroundTheme={backgroundTheme}
+                    setBackgroundTheme={setBackgroundTheme}
+                />
+            </Modal>
 
             <button
                 onClick={() => setOpenThemesDialog(true)}
@@ -140,12 +147,13 @@ function App() {
                 <Icon className="w-4 h-4" name="pallete" />
             </button>
 
-            {openPinnedBoards && (
-                <PinnedBoards
-                    open={openPinnedBoards}
-                    setOpen={setOpenPinnedBoards}
-                />
-            )}
+            <Modal
+                open={openPinnedBoards}
+                setOpen={setOpenPinnedBoards}
+                title="pinned boards"
+            >
+                <PinnedBoards />
+            </Modal>
         </>
     );
 }

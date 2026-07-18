@@ -1,5 +1,6 @@
 import Icon from "./Icon";
 
+/** @param {{ type: ToastItem["type"], message: string, onClose: () => void }} props */
 const Toast = ({ type, message, onClose }) => {
     return (
         <div

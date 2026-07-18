@@ -1,5 +1,6 @@
 import { createContext, useRef, useCallback, useEffect } from "react";
 
+/** @param {string} key */
 const normalizeKey = (key) => {
     const lower = key.toLowerCase().trim();
 
@@ -14,9 +15,10 @@ const normalizeKey = (key) => {
         // delete, backspace, tab, f1, etc.
     };
 
-    return map[lower] ?? lower;
+    return /** @type {Record<string, string>} */ (map)[lower] ?? lower;
 };
 
+/** @param {string} combo */
 const normalizeCombo = (combo) => {
     if (!combo) {
         return "";
@@ -32,7 +34,7 @@ const normalizeCombo = (combo) => {
         return "";
     }
 
-    const keyPart = rawParts.pop();
+    const keyPart = /** @type {string} */ (rawParts.pop());
     const normKey = normalizeKey(keyPart);
 
     const modOrder = ["ctrl", "alt", "meta"];
@@ -43,6 +45,7 @@ const normalizeCombo = (combo) => {
     return [...sortedMods, normKey].join("+");
 };
 
+/** @param {KeyboardEvent} e */
 const getComboStr = (e) => {
     const parts = [];
 
@@ -61,11 +64,17 @@ const getComboStr = (e) => {
     return parts.join("+");
 };
 
-const KeybindContext = createContext(null);
+/** @type {React.Context<KeybindContextValue>} */
+const KeybindContext = createContext(/** @type {KeybindContextValue} */ ({}));
 export default KeybindContext;
 
+/** @param {{ children: React.ReactNode }} props */
 export const KeybindProvider = ({ children }) => {
-    const keybindsRef = useRef(new Map());
+    const keybindsRef = useRef(
+        /** @type {Map<string, {handler: () => void, options: KeybindOptions}>} */ (
+            new Map()
+        ),
+    );
 
     /**
      * Registers a keyboard shortcut and binds it to a handler.
@@ -105,20 +114,29 @@ export const KeybindProvider = ({ children }) => {
         [],
     );
 
-    const unbind = useCallback((combo) => {
-        keybindsRef.current.delete(combo);
-    }, []);
+    const unbind = useCallback(
+        /** @param {string} combo */ (combo) => {
+            keybindsRef.current.delete(combo);
+        },
+        [],
+    );
 
     const getKeybinds = useCallback(() => {
         return [...keybindsRef.current.entries()].map(
             ([combo, { options }]) => ({
                 combo,
-                options,
+                options: {
+                    preventDefault: true,
+                    stopPropagation: false,
+                    ignoreInInputs: false,
+                    ...options,
+                },
             }),
         );
     }, []);
 
     useEffect(() => {
+        /** @param {KeyboardEvent} e */
         const handleKeyDown = (e) => {
             const combo = getComboStr(e);
             if (!combo) {
@@ -130,7 +148,7 @@ export const KeybindProvider = ({ children }) => {
                 return;
             }
 
-            const target = e.target;
+            const target = /** @type {HTMLElement} */ (e.target);
             const isInputFocused =
                 target.tagName === "INPUT" ||
                 target.tagName === "TEXTAREA" ||

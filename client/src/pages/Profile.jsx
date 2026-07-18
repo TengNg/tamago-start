@@ -2,20 +2,22 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 import Title from "../components/ui/Title";
-import BoardStats from "../components/board/BoardStats";
-import { axiosPrivate } from "../api/axios";
+import BoardStatsModal from "../components/board/BoardStatsModal";
 
 import dateFormatter from "../utils/dateFormatter";
-import useCurrentUserContext from "../hooks/useCurrentUserContext";
+import useAuth from "../hooks/useAuth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchBoards } from "../api/boardApi";
 import { updatePassword, updateUsername } from "../api/meApi";
 import useToast from "../hooks/useToast";
+import useCurrentUser from "../hooks/useCurrentUser";
+import { getErrorMessage } from "../utils/getErrorMessage";
 
 const Profile = () => {
     const queryClient = useQueryClient();
 
-    const { currentUser, logout } = useCurrentUserContext();
+    const { logout } = useAuth();
+    const currentUser = useCurrentUser();
 
     const [changePassword, setChangePassword] = useState(false);
     const [password, setPassword] = useState("");
@@ -24,13 +26,10 @@ const Profile = () => {
 
     const toast = useToast();
 
-    const [boardStatsModal, setBoardStatsModal] = useState({
-        stats: [],
-        board: {},
-        members: [],
-        open: false,
-        loadingData: false,
-    });
+    const [boardStatsOpen, setBoardStatsOpen] = useState(false);
+    const [boardStatsBoardId, setBoardStatsBoardId] = useState(
+        /** @type {string | null} */ (null),
+    );
 
     const [msg, setMsg] = useState({
         error: false,
@@ -39,9 +38,12 @@ const Profile = () => {
 
     const navigate = useNavigate();
 
-    const usernameInputRef = useRef(null);
+    const usernameInputRef = useRef(
+        /** @type {HTMLInputElement | null} */ (null),
+    );
 
     useEffect(() => {
+        /** @type {ReturnType<typeof setTimeout> | null} */
         let id = null;
         if (msg.content != "") {
             id = setTimeout(() => {
@@ -49,7 +51,7 @@ const Profile = () => {
             }, 3000);
         }
         return () => {
-            clearTimeout(id);
+            if (id) clearTimeout(id);
         };
     }, [msg]);
 
@@ -59,32 +61,31 @@ const Profile = () => {
     });
 
     const updateUsernameMutation = useMutation({
-        mutationFn: (newUsername) => updateUsername({ username: newUsername }),
+        mutationFn: /** @param {string} newUsername */ (newUsername) =>
+            updateUsername({ username: newUsername }),
         onSuccess: (_data, _variables, _context) => {
             queryClient.invalidateQueries({ queryKey: ["me"], exact: true });
-            usernameInputRef.current.value = "";
+            /** @type {HTMLInputElement} */ (usernameInputRef.current).value =
+                "";
             toast.success("Username updated");
         },
         onError: (err) => {
-            const { status } = err?.response;
-            if (status === 409 || status === 400) {
-                setMsg({
-                    error: true,
-                    content: err?.response?.data?.message,
-                });
-            } else {
-                setMsg({
-                    error: true,
-                    content: "Failed to update username",
-                });
-            }
+            const errMsg = getErrorMessage(err, "Failed to update username");
+            setMsg({
+                error: true,
+                content: errMsg,
+            });
         },
     });
 
     const updatePasswordMutation = useMutation({
-        mutationFn: ({ currentPassword, newPassword }) => {
-            return updatePassword({ currentPassword, newPassword });
-        },
+        mutationFn:
+            /** @param {{ currentPassword: string, newPassword: string }} params */ ({
+                currentPassword,
+                newPassword,
+            }) => {
+                return updatePassword({ currentPassword, newPassword });
+            },
         onSuccess: (data, _variables, _context) => {
             if (data?.notice === "PLEASE_PROVIDE_NEW_PASSWORD") {
                 setMsg({ error: true, content: "Please provide new password" });
@@ -107,10 +108,7 @@ const Profile = () => {
             toast.success("Password updated successfully");
         },
         onError: (err) => {
-            const errMsg =
-                err?.response?.status === 400
-                    ? "Current password is incorrect"
-                    : "Can't change password";
+            const errMsg = getErrorMessage(err, "Can't change password");
             setMsg({ error: true, content: errMsg });
         },
     });
@@ -122,9 +120,14 @@ const Profile = () => {
         setChangePassword(false);
     };
 
+    /**
+     * @param {React.MouseEvent<HTMLButtonElement>} e
+     */
     const handleSaveProfile = async (e) => {
         e.preventDefault();
-        const newUsername = usernameInputRef.current.value.trim();
+        const newUsername = /** @type {HTMLInputElement} */ (
+            usernameInputRef.current
+        ).value.trim();
 
         if (newUsername === "" || newUsername === currentUser.username) {
             return;
@@ -133,6 +136,9 @@ const Profile = () => {
         updateUsernameMutation.mutate(newUsername);
     };
 
+    /**
+     * @param {React.MouseEvent<HTMLButtonElement>} e
+     */
     const handleUpdatePassword = (e) => {
         e.preventDefault();
 
@@ -169,6 +175,9 @@ const Profile = () => {
         });
     };
 
+    /**
+     * @param {React.MouseEvent<HTMLButtonElement>} e
+     */
     const handleLogout = async (e) => {
         e.preventDefault();
         try {
@@ -179,6 +188,9 @@ const Profile = () => {
         }
     };
 
+    /**
+     * @param {React.MouseEvent<HTMLButtonElement>} e
+     */
     const handleLogoutOfAllDevices = async (e) => {
         e.preventDefault();
 
@@ -193,56 +205,12 @@ const Profile = () => {
         }
     };
 
-    const fetchBoardStats = async (boardId) => {
-        try {
-            const response = await axiosPrivate.get(`/boards/${boardId}/stats`);
-            return response;
-        } catch (err) {
-            throw err;
-        }
-    };
-
-    const handleOpenBoardStats = async (boardId) => {
-        try {
-            setBoardStatsModal({
-                board: {},
-                stats: [],
-                members: [],
-                open: true,
-                loadingData: true,
-            });
-
-            const response = await fetchBoardStats(boardId);
-            const { board, members, priorityLevelStats, staleCardCount } =
-                response.data;
-
-            const priorityOrder = ["none", "low", "medium", "high", "critical"];
-            priorityLevelStats.sort((a, b) => {
-                const indexA = priorityOrder.indexOf(a._id);
-                const indexB = priorityOrder.indexOf(b._id);
-                return indexA - indexB;
-            });
-
-            setBoardStatsModal((prev) => {
-                return {
-                    ...prev,
-                    board,
-                    members,
-                    stats: priorityLevelStats,
-                    staleCardCount,
-                    loadingData: false,
-                };
-            });
-        } catch (err) {
-            toast.error("Failed to load this board-stat");
-        }
-    };
-
     return (
         <>
-            <BoardStats
-                boardStatsModal={boardStatsModal}
-                setBoardStatsModal={setBoardStatsModal}
+            <BoardStatsModal
+                boardId={/** @type {string} */ (boardStatsBoardId)}
+                open={boardStatsOpen}
+                setOpen={setBoardStatsOpen}
             />
 
             <section id="profile" className="w-full h-full overflow-auto pb-8">
@@ -251,7 +219,7 @@ const Profile = () => {
                 <div className="mx-auto sm:w-3/4 w-[90%] flex flex-col items-center">
                     <span className="text-gray-600">information</span>
 
-                    <div className="box--style border-2 border-gray-700 shadow-gray-700 sm:p-4 p-3 lg:w-[450px] sm:w-[400px] w-full bg-gray-100/20">
+                    <div className="box--style border-2 border-gray-700 shadow-gray-700 sm:p-4 p-3 lg:w-112.5 sm:w-100 w-full bg-gray-100/20">
                         <div className="font-medium text-gray-700">
                             {currentUser.username}
                         </div>
@@ -432,9 +400,10 @@ const Profile = () => {
                                     return (
                                         <div
                                             key={_id}
-                                            onClick={() =>
-                                                handleOpenBoardStats(_id)
-                                            }
+                                            onClick={() => {
+                                                setBoardStatsBoardId(_id);
+                                                setBoardStatsOpen(true);
+                                            }}
                                             className="w-full h-[125px] sm:h-[150px] bg-transparent"
                                         >
                                             <div className="w-full h-[125px] sm:h-[150px] board--style board--hover border-2 md:border-[2.5px] border-gray-600 text-gray-700 py-3 px-3 shadow-gray-600 select-none bg-transparent relative">
@@ -445,7 +414,12 @@ const Profile = () => {
                                                 <div className="h-px w-full bg-black my-2"></div>
 
                                                 <p className="text-[11px] sm:text-[0.85rem] mt-3">
-                                                    lists: {item.listCount}
+                                                    lists:{" "}
+                                                    {
+                                                        /** @type {BoardListItem & { listCount: number }} */ (
+                                                            item
+                                                        ).listCount
+                                                    }
                                                 </p>
 
                                                 <p className="text-[11px] sm:text-[0.85rem] mt-1">

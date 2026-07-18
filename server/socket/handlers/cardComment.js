@@ -1,8 +1,5 @@
 import { SOCKET_EVENTS } from '../../../shared/socket-events.js';
 
-/**
- * @param {import('socket.io').Socket} socket
- */
 export default function registerCardCommentHandlers(socket) {
 
     socket.on(SOCKET_EVENTS.COMMENT_CREATE, (data) => {

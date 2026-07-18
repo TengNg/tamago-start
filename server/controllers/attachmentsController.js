@@ -1,6 +1,5 @@
 import Attachment from '../models/Attachment.js';
 import { authorize } from '../services/attachmentService.js';
-import { fileTypeFromBuffer } from 'file-type';
 
 /**
  * @param {import('express').Request} req
@@ -40,6 +39,7 @@ export const uploadAttachment = async (req, res) => {
     }
 
     if (process.env.NODE_ENV !== "test") {
+        const { fileTypeFromBuffer } = await import('file-type');
         const detectedType = await fileTypeFromBuffer(req.file.buffer);
         if (!detectedType) {
             return res.status(422).json({

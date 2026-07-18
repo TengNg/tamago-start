@@ -1,74 +1,206 @@
-import { useEffect, useState, useRef, useMemo } from "react";
-import useBoardState from "../../hooks/useBoardState";
-import Loading from "../ui/Loading";
+import {
+    useEffect,
+    useState,
+    useRef,
+    useMemo,
+    useCallback,
+    useContext,
+} from "react";
 import { useSearchParams } from "react-router-dom";
-import { axiosPrivate } from "../../api/axios";
-import useToast from "../../hooks/useToast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
+import { updateCard as updateCardApi } from "../../api/cardApi";
+import { uploadAttachment } from "../../api/attachmentApi";
+import useBoardState from "../../hooks/useBoardState";
+import useToast from "../../hooks/useToast";
+import Loading from "../ui/Loading";
 import TitleBar from "./modal/TitleBar";
 import ListSelectOptions from "./modal/ListSelectOptions";
 import Actions from "./modal/Actions";
 import Extra from "./modal/Extra";
 import Comments from "./modal/Comments";
+import { cardKeys } from "../../queries/cardKeys";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
+import { getErrorMessage } from "../../utils/getErrorMessage";
+import CardModalContext from "../../context/CardModalContext";
+import ModalStackContext from "../../context/ModalStackContext";
 
+/**
+ * @typedef {Object} CardModalProps
+ * @property {{ msg: string; processing: boolean }} processingCard
+ * @property {(card: Card) => void} handleDeleteCard
+ * @property {(card: Card) => void} handleCopyCard
+ * @property {(card: Card, newListId: string) => void} handleMoveCardToList
+ * @property {(card: Card, insertedIndex: number) => void} handleMoveCardByIndex
+ */
+
+/**
+ * @param {CardModalProps} props
+ * @returns {JSX.Element | null}
+ */
 const CardModal = ({
-    open,
-    setOpen,
     processingCard,
     handleDeleteCard,
     handleCopyCard,
     handleMoveCardToList,
     handleMoveCardByIndex,
-    abortController,
 }) => {
-    const {
-        openedCard: card,
-        boardState,
-        setOpenedCard,
-        updateCardField,
-        socket,
-    } = useBoardState();
-
-    const queryClient = useQueryClient();
-
-    const [openHighlightPicker, setOpenHighlightPicker] = useState(false);
-    const [title, setTitle] = useState("");
-    const [description, setDescription] = useState(card?.description);
-    const [cardCount, setCardCount] = useState(0);
-    const [position, setPosition] = useState(0);
-    const [isVerifying, setIsVerifying] = useState(false);
-    const [openCardDeleteConfirm, setOpenCardDeleteConfirm] = useState(false);
-    const [isSavingDescription, setIsSavingDescription] = useState(false);
-    const [isScrolledDown, setIsScrolledDown] = useState(false);
-
-    const modalRef = useRef();
-    const cardTitleInput = useRef();
-    const cardDescriptionInput = useRef();
-    const abortControllerRef = useRef(null);
-
     const [searchParams, setSearchParams] = useSearchParams();
 
+    const { boardState, updateCardField, socket } = useBoardState();
+    const { isAnyModalOpen } = useContext(ModalStackContext);
+    const { card } = useContext(CardModalContext);
+
+    const queryClient = useQueryClient();
     const toast = useToast();
 
-    const fileUploadMutation = useMutation({
-        mutationFn: async (formData) => {
-            abortControllerRef.current = new AbortController();
-            const response = await axiosPrivate.post(
-                "/attachments/upload",
-                formData,
-                {
-                    headers: { "Content-Type": "multipart/form-data" },
-                    signal: abortControllerRef.current.signal,
+    /** @type {React.MutableRefObject<HTMLDivElement | null>} */
+    const modalRef = useRef(null);
+
+    /** @type {React.MutableRefObject<HTMLTextAreaElement | null>} */
+    const cardTitleInput = useRef(null);
+
+    /** @type {React.MutableRefObject<HTMLTextAreaElement | null>} */
+    const cardDescriptionInput = useRef(null);
+
+    /** @type {React.MutableRefObject<AbortController | null>} */
+    const abortControllerRef = useRef(null);
+
+    /** @type {React.MutableRefObject<HTMLTextAreaElement | null>} */
+    const textareaRef = cardDescriptionInput;
+
+    const [title, setTitle] = useState(() => card?.title || "");
+    const [description, setDescription] = useState(
+        () => card?.description || "",
+    );
+    const [cardCount, setCardCount] = useState(() => {
+        if (!card) return 0;
+        const cards = boardState.cards[card.listId] ?? [];
+        return cards.length || 0;
+    });
+    const [position, setPosition] = useState(() => {
+        if (!card) return 0;
+        const cards = boardState.cards[card.listId] ?? [];
+        return cards.findIndex((el) => el._id === card._id);
+    });
+    const [isScrolledDown, setIsScrolledDown] = useState(false);
+
+    /** @type {{ value: string; title: string }[]} */
+    const listSelectOptions = useMemo(() => {
+        return (
+            boardState?.lists?.map((list) => {
+                return { value: list._id, title: list.title };
+            }) || []
+        );
+    }, [boardState.lists]);
+
+    const handleCancel = useCallback(() => {
+        const next = new URLSearchParams(searchParams);
+        next.delete("card");
+        next.delete("comment");
+        setSearchParams(next, { replace: true });
+        document.title = boardState.board.title || "tamago-start";
+    }, [searchParams, setSearchParams, boardState.board.title]);
+
+    useEffect(() => {
+        if (card && cardTitleInput.current && title) {
+            cardTitleInput.current.style.height = "auto";
+            cardTitleInput.current.style.height = `${cardTitleInput.current.scrollHeight}px`;
+        }
+    }, [card, title]);
+
+    useEffect(() => {
+        if (!card) {
+            return;
+        }
+
+        document.title = `[card] ${card.title}`;
+
+        const handleKeyDown = (/** @type {KeyboardEvent} */ e) => {
+            if (e.ctrlKey && e.key === "/") {
+                e.preventDefault();
+                textareaRef.current?.focus();
+            } else if (e.key === "Escape") {
+                if (!isAnyModalOpen) {
+                    handleCancel();
+                }
+            }
+        };
+
+        const handleScroll = () => {
+            if (modalRef.current) {
+                setIsScrolledDown(modalRef.current.scrollTop > 0);
+            }
+        };
+
+        const modalEl = modalRef.current;
+
+        document.addEventListener("keydown", handleKeyDown);
+        modalEl?.addEventListener("scroll", handleScroll);
+
+        return () => {
+            document.removeEventListener("keydown", handleKeyDown);
+            modalEl?.removeEventListener("scroll", handleScroll);
+        };
+    }, [card, handleCancel, isAnyModalOpen, textareaRef]);
+
+    const cardMutation = useMutation({
+        mutationFn: (
+            /** @type {{ field: CardUpdateField, value: any }} */ {
+                field,
+                value,
+            },
+        ) => updateCardApi(card._id, field, value),
+        onSuccess: (
+            data,
+            /** @type {{ field: CardUpdateField, value: any }} */ {
+                field,
+                value,
+            },
+        ) => {
+            const resolvedValue = data[field] ?? value;
+
+            updateCardField({
+                id: card._id,
+                listId: card.listId,
+                field,
+                value: resolvedValue,
+            });
+
+            queryClient.setQueryData(
+                cardKeys.detail(card._id),
+                (/** @type {Card | undefined} */ old) => {
+                    if (!old) return old;
+                    return { ...old, [field]: resolvedValue };
                 },
             );
-            return response.data;
+
+            socket.emit(SOCKET_EVENTS.CARD_UPDATE, {
+                id: card._id,
+                listId: card.listId,
+                field,
+                value: resolvedValue,
+            });
+        },
+        onError: () => {
+            toast.error("Failed to update card");
+        },
+    });
+
+    const fileUploadMutation = useMutation({
+        mutationFn: async (/** @type {FormData} */ formData) => {
+            abortControllerRef.current = new AbortController();
+            return await uploadAttachment(formData, {
+                signal: abortControllerRef.current.signal,
+            });
         },
         onSuccess: (data) => {
-            queryClient.setQueryData(["card-attachments", card._id], (old) => {
-                if (!old) return old;
-                return [...old, data];
-            });
+            queryClient.setQueryData(
+                ["card-attachments", card._id],
+                (/** @type {any[] | undefined} */ old) => {
+                    if (!old) return old;
+                    return [...old, data];
+                },
+            );
 
             toast.success("Attachment uploaded successfully");
             socket.emit(SOCKET_EVENTS.ATTACHMENT_CREATE, { attachment: data });
@@ -78,245 +210,21 @@ const CardModal = ({
                 return;
             }
 
-            const errMsg =
-                err.response?.data?.message || "Failed to upload attachment";
-            toast.error(errMsg);
+            toast.error(getErrorMessage(err, "Failed to upload attachment"));
         },
     });
 
-    useEffect(() => {
-        if (open && card && cardDescriptionInput.current) {
-            cardDescriptionInput.current.value = card?.description;
-        }
+    const handleConfirmTitle = useCallback(
+        (/** @type {React.FocusEvent<HTMLTextAreaElement>} */ e) => {
+            const newTitle = e.target.value.trim();
+            if (card?.title === newTitle || !newTitle) return;
+            cardMutation.mutate({ field: "title", value: newTitle });
+        },
+        [card, cardMutation],
+    );
 
-        if (open && card) {
-            setIsScrolledDown(false);
-            setOpenCardDeleteConfirm(false);
-
-            setTitle(card.title);
-            setDescription(card.description);
-
-            const cards = boardState.cards[card.listId];
-            const cardCount = cards?.length || 0;
-            const position = cards?.findIndex((el) => el._id === card._id) || 0;
-            setCardCount(cardCount);
-            setPosition(position);
-
-            const handleKeyDown = (e) => {
-                if (e.ctrlKey && e.key === "/") {
-                    let descTextArea = modalRef.current?.querySelector(
-                        "#card__detail__description__textarea",
-                    );
-                    if (descTextArea) {
-                        descTextArea.focus();
-                    }
-                } else if (e.key === "Escape") {
-                    const openNativeDialogs =
-                        document.querySelectorAll("dialog[open]");
-                    if (openNativeDialogs.length === 0) {
-                        handleCancel(e);
-                    }
-                    return;
-                }
-            };
-
-            const handleScroll = () => {
-                if (modalRef.current) {
-                    setIsScrolledDown(modalRef.current.scrollTop > 0);
-                }
-            };
-
-            document.addEventListener("keydown", handleKeyDown);
-            modalRef.current?.addEventListener("scroll", handleScroll);
-
-            return () => {
-                document.removeEventListener("keydown", handleKeyDown);
-                modalRef.current?.removeEventListener("scroll", handleScroll);
-                if (abortController) {
-                    abortController.abort();
-                }
-            };
-        }
-    }, [open, card]);
-
-    useEffect(() => {
-        if (open && cardTitleInput.current && card?.title) {
-            cardTitleInput.current.style.height = "auto";
-            cardTitleInput.current.style.height = `${cardTitleInput.current.scrollHeight}px`;
-        }
-    }, [open, title, card?.title]);
-
-    const listSelectOptions = useMemo(() => {
-        return (
-            boardState?.lists?.map((list) => {
-                return { value: list._id, title: list.title };
-            }) || []
-        );
-    }, [boardState?.lists]);
-
-    const handleClick = (e) => {
-        const hlPicker = modalRef.current?.querySelector(
-            "#card__detail__highlight__picker",
-        );
-        if (hlPicker && e.target != hlPicker) {
-            setOpenHighlightPicker(false);
-        }
-
-        const deleteConfirm = modalRef.current?.querySelector(
-            "#card__detail__delete__confirm",
-        );
-        if (deleteConfirm && e.target != deleteConfirm) {
-            setOpenCardDeleteConfirm(false);
-        }
-    };
-
-    const handleCancel = (e) => {
-        e.preventDefault();
-
-        setOpen(false);
-        setOpenedCard(undefined);
-
-        if (abortController) {
-            abortController.abort();
-        }
-
-        searchParams.delete("card");
-        searchParams.delete("comment");
-        setSearchParams(searchParams, { replace: true });
-
-        document.title = boardState?.board?.title || "tamago-start";
-    };
-
-    const handleCardOwnerChange = async (memberName) => {
-        try {
-            const response = await axiosPrivate.patch(
-                `/cards/${card._id}/new-owner`,
-                JSON.stringify({ ownerName: memberName }),
-            );
-            const cardOwner = response?.data?.newCard?.owner || "";
-
-            updateCardField({
-                id: card._id,
-                listId: card.listId,
-                field: "owner",
-                value: cardOwner,
-            });
-
-            setOpenedCard((prev) => {
-                return { ...prev, owner: cardOwner };
-            });
-
-            socket.emit(SOCKET_EVENTS.CARD_UPDATE_OWNER, {
-                cardId: card._id,
-                listId: card.listId,
-                username: cardOwner,
-            });
-        } catch (err) {
-            toast.error("Failed to update owner");
-        }
-    };
-
-    const handleCardPriorityLevelChange = async (value) => {
-        try {
-            const response = await axiosPrivate.patch(
-                `/cards/${card._id}/new-priority`,
-                JSON.stringify({ priorityLevel: value }),
-            );
-            const priorityLevel =
-                response?.data?.newCard?.priorityLevel || "none";
-
-            updateCardField({
-                id: card._id,
-                listId: card.listId,
-                field: "priorityLevel",
-                value: priorityLevel,
-            });
-
-            setOpenedCard((prev) => {
-                return { ...prev, priorityLevel };
-            });
-
-            socket.emit(SOCKET_EVENTS.CARD_UPDATE_PRIORITY, {
-                cardId: card._id,
-                listId: card.listId,
-                priorityLevel,
-            });
-        } catch (err) {
-            toast.error("Failed to update priority-level");
-        }
-    };
-
-    const handleMoveCardOnListOptionChanged = (e) => {
-        const newListId = e.target.value;
-        handleMoveCardToList(card, newListId);
-
-        const cards = boardState.cards[newListId] || [];
-        setCardCount(cards?.length + 1 || 0);
-        setPosition(cards?.length);
-    };
-
-    const handleToggleVerified = async () => {
-        if (isVerifying) {
-            return;
-        }
-
-        try {
-            setIsVerifying(true);
-            const response = await axiosPrivate.patch(
-                `/cards/${card._id}/toggle-verified`,
-            );
-            const { verified } = response.data;
-
-            updateCardField({
-                id: card._id,
-                listId: card.listId,
-                field: "verified",
-                value: verified,
-            });
-
-            socket.emit(SOCKET_EVENTS.CARD_UPDATE_VERIFIED, {
-                id: card._id,
-                listId: card.listId,
-                verified,
-            });
-        } catch (err) {
-            toast.error("Failed to toggle verified");
-        } finally {
-            setIsVerifying(false);
-        }
-    };
-
-    const handleChangeDueDate = async (value) => {
-        try {
-            const response = await axiosPrivate.patch(
-                `/cards/${card._id}/new-due-date`,
-                JSON.stringify({ dueDate: value }),
-            );
-            const { dueDate } = response.data;
-
-            setOpenedCard((prev) => {
-                return { ...prev, dueDate };
-            });
-
-            updateCardField({
-                id: card._id,
-                listId: card.listId,
-                field: "dueDate",
-                value: dueDate,
-            });
-
-            socket.emit(SOCKET_EVENTS.CARD_UPDATE_DUE_DATE, {
-                id: card._id,
-                listId: card.listId,
-                dueDate,
-            });
-        } catch (err) {
-            toast.error("Failed to update due date");
-        }
-    };
-
-    const confirmDescription = async () => {
-        if (card?.description == description) {
+    const handleConfirmDescription = useCallback(() => {
+        if (card.description === description) {
             return;
         }
 
@@ -327,162 +235,76 @@ const CardModal = ({
             return;
         }
 
-        setIsSavingDescription(true);
-        try {
-            await axiosPrivate.patch(
-                `/cards/${card._id}/new-description`,
-                JSON.stringify({ description }),
-            );
+        cardMutation.mutate({ field: "description", value: description });
+    }, [card, description, cardMutation, toast]);
 
-            updateCardField({
-                id: card._id,
-                listId: card.listId,
-                field: "description",
-                value: description,
-            });
+    const handleMoveCardOnListOptionChanged = useCallback(
+        (/** @type {React.ChangeEvent<HTMLSelectElement>} */ e) => {
+            const newListId = e.target.value;
+            handleMoveCardToList(card, newListId);
 
-            socket.emit(SOCKET_EVENTS.CARD_UPDATE_DESCRIPTION, {
-                id: card._id,
-                listId: card.listId,
-                description,
-            });
+            const cards = boardState.cards[newListId] || [];
+            setCardCount(cards?.length + 1 || 0);
+            setPosition(cards?.length);
+        },
+        [card, handleMoveCardToList, boardState.cards],
+    );
 
-            setOpenedCard((prev) => {
-                return { ...prev, description };
-            });
-        } catch (err) {
-            toast.error("Failed to save description");
-        } finally {
-            setIsSavingDescription(false);
-        }
-    };
+    const handleMoveByIndex = useCallback(
+        (/** @type {React.ChangeEvent<HTMLSelectElement>} */ e) => {
+            const insertedIndex = Number(e.target.value);
 
-    const confirmTitle = async (e) => {
-        if (card.title === e.target.value.trim()) {
-            return;
-        }
+            if (isNaN(insertedIndex)) return;
 
-        if (!e.target.value) {
-            return;
-        }
+            handleMoveCardByIndex(card, insertedIndex);
+            setPosition(insertedIndex);
+        },
+        [card, handleMoveCardByIndex],
+    );
 
-        try {
-            await axiosPrivate.patch(
-                `/cards/${card._id}/new-title`,
-                JSON.stringify({ title: e.target.value.trim() }),
-            );
-
-            updateCardField({
-                id: card._id,
-                listId: card.listId,
-                field: "title",
-                value: e.target.value,
-            });
-
-            socket.emit(SOCKET_EVENTS.CARD_UPDATE_TITLE, {
-                id: card._id,
-                listId: card.listId,
-                title: e.target.value.trim(),
-            });
-        } catch (err) {
-            toast.error("Failed to update title");
-        }
-    };
-
-    const deleteCard = () => {
+    const handleDeleteCardLocal = useCallback(() => {
         handleDeleteCard(card);
-        setOpen(false);
-    };
+        handleCancel();
+    }, [card, handleDeleteCard, handleCancel]);
 
-    const copyCard = () => {
+    const handleCopyCardLocal = useCallback(() => {
         handleCopyCard(card);
-    };
+    }, [card, handleCopyCard]);
 
-    const moveByIndex = (e) => {
-        const insertedIndex = e.target.value;
-
-        if (!insertedIndex) {
-            return;
-        }
-
-        handleMoveCardByIndex(card, insertedIndex);
-        setPosition(insertedIndex);
-    };
-
-    const paste = (e) => {
-        const items = e.clipboardData?.items || [];
-        let attachmentFile = null;
-        for (let i = 0; i < items.length; i++) {
-            const item = items[i];
-            if (item.kind === "file" && item.type.startsWith("image/")) {
-                const file = item.getAsFile();
-                if (file) {
-                    attachmentFile = item.getAsFile();
-                    break;
+    const handlePaste = useCallback(
+        (/** @type {React.ClipboardEvent<HTMLTextAreaElement>} */ e) => {
+            const items = e.clipboardData?.items || [];
+            let attachmentFile = null;
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                if (item.kind === "file" && item.type.startsWith("image/")) {
+                    const file = item.getAsFile();
+                    if (file) {
+                        attachmentFile = file;
+                        break;
+                    }
                 }
             }
-        }
 
-        if (!attachmentFile) {
-            return;
-        }
+            if (!attachmentFile) return;
 
-        e.preventDefault();
+            e.preventDefault();
 
-        const pastedFile = new File(
-            [attachmentFile],
-            `pasted-${Date.now()}.${attachmentFile.type.split("/")[1] || "png"}`,
-            { type: attachmentFile.type },
-        );
+            const pastedFile = new File(
+                [attachmentFile],
+                `pasted-${Date.now()}.${attachmentFile.type.split("/")[1] || "png"}`,
+                { type: attachmentFile.type },
+            );
 
-        const formData = new FormData();
-        formData.append("attachment", pastedFile);
-        formData.append("docModel", "Card");
-        formData.append("doc", card._id);
+            const formData = new FormData();
+            formData.append("attachment", pastedFile);
+            formData.append("docModel", "Card");
+            formData.append("doc", card._id);
 
-        fileUploadMutation.mutate(formData);
-    };
-
-    if (!open) {
-        return null;
-    }
-
-    if (!card) {
-        return (
-            <div
-                className="fixed inset-0 z-40 bg-black/15 flex items-center justify-center"
-                onClick={handleCancel}
-            >
-                <div
-                    className="overflow-y-auto overflow-x-hidden box--style text-gray-600 p-3 gap-3 pb-4 w-87.5 h-87.5 border-gray-600 border-2 bg-gray-200"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <div className="w-full h-75 text-center flex flex-col items-center justify-center">
-                        <span>getting card data</span>
-                        <div className="loader mx-auto mt-8"></div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    if (card?.failedToLoad && card?.errMsg) {
-        return (
-            <div
-                className="fixed inset-0 z-40 bg-black/15 flex items-center justify-center"
-                onClick={handleCancel}
-            >
-                <div
-                    className="overflow-y-auto overflow-x-hidden box--style text-gray-600 p-3 gap-3 pb-4 w-87.5 h-87.5 border-gray-600 border-2 bg-gray-200"
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    <div className="w-full h-75 text-center flex flex-col items-center justify-center">
-                        <span>{card?.errMsg}</span>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+            fileUploadMutation.mutate(formData);
+        },
+        [card, fileUploadMutation],
+    );
 
     return (
         <div
@@ -491,15 +313,8 @@ const CardModal = ({
         >
             <div
                 ref={modalRef}
-                className="full-in-small-screen bg-[rgb(var(--card-item-bg))] p-0 overflow-y-auto overflow-x-hidden box--style gap-3 min-w-87.5 w-[90%] xl:w-200 md:w-[80%] h-fit max-h-[90%]"
-                style={{
-                    boxShadow: "6px 8px 0 0 #4b5563",
-                    border: "3px solid #4b5563",
-                }}
-                onClick={(e) => {
-                    e.stopPropagation();
-                    handleClick(e);
-                }}
+                className="full-in-small-screen bg-[rgb(var(--card-item-bg))] border-3 border-gray-700 shadow-[6px_8px_0_0] shadow-gray-700 p-0 overflow-y-auto overflow-x-hidden gap-3 min-w-87.5 w-[90%] xl:w-200 md:w-[80%] h-fit max-h-[90%]"
+                onClick={(e) => e.stopPropagation()}
             >
                 <div className="bg-[rgb(var(--card-item-bg))] relative w-full h-fit flex flex-col min-h-152 md:min-h-176">
                     <Loading
@@ -518,8 +333,8 @@ const CardModal = ({
                         setTitle={setTitle}
                         card={card}
                         cardTitleInput={cardTitleInput}
-                        confirmTitle={confirmTitle}
-                        handleCancel={handleCancel}
+                        confirmTitle={handleConfirmTitle}
+                        cancel={handleCancel}
                         isScrolledDown={isScrolledDown}
                     />
 
@@ -530,52 +345,80 @@ const CardModal = ({
                             handleMoveCardOnListOptionChanged={
                                 handleMoveCardOnListOptionChanged
                             }
-                            moveByIndex={moveByIndex}
+                            moveByIndex={handleMoveByIndex}
                             cardCount={cardCount}
                             position={position}
                         />
 
-                        <div className="w-full flex flex-wrap border-b border-t py-4 gap-3 border-black z-20">
+                        <div className="w-full flex flex-wrap gap-3 border-black z-20">
                             <div className="relative w-full">
                                 <textarea
                                     ref={cardDescriptionInput}
-                                    id="card__detail__description__textarea"
-                                    className="overflow-y-auto border-2 shadow-[0_2px_0_0] border-gray-600 shadow-gray-600 min-h-62.5 wrap-break-word box-border text-sm py-2 px-3 w-full text-gray-600 bg-gray-100 leading-normal font-medium placeholder-gray-400 focus:outline-hidden"
+                                    className="overflow-y-auto border-2 shadow-[0_2px_0_0] border-gray-600 shadow-gray-600 min-h-55 wrap-break-word box-border text-sm py-2 px-3 w-full text-gray-600 bg-gray-100 leading-normal font-medium placeholder-gray-400 focus:outline-hidden"
                                     placeholder={"add description..."}
                                     value={description}
                                     onChange={(e) =>
                                         setDescription(e.target.value)
                                     }
-                                    onPaste={paste}
+                                    onPaste={handlePaste}
                                 />
                             </div>
 
                             <Actions
                                 card={card}
                                 description={description}
-                                isSavingDescription={isSavingDescription}
-                                confirmDescription={confirmDescription}
-                                openHighlightPicker={openHighlightPicker}
-                                setOpenHighlightPicker={setOpenHighlightPicker}
-                                copyCard={copyCard}
-                                isVerifying={isVerifying}
-                                handleToggleVerified={handleToggleVerified}
-                                openCardDeleteConfirm={openCardDeleteConfirm}
-                                setOpenCardDeleteConfirm={
-                                    setOpenCardDeleteConfirm
+                                isSavingDescription={
+                                    cardMutation.isPending &&
+                                    cardMutation.variables.field ===
+                                        "description"
                                 }
-                                deleteCard={deleteCard}
+                                confirmDescription={handleConfirmDescription}
+                                copyCard={handleCopyCardLocal}
+                                isVerifying={
+                                    cardMutation.isPending &&
+                                    cardMutation.variables.field === "verified"
+                                }
+                                handleToggleVerified={() =>
+                                    cardMutation.mutate({
+                                        field: "verified",
+                                        value: !card.verified,
+                                    })
+                                }
+                                deleteCard={handleDeleteCardLocal}
+                                onHighlightChange={(
+                                    /** @type {string | null} */ value,
+                                ) =>
+                                    cardMutation.mutate({
+                                        field: "highlight",
+                                        value,
+                                    })
+                                }
                             />
                         </div>
 
                         <Extra
                             card={card}
-                            listSelectOptions={listSelectOptions}
-                            handleCardOwnerChange={handleCardOwnerChange}
-                            handleCardPriorityLevelChange={
-                                handleCardPriorityLevelChange
+                            handleCardOwnerChange={(
+                                /** @type {string} */ name,
+                            ) =>
+                                cardMutation.mutate({
+                                    field: "owner",
+                                    value: name,
+                                })
                             }
-                            handleChangeDueDate={handleChangeDueDate}
+                            handleCardPriorityLevelChange={(
+                                /** @type {string} */ value,
+                            ) =>
+                                cardMutation.mutate({
+                                    field: "priorityLevel",
+                                    value,
+                                })
+                            }
+                            handleCardDueDateChange={(
+                                /** @type {string} */ value,
+                            ) =>
+                                cardMutation.mutate({ field: "dueDate", value })
+                            }
                         />
 
                         <Comments card={card} />

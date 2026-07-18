@@ -18,19 +18,29 @@ import {
 import { createPortal } from "react-dom";
 import Card from "../card/Card";
 import { useMouseDragScroll } from "../../hooks/useMouseDragScroll";
-import { axiosPrivate } from "../../api/axios";
+import { reorderList } from "../../api/listApi";
+import { reorderCard } from "../../api/cardApi";
 import useToast from "../../hooks/useToast";
 import { useKeybind } from "../../hooks/useKeybind";
 import { kb } from "../../constants/keybinds";
 import { BOARD_ACTIONS } from "../../state/boardActionTypes";
 import { SOCKET_EVENTS } from "@shared/socket-events.js";
+import { getErrorMessage } from "../../utils/getErrorMessage";
 
 const ListContainer = () => {
     const { boardState, dispatch, setOpenAddList, socket } = useBoardState();
-    const [clonedBoardState, setClonedBoardState] = useState(null);
 
-    const [activeList, setActiveList] = useState(undefined);
-    const [activeCard, setActiveCard] = useState(undefined);
+    const [clonedBoardState, setClonedBoardState] = useState(
+        /** @type {BoardState | null} */ (null),
+    );
+
+    const [activeList, setActiveList] = useState(
+        /** @type {List | null} */ (null),
+    );
+
+    const [activeCard, setActiveCard] = useState(
+        /** @type {(Card & { srcIndex: number }) | null} */ (null),
+    );
 
     const toast = useToast();
 
@@ -70,6 +80,7 @@ const ListContainer = () => {
         setOpenAddList((prev) => !prev);
     });
 
+    /** @param {import("@dnd-kit/core").DragEndEvent} e */
     async function handleOnDragEnd(e) {
         setActiveCard(null);
         setActiveList(null);
@@ -81,15 +92,16 @@ const ListContainer = () => {
 
         const activeData = active.data.current;
         const overData = over.data.current;
+        if (!activeData || !overData) return;
         const activeType = activeData.type;
         const overType = overData.type;
 
         if (activeType === "list") {
             let overId = "";
             if (overType === "list") {
-                overId = over.id;
+                overId = /** @type {string} */ (over.id);
             } else if (overType === "card") {
-                overId = over.data.current.card.listId;
+                overId = /** @type {string} */ (over.data.current?.card.listId);
             }
 
             const srcIndex = boardState.lists.findIndex(
@@ -124,23 +136,19 @@ const ListContainer = () => {
                     payload: { lists: newLists },
                 });
 
-                await axiosPrivate.patch(
-                    `/lists/${removed._id}/reorder`,
-                    JSON.stringify({
-                        rank,
-                        sourceIndex: srcIndex,
-                        destinationIndex: destIndex,
-                    }),
-                );
+                await reorderList(removed._id, {
+                    rank,
+                    sourceIndex: srcIndex,
+                    destinationIndex: destIndex,
+                });
 
                 socket.emit(SOCKET_EVENTS.LIST_MOVE, {
-                    listId: removed._id,
+                    id: removed._id,
                     fromIndex: srcIndex,
                     toIndex: destIndex,
                 });
             } catch (err) {
-                const errMsg =
-                    err.response.data.message || "Failed to reorder list";
+                const errMsg = getErrorMessage(err, "Failed to reorder list");
                 toast.error(errMsg);
                 dispatch({
                     type: BOARD_ACTIONS.SET_STATE,
@@ -162,7 +170,7 @@ const ListContainer = () => {
             return;
         }
 
-        const activeId = active.id;
+        const activeId = /** @type {string} */ (active.id);
         const activeListId = activeData.card.listId;
 
         const cards = [...boardState.cards[activeListId]];
@@ -183,6 +191,7 @@ const ListContainer = () => {
 
         // drag to the same list, and same position
         if (
+            activeCard &&
             activeCard.listId === activeListId &&
             activeCard.srcIndex === activeIndex
         ) {
@@ -190,18 +199,14 @@ const ListContainer = () => {
         }
 
         try {
-            const response = await axiosPrivate.patch(
-                `/cards/${activeId}/reorder`,
-                JSON.stringify({
-                    rank,
-                    listId: activeListId,
-                    timestamp: new Date(),
-                    oldPos: activeCard.srcIndex + 1,
-                    newPos: activeIndex + 1,
-                }),
-            );
+            const data = await reorderCard(activeId, {
+                rank,
+                listId: activeListId,
+                oldPos: activeCard ? activeCard.srcIndex + 1 : 0,
+                newPos: activeIndex + 1,
+            });
 
-            const newCard = response.data.newCard;
+            const newCard = data.newCard;
             dispatch({
                 type: BOARD_ACTIONS.SET_CARD,
                 payload: {
@@ -213,14 +218,13 @@ const ListContainer = () => {
             });
 
             socket.emit(SOCKET_EVENTS.CARD_MOVE_TO_LIST, {
-                oldListId: response.data.oldListId,
+                oldListId: data.oldListId,
                 newListId: newCard.listId,
                 insertedIndex: activeIndex,
                 card: newCard,
             });
         } catch (err) {
-            const errMsg =
-                err.response.data.message || "Failed to reorder card";
+            const errMsg = getErrorMessage(err, "Failed to reorder card");
             toast.error(errMsg);
             dispatch({
                 type: BOARD_ACTIONS.SET_STATE,
@@ -229,11 +233,13 @@ const ListContainer = () => {
         }
     }
 
+    /** @param {import("@dnd-kit/core").DragOverEvent} e */
     function handleOnDragOver(e) {
         const { active, over } = e;
+        if (!over) return;
 
         const activeId = active.id;
-        const overId = over?.id;
+        const overId = over.id;
 
         if (overId == null || activeId == overId) {
             return;
@@ -247,8 +253,10 @@ const ListContainer = () => {
         }
 
         if (isActiveTypeCard && isOverACard) {
-            const activeListId = active.data.current.card.listId;
-            const overListId = over.data.current.card.listId;
+            const activeListId = active.data.current?.card.listId;
+            const overListId = over.data.current?.card.listId;
+
+            if (!activeListId || !overListId) return;
 
             if (activeListId === overListId) {
                 if (!boardState.cards[activeListId]) {
@@ -259,7 +267,14 @@ const ListContainer = () => {
                 const activeIndex = newCards.findIndex(
                     (c) => c._id === activeId,
                 );
+                if (activeIndex === -1) {
+                    return;
+                }
+
                 const overIndex = newCards.findIndex((c) => c._id === overId);
+                if (overIndex === -1) {
+                    return;
+                }
 
                 const [removed] = newCards.splice(activeIndex, 1);
                 newCards.splice(overIndex, 0, removed);
@@ -323,22 +338,30 @@ const ListContainer = () => {
         if (isActiveTypeCard && isOverAList) {
             const newLists = [...boardState.lists];
 
-            const overList = newLists.find((l) => l._id === over.id);
+            const overList = newLists.find(
+                (l) => l._id === /** @type {string} */ (over.id),
+            );
             if (!overList) {
                 return;
             }
 
-            const activeListId = active.data.current.card.listId;
-            if (!boardState.cards[over.id] || !boardState.cards[activeListId]) {
+            const activeListId = active.data.current?.card.listId;
+            if (!activeListId) {
                 return;
             }
 
-            if (activeListId === over.id) {
+            const overId = /** @type {string} */ (over.id);
+
+            if (!boardState.cards[overId] || !boardState.cards[activeListId]) {
+                return;
+            }
+
+            if (activeListId === overId) {
                 return;
             }
 
             const newActiveCards = [...boardState.cards[activeListId]];
-            const newOverCards = [...boardState.cards[over.id]];
+            const newOverCards = [...boardState.cards[overId]];
 
             const activeIndex = newActiveCards.findIndex(
                 (c) => c._id === active.id,
@@ -354,13 +377,14 @@ const ListContainer = () => {
                     cards: {
                         ...boardState.cards,
                         [activeListId]: newActiveCards,
-                        [over.id]: newOverCards,
+                        [overId]: newOverCards,
                     },
                 },
             });
         }
     }
 
+    /** @param {import("@dnd-kit/core").DragStartEvent} e */
     function handleOnDragStart(e) {
         setActiveCard(null);
         setActiveList(null);
@@ -438,13 +462,14 @@ const ListContainer = () => {
                 <DragOverlay>
                     {activeList && (
                         <List
+                            index={-1}
                             list={activeList}
                             cards={boardState.cards[activeList._id]}
                         />
                     )}
                     {activeCard && <Card card={activeCard} />}
                 </DragOverlay>,
-                document.getElementById("root"),
+                /** @type {Element} */ (document.getElementById("root")),
             )}
         </DndContext>
     );

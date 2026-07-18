@@ -1,8 +1,24 @@
-import { useRef, useEffect } from "react";
+import { useContext, useRef } from "react";
 import dateFormatter from "../../utils/dateFormatter";
 import useBoardState from "../../hooks/useBoardState";
 import Icon from "../shared/Icon";
+import useClickOutside from "../../hooks/useClickOutside";
+import { useKeybind } from "../../hooks/useKeybind";
+import ModalStackContext from "../../context/ModalStackContext";
 
+/**
+ * @typedef {Object} ListMenuProps
+ * @property {List} list
+ * @property {boolean} open
+ * @property {React.Dispatch<React.SetStateAction<boolean>>} setOpen
+ * @property {() => Promise<void>} handleDelete
+ * @property {(id: string) => Promise<void>} handleCopy
+ * @property {{ msg: string; processing: boolean }} processingList
+ */
+
+/**
+ * @param {ListMenuProps} props
+ */
 export default function ListMenu({
     list,
     open,
@@ -11,8 +27,6 @@ export default function ListMenu({
     handleCopy,
     processingList,
 }) {
-    const containerRef = useRef();
-
     const {
         boardState,
         setListToMove,
@@ -21,38 +35,18 @@ export default function ListMenu({
         theme,
     } = useBoardState();
 
-    useEffect(() => {
-        containerRef.current.focus();
-        const abortController = new AbortController();
+    const { isAnyModalOpen } = useContext(ModalStackContext);
 
-        window.addEventListener(
-            "keydown",
-            (e) => {
-                if (e.key === "Escape" && open) {
-                    setOpen(false);
-                }
-            },
-            { signal: abortController.signal },
-        );
+    /** @type {React.MutableRefObject<HTMLDivElement | null>} */
+    const containerRef = useRef(null);
 
-        window.addEventListener(
-            "mousedown",
-            (e) => {
-                if (
-                    containerRef.current &&
-                    !containerRef.current.contains(e.target) &&
-                    collapse
-                ) {
-                    setOpen(false);
-                }
-            },
-            { signal: abortController.signal },
-        );
+    useKeybind("esc", () => {
+        if (open && !isAnyModalOpen) setOpen(false);
+    });
 
-        return () => {
-            abortController.abort();
-        };
-    }, []);
+    useClickOutside(containerRef, () => {
+        if (open && !isAnyModalOpen) setOpen(false);
+    });
 
     const del = () => {
         handleDelete();
@@ -80,7 +74,7 @@ export default function ListMenu({
     return (
         <div
             ref={containerRef}
-            className={`list__menu absolute top-0 left-0 outline-hidden z-11 border-gray-700 border-2 w-full py-2 px-3 ${theme.itemTheme == "rounded-sm" ? "rounded-md" : ""}`}
+            className={`list__menu absolute top-0 left-0 outline-hidden z-11 border-gray-700 border-2 border-b-5 w-full py-2 px-3 ${theme.itemTheme == "rounded-sm" ? "rounded-md" : ""}`}
         >
             <button
                 className="absolute right-3 top-2.5 text-gray-600 flex justify-center items-center"

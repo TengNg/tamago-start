@@ -1,3 +1,17 @@
+/**
+ * @typedef {Object} LoadingProps
+ * @property {"fixed" | "absolute" | "relative" | "sticky"} [position="fixed"]
+ * @property {boolean} loading
+ * @property {string} [displayText="Loading..."]
+ * @property {string} [fontSize="1.25rem"]
+ * @property {string | number} [zIndex="50"]
+ * @property {string} [displayTextClassName=""]
+ * @property {boolean} [withLoader=false]
+ */
+
+/**
+ * @param {LoadingProps} props
+ */
 const Loading = ({
     position = "fixed",
     loading,

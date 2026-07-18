@@ -114,7 +114,7 @@ const addPinnedBoard = async (req, res) => {
             { $unset: { [`pinnedBoardIdCollection.${id}`]: 1 } },
             { new: true }
         ).select('pinnedBoardIdCollection');
-        return res.status(200).json({ result });
+        return res.status(200).json({ pinnedBoards: result.pinnedBoardIdCollection });
     }
 
     const result = await User.findOneAndUpdate(
@@ -122,7 +122,8 @@ const addPinnedBoard = async (req, res) => {
         { $set: { [`pinnedBoardIdCollection.${id}`]: { title: foundBoard?.title } } },
         { new: true, upsert: true }
     ).select('pinnedBoardIdCollection');
-    return res.status(200).json({ result });
+
+    return res.status(200).json({ pinnedBoards: result.pinnedBoardIdCollection });
 };
 
 /**
@@ -144,7 +145,7 @@ const deletePinnedBoard = async (req, res) => {
             { $unset: { [`pinnedBoardIdCollection.${id}`]: 1 } },
             { new: true }
         ).select('pinnedBoardIdCollection');
-        return res.status(200).json({ result });
+        return res.status(200).json({ pinnedBoards: result.pinnedBoardIdCollection });
     }
 
     return res.sendStatus(404);
@@ -161,7 +162,7 @@ const updatePinnedBoards = async (req, res) => {
     const foundUser = await User.findById(userId);
     if (JSON.stringify(foundUser.pinnedBoardIdCollection) === JSON.stringify(pinnedBoards)) {
         return res.status(200).json({
-            result: foundUser.pinnedBoardIdCollection,
+            pinnedBoards: foundUser.pinnedBoardIdCollection,
         });
     }
 
@@ -171,7 +172,7 @@ const updatePinnedBoards = async (req, res) => {
         { new: true }
     ).select('pinnedBoardIdCollection');
 
-    return res.status(200).json({ result });
+    return res.status(200).json({ pinnedBoards: result.pinnedBoardIdCollection });
 };
 
 /**
@@ -180,13 +181,13 @@ const updatePinnedBoards = async (req, res) => {
  */
 const cleanPinnedBoards = async (req, res) => {
     const { userId } = req.user;
-    const result = await User.findOneAndUpdate(
+    await User.findOneAndUpdate(
         { _id: userId },
         { pinnedBoardIdCollection: {} },
         { new: true }
     ).select('pinnedBoardIdCollection');
 
-    return res.status(200).json({ result });
+    return res.sendStatus(204);
 };
 
 export {

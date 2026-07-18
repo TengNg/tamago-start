@@ -1,19 +1,32 @@
 import { useEffect, useCallback, useRef } from "react";
 
+/**
+ * @returns {{
+ *   ref: (node: HTMLElement | null) => void,
+ *   scrollEl: React.MutableRefObject<HTMLElement | null>
+ * }}
+ */
 export const useMouseDragScroll = () => {
+    /** @type {React.MutableRefObject<HTMLElement | null>} */
     const elRef = useRef(null);
 
+    /** @type {(node: HTMLElement | null) => void} */
     const refCallback = useCallback((node) => {
         elRef.current = node;
     }, []);
 
+    /** @type {(e: MouseEvent) => void} */
     const handleMouseDown = useCallback((e) => {
         const el = elRef.current;
         if (!el) return;
 
         if (
             e.target !== el &&
-            !e.target.classList.contains("list__item__wrapper")
+            !(
+                /** @type {HTMLElement} */ (e.target).classList.contains(
+                    "list__item__wrapper",
+                )
+            )
         ) {
             return;
         }
@@ -25,6 +38,7 @@ export const useMouseDragScroll = () => {
             y: e.clientY,
         };
 
+        /** @param {MouseEvent} e */
         const handleMouseMove = (e) => {
             const dx = e.clientX - startPos.x;
             const dy = e.clientY - startPos.y;

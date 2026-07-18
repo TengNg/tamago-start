@@ -1,11 +1,16 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useContext } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import dateFormatter from "../../utils/dateFormatter";
 import Icon from "../shared/Icon";
-import useCurrentUserContext from "../../hooks/useCurrentUserContext";
+import useAuth from "../../hooks/useAuth";
+import { useKeybind } from "../../hooks/useKeybind";
+import ModalStackContext from "../../context/ModalStackContext";
+import useClickOutside from "../../hooks/useClickOutside";
 
 const UserAccount = () => {
-    const { currentUser, logout } = useCurrentUserContext();
+    const { currentUser, logout } = useAuth();
+
+    const { isAnyModalOpen } = useContext(ModalStackContext);
 
     const [collapse, setCollapse] = useState(true);
 
@@ -14,47 +19,36 @@ const UserAccount = () => {
     const location = useLocation();
     const { pathname } = location;
 
-    const userProfileImageRef = useRef();
-    const userInfoRef = useRef();
-    const containerRef = useRef();
+    /** @type {React.MutableRefObject<HTMLDivElement | null>} */
+    const userProfileImageRef = useRef(null);
 
-    useEffect(() => {
-        const abortController = new AbortController();
+    /** @type {React.MutableRefObject<HTMLDivElement | null>} */
+    const userInfoRef = useRef(null);
 
-        window.addEventListener(
-            "keydown",
-            (e) => {
-                if (e.key === "Escape" && collapse) {
-                    setCollapse(true);
-                }
-            },
-            { signal: abortController.signal },
-        );
+    /** @type {React.MutableRefObject<HTMLDivElement | null>} */
+    const containerRef = useRef(null);
 
-        window.addEventListener(
-            "mousedown",
-            (e) => {
-                if (
-                    containerRef.current &&
-                    !containerRef.current.contains(e.target) &&
-                    collapse
-                ) {
-                    setCollapse(true);
-                }
-            },
-            { signal: abortController.signal },
-        );
+    useKeybind("esc", () => {
+        if (!collapse && !isAnyModalOpen) {
+            setCollapse(true);
+        }
+    });
 
-        return () => {
-            abortController.abort();
-        };
-    }, []);
+    useClickOutside(containerRef, () => {
+        if (!collapse && !isAnyModalOpen) {
+            setCollapse(true);
+        }
+    });
 
     const handleLogout = async () => {
         await logout();
         navigate("/login");
         setCollapse(true);
     };
+
+    if (!currentUser) {
+        return null;
+    }
 
     return (
         <>
@@ -97,11 +91,11 @@ const UserAccount = () => {
 
                                 <div className="h-px w-full bg-gray-400"></div>
 
-                                <div className="select-none font-medium text-[0.8rem] max-w-[200px] overflow-hidden whitespace-nowrap text-ellipsis text-gray-700">
+                                <div className="select-none font-medium text-[0.8rem] max-w-50 overflow-hidden whitespace-nowrap text-ellipsis text-gray-700">
                                     username: {currentUser.username}
                                 </div>
 
-                                <div className="select-none font-medium text-[0.8rem] max-w-[200px] overflow-hidden whitespace-nowrap text-ellipsis text-gray-700">
+                                <div className="select-none font-medium text-[0.8rem] max-w-50 overflow-hidden whitespace-nowrap text-ellipsis text-gray-700">
                                     joined:{" "}
                                     {dateFormatter(currentUser.createdAt, {
                                         withTime: false,

@@ -9,10 +9,18 @@ import {
     UNAUTHORIZED_KEYS,
 } from "../../constants/pages";
 import Icon from "../shared/Icon";
-import useCurrentUserContext from "../../hooks/useCurrentUserContext";
+import useAuth from "../../hooks/useAuth";
 
+/**
+ * @typedef {Object} NavBarProps
+ * @property {React.Dispatch<React.SetStateAction<boolean>>} setOpenPinnedBoards
+ */
+
+/**
+ * @param {NavBarProps} props
+ */
 const NavBar = ({ setOpenPinnedBoards }) => {
-    const { currentUser } = useCurrentUserContext();
+    const { currentUser } = useAuth();
 
     const navigate = useNavigate();
     const { pathname } = useLocation();
@@ -20,6 +28,7 @@ const NavBar = ({ setOpenPinnedBoards }) => {
     const isBoardPath = pathname.startsWith("/b/");
 
     useEffect(() => {
+        /** @param {KeyboardEvent} e */
         const handleOnKeyDown = (e) => {
             const isTextFieldFocused = document.querySelector(
                 "input:focus, textarea:focus",
@@ -34,13 +43,16 @@ const NavBar = ({ setOpenPinnedBoards }) => {
                 (activeElement.tagName === "INPUT" ||
                     activeElement.tagName === "TEXTAREA" ||
                     activeElement.tagName === "SELECT" ||
-                    activeElement.isContentEditable ||
                     activeElement.getAttribute("contenteditable") === "true");
             if (isInputFocused) {
                 return;
             }
 
             if (e.key === "5") {
+                if (!currentUser) {
+                    return;
+                }
+
                 const recentlyViewedBoardId = currentUser.recentlyViewedBoardId;
                 if (recentlyViewedBoardId) {
                     navigate(`/b/${recentlyViewedBoardId}`);
@@ -49,8 +61,13 @@ const NavBar = ({ setOpenPinnedBoards }) => {
             }
 
             const keys = !currentUser ? UNAUTHORIZED_KEYS : AUTHORIZED_KEYS;
-            const path = keys[e.key]?.path;
-            if (!path) return;
+            const key = /** @type {keyof typeof keys} */ (
+                /** @type {unknown} */ (e.key)
+            );
+            const path = keys[key]?.path;
+            if (!path) {
+                return;
+            }
 
             navigate(path, { state: { from: path } });
         };
@@ -140,7 +157,7 @@ const NavBar = ({ setOpenPinnedBoards }) => {
                     )}
                     <button
                         className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border border-dashed text-[0.75rem] md:p-2 p-1 font-medium cursor-pointer"
-                        title="[C-E] Open your pinned boards"
+                        title="[C-p] Open your pinned boards"
                         onClick={() => {
                             setOpenPinnedBoards(true);
                         }}

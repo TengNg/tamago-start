@@ -26,4 +26,11 @@ export const boardKeys = {
     activities: (boardId) => {
         return ["boards", "detail", boardId, "activities"];
     },
+
+    /**
+     * @param {string} boardId
+     */
+    listCount: (boardId) => {
+        return ["boards", "detail", boardId, "listCount"];
+    },
 };

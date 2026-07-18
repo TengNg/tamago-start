@@ -25,12 +25,16 @@ const DOC_COLORS = {
     },
 };
 
+/** @param {{ activity: ActivityItem }} props */
 const ActivityItem = ({ activity }) => {
     const { action, user, docModel, doc, docTitle, description, createdAt } =
         activity;
     const colors = DOC_COLORS[docModel] || DOC_COLORS.Board;
 
-    const label = BOARD_ACTIVITY_LABELS[action] || action;
+    const label =
+        BOARD_ACTIVITY_LABELS[
+            /** @type {keyof typeof BOARD_ACTIVITY_LABELS} */ (action)
+        ] ?? action;
     const docName = doc?.title || docTitle || null;
 
     return (
@@ -78,6 +82,12 @@ const ActivityItem = ({ activity }) => {
     );
 };
 
+/** @param {{
+ *   docModel: string;
+ *   doc?: { _id: string; title: string };
+ *   title: string;
+ *   colors: typeof DOC_COLORS[keyof typeof DOC_COLORS];
+ * }} props */
 const DocTitle = ({ docModel, doc, title, colors }) => {
     const { setOpenBoardActivities } = useBoardState();
     const [searchParams, setSearchParams] = useSearchParams();

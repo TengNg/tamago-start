@@ -3,12 +3,29 @@ import Title from "../components/ui/Title";
 import Invitations from "../components/invitation/Invitations";
 import JoinBoardRequests from "../components/join-board-request/JoinRequests";
 import ActivitiesHelp from "../components/ui/ActivitiesHelp";
+import Modal from "../components/ui/Modal";
 
 const ACTIONS = Object.freeze({
     TOGGLE_INVITATIONS_SECTION: "toggle_invitation_section",
     TOGGLE_JOIN_BOARD_REQUESTS_SECTION: "toggle_join_board_request_section",
 });
 
+/**
+ * @typedef {Object} ActivitiesState
+ * @property {boolean} showInvitations
+ * @property {boolean} showJoinBoardRequests
+ */
+
+/**
+ * @typedef {Object} ActivitiesAction
+ * @property {string} type
+ */
+
+/**
+ * @param {ActivitiesState} state
+ * @param {ActivitiesAction} action
+ * @returns {ActivitiesState}
+ */
 const reducer = (state, action) => {
     switch (action.type) {
         case ACTIONS.TOGGLE_INVITATIONS_SECTION:
@@ -46,7 +63,9 @@ const Activities = () => {
 
     return (
         <>
-            <ActivitiesHelp open={openHelp} setOpen={setOpenHelp} />
+            <Modal open={openHelp} setOpen={setOpenHelp} title="help">
+                <ActivitiesHelp />
+            </Modal>
 
             <section className="w-full h-full overflow-auto pb-8">
                 <Title titleName="activities" />

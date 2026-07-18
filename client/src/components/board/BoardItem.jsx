@@ -1,10 +1,11 @@
 import dateFormatter from "../../utils/dateFormatter";
 import { Link } from "react-router-dom";
 import { pluralizeString } from "../../utils/pluralize";
-import useCurrentUserContext from "../../hooks/useCurrentUserContext";
+import useCurrentUser from "../../hooks/useCurrentUser";
 
+/** @param {{ item: BoardListItem }} props */
 const BoardItem = ({ item }) => {
-    const { currentUser } = useCurrentUserContext();
+    const currentUser = useCurrentUser();
 
     const { _id, title, description, memberCount, createdBy, createdAt } = item;
 

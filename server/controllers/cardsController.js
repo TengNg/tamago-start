@@ -26,7 +26,7 @@ const getCard = async (req, res) => {
         action: "view"
     })
 
-    return res.status(200).json({ card: foundCard });
+    return res.json(foundCard);
 };
 
 /**
@@ -69,7 +69,7 @@ const addCard = async (req, res) => {
         createdAt: newCard.updatedAt,
     })
 
-    return res.status(201).json({ newCard });
+    return res.status(201).json(newCard);
 };
 
 /**
@@ -79,7 +79,7 @@ const addCard = async (req, res) => {
 const reorder = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
-    const { rank, listId, timestamp, oldPos, newPos } = req.body;
+    const { rank, listId, oldPos, newPos } = req.body;
 
     const foundCard = await Card.findById(id).populate({
         path: 'listId',
@@ -114,7 +114,6 @@ const reorder = async (req, res) => {
 
     foundCard.order = rank;
     foundCard.listId = listId;
-    foundCard.updatedAt = timestamp;
     await foundCard.save();
 
     await saveBoardActivity({
@@ -124,7 +123,7 @@ const reorder = async (req, res) => {
         action: "card.moved",
         docModel: "Card",
         docTitle: foundCard.title,
-        description: `${currentCardListTitle} (${oldPos}) →  ${foundList.title} (${newPos})`,
+        description: `${currentCardListTitle} (${oldPos}) → ${foundList.title} (${newPos})`,
     });
 
     res.status(200).json({
@@ -137,10 +136,18 @@ const reorder = async (req, res) => {
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  */
-const updateTitle = async (req, res) => {
+const updateCard = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
-    const { title } = req.body;
+    const { field, value } = req.body;
+
+    const allowedFields = [
+        "title", "description", "highlight", "priorityLevel",
+        "owner", "dueDate", "verified",
+    ];
+    if (!allowedFields.includes(field)) {
+        return res.status(400).json({ message: "Invalid field to update" });
+    }
 
     const foundCard = await Card.findById(id);
     if (!foundCard) {
@@ -154,135 +161,40 @@ const updateTitle = async (req, res) => {
         action: "edit"
     });
 
-    const prevTitle = foundCard.title;
-    foundCard.title = title.trim();
-    await foundCard.save();
+    // if (foundCard[field] === value) {
+    //     return res.status(200).json(foundCard);
+    // }
+
+    const prevValue = foundCard[field];
+    foundCard[field] = value;
+    const newCard = await foundCard.save();
+
+    const actionMap = {
+        title: "card.title_updated",
+        description: "card.description_updated",
+        highlight: "card.highlight_updated",
+        priorityLevel: "card.priority_updated",
+        owner: "card.owner_updated",
+        dueDate: "card.due_date_updated",
+        verified: foundCard.verified ? "card.verified" : "card.unverified",
+    };
+    const description = field === "verified"
+        ? null
+        : field === "dueDate"
+        ? `${dateFormatter(prevValue) || "none"} → ${dateFormatter(value) || "none"}`
+        : `"${prevValue}" → "${value}"`;
 
     await saveBoardActivity({
         userId,
         boardId: foundCard.boardId,
         docId: foundCard._id,
+        action: actionMap[field] || "card.updated",
         docModel: "Card",
         docTitle: foundCard.title,
-        action: "card.title_updated",
-        description: `"${prevTitle}" → "${foundCard.title}"`,
+        description,
     });
 
-    res.status(200).json({ newCard: foundCard });
-};
-
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
-const updateDescription = async (req, res) => {
-    const { userId } = req.user;
-    const { id } = req.params;
-    const { description } = req.body;
-
-    const foundCard = await Card.findById(id);
-    if (!foundCard) {
-        return res.sendStatus(404);
-    }
-
-    await checkBoardPermission({
-        boardId: foundCard.boardId.toString(),
-        userId,
-        resource: "card",
-        action: "edit"
-    });
-
-    const prevDescription = foundCard.description;
-    foundCard.description = description;
-    await foundCard.save();
-
-    await saveBoardActivity({
-        userId,
-        boardId: foundCard.boardId,
-        docId: foundCard._id,
-        action: "card.description_updated",
-        docModel: "Card",
-        docTitle: foundCard.title,
-        description: `"${prevDescription}" → "${foundCard.description}"`,
-    });
-
-    res.status(200).json({ newCard: foundCard });
-};
-
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
-const updateHighlight = async (req, res) => {
-    const { userId } = req.user;
-    const { id } = req.params;
-    const { highlight } = req.body;
-
-    const foundCard = await Card.findById(id);
-    if (!foundCard) {
-        return res.sendStatus(404);
-    }
-
-    await checkBoardPermission({
-        boardId: foundCard.boardId.toString(),
-        userId,
-        resource: "card",
-        action: "edit"
-    });
-
-    const prevHighlight = foundCard.highlight;
-    foundCard.highlight = highlight;
-    await foundCard.save();
-
-    await saveBoardActivity({
-        userId,
-        boardId: foundCard.boardId,
-        docId: foundCard._id,
-        action: "card.highlight_updated",
-        docModel: "Card",
-        docTitle: foundCard.title,
-        description: `${prevHighlight} → ${foundCard.highlight}`,
-    });
-
-    res.status(200).json({ newCard: foundCard });
-};
-
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
-const updatePriorityLevel = async (req, res) => {
-    const { userId } = req.user;
-    const { id } = req.params;
-    const { priorityLevel } = req.body;
-
-    const foundCard = await Card.findById(id);
-    if (!foundCard) {
-        return res.sendStatus(404);
-    }
-
-    await checkBoardPermission({
-        boardId: foundCard.boardId.toString(),
-        userId,
-        resource: "card",
-        action: "edit"
-    });
-
-    const prevPriority = foundCard.priorityLevel;
-    foundCard.priorityLevel = priorityLevel;
-    await foundCard.save();
-
-    await saveBoardActivity({
-        userId,
-        boardId: foundCard.boardId,
-        docId: foundCard._id,
-        action: "card.priority_updated",
-        docModel: "Card",
-        docTitle: foundCard.title,
-        description: `${prevPriority} → ${foundCard.priorityLevel}`,
-    })
-
-    res.status(200).json({ newCard: foundCard });
+    res.status(200).json(newCard);
 };
 
 /**
@@ -317,7 +229,7 @@ const deleteCard = async (req, res) => {
         description: `card with title "${foundCard.title}" deleted`,
     });
 
-    res.status(200).json({ message: 'Card removed successfully' });
+    res.sendStatus(204);
 };
 
 /**
@@ -361,124 +273,14 @@ const copyCard = async (req, res) => {
         description: `a copy of "${foundCard.title}" created`,
     })
 
-    return res.status(200).json({ newCard });
-};
-
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
-const updateOwner = async (req, res) => {
-    const { userId } = req.user;
-    const { id } = req.params;
-    const { ownerName } = req.body;
-
-    const foundCard = await Card.findById(id);
-    if (!foundCard) return res.sendStatus(404);
-
-    await checkBoardPermission({
-        boardId: foundCard.boardId.toString(),
-        userId,
-        resource: "card",
-        action: "edit"
-    });
-
-    const prevOwner = foundCard.owner;
-    foundCard.owner = ownerName;
-    const newCard = await foundCard.save();
-
-    await saveBoardActivity({
-        boardId: newCard.boardId,
-        userId,
-        docId: newCard._id,
-        action: "card.owner_updated",
-        docModel: "Card",
-        docTitle: foundCard.title,
-        description: `${prevOwner} →  ${foundCard.owner}`,
-    })
-
-    res.status(200).json({ newCard: foundCard });
-};
-
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
-const toggleVerified = async (req, res) => {
-    const { userId } = req.user;
-    const { id } = req.params;
-
-    const foundCard = await Card.findById(id);
-    if (!foundCard) return res.sendStatus(404);
-
-    await checkBoardPermission({
-        boardId: foundCard.boardId.toString(),
-        userId,
-        resource: "card",
-        action: "edit"
-    });
-
-    foundCard.verified = !foundCard.verified;
-    await foundCard.save();
-
-    await saveBoardActivity({
-        boardId: foundCard.boardId,
-        userId,
-        docId: foundCard._id,
-        action: foundCard.verified ? 'card.verified' : 'card.unverified',
-        docModel: "Card",
-        docTitle: foundCard.title,
-    })
-
-    res.status(200).json({ verified: foundCard.verified });
-};
-
-/**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- */
-const updateDueDate = async (req, res) => {
-    const { userId } = req.user;
-    const { id } = req.params;
-
-    const foundCard = await Card.findById(id);
-    if (!foundCard) return res.sendStatus(404);
-
-    await checkBoardPermission({
-        boardId: foundCard.boardId.toString(),
-        userId,
-        resource: "card",
-        action: "edit"
-    });
-
-    const prevDueDate = dateFormatter(foundCard.dueDate) || "none";
-    foundCard.dueDate = req.body.dueDate;
-    const newCard = await foundCard.save();
-
-    await saveBoardActivity({
-        boardId: newCard.boardId,
-        userId,
-        docId: newCard._id,
-        action: "card.due_date_updated",
-        docModel: "Card",
-        docTitle: foundCard.title,
-        description: `${prevDueDate} → ${dateFormatter(newCard.dueDate)}`,
-    })
-
-    res.status(200).json({ dueDate: foundCard.dueDate });
+    return res.json(newCard);
 };
 
 export {
     getCard,
     addCard,
-    updateTitle,
-    updateDescription,
-    updateHighlight,
-    updatePriorityLevel,
     deleteCard,
     reorder,
     copyCard,
-    updateOwner,
-    toggleVerified,
-    updateDueDate,
+    updateCard,
 }
