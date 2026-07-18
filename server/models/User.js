@@ -94,18 +94,6 @@ const UserSchema = new Schema({
                 required: true
             },
         },
-
-        // validate: {
-        //     validator: function(pinnedBoardIdCollection) {
-        //         for (let key of pinnedBoardIdCollection.keys()) {
-        //             if (key.length > 4) {
-        //                 return false;
-        //             }
-        //         }
-        //         return true;
-        //     },
-        //     message: 'max 4 pinned boards'
-        // }
     },
 
     discordId: {

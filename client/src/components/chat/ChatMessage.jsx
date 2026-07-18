@@ -1,61 +1,77 @@
 import dateFormatter from "../../utils/dateFormatter";
-import { useLocation, Link, useParams } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import Icon from "../shared/Icon";
 import validUrl from "../../utils/validUrl";
-import useCurrentUserContext from "../../hooks/useCurrentUserContext";
+import useCurrentUser from "../../hooks/useCurrentUser";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useToast from "../../hooks/useToast";
-import { deleteMessage } from "../../api/chatApi";
+import { chatApi } from "../../services/api";
 import useBoardState from "../../hooks/useBoardState";
 import { chatKeys } from "../../queries/chatKeys";
 import { SOCKET_EVENTS } from "@shared/socket-events.js";
+import { getErrorMessage } from "../../utils/getErrorMessage";
 
+/**
+ * @typedef {Object} ChatMessageProps
+ * @property {ChatMessage} chatMessage
+ */
+
+/**
+ * @param {ChatMessageProps} props
+ */
 const ChatMessage = ({ chatMessage }) => {
     const location = useLocation();
     const { pathname } = location;
 
-    const { currentUser } = useCurrentUserContext();
+    const currentUser = useCurrentUser();
     const queryClient = useQueryClient();
     const toast = useToast();
-    const { boardId } = useParams();
-    const { socket } = useBoardState();
+    const { boardState, socket } = useBoardState();
 
     const { _id, content, sentBy, createdAt, error, type } = chatMessage;
     const chatContent = type !== "MESSAGE" ? content.split(" ")[1] : content;
     const isMe = currentUser._id === sentBy._id;
 
     const deleteMessageMutation = useMutation({
-        mutationFn: () => deleteMessage({ boardId, id: _id }),
+        mutationFn: () => chatApi.deleteMessage(_id),
         onSuccess: (_data, _variables, _context) => {
-            queryClient.setQueryData(chatKeys.messages(boardId), (old) => {
-                if (!old) {
-                    return old;
-                }
+            queryClient.setQueryData(
+                chatKeys.messages(boardState.board._id),
+                /**
+                 * @param {import("@tanstack/react-query").InfiniteData<GetChatResponse, unknown> | undefined} old
+                 */
+                (old) => {
+                    if (!old) {
+                        return old;
+                    }
 
-                const newPages = old.pages.map((page) => {
+                    const newPages = old.pages.map((page) => {
+                        return {
+                            ...page,
+                            messages: [...page.messages].filter((message) => {
+                                return message._id !== _id;
+                            }),
+                        };
+                    });
+
                     return {
-                        ...page,
-                        messages: [...page.messages].filter((message) => {
-                            return message._id !== _id;
-                        }),
+                        ...old,
+                        pages: newPages,
                     };
-                });
-
-                return {
-                    ...old,
-                    pages: newPages,
-                };
-            });
+                },
+            );
 
             socket.emit(SOCKET_EVENTS.CHAT_DELETE, { id: _id });
         },
         onError: (err) => {
-            const errMsg =
-                err.response?.data?.message || "Failed to send message";
+            const errMsg = getErrorMessage(err, "Failed to send message");
             toast.error(errMsg);
         },
     });
 
+    /**
+     * @param {string} chatContent
+     */
     const openLink = (chatContent) => {
         if (!validUrl(chatContent)) {
             return;
@@ -95,7 +111,7 @@ const ChatMessage = ({ chatMessage }) => {
                                 <Link
                                     replace
                                     to={`${pathname}?card=${chatContent}`}
-                                    className="px-2 py-1 bg-pink-400 text-gray-50 cursor-pointer"
+                                    className="px-2 py-1 bg-pink-400 text-gray-50! cursor-pointer"
                                 >
                                     CARD
                                 </Link>
@@ -116,7 +132,7 @@ const ChatMessage = ({ chatMessage }) => {
                             <div className="p-2 w-fit wrap-break-word whitespace-pre-line text-[0.75rem] font-medium bg-violet-100 text-violet-700 border border-dashed border-violet-600">
                                 <Link
                                     to={`/b/${chatContent}`}
-                                    className="px-2 py-1 bg-violet-400 text-gray-50 cursor-pointer"
+                                    className="px-2 py-1 bg-violet-400 text-gray-50! cursor-pointer"
                                 >
                                     BOARD
                                 </Link>
@@ -145,7 +161,7 @@ const ChatMessage = ({ chatMessage }) => {
 
                     {isMe && (
                         <button
-                            onClick={deleteMessageMutation.mutate}
+                            onClick={() => deleteMessageMutation.mutate()}
                             className="text-transparent group-hover:text-gray-400 mt-0.5 hover:text-red-600!"
                         >
                             <Icon className="w-3 h-3" name="xmark" />

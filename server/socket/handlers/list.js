@@ -1,5 +1,8 @@
 import BoardMembership from '../../models/BoardMembership.js';
 import { SOCKET_EVENTS } from '../../../shared/socket-events.js';
+import { allowedFields } from '../validate.js';
+
+const LIST_UPDATE_ALLOWED = ['id', 'field', 'value'];
 
 /**
  * @param {import('socket.io').Socket} socket
@@ -44,9 +47,10 @@ export default function registerListHandlers(socket) {
         socket.to(boardId).emit(SOCKET_EVENTS.LIST_DELETED, data);
     });
 
-    socket.on(SOCKET_EVENTS.LIST_UPDATE_TITLE, (data) => {
+    socket.on(SOCKET_EVENTS.LIST_UPDATE, (data) => {
         const boardId = socket.boardId;
         if (!boardId) return;
-        socket.to(boardId).emit(SOCKET_EVENTS.LIST_TITLE_UPDATED, data);
+        if (!allowedFields(data, LIST_UPDATE_ALLOWED)) return;
+        socket.to(boardId).emit(SOCKET_EVENTS.LIST_UPDATED, data);
     });
 }

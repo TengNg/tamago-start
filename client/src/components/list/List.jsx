@@ -6,12 +6,23 @@ import useBoardState from "../../hooks/useBoardState";
 import CardComposer from "../card/CardComposer";
 import ListMenu from "./ListMenu";
 import { lexorank } from "../../lib/lexorank";
-import { axiosPrivate } from "../../api/axios";
+import { listApi } from "../../services/api";
 import Icon from "../shared/Icon";
 import useToast from "../../hooks/useToast";
 import { BOARD_ACTIONS } from "../../state/boardActionTypes";
 import { SOCKET_EVENTS } from "@shared/socket-events.js";
+import { getErrorMessage } from "../../utils/getErrorMessage";
 
+/**
+ * @typedef {Object} ListProps
+ * @property {number} index
+ * @property {List} list
+ * @property {Card[]} cards
+ */
+
+/**
+ * @param {ListProps} props
+ */
 const List = ({ index, list, cards }) => {
     const { attributes, listeners, setNodeRef, transform, isDragging } =
         useSortable({
@@ -42,10 +53,15 @@ const List = ({ index, list, cards }) => {
         processing: false,
     });
 
+    /** @type {React.MutableRefObject<HTMLTextAreaElement | null>} */
     const textAreaRef = useRef(null);
+
+    /** @type {React.MutableRefObject<HTMLDivElement | null>} */
     const titleRef = useRef(null);
 
+    /** @type {React.MutableRefObject<HTMLDivElement | null>} */
     const scrollRef = useRef(null);
+
     const [scrollState, setScrollState] = useState({
         top: true,
         bottom: true,
@@ -79,6 +95,10 @@ const List = ({ index, list, cards }) => {
     }, [handleScroll]);
 
     const onInputConfirm = async () => {
+        if (!textAreaRef.current || !titleRef.current) {
+            return;
+        }
+
         if (textAreaRef.current.value.trim() === initialListTitle) {
             return;
         }
@@ -97,14 +117,16 @@ const List = ({ index, list, cards }) => {
         titleRef.current.classList.remove("hidden");
 
         try {
-            await axiosPrivate.patch(
-                `/lists/${list._id}/new-title`,
-                JSON.stringify({ title: textAreaRef.current.value }),
+            await listApi.updateList(
+                list._id,
+                "title",
+                textAreaRef.current.value,
             );
             setInitialListTitle(textAreaRef.current.value);
-            socket.emit(SOCKET_EVENTS.LIST_UPDATE_TITLE, {
-                listId: list._id,
-                title: textAreaRef.current.value,
+            socket.emit(SOCKET_EVENTS.LIST_UPDATE, {
+                id: list._id,
+                field: "title",
+                value: textAreaRef.current.value,
             });
         } catch (err) {
             updateListField({
@@ -112,43 +134,58 @@ const List = ({ index, list, cards }) => {
                 field: "title",
                 value: initialListTitle,
             });
-            const errMsg =
-                err.response?.data?.message || "Failed to update title";
+            const errMsg = getErrorMessage(err, "Failed to update title");
             toast.error(errMsg);
         }
     };
 
+    /**
+     * @param {React.MouseEvent<HTMLDivElement, MouseEvent>} e
+     */
     const handleMouseUp = (e) => {
         if (e.button !== 0) return;
 
-        textAreaRef.current.classList.remove("hidden");
-        textAreaRef.current.classList.add("block");
-        titleRef.current.classList.add("hidden");
-        textAreaRef.current.focus();
-        textAreaRef.current.selectionStart = textAreaRef.current.value.length;
+        if (textAreaRef.current) {
+            textAreaRef.current.classList.remove("hidden");
+            textAreaRef.current.classList.add("block");
+            textAreaRef.current.focus();
+            textAreaRef.current.selectionStart =
+                textAreaRef.current.value.length;
+        }
+
+        if (titleRef.current) {
+            titleRef.current.classList.add("hidden");
+        }
     };
 
     const handleTextAreaChanged = () => {
         const textarea = textAreaRef.current;
-        textarea.style.height = "24px";
-        textarea.style.height = `${textarea.scrollHeight}px`;
-        updateListField({
-            id: list._id,
-            field: "title",
-            value: textAreaRef.current.value,
-        });
+        if (textarea) {
+            textarea.style.height = "24px";
+            textarea.style.height = `${textarea.scrollHeight}px`;
+            updateListField({
+                id: list._id,
+                field: "title",
+                value: textarea.value,
+            });
+        }
     };
 
     const handleTextAreaOnFocus = () => {
         const textarea = textAreaRef.current;
-        textarea.style.height = "24px";
-        textarea.style.height = `${textarea.scrollHeight}px`;
+        if (textarea) {
+            textarea.style.height = "24px";
+            textarea.style.height = `${textarea.scrollHeight}px`;
+        }
     };
 
     const handleTitleInputBlur = () => {
         onInputConfirm();
     };
 
+    /**
+     * @param {React.KeyboardEvent<HTMLTextAreaElement>} e
+     */
     const handleTextAreaOnEnter = (e) => {
         if (e.key === "Enter") {
             onInputConfirm();
@@ -158,15 +195,18 @@ const List = ({ index, list, cards }) => {
     const handleDeleteList = async () => {
         if (confirm("Are you want to delete this list ?")) {
             try {
-                await axiosPrivate.delete(`/lists/${list._id}`);
+                await listApi.deleteList(list._id);
                 deleteList(list._id);
-                socket.emit(SOCKET_EVENTS.LIST_DELETE, list._id);
+                socket.emit(SOCKET_EVENTS.LIST_DELETE, { id: list._id });
             } catch (err) {
                 toast.error("Failed to delete list");
             }
         }
     };
 
+    /**
+     * @param {string} id
+     */
     const handleCopyList = async (id) => {
         const lists = boardState.lists;
         const tempLists = [...boardState.lists];
@@ -177,9 +217,11 @@ const List = ({ index, list, cards }) => {
                 processing: true,
             });
 
-            const currentIndex = lists.indexOf(
-                lists.find((el) => el._id == id),
-            );
+            const currentIndex = lists.findIndex((el) => el._id == id);
+            if (currentIndex === -1) {
+                throw `couldn't find list with id ${id}`;
+            }
+
             const nextElement =
                 index < lists.length - 1 ? lists[index + 1] : null;
 
@@ -193,12 +235,9 @@ const List = ({ index, list, cards }) => {
                 return;
             }
 
-            const response = await axiosPrivate.post(
-                `/lists/copy/${id}`,
-                JSON.stringify({ rank }),
-            );
-            const newList = response.data.list;
-            const newCards = response.data.cards;
+            const data = await listApi.copyList(id, rank);
+            const newList = data.list;
+            const newCards = data.cards;
             newCards.sort((a, b) => (a.order > b.order ? 1 : -1));
             lists.splice(index + 1, 0, newList);
 
@@ -216,19 +255,16 @@ const List = ({ index, list, cards }) => {
                 },
             });
 
-            setProcessingList({ msg: "", processing: false });
-
             socket.emit(SOCKET_EVENTS.LIST_UPDATE_ALL, lists);
         } catch (err) {
-            const errMsg = err.response?.data?.message || err.message;
+            const errMsg = getErrorMessage(err);
             toast.error(errMsg);
-
-            setProcessingList({ msg: "", processing: false });
-
             dispatch({
                 type: BOARD_ACTIONS.SET_LISTS,
                 payload: { lists: tempLists },
             });
+        } finally {
+            setProcessingList({ msg: "", processing: false });
         }
     };
 
@@ -236,9 +272,9 @@ const List = ({ index, list, cards }) => {
         return cards.map((c) => c._id);
     }, [cards]);
 
+    /** @type {React.CSSProperties} */
     const style = {
         transform: transform ? CSS.Translate.toString(transform) : undefined,
-        transition: null,
         cursor: "auto",
         opacity: isDragging ? 0.25 : 1,
     };
@@ -348,16 +384,10 @@ const List = ({ index, list, cards }) => {
                         className={`sticky top-0 left-0 right-0 h-px bg-gray-400 backdrop-blur-[2px] pointer-events-none shrink-0 z-10 transition-opacity duration-150 ${scrollState.top ? "opacity-0" : "opacity-100"}`}
                     />
 
-                    <div className="flex flex-1 flex-col gap-2 px-3">
+                    <div className="flex flex-1 flex-col gap-2.5 px-3 pb-1">
                         <SortableContext items={cardIds}>
                             {cards.map((card) => {
-                                return (
-                                    <Card
-                                        key={card._id}
-                                        id={card._id}
-                                        card={card}
-                                    />
-                                );
+                                return <Card key={card._id} card={card} />;
                             })}
                         </SortableContext>
 

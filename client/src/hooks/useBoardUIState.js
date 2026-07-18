@@ -2,7 +2,6 @@ import { useState } from "react";
 
 export function useBoardUIState() {
     const [openMoveListForm, setOpenMoveListForm] = useState(false);
-    const [openCardDetail, setOpenCardDetail] = useState(false);
 
     const [openMembers, setOpenMembers] = useState(false);
     const [openFilter, setOpenFilter] = useState(false);
@@ -19,8 +18,6 @@ export function useBoardUIState() {
     return {
         openMoveListForm,
         setOpenMoveListForm,
-        openCardDetail,
-        setOpenCardDetail,
         openMembers,
         setOpenMembers,
         openFilter,

@@ -1,15 +1,10 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import useCurrentUserContext from "../../hooks/useCurrentUserContext";
-import { useEffect } from "react";
+import useAuth from "../../hooks/useAuth";
 
 export default function Public() {
-    const { currentUser, currentUserQuery } = useCurrentUserContext();
+    const { currentUser, currentUserQuery } = useAuth();
     const location = useLocation();
     const from = location.state?.from?.pathname || "/boards";
-
-    useEffect(() => {
-        currentUserQuery.refetch();
-    }, []);
 
     if (currentUserQuery.isPending) {
         return (

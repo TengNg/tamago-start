@@ -1,38 +1,47 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Title from "../components/ui/Title";
 import Editor from "../components/writedown/Editor";
-
 import WritedownItem from "../components/writedown/WritedownItem";
-
 import { useSearchParams } from "react-router-dom";
 import { closestCenter, DndContext, DragOverlay } from "@dnd-kit/core";
 import { rectSwappingStrategy, SortableContext } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
 import { lexorank } from "../lib/lexorank";
-import { axiosPrivate } from "../api/axios";
-import useToast from "../hooks/useToast";
+import useWritedownMutations from "../hooks/useWritedownMutations";
+import { writedownApi } from "../services/api";
+import { writedownKeys } from "../queries/writedownKeys";
 
 const Writedowns = () => {
-    const [activeWritedown, setActiveWritedown] = useState(null);
-    const [writedowns, setWritedowns] = useState([]);
-    const [clonedWritedowns, setClonedWritedowns] = useState([]);
-    const [writedown, setWritedown] = useState({
+    const [activeWritedown, setActiveWritedown] = useState(
+        /** @type {Writedown | null} */ (null),
+    );
+    const [editor, setEditor] = useState({
         open: false,
-        loading: false,
-        error: false,
-        processingMsg: "",
-        data: {},
+        writedownId: /** @type {string | null} */ (null),
     });
-    const [isDataLoaded, setIsDataLoaded] = useState(false);
-    const [isCreatingWritedown, setIsCreatingWritedown] = useState(false);
 
     const [searchParams, setSearchParams] = useSearchParams();
+    const queryClient = useQueryClient();
 
-    const toast = useToast();
+    const {
+        createWritedown,
+        deleteWritedown,
+        deleteAllWritedowns,
+        reorderWritedown,
+        pinWritedown,
+        isCreating,
+    } = useWritedownMutations();
 
-    useEffect(() => {
-        fetchWritedowns();
-    }, []);
+    const { data, isLoading } = useQuery({
+        queryKey: writedownKeys.all(),
+        queryFn: () => writedownApi.fetchWritedowns(),
+    });
+
+    const writedowns = useMemo(
+        () => data?.writedowns ?? [],
+        [data?.writedowns],
+    );
 
     function handleFilterPinned() {
         if (searchParams.get("filter") === "pinned") {
@@ -45,111 +54,30 @@ const Writedowns = () => {
         setSearchParams(searchParams, { replace: true });
     }
 
-    async function fetchWritedowns() {
-        setIsDataLoaded(false);
-        try {
-            const response = await axiosPrivate.get("/personal_writedowns");
-            setWritedowns(response.data.writedowns);
-        } catch (err) {
-            const errMsg =
-                err?.response?.data?.message ||
-                "Failed to get writedowns. Please try again";
-            toast.error(errMsg);
-        } finally {
-            setIsDataLoaded(true);
-        }
+    /** @param {string} id */
+    function handleOpenWritedown(id) {
+        setEditor({ open: true, writedownId: id });
     }
 
-    async function handleOpenWritedown(id) {
-        setWritedown((prev) => {
-            return { ...prev, open: true, loading: true };
-        });
-
-        try {
-            const response = await axiosPrivate.get(
-                `/personal_writedowns/${id}`,
-            );
-            setWritedown({
-                open: true,
-                data: response.data.writedown,
-                loading: false,
-            });
-        } catch (err) {
-            const errMsg =
-                err?.response?.data?.message || "Can't load writedown";
-            toast.error(errMsg);
-
-            setWritedown({
-                open: false,
-                error: true,
-                loading: false,
-            });
-        }
+    function handleCloseEditor() {
+        setEditor({ open: false, writedownId: null });
     }
 
     async function handleCreateWritedown() {
-        setIsCreatingWritedown(true);
+        if (isCreating) return;
 
-        if (isCreatingWritedown) return;
+        const rank = lexorank.insert(
+            writedowns[writedowns.length - 1]?.order,
+            undefined,
+        )[0];
 
-        try {
-            const rank = lexorank.insert(
-                writedowns[writedowns.length - 1]?.order,
-                undefined,
-            )[0];
-            const response = await axiosPrivate.post(
-                "/personal_writedowns",
-                JSON.stringify({ rank }),
-            );
-            const { newWritedown } = response.data;
-            setWritedowns((prev) => {
-                return [...prev, newWritedown];
-            });
-        } catch (err) {
-            const errMsg =
-                err?.response?.data?.message || "Failed to create writedown";
-            toast.error(errMsg);
-        } finally {
-            setIsCreatingWritedown(false);
-        }
+        await createWritedown(rank);
     }
 
-    async function handleSaveWritedown(id, value) {
-        setWritedown((prev) => {
-            return {
-                ...prev,
-                open: true,
-                loading: true,
-                processingMsg: "saving writedown...",
-            };
-        });
-
-        try {
-            const response = await axiosPrivate.patch(
-                `/personal_writedowns/${id}`,
-                JSON.stringify({ content: value }),
-            );
-
-            const { updatedWritedown } = response.data;
-
-            setWritedowns((prev) => {
-                return prev.map((writedown) =>
-                    writedown._id === updatedWritedown._id
-                        ? updatedWritedown
-                        : writedown,
-                );
-            });
-        } catch (err) {
-            const errMsg =
-                err?.response?.data?.message || "Failed to save writedown";
-            toast.error(errMsg);
-        } finally {
-            setWritedown((prev) => {
-                return { ...prev, loading: false, open: false };
-            });
-        }
-    }
-
+    /**
+     * @param {string} id
+     * @param {boolean} isEmpty
+     */
     async function handleDeleteWritedown(id, isEmpty) {
         if (
             !isEmpty &&
@@ -158,74 +86,23 @@ const Writedowns = () => {
             return;
         }
 
-        try {
-            await axiosPrivate.delete(`/personal_writedowns/${id}`);
-            setWritedowns((prev) => {
-                return prev.filter((writedown) => writedown._id !== id);
-            });
-        } catch (err) {
-            toast.error("Failed to delete writedown");
-        }
+        await deleteWritedown(id);
     }
 
     async function handleDeleteAllWritedowns() {
         if (!confirm("Are you sure you want to delete all writedowns?")) return;
 
-        try {
-            await axiosPrivate.delete(`/personal_writedowns/`);
-            setWritedowns([]);
-        } catch (err) {
-            const errMsg =
-                err?.response?.data?.message || "Failed to delete writedowns";
-            toast.error(errMsg);
-        }
+        await deleteAllWritedowns();
     }
 
-    async function handleUpdateWritedownTitle(id, newTitle) {
-        try {
-            await axiosPrivate.patch(`/personal_writedowns/${id}/title`, {
-                title: newTitle,
-            });
-        } catch (err) {
-            toast.error("Failed to delete writedown");
-        }
-    }
-
+    /** @param {string} id */
     async function handlePinWritedown(id) {
-        try {
-            setWritedowns((prev) => {
-                return prev.map((writedown) => {
-                    return writedown._id === id
-                        ? { ...writedown, isPinning: true }
-                        : writedown;
-                });
-            });
-
-            const response = await axiosPrivate.patch(
-                `/personal_writedowns/${id}/pin`,
-            );
-
-            setWritedowns((prev) => {
-                const newWritedowns = prev.map((writedown) => {
-                    if (writedown._id === id) {
-                        return {
-                            ...writedown,
-                            pinned: response.data.pinned,
-                            isPinning: false,
-                        };
-                    }
-
-                    return writedown;
-                });
-                return newWritedowns;
-            });
-        } catch (err) {
-            const errMsg =
-                err?.response?.data?.message || "Failed to pin writedown";
-            toast.error(errMsg);
-        }
+        await pinWritedown(id);
     }
 
+    /**
+     * @param {import("@dnd-kit/core").DragEndEvent} e
+     */
     async function handleOnDragEnd(e) {
         const { active, over } = e;
 
@@ -233,50 +110,25 @@ const Writedowns = () => {
             return;
         }
 
-        try {
-            const items = [...writedowns];
-            const oldIndex = items.findIndex((w) => w._id == active.id);
-            const newIndex = items.findIndex((w) => w._id == over.id);
-            if (oldIndex === newIndex) {
-                return;
-            }
+        const activeId = /** @type {string} */ (active.id);
+        const overId = /** @type {string} */ (over.id);
 
-            const [removed] = items.splice(oldIndex, 1);
+        const oldIndex = writedowns.findIndex((w) => w._id == activeId);
+        const newIndex = writedowns.findIndex((w) => w._id == overId);
 
-            items.splice(newIndex, 0, removed);
-            const prevRank = items[newIndex - 1]?.order;
-            const nextRank = items[newIndex + 1]?.order;
-
-            let [rank, ok] = lexorank.insert(prevRank, nextRank);
-            if (!ok) {
-                toast.error(
-                    "invalid order, please try to drag this writedown to other position",
-                );
-                setClonedWritedowns(clonedWritedowns);
-                return;
-            }
-
-            removed.order = rank;
-            setWritedowns(items);
-
-            await axiosPrivate.patch(
-                `/personal_writedowns/${removed._id}/reorder`,
-                JSON.stringify({ rank }),
-            );
-        } catch (err) {
-            const errMsg =
-                err?.response?.data?.message ||
-                "something went wrong, please try again";
-            toast.error(errMsg);
-            setClonedWritedowns(clonedWritedowns);
-        } finally {
-            setActiveWritedown(null);
+        if (oldIndex === newIndex) {
+            return;
         }
+
+        await reorderWritedown(activeId, oldIndex, newIndex);
     }
 
+    /**
+     * @param {import("@dnd-kit/core").DragStartEvent} e
+     */
     function handleOnDragStart(e) {
-        const activeWd = e.active.data.current.writedown;
-        setActiveWritedown(activeWd);
+        const activeWd = e.active.data.current?.writedown;
+        setActiveWritedown(activeWd ?? null);
     }
 
     function handleOnDragCancel() {
@@ -287,13 +139,14 @@ const Writedowns = () => {
         return writedowns.map((w) => w._id);
     }, [writedowns]);
 
+    const rootEl = document.getElementById("root") ?? document.body;
+
     return (
         <>
             <Editor
-                writedown={writedown}
-                setWritedown={setWritedown}
-                saveWritedown={handleSaveWritedown}
-                updateTitle={handleUpdateWritedownTitle}
+                writedownId={editor.writedownId}
+                open={editor.open}
+                onClose={handleCloseEditor}
             />
 
             <section className="w-full h-full overflow-auto pb-8">
@@ -303,15 +156,13 @@ const Writedowns = () => {
                     <div className="flex flex-col justify-center items-center gap-4 text-sm text-gray-600">
                         <button
                             onClick={handleCreateWritedown}
-                            className="w-[180px] grid place-items-center text-gray-600 text-sm border-2 border-gray-600 border-dashed py-4 px-6 hover:bg-gray-600 hover:text-gray-50"
+                            className="w-45 grid place-items-center text-gray-600 text-sm border-2 border-gray-600 border-dashed py-4 px-6 hover:bg-gray-600 hover:text-gray-50"
                         >
-                            {isCreatingWritedown
-                                ? "creating..."
-                                : "+ new writedown"}
+                            {isCreating ? "creating..." : "+ new writedown"}
                         </button>
                     </div>
 
-                    {!isDataLoaded ? (
+                    {isLoading ? (
                         <>
                             <div className="font-medium text-sm mx-auto text-center mt-10 text-gray-600">
                                 getting writedowns
@@ -336,7 +187,12 @@ const Writedowns = () => {
                                     <div className="w-fit grid place-items-center">
                                         <button
                                             className="text-[0.75rem] text-gray-600 pe-1 text-center hover:underline cursor-pointer sm:mb-0 mb-1 mx-auto"
-                                            onClick={fetchWritedowns}
+                                            onClick={() => {
+                                                queryClient.invalidateQueries({
+                                                    queryKey:
+                                                        writedownKeys.all(),
+                                                });
+                                            }}
                                         >
                                             refresh
                                         </button>
@@ -402,7 +258,7 @@ const Writedowns = () => {
                                             />
                                         )}
                                     </DragOverlay>,
-                                    document.getElementById("root"),
+                                    rootEl,
                                 )}
                             </DndContext>
                         </>

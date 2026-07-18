@@ -6,9 +6,7 @@ import {
     getBoardStats,
     createBoard,
     getBoard,
-    updateVisibility,
-    updateTitle,
-    updateDescription,
+    updateBoard,
     leaveBoard,
     removeMemberFromBoard,
     closeBoard,
@@ -45,14 +43,8 @@ router.route("/:id/members/leave")
 router.route("/:id/members/:memberId")
     .delete(removeMemberFromBoard)
 
-router.route("/:id/new-title")
-    .patch(updateTitle)
-
-router.route("/:id/new-description")
-    .patch(updateDescription)
-
-router.route("/:id/new-visibility")
-    .patch(updateVisibility)
+router.route("/:id")
+    .patch(updateBoard)
 
 router.route("/copy/:id")
     .post(copyBoard)

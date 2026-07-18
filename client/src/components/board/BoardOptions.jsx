@@ -3,43 +3,50 @@ import useBoardState from "../../hooks/useBoardState";
 import { useNavigate } from "react-router-dom";
 import { formatDateToYYYYMMDD } from "../../utils/dateFormatter";
 import Icon from "../shared/Icon";
-import useCurrentUserContext from "../../hooks/useCurrentUserContext";
-import { axiosPrivate } from "../../api/axios";
+import useCurrentUser from "../../hooks/useCurrentUser";
+import { boardApi } from "../../services/api";
 import useToast from "../../hooks/useToast";
 import { SOCKET_EVENTS } from "@shared/socket-events.js";
+import { getErrorMessage } from "../../utils/getErrorMessage";
 
+/**
+ * @param {{
+ *   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+ *   setOpenCopyBoardForm: React.Dispatch<React.SetStateAction<boolean>>;
+ *   setOpenBoardConfiguration: React.Dispatch<React.SetStateAction<boolean>>;
+ *   setOpenBoardActivities: React.Dispatch<React.SetStateAction<boolean>>;
+ * }} props
+ */
 const BoardOptions = ({
     setOpen,
     setOpenCopyBoardForm,
     setOpenBoardConfiguration,
     setOpenBoardActivities,
 }) => {
-    const { currentUser } = useCurrentUserContext();
+    const currentUser = useCurrentUser();
     const { boardState, removeMemberFromBoard, socket } = useBoardState();
 
     const [showDescription, setShowDescription] = useState(false);
 
     const navigate = useNavigate();
 
-    const containerRef = useRef();
+    /** @type {import("react").MutableRefObject<HTMLDivElement | null>} */
+    const containerRef = useRef(null);
 
     const toast = useToast();
 
     useEffect(() => {
-        containerRef.current.focus();
+        if (containerRef.current) containerRef.current.focus();
     }, []);
 
     const handleLeaveBoard = async () => {
         try {
-            await axiosPrivate.delete(
-                `/boards/${boardState.board._id}/members/leave`,
-            );
+            await boardApi.leaveBoard(boardState.board._id);
             removeMemberFromBoard(currentUser.username);
             socket.emit(SOCKET_EVENTS.BOARD_LEAVE);
             navigate("/boards");
         } catch (err) {
-            const errMsg =
-                err?.response?.data?.message || "Failed to leave this board";
+            const errMsg = getErrorMessage(err, "Failed to leave this board");
             toast.error(errMsg);
             navigate("/boards");
         }
@@ -50,41 +57,55 @@ const BoardOptions = ({
             confirm("This will delete this board permanently. Are you sure ?")
         ) {
             try {
-                await axiosPrivate.delete(`/boards/${boardState.board._id}`);
+                await boardApi.deleteBoard(boardState.board._id);
                 socket.emit(SOCKET_EVENTS.BOARD_CLOSE);
                 navigate("/boards");
             } catch (err) {
-                const errMsg =
-                    err?.response?.data?.message ||
-                    "Failed to close this board, something went wrong";
+                const errMsg = getErrorMessage(
+                    err,
+                    "Failed to close this board, something went wrong",
+                );
                 toast.error(errMsg);
             }
         }
     };
 
+    /**
+     * @param {React.FocusEvent<HTMLTextAreaElement, Element>} e
+     */
     const handleUpdateDescription = async (e) => {
-        if (e.target.value.trim() === boardState.board.description) return;
+        if (e.target.value.trim() === boardState.board.description) {
+            return;
+        }
+
         try {
-            await axiosPrivate.patch(
-                `/boards/${boardState.board._id}/new-description`,
-                JSON.stringify({ description: e.target.value.trim() }),
-            );
-            socket.emit(
-                SOCKET_EVENTS.BOARD_UPDATE_DESCRIPTION,
+            await boardApi.updateBoard(
+                boardState.board._id,
+                "description",
                 e.target.value.trim(),
             );
+            socket.emit(SOCKET_EVENTS.BOARD_UPDATE, {
+                field: "description",
+                value: e.target.value.trim(),
+            });
         } catch (err) {
-            const errMsg =
-                err.response?.data?.message || "Failed to update board title";
+            const errMsg = getErrorMessage(err, "Failed to update board title");
             toast.error(errMsg);
         }
     };
 
+    /**
+     * @param {React.FocusEvent<HTMLDivElement, Element>} e
+     */
     const handleCloseMenuOnBlur = (e) => {
+        if (!containerRef.current) {
+            return;
+        }
+
         if (
             !containerRef.current.contains(e.relatedTarget) &&
             e.relatedTarget !=
-                containerRef.current.parentElement.querySelector("button")
+                containerRef.current.parentElement?.querySelector("button")
         ) {
             setOpen(false);
         }
@@ -97,7 +118,7 @@ const BoardOptions = ({
                 id="board-menu"
                 tabIndex={-1}
                 onBlur={handleCloseMenuOnBlur}
-                className="bg-[rgb(var(--card-item-bg))] cursor-auto absolute outline-hidden bottom-0 right-0 overflow-x-hidden flex flex-col min-w-[300px] min-h-[200px] box--style shadow-gray-600 border-2 border-gray-600 p-3 select-none gap-2 translate-y-[105%]"
+                className="bg-[rgb(var(--card-item-bg))] cursor-auto absolute outline-hidden bottom-0 right-0 overflow-x-hidden flex flex-col min-w-[300px] min-h-[200px] box--style shadow-gray-600 border-2 border-gray-600 p-3 gap-2 translate-y-[105%]"
             >
                 <div className="font-medium text-gray-600 flex-1 flex--center border-b border-black pb-1 mb-1">
                     options

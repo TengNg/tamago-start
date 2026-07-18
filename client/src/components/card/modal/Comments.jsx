@@ -8,45 +8,63 @@ import dateFormatter from "../../../utils/dateFormatter";
 import { useState, useRef, useMemo, useEffect } from "react";
 import Icon from "../../shared/Icon";
 import { useSearchParams } from "react-router-dom";
-import useCurrentUserContext from "../../../hooks/useCurrentUserContext";
-import { axiosPrivate } from "../../../api/axios";
+import useCurrentUser from "../../../hooks/useCurrentUser";
+import { commentApi } from "../../../services/api";
 import useToast from "../../../hooks/useToast";
 import { SOCKET_EVENTS } from "@shared/socket-events.js";
+import { getErrorMessage } from "../../../utils/getErrorMessage";
+import { cardKeys } from "../../../queries/cardKeys";
 
+/**
+ * @typedef {Object} CommentsProps
+ * @property {Card} card
+ */
+
+/**
+ * @param {CommentsProps} props
+ */
 const Comments = ({ card }) => {
     const queryClient = useQueryClient();
     const { socket } = useBoardState();
-    const { currentUser } = useCurrentUserContext();
-
-    const commentTextareaRef = useRef();
-    const focusedCommentRef = useRef();
+    const currentUser = useCurrentUser();
 
     const [content, setContent] = useState("");
-    const [focusedComment, setFocusedComment] = useState(null);
+    const [focusedComment, setFocusedComment] = useState(
+        /** @type {FocusedComment | undefined} */ (undefined),
+    );
     const [searchParams, _setSearchParams] = useSearchParams();
 
     const toast = useToast();
 
+    /** @type {React.MutableRefObject<HTMLTextAreaElement | null>} */
+    const commentTextareaRef = useRef(null);
+
+    /** @type {React.MutableRefObject<HTMLDivElement | null>} */
+    const focusedCommentRef = useRef(null);
+
     useEffect(() => {
+        /**
+         * @param {string} id
+         */
         const fetchFocusedComment = async (id) => {
             try {
-                const response = await axiosPrivate.get(
-                    `/cards/${card._id}/comments/${id}`,
-                );
+                const data = await commentApi.fetchComment(card._id, id);
                 setFocusedComment({
-                    ...response.data.comment,
+                    ...data.comment,
                     collapsed: false,
                 });
             } catch (err) {
-                const errMsg =
-                    err?.response?.data?.message ||
-                    "Failed to load focused comment";
+                const errMsg = getErrorMessage(
+                    err,
+                    "Failed to load focused comment",
+                );
                 toast.error(errMsg);
             }
         };
 
-        if (searchParams.get("focusedComment")) {
-            fetchFocusedComment(searchParams.get("focusedComment"));
+        const focusedCommentParam = searchParams.get("focusedComment");
+        if (focusedCommentParam !== null && focusedCommentParam !== "") {
+            fetchFocusedComment(focusedCommentParam);
         }
     }, [searchParams]);
 
@@ -59,33 +77,36 @@ const Comments = ({ card }) => {
     }, [focusedComment, focusedCommentRef]);
 
     const fetchComments = async ({ page = 1 }) => {
-        const response = await axiosPrivate.get(
-            `/cards/${card._id}/comments?page=${page}`,
-        );
-        return response?.data || [];
+        return await commentApi.fetchComments(card._id, { page });
     };
 
+    /**
+     * @param {string} content
+     */
     const addComment = async (content) => {
-        const response = await axiosPrivate.post(
-            `/cards/${card._id}/comments`,
-            JSON.stringify({ content }),
-        );
-        return response?.data?.comment;
+        const data = await commentApi.addComment(card._id, content);
+        return data?.comment;
     };
 
+    /**
+     * @param {string} commentId
+     */
     const deleteComment = async (commentId) => {
-        const response = await axiosPrivate.delete(
-            `/cards/${card._id}/comments/${commentId}`,
-        );
-        return response?.data?.comment;
+        await commentApi.deleteComment(card._id, commentId);
     };
 
+    /**
+     * @param {string} id
+     */
     const copyCommentLink = (id) => {
         const url = `${window.location.origin}/b/${card.boardId}?card=${card._id}&focusedComment=${id}`;
         navigator.clipboard.writeText(url);
         toast.success("Link copied to clipboard");
     };
 
+    /**
+     * @param {string} content
+     */
     const copyCommentContent = (content) => {
         navigator.clipboard.writeText(content).then(() => {
             toast.success("Content copied to clipboard");
@@ -93,33 +114,33 @@ const Comments = ({ card }) => {
     };
 
     const commentsQuery = useInfiniteQuery({
-        queryKey: ["card-comments", card?._id],
-        queryFn: ({ pageParam = 1 }) => fetchComments({ page: pageParam }),
+        queryKey: cardKeys.comments(card._id),
+        initialPageParam: 1,
+        queryFn: ({ pageParam }) => fetchComments({ page: pageParam }),
         getNextPageParam: (lastPage, _pages) => {
             return lastPage.nextPage;
         },
     });
 
     const addCommentQuery = useMutation({
-        mutationFn: (content) => addComment(content),
+        mutationFn: (/** @type {string} */ content) => addComment(content),
         onSuccess: (data, _variables, _context) => {
             queryClient.invalidateQueries({
-                queryKey: ["card-comments", card._id],
+                queryKey: cardKeys.comments(card._id),
             });
             socket.emit(SOCKET_EVENTS.COMMENT_CREATE, { comment: data });
         },
         onError: (err) => {
-            const errMsg =
-                err.response?.data?.message || "Failed to add new comment";
+            const errMsg = getErrorMessage(err, "Failed to add new comment");
             toast.error(errMsg);
         },
     });
 
     const deleteCommentQuery = useMutation({
-        mutationFn: (id) => deleteComment(id),
+        mutationFn: (/** @type {string} */ id) => deleteComment(id),
         onSuccess: (_data, commentId, _context) => {
             queryClient.invalidateQueries({
-                queryKey: ["card-comments", card._id],
+                queryKey: cardKeys.comments(card._id),
             });
             socket.emit(SOCKET_EVENTS.COMMENT_DELETE, {
                 commentId,
@@ -127,10 +148,7 @@ const Comments = ({ card }) => {
             });
         },
         onError: (err) => {
-            const errMsg =
-                err.response?.data?.message ||
-                err.message ||
-                "Failed to delete comment";
+            const errMsg = getErrorMessage(err, "Failed to delete comment");
             toast.error(errMsg);
         },
     });
@@ -153,6 +171,9 @@ const Comments = ({ card }) => {
         commentTextareaRef.current.value = "";
     }
 
+    /**
+     * @param {string} id
+     */
     function handleDeleteComment(id) {
         if (!confirm("Are you sure you want to delete this comment?")) {
             return;
@@ -161,6 +182,9 @@ const Comments = ({ card }) => {
         deleteCommentQuery.mutate(id);
     }
 
+    /**
+     * @param {React.KeyboardEvent<HTMLTextAreaElement>} e
+     */
     function handleTextAreaOnKeydown(e) {
         if (e.shiftKey && e.key === "Enter") {
             e.preventDefault();
@@ -173,6 +197,9 @@ const Comments = ({ card }) => {
         }
     }
 
+    /**
+     * @param {React.ChangeEvent<HTMLTextAreaElement>} e
+     */
     function handleSetTextAreaContent(e) {
         if (content.length >= 1000) {
             e.preventDefault();
@@ -218,11 +245,11 @@ const Comments = ({ card }) => {
                     className="overflow-y-auto border shadow-[0_2px_0_0] border-gray-400 shadow-gray-400 focus:border-gray-600 focus:shadow-gray-600 wrap-break-word py-2 px-3 w-full text-gray-700 focus:bg-gray-100 bg-transparent font-medium placeholder-gray-400 focus:outline-hidden"
                     placeholder="add a comment..."
                 />
-                <div className="flex flex-col gap-2 min-w-[60px] w-[60px]">
+                <div className="flex flex-col gap-2 min-w-15 w-15">
                     <button
                         disabled={addCommentQuery.isPending}
                         onClick={handleAddNewComment}
-                        className="bg-gray-500 hover:bg-gray-400 py-2 text-[12px] text-gray-50 w-[60px] select-none font-medium"
+                        className="bg-gray-500 hover:bg-gray-400 py-2 text-[12px] text-gray-50 w-15 select-none font-medium"
                     >
                         {addCommentQuery.isPending ? "..." : "send"}
                     </button>
@@ -285,6 +312,8 @@ const Comments = ({ card }) => {
                                                     onClick={() => {
                                                         setFocusedComment(
                                                             (prev) => {
+                                                                if (!prev)
+                                                                    return prev;
                                                                 return {
                                                                     ...prev,
                                                                     collapsed:

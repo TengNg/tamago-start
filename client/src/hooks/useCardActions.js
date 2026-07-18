@@ -1,12 +1,29 @@
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useKeybind } from "./useKeybind";
 
-const useCardActions = ({ stateHooks, effectDeps }) => {
-    const { setFocusedCard, setOpenedCardQuickEditor } = stateHooks;
-    const { boardState, focusedCard } = effectDeps;
+/**
+ * @param {Object} params
+ * @param {BoardState} params.boardState
+ * @param {FocusedCard | undefined} params.focusedCard
+ * @param {React.Dispatch<React.SetStateAction<FocusedCard | undefined>>} params.setFocusedCard
+ * @param {React.Dispatch<React.SetStateAction<CardQuickEditorData | undefined>>} params.setOpenedCardQuickEditor
+ */
+const useCardActions = ({
+    boardState,
+    focusedCard,
+    setFocusedCard,
+    setOpenedCardQuickEditor,
+}) => {
+    const [, setSearchParams] = useSearchParams();
 
-    const [searchParams, setSearchParams] = useSearchParams();
+    /**
+     * @param {string} cardId
+     * @param {string} listId
+     */
+    const getCardElement = (cardId, listId) => {
+        return document.querySelector(`[data-card-item="${cardId}-${listId}"]`);
+    };
 
     const getVisibleLists = useCallback(() => {
         const lists = boardState.lists ?? [];
@@ -19,9 +36,12 @@ const useCardActions = ({ stateHooks, effectDeps }) => {
     }, [boardState.lists, boardState.cards]);
 
     const getVisibleCards = useCallback(
+        /**
+         * @param {string} listId
+         */
         (listId) => {
             return (
-                boardState.cards?.[listId]?.filter(
+                boardState.cards[listId]?.filter(
                     (card) => !card.hiddenByFilter,
                 ) ?? []
             );
@@ -30,6 +50,10 @@ const useCardActions = ({ stateHooks, effectDeps }) => {
     );
 
     const getCardPosition = useCallback(
+        /**
+         * @param {string} cardId
+         * @param {string} listId
+         */
         (cardId, listId) => {
             const list = getVisibleLists().find((l) => l._id === listId);
             if (!list) return null;
@@ -41,6 +65,9 @@ const useCardActions = ({ stateHooks, effectDeps }) => {
     );
 
     const moveFocus = useCallback(
+        /**
+         * @param {"up" | "down" | "left" | "right"} direction
+         */
         (direction) => {
             const visibleLists = getVisibleLists();
             if (visibleLists.length === 0) return;
@@ -57,14 +84,14 @@ const useCardActions = ({ stateHooks, effectDeps }) => {
             if (!focusedCard) {
                 const firstCard = getVisibleCards(visibleLists[0]._id)[0];
                 setFocusedCard({
-                    id: firstCard._id,
+                    _id: firstCard._id,
                     listId: firstCard.listId,
                     focused: true,
                 });
                 return;
             }
 
-            const pos = getCardPosition(focusedCard.id, focusedCard.listId);
+            const pos = getCardPosition(focusedCard._id, focusedCard.listId);
             if (!pos) return;
 
             const { list: currList, cards: currCards, index: currIndex } = pos;
@@ -92,21 +119,17 @@ const useCardActions = ({ stateHooks, effectDeps }) => {
 
             if (nextCard) {
                 setFocusedCard({
-                    id: nextCard._id,
+                    _id: nextCard._id,
                     listId: nextCard.listId,
                     focused: true,
                 });
 
-                const cardEl = document.querySelector(
-                    `[data-card-item="${nextCard._id}-${nextCard.listId}"]`,
-                );
+                const cardEl = getCardElement(nextCard._id, nextCard.listId);
                 if (!cardEl) return;
                 cardEl.scrollIntoView({ behavior: "smooth", block: "center" });
             }
         },
         [
-            boardState?.lists,
-            boardState?.cards,
             focusedCard,
             getVisibleLists,
             getVisibleCards,
@@ -116,27 +139,35 @@ const useCardActions = ({ stateHooks, effectDeps }) => {
     );
 
     const handleOpenCardDetail = useCallback(
+        /**
+         * @param {FocusedCard | undefined} card
+         */
         (card) => {
             if (card?.focused) {
-                searchParams.set("card", card.id);
-                setSearchParams(searchParams, { replace: true });
+                setSearchParams(
+                    (prev) => {
+                        prev.set("card", card._id);
+                        return prev;
+                    },
+                    { replace: true },
+                );
             }
         },
-        [searchParams, setSearchParams],
+        [setSearchParams],
     );
 
     const handleOpenCardQuickEditor = useCallback(
+        /**
+         * @param {Card} card
+         */
         (card) => {
-            if (!card?.focused) return;
-
-            const cardEl = document.querySelector(
-                `[data-card-item="${card.id}-${card.listId}"]`,
-            );
-            if (!cardEl) return;
+            const cardEl = getCardElement(card._id, card.listId);
+            if (!cardEl) {
+                return;
+            }
 
             const rect = cardEl.getBoundingClientRect();
             setOpenedCardQuickEditor({
-                open: true,
                 card,
                 attribute: {
                     top: rect.bottom + window.scrollY,
@@ -150,59 +181,65 @@ const useCardActions = ({ stateHooks, effectDeps }) => {
     );
 
     const handleMouseDown = useCallback(
+        /**
+         * @param {MouseEvent} e
+         */
         (e) => {
-            const el = e.target;
+            const el = /** @type {HTMLElement} */ (e.target);
             if (el?.hasAttribute("data-card-item")) {
-                const [id, listId] = el
-                    .getAttribute("data-card-item")
-                    .split("-");
-                setFocusedCard({ id, listId, focused: true });
+                const elAttr = el.getAttribute("data-card-item");
+                if (elAttr) {
+                    const [id, listId] = elAttr.split("-");
+                    setFocusedCard({ _id: id, listId, focused: true });
+                }
             } else {
-                setFocusedCard((prev) => ({ ...prev, focused: false }));
+                setFocusedCard(
+                    /** @param {FocusedCard | undefined} prev */
+                    (prev) => {
+                        return prev ? { ...prev, focused: false } : undefined;
+                    },
+                );
             }
         },
         [setFocusedCard],
     );
 
-    useKeybind(["j", "down"], () => moveFocus("down"), {
-        ignoreInInputs: true,
-    });
+    const moveDown = useCallback(() => moveFocus("down"), [moveFocus]);
+    const moveUp = useCallback(() => moveFocus("up"), [moveFocus]);
+    const moveLeft = useCallback(() => moveFocus("left"), [moveFocus]);
+    const moveRight = useCallback(() => moveFocus("right"), [moveFocus]);
 
-    useKeybind(["k", "up"], () => moveFocus("up"), {
-        ignoreInInputs: true,
-    });
-
-    useKeybind(["h", "left"], () => moveFocus("left"), {
-        ignoreInInputs: true,
-    });
-
-    useKeybind(["l", "right"], () => moveFocus("right"), {
-        ignoreInInputs: true,
-    });
-
-    useKeybind(["ctrl+j", "ctrl+down"], () => moveFocus("down"));
-    useKeybind(["ctrl+k", "ctrl+up"], () => moveFocus("up"));
-    useKeybind(["ctrl+h", "ctrl+left"], () => moveFocus("left"));
-    useKeybind(["ctrl+l", "ctrl+right"], () => moveFocus("right"));
-
-    useKeybind("enter", () => handleOpenCardDetail(focusedCard), {
-        ignoreInInputs: true,
-    });
-
-    useKeybind(
-        "q",
-        () => {
-            if (!focusedCard) return;
-            const pos = getCardPosition(focusedCard.id, focusedCard.listId);
-            if (pos) {
-                handleOpenCardQuickEditor({
-                    ...focusedCard,
-                    title: pos.cards[pos.index].title,
-                });
-            }
-        },
-        { ignoreInInputs: true },
+    const handleEnter = useCallback(
+        () => handleOpenCardDetail(focusedCard),
+        [handleOpenCardDetail, focusedCard],
     );
+
+    const handleQ = useCallback(() => {
+        if (!focusedCard) {
+            return;
+        }
+
+        const pos = getCardPosition(focusedCard._id, focusedCard.listId);
+        if (pos) {
+            handleOpenCardQuickEditor(pos.cards[pos.index]);
+        }
+    }, [focusedCard, getCardPosition, handleOpenCardQuickEditor]);
+
+    const vimOpts = useMemo(() => ({ ignoreInInputs: true }), []);
+    const ctrlOpts = useMemo(() => ({}), []);
+
+    useKeybind(["j", "down"], moveDown, vimOpts);
+    useKeybind(["k", "up"], moveUp, vimOpts);
+    useKeybind(["h", "left"], moveLeft, vimOpts);
+    useKeybind(["l", "right"], moveRight, vimOpts);
+
+    useKeybind(["ctrl+j", "ctrl+down"], moveDown, ctrlOpts);
+    useKeybind(["ctrl+k", "ctrl+up"], moveUp, ctrlOpts);
+    useKeybind(["ctrl+h", "ctrl+left"], moveLeft, ctrlOpts);
+    useKeybind(["ctrl+l", "ctrl+right"], moveRight, ctrlOpts);
+
+    useKeybind("enter", handleEnter, vimOpts);
+    useKeybind("q", handleQ, vimOpts);
 
     useEffect(() => {
         document.addEventListener("mousedown", handleMouseDown);

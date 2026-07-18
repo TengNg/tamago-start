@@ -1,8 +1,5 @@
 import { SOCKET_EVENTS } from '../../../shared/socket-events.js';
 
-/**
- * @param {import('socket.io').Socket} socket
- */
 export default function registerChatHandlers(socket) {
 
     socket.on(SOCKET_EVENTS.CHAT_SEND, (data) => {

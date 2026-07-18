@@ -1,3 +1,7 @@
+/**
+ * @param {string} str
+ * @returns {boolean}
+ */
 function validUrl(str) {
     try {
         const url = new URL(str);

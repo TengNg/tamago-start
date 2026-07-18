@@ -138,12 +138,11 @@ const removeInvitation = async (req, res) => {
     const { id } = req.params;
 
     const removed = await Invitation.findByIdAndDelete(id);
-
     if (!removed) {
-        return res.status(404).json({ message: 'Invitation not found' });
+        return res.sendStatus(404);
     }
 
-    res.status(200).json({ message: 'Invitation removed successfully' });
+    res.sendStatus(204);
 };
 
 export {

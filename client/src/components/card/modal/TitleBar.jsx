@@ -1,32 +1,41 @@
-import React from "react";
 import Icon from "../../shared/Icon";
 
+/**
+ * @typedef {Object} TitleBarProps
+ * @property {string} title
+ * @property {React.Dispatch<React.SetStateAction<string>>} setTitle
+ * @property {Card} card
+ * @property {React.MutableRefObject<HTMLTextAreaElement | null>} cardTitleInput
+ * @property {(e: React.FocusEvent<HTMLTextAreaElement>) => void} confirmTitle
+ * @property {() => void} cancel
+ * @property {boolean} isScrolledDown
+ */
+
+/**
+ * @param {TitleBarProps} props
+ */
 export default function TitleBar({
     title,
     setTitle,
     card,
     cardTitleInput,
     confirmTitle,
-    handleCancel,
+    cancel,
     isScrolledDown,
 }) {
     return (
         <div
             className="bg-[rgb(var(--card-item-bg))] sticky z-30 top-0 flex justify-start items-start p-3"
-            style={{
-                boxShadow: isScrolledDown
-                    ? "0 2px 0 0 rgba(0, 0, 0, 0.25)"
-                    : "none",
-            }}
+            style={{ borderBottom: isScrolledDown ? "1px solid black" : "" }}
         >
             <div className="flex flex-col flex-1">
                 <textarea
                     ref={cardTitleInput}
-                    rows="1"
+                    rows={1}
                     className="card__title__textarea font-medium text-gray-600 bg-transparent leading-normal resize-none"
                     value={title}
                     onKeyDown={(e) => {
-                        if (e.key == "Enter") e.target.blur();
+                        if (e.key == "Enter") e.currentTarget.blur();
                     }}
                     onBlur={confirmTitle}
                     onFocus={(e) => {
@@ -48,7 +57,7 @@ export default function TitleBar({
                 )}
             </div>
             <button
-                onClick={handleCancel}
+                onClick={cancel}
                 className="text-[0.75rem] grid text-gray-400 hover:text-gray-600 place-items-center"
             >
                 <Icon className="w-5 h-5" name="xmark" />

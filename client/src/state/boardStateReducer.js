@@ -1,5 +1,10 @@
 import { BOARD_ACTIONS } from "./boardActionTypes";
 
+/**
+ * @param {BoardState} state
+ * @param {BoardAction} action
+ * @returns {BoardState}
+ */
 export function boardStateReducer(state, action) {
     switch (action.type) {
         // board ==============================================================
@@ -207,13 +212,7 @@ export function boardStateReducer(state, action) {
             const { member } = action.payload;
             return {
                 ...state,
-                members: [
-                    ...state.members,
-                    {
-                        username: member.username,
-                        profileImage: member.profileImage,
-                    },
-                ],
+                members: [...state.members, member],
             };
         }
 

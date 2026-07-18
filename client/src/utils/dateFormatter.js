@@ -1,6 +1,13 @@
+/**
+ * @param {string | number | Date | undefined} miliseconds
+ * @param {Object} [opts]
+ * @param {boolean} [opts.weekdayFormat=false]
+ * @param {boolean} [opts.withTime=true]
+ * @returns {string}
+ */
 export default function dateFormatter(
     miliseconds,
-    option = { weekdayFormat: false, withTime: true },
+    opts = { weekdayFormat: false, withTime: true },
 ) {
     if (!miliseconds) return "";
 
@@ -9,7 +16,8 @@ export default function dateFormatter(
     const year = date.getFullYear();
     const currentYear = new Date().getFullYear();
 
-    if (option.weekdayFormat && year === currentYear) {
+    if (opts.weekdayFormat && year === currentYear) {
+        /** @type {Intl.DateTimeFormatOptions} */
         const options = {
             weekday: "short",
             month: "short",
@@ -22,7 +30,7 @@ export default function dateFormatter(
         const minutes = String(date.getMinutes()).padStart(2, "0");
         const time = hours + ":" + minutes;
 
-        if (option.withTime) {
+        if (opts.withTime) {
             return `${formattedDate} ${time}`;
         }
 
@@ -53,11 +61,17 @@ export default function dateFormatter(
     const minutes = String(date.getMinutes()).padStart(2, "0");
     const seconds = String(date.getSeconds()).padStart(2, "0");
 
-    return option.withTime
+    return opts.withTime
         ? `${weekday[wday]}, ${month[m]} ${day} ${year} ${hours}:${minutes}:${seconds}`
         : `${weekday[wday]}, ${month[m]} ${day} ${year}`;
 }
 
+/**
+ * @param {string | number | Date | undefined} miliseconds
+ * @param {Object} [opts]
+ * @param {boolean} [opts.withTime=true]
+ * @returns {string}
+ */
 export const formatDateToYYYYMMDD = (
     miliseconds,
     option = { withTime: false },
@@ -80,6 +94,9 @@ export const formatDateToYYYYMMDD = (
     return `${year}-${month}-${day}`;
 };
 
+/**
+ * @param {string | number | Date | undefined} miliseconds
+ */
 export const dateToCompare = (miliseconds) => {
     if (!miliseconds) return "";
 

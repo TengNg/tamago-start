@@ -1,9 +1,10 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import Title from "../components/ui/Title";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { login } from "../api/authApi";
+import { authApi } from "../services/api";
+import { getErrorMessage } from "../utils/getErrorMessage";
 
 export default function Login() {
     const queryClient = useQueryClient();
@@ -14,33 +15,26 @@ export default function Login() {
 
     const [searchParams, _] = useSearchParams();
 
-    const usernameInputEl = useRef();
-    const passwordInputEl = useRef();
-
     const navigate = useNavigate();
 
     const location = useLocation();
     const from = location.state?.from?.pathname || "/boards";
 
     const loginMutation = useMutation({
-        mutationFn: () => login({ username, password }),
+        mutationFn: () => authApi.login({ username, password }),
         onSuccess: (_data, _variables, _context) => {
             queryClient.resetQueries({ queryKey: ["me"], exact: true });
             navigate(from, { replace: true });
         },
-        onMutate: () => {
-            usernameInputEl.current.readOnly = true;
-            passwordInputEl.current.readOnly = true;
-        },
         onError: (err) => {
-            const errMsg =
-                err?.response?.data?.message || "Something went wrong";
-            usernameInputEl.current.readOnly = false;
-            passwordInputEl.current.readOnly = false;
+            const errMsg = getErrorMessage(err, "Something went wrong");
             setErrMsg(errMsg);
         },
     });
 
+    /**
+     * @param {React.FormEvent<HTMLFormElement>} e
+     */
     const handleSubmit = async (e) => {
         e.preventDefault();
         loginMutation.mutate();
@@ -53,7 +47,7 @@ export default function Login() {
 
                 <form
                     onSubmit={handleSubmit}
-                    className="flex flex-col form--style p-6 pt-2 w-[325px]"
+                    className="flex flex-col form--style p-6 pt-2 w-81.25"
                     style={{ backgroundColor: "rgba(241, 241, 241, 0.75)" }}
                 >
                     <label className="text-gray-700" htmlFor="username">
@@ -64,7 +58,7 @@ export default function Login() {
                         type="text"
                         id="username"
                         autoComplete="off"
-                        ref={usernameInputEl}
+                        readOnly={loginMutation.isPending}
                         onChange={(e) => setUsername(e.target.value)}
                         value={username}
                         required
@@ -74,9 +68,9 @@ export default function Login() {
                         Password
                     </label>
                     <input
-                        ref={passwordInputEl}
                         className="border-2 border-gray-700 text-gray-700 p-1 font-medium select-none"
                         type="password"
+                        readOnly={loginMutation.isPending}
                         id="password"
                         onChange={(e) => setPassword(e.target.value)}
                         value={password}

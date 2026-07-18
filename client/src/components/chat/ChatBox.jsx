@@ -2,24 +2,25 @@ import { useMemo, useRef, useState } from "react";
 import ChatMessage from "./ChatMessage";
 import ChatInput from "./ChatInput";
 import Icon from "../shared/Icon";
-import { useParams } from "react-router-dom";
-import { clearMessages, fetchChat } from "../../api/chatApi";
+import { chatApi } from "../../services/api";
 import {
     useInfiniteQuery,
     useMutation,
     useQueryClient,
 } from "@tanstack/react-query";
 import useBoardState from "../../hooks/useBoardState";
-import useCurrentUserContext from "../../hooks/useCurrentUserContext";
+import useCurrentUser from "../../hooks/useCurrentUser";
 import { chatKeys } from "../../queries/chatKeys";
 import useToast from "../../hooks/useToast";
 import { useKeybind } from "../../hooks/useKeybind";
 import { kb } from "../../constants/keybinds";
 import { SOCKET_EVENTS } from "@shared/socket-events.js";
+import { getErrorMessage } from "../../utils/getErrorMessage";
 
+/** @returns {JSX.Element} */
 const ChatBox = () => {
     const queryClient = useQueryClient();
-    const { currentUser } = useCurrentUserContext();
+    const currentUser = useCurrentUser();
     const {
         boardState,
         socket,
@@ -28,43 +29,58 @@ const ChatBox = () => {
         isAtBottomOfChatBox: isAtBottom,
         setIsAtBottomOfChatBox: setIsAtBottom,
     } = useBoardState();
-    const { boardId } = useParams();
     const toast = useToast();
+
+    /** @type {React.MutableRefObject<HTMLDivElement | null>} */
     const containerRef = useRef(null);
+
+    /** @type {React.MutableRefObject<HTMLDivElement | null>} */
     const messagesRef = useRef(null);
+
+    /** @type {React.MutableRefObject<number>} */
     const previousScrollHeightRef = useRef(0);
+
     const [expanded, setExpanded] = useState(false);
+
+    const isOwner =
+        boardState.members.findIndex(
+            /** @param {BoardMember} m */
+            (m) => m.role === "owner" && m.userId === currentUser._id,
+        ) !== -1;
 
     useKeybind(kb.openChatBox, () => {
         setOpen((prev) => !prev);
     });
 
-    const isOwner = useMemo(() => {
-        return boardState.members.indexOf((m) => {
-            return m.role === "owner" && m.userId === currentUser._id;
-        });
-    }, [boardState.members]);
-
     const chatQuery = useInfiniteQuery({
-        queryKey: chatKeys.messages(boardId),
-        queryFn: ({ pageParam = null }) =>
-            fetchChat({ boardId, before: pageParam }),
+        queryKey: chatKeys.messages(boardState.board._id),
+        queryFn: /** @param {{ pageParam: string | null }} param */ ({
+            pageParam,
+        }) =>
+            chatApi.fetchChat({
+                boardId: boardState.board._id,
+                before: pageParam ?? undefined,
+            }),
         initialPageParam: null,
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     });
 
+    chatQuery.data;
+
     const clearMessagesMutation = useMutation({
-        mutationFn: () => clearMessages({ boardId }),
+        mutationFn: () => chatApi.clearMessages(boardState.board._id),
         onSuccess: (_data, _variables, _context) => {
             queryClient.invalidateQueries({
-                queryKey: chatKeys.messages(boardId),
+                queryKey: chatKeys.messages(boardState.board._id),
             });
             socket.emit(SOCKET_EVENTS.CHAT_CLEAR);
             toast.success("Chat cleared");
         },
         onError: (err) => {
-            const errMsg =
-                err?.response?.data?.message || "Failed to clear chat messages";
+            const errMsg = getErrorMessage(
+                err,
+                "Failed to clear chat messages",
+            );
             toast.error(errMsg);
         },
     });
@@ -125,6 +141,7 @@ const ChatBox = () => {
         setExpanded((prev) => !prev);
     }
 
+    /** @type {React.CSSProperties} */
     const style = {
         width: expanded ? "800px" : "350px",
         height: expanded ? "800px" : "450px",
@@ -168,8 +185,10 @@ const ChatBox = () => {
 
                 <div className="flex-1 flex items-center justify-center">
                     <div className="text-gray-400 text-sm">
-                        {chatQuery.error.response?.data?.message ||
-                            "Failed to load chat"}
+                        {getErrorMessage(
+                            chatQuery.error,
+                            "Failed to load chat",
+                        )}
                     </div>
                 </div>
             </div>

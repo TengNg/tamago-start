@@ -1,15 +1,20 @@
 import { useState, useRef, useEffect } from "react";
 import useBoardState from "../../hooks/useBoardState";
 import { lexorank } from "../../lib/lexorank";
-import { axiosPrivate } from "../../api/axios";
+import { listApi } from "../../services/api";
 import useToast from "../../hooks/useToast";
 import { SOCKET_EVENTS } from "@shared/socket-events.js";
+import { getErrorMessage } from "../../utils/getErrorMessage";
+import { useMutation } from "@tanstack/react-query";
 
 const AddList = () => {
     const [title, setTitle] = useState("");
-    const [addingList, setAddingList] = useState(false);
-    const titleInputRef = useRef();
-    const containerRef = useRef();
+
+    /** @type {React.MutableRefObject<HTMLInputElement | null>} */
+    const titleInputRef = useRef(null);
+
+    /** @type {React.MutableRefObject<HTMLDivElement | null>} */
+    const containerRef = useRef(null);
 
     const {
         openAddList: open,
@@ -23,66 +28,50 @@ const AddList = () => {
     const toast = useToast();
 
     useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (
-                containerRef.current &&
-                !containerRef.current.contains(event.target)
-            ) {
-                setOpen(false);
+        if (open) {
+            if (titleInputRef.current) {
+                titleInputRef.current.focus();
             }
-        };
 
-        document.addEventListener("mousedown", handleClickOutside);
-
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, []);
-
-    useEffect(() => {
-        if (titleInputRef.current && open) {
-            titleInputRef.current.focus();
-            containerRef.current.scrollIntoView({ block: "end" });
+            if (containerRef.current) {
+                containerRef.current.scrollIntoView({ block: "end" });
+            }
         }
     }, [open]);
 
-    const handleAddList = async () => {
-        if (title.trim() === "" || addingList) {
-            return;
-        }
+    const addListMutation = useMutation({
+        mutationFn: async () => {
+            if (title.trim() === "") {
+                return;
+            }
 
-        let prevOrder = "";
-        if (boardState.lists.length > 0) {
-            prevOrder = boardState.lists[boardState.lists.length - 1].order;
-        }
+            let prevOrder = "";
+            if (boardState.lists.length > 0) {
+                prevOrder = boardState.lists[boardState.lists.length - 1].order;
+            }
 
-        const [rank, _] = lexorank.insert(prevOrder);
+            const [rank, _] = lexorank.insert(prevOrder);
 
-        const newList = {
-            title: title,
-            order: rank,
-            boardId: boardState.board._id,
-        };
+            const newList = {
+                title: title,
+                order: rank,
+                boardId: boardState.board._id,
+            };
 
-        try {
-            setAddingList(true);
-
-            const response = await axiosPrivate.post(
-                "/lists",
-                JSON.stringify(newList),
-            );
-            socket.emit(SOCKET_EVENTS.LIST_CREATE, response.data.newList);
-            addListToBoard(response.data.newList);
-            setTitle("");
-            titleInputRef.current.focus();
-        } catch (err) {
-            const errMsg =
-                err?.response?.data?.message || "Failed to add new list";
+            const data = await listApi.createList(newList);
+            return data;
+        },
+        onSuccess: (data) => {
+            if (data) {
+                socket.emit(SOCKET_EVENTS.LIST_CREATE, data);
+                addListToBoard(data);
+            }
+        },
+        onError: (err) => {
+            const errMsg = getErrorMessage(err, "Failed to add new list");
             toast.error(errMsg);
-        } finally {
-            setAddingList(false);
-        }
-    };
+        },
+    });
 
     const handleOpenAddListForm = () => {
         if (titleInputRef.current) {
@@ -90,12 +79,22 @@ const AddList = () => {
         }
     };
 
-    const handleKeyDown = (event) => {
-        if (event.key === "Enter") {
+    const handleAddList = () => {
+        addListMutation.mutateAsync();
+    };
+
+    /**
+     * @param {React.KeyboardEvent<HTMLInputElement>} e
+     */
+    const handleKeyDown = (e) => {
+        if (e.key === "Enter") {
             handleAddList();
         }
     };
 
+    /**
+     * @param {React.ChangeEvent<HTMLInputElement>} e
+     */
     const handleInputChange = (e) => {
         setTitle(e.target.value);
     };
@@ -134,7 +133,7 @@ const AddList = () => {
                         onClick={handleAddList}
                         className="button--style--dark grid place-items-center w-1/2 font-medium text-sm"
                     >
-                        {!addingList ? "+ add" : "adding..."}
+                        {!addListMutation.isPending ? "+ add" : "adding..."}
                     </button>
                     <button
                         onClick={() => setOpen(false)}

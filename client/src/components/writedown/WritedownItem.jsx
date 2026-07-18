@@ -6,6 +6,14 @@ import { CSS } from "@dnd-kit/utilities";
 import { useSearchParams } from "react-router-dom";
 import { useMemo } from "react";
 
+/**
+ * @param {{
+ *   writedown: Writedown & { isPinning?: boolean },
+ *   open: (id: string) => void,
+ *   remove: (id: string, isEmpty: boolean) => void,
+ *   pin: (id: string) => void,
+ * }} props
+ */
 const WritedownItem = ({ writedown, open, remove, pin }) => {
     const { _id: id, title, content, isPinning, pinned, createdAt } = writedown;
 
@@ -20,8 +28,9 @@ const WritedownItem = ({ writedown, open, remove, pin }) => {
 
     const [searchParams, _] = useSearchParams();
 
+    /** @type {React.CSSProperties} */
     const style = {
-        transition: null,
+        transition: undefined,
         transform: CSS.Transform.toString(transform),
         opacity: isDragging ? 0.2 : 1,
         cursor: "auto",
@@ -36,10 +45,10 @@ const WritedownItem = ({ writedown, open, remove, pin }) => {
             ref={setNodeRef}
             {...attributes}
             style={style}
-            className={`${(hasPinnedFilter && pinned) || !hasPinnedFilter ? "flex" : "hidden"} relative flex flex-col w-[250px] h-[220px] border-2 px-3 pb-3 pt-2 border-gray-700 border-dashed text-gray-700 text-[0.85rem] bg-gray-100/20`}
+            className={`${(hasPinnedFilter && pinned) || !hasPinnedFilter ? "flex" : "hidden"} relative flex flex-col w-62.5 h-55 border-2 px-3 pb-3 pt-2 border-gray-700 border-dashed text-gray-700 text-[0.85rem] bg-gray-100/20`}
         >
             <Loading
-                loading={isPinning}
+                loading={isPinning ?? false}
                 position={"absolute"}
                 displayText="saving..."
                 fontSize="0.75rem"
@@ -48,7 +57,7 @@ const WritedownItem = ({ writedown, open, remove, pin }) => {
             <div className="flex w-full justify-between items-center border-b border-black pb-2 mb-2 gap-2">
                 <button
                     title="pin"
-                    className={`${pinned ? "bg-amber-600/40" : "bg-gray-400"} w-[10px] h-[10px] rounded-full`}
+                    className={`${pinned ? "bg-amber-600/40" : "bg-gray-400"} w-2.5 h-2.5 rounded-full`}
                     onClick={() => pin(id)}
                 ></button>
 
@@ -76,12 +85,12 @@ const WritedownItem = ({ writedown, open, remove, pin }) => {
                 onClick={() => open(id)}
             >
                 {title ? (
-                    <p className="text-sm max-w-[200px] max-h-[100px] overflow-hidden text-gray-700 whitespace-pre-wrap cursor-pointer">
+                    <p className="text-sm max-w-50 max-h-25 overflow-hidden text-gray-700 whitespace-pre-wrap cursor-pointer">
                         &#128205;{" "}
                         <span className="group-hover:underline">{title}</span>
                     </p>
                 ) : !title && content ? (
-                    <p className="text-sm max-w-[200px] max-h-[100px] overflow-hidden text-gray-700 whitespace-pre-wrap group-hover:underline cursor-pointer">
+                    <p className="text-sm max-w-50 max-h-25 overflow-hidden text-gray-700 whitespace-pre-wrap group-hover:underline cursor-pointer">
                         {content}
                     </p>
                 ) : (

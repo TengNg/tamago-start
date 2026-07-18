@@ -1,9 +1,10 @@
 import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Title from "../components/ui/Title";
-import { register } from "../api/authApi";
+import { authApi } from "../services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useToast from "../hooks/useToast";
+import { getErrorMessage } from "../utils/getErrorMessage";
 
 // const USER_REGEX = /^[A-z][A-z0-9-_]{3,23}$/;
 // const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/;
@@ -18,8 +19,13 @@ export default function Register() {
     const [password, setPassword] = useState("");
     const [confirmedPassword, setConfirmedPassword] = useState("");
 
+    /** @type {React.MutableRefObject<HTMLInputElement | null>} */
     const passwordInputEl = useRef(null);
+
+    /** @type {React.MutableRefObject<HTMLInputElement | null>} */
     const usernameInputEl = useRef(null);
+
+    /** @type {React.MutableRefObject<HTMLInputElement | null>} */
     const confirmedPasswordInputEl = useRef(null);
 
     const [errMsg, setErrMsg] = useState("");
@@ -30,27 +36,51 @@ export default function Register() {
     const toast = useToast();
 
     const registerMutation = useMutation({
-        mutationFn: () => register({ username, password, confirmedPassword }),
+        mutationFn: () =>
+            authApi.register({ username, password, confirmedPassword }),
         onSuccess: (_data, _variables, _context) => {
             queryClient.resetQueries({ queryKey: ["me"], exact: true });
             navigate("/login");
             toast.success("account successfully registered", 5000);
         },
         onMutate: () => {
-            usernameInputEl.current.readOnly = true;
-            passwordInputEl.current.readOnly = true;
-            confirmedPasswordInputEl.current.readOnly = true;
+            const username = usernameInputEl.current;
+            const password = passwordInputEl.current;
+            const confirmedPassword = confirmedPasswordInputEl.current;
+
+            if (!username || !password || !confirmedPassword) {
+                return;
+            }
+
+            username.readOnly = true;
+            password.readOnly = true;
+            confirmedPassword.readOnly = true;
         },
         onError: (err) => {
-            const errMsg =
-                err?.response?.data?.message || "Something went wrong";
-            usernameInputEl.current.readOnly = false;
-            passwordInputEl.current.readOnly = false;
-            confirmedPasswordInputEl.current.readOnly = false;
+            const username = usernameInputEl.current;
+            const password = passwordInputEl.current;
+            const confirmedPassword = confirmedPasswordInputEl.current;
+
+            if (username) {
+                username.readOnly = false;
+            }
+
+            if (password) {
+                password.readOnly = false;
+            }
+
+            if (confirmedPassword) {
+                confirmedPassword.readOnly = false;
+            }
+
+            const errMsg = getErrorMessage(err, "Something went wrong");
             setErrMsg(errMsg);
         },
     });
 
+    /**
+     * @param {React.FormEvent<HTMLFormElement>} e
+     */
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -61,20 +91,26 @@ export default function Register() {
             setErrMsg(
                 "Username must be between 3 and 20 characters (no spaces)",
             );
-            usernameInputEl.current.focus();
+            if (usernameInputEl.current) {
+                usernameInputEl.current.focus();
+            }
             return;
         }
 
         if (!passwordMatched) {
             setErrMsg("Password must be at least 8 characters");
-            passwordInputEl.current.focus();
+            if (passwordInputEl.current) {
+                passwordInputEl.current.focus();
+            }
             return;
         }
 
         if (confirmedPassword !== password) {
             setErrMsg("Confirmed password do not match");
             setSuccess(false);
-            confirmedPasswordInputEl.current.focus();
+            if (confirmedPasswordInputEl.current) {
+                confirmedPasswordInputEl.current.focus();
+            }
             return;
         }
 
@@ -88,7 +124,7 @@ export default function Register() {
 
                 <form
                     onSubmit={handleSubmit}
-                    className="flex flex-col form--style p-6 pt-2 bg-gray-200 w-[325px]"
+                    className="flex flex-col form--style p-6 pt-2 bg-gray-200 w-81.25"
                     style={{ backgroundColor: "rgba(241, 241, 241, 0.75)" }}
                 >
                     <label className="text-gray-700" htmlFor="username">
@@ -102,7 +138,7 @@ export default function Register() {
                         ref={usernameInputEl}
                         onChange={(e) => setUsername(e.target.value)}
                         value={username}
-                        maxLength="25"
+                        maxLength={25}
                         required
                     />
 

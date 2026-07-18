@@ -18,10 +18,10 @@ const rCookieOpts = {
     maxAge: 15 * 24 * 60 * 60 * 1000 // 15 days
 };
 
-/** @type string */
+/** @type {string} */
 const aTokenName = process.env.ACCESS_TOKEN_COOKIE_NAME;
 
-/** @type string */
+/** @type {string} */
 const rTokenName = process.env.REFRESH_TOKEN_COOKIE_NAME;
 
 /**

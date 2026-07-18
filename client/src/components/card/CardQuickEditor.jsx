@@ -1,13 +1,25 @@
-import { useRef, useState, useEffect } from "react";
+import { useContext, useRef, useState, useEffect } from "react";
 import useBoardState from "../../hooks/useBoardState";
-import QuickEditorHighlightPicker from "./QuickEditorHighlightPicker";
-import { axiosPrivate } from "../../api/axios";
+import HighlightPicker from "./quick-editor/HighlightPicker";
+import { cardApi } from "../../services/api";
 import { useSearchParams } from "react-router-dom";
 import useToast from "../../hooks/useToast";
 import { SOCKET_EVENTS } from "@shared/socket-events.js";
+import { useKeybind } from "../../hooks/useKeybind";
+import ModalStackContext from "../../context/ModalStackContext";
 
+/**
+ * @typedef {Object} CardQuickEditorProps
+ * @property {Card} card
+ * @property {{ top: number; left: number; width: number; height: number }} attribute
+ * @property {(card: Card) => void} handleCopyCard
+ * @property {(card: Card) => void} handleDeleteCard
+ */
+
+/**
+ * @param {CardQuickEditorProps} props
+ */
 const CardQuickEditor = ({
-    open,
     card,
     attribute,
     handleCopyCard,
@@ -20,54 +32,43 @@ const CardQuickEditor = ({
     const [openHighlightPicker, setOpenHighlightPicker] = useState(true);
     const [isVerifying, setIsVerifying] = useState(false);
 
-    const textAreaRef = useRef();
-    const quickEditorRef = useRef();
+    const { isAnyModalOpen } = useContext(ModalStackContext);
 
     const [searchParams, setSearchParams] = useSearchParams();
 
     const toast = useToast();
 
+    /** @type {React.MutableRefObject<HTMLTextAreaElement | null>} */
+    const textAreaRef = useRef(null);
+
+    useKeybind("esc", () => {
+        if (!isAnyModalOpen) close();
+    });
+
     useEffect(() => {
-        if (quickEditorRef.current && textAreaRef.current && open) {
+        if (textAreaRef.current) {
             textAreaRef.current.focus();
             textAreaRef.current.selectionStart =
                 textAreaRef.current.value.length;
-
-            const handleCloseOnKeydown = (e) => {
-                if (e.key == "Escape") {
-                    e.preventDefault();
-                    close();
-                }
-            };
-
-            quickEditorRef.current.addEventListener(
-                "keydown",
-                handleCloseOnKeydown,
-            );
-
-            return () => {
-                quickEditorRef.current?.removeEventListener(
-                    "keydown",
-                    handleCloseOnKeydown,
-                );
-            };
         }
-    }, [open]);
+    }, []);
 
     const close = () => {
-        setOpenedCardQuickEditor((prev) => {
-            return { ...prev, open: false };
-        });
+        setOpenedCardQuickEditor(undefined);
     };
 
     const handleSetCardTitle = async () => {
-        if (textAreaRef.current.value === "") {
+        if (!textAreaRef.current) {
+            return;
+        }
+
+        if (textAreaRef.current.value.trim() === "") {
             setInitialTitle(card.title);
             return;
         }
 
         try {
-            const newTitle = textAreaRef.current.value;
+            const newTitle = textAreaRef.current?.value || "";
 
             updateCardField({
                 id: card._id,
@@ -77,14 +78,12 @@ const CardQuickEditor = ({
             });
 
             setInitialTitle(newTitle);
-            await axiosPrivate.patch(
-                `/cards/${card._id}/new-title`,
-                JSON.stringify({ title: newTitle }),
-            );
-            socket.emit(SOCKET_EVENTS.CARD_UPDATE_TITLE, {
+            await cardApi.updateCard(card._id, "title", newTitle);
+            socket.emit(SOCKET_EVENTS.CARD_UPDATE, {
                 id: card._id,
                 listId: card.listId,
-                title: newTitle,
+                field: "title",
+                value: newTitle,
             });
         } catch (err) {
             toast.error("Failed to update title");
@@ -98,10 +97,12 @@ const CardQuickEditor = ({
 
         try {
             setIsVerifying(true);
-            const response = await axiosPrivate.patch(
-                `/cards/${card._id}/toggle-verified`,
+            const data = await cardApi.updateCard(
+                card._id,
+                "verified",
+                !card.verified,
             );
-            const { verified } = response.data;
+            const { verified } = data;
 
             updateCardField({
                 id: card._id,
@@ -110,10 +111,11 @@ const CardQuickEditor = ({
                 value: verified,
             });
 
-            socket.emit(SOCKET_EVENTS.CARD_UPDATE_VERIFIED, {
+            socket.emit(SOCKET_EVENTS.CARD_UPDATE, {
                 id: card._id,
                 listId: card.listId,
-                verified,
+                field: "verified",
+                value: verified,
             });
         } catch (err) {
             toast.error("Failed to toggle verified");
@@ -122,15 +124,18 @@ const CardQuickEditor = ({
         }
     };
 
-    const handleTextAreaChanged = () => {
+    const handleTextAreaChange = () => {
         const textarea = textAreaRef.current;
-        setInitialTitle(textarea.value);
-        textarea.style.height = "auto";
-
-        const littleOffset = 4; // prevent resizing when start typing
-        textarea.style.height = `${textarea.scrollHeight + littleOffset}px`;
+        if (textarea) {
+            setInitialTitle(textarea.value);
+            const littleOffset = 4; // prevent resizing when start typing
+            textarea.style.height = `${textarea.scrollHeight + littleOffset}px`;
+        }
     };
 
+    /**
+     * @param {React.KeyboardEvent} e
+     */
     const handleTextAreaOnEnter = (e) => {
         if (e.key == "Enter" && !e.shiftKey) {
             e.preventDefault();
@@ -182,34 +187,30 @@ const CardQuickEditor = ({
                 className="fixed bg-gray-600 opacity-20 w-full h-full z-21"
             ></div>
             <div
-                ref={quickEditorRef}
                 className="absolute z-21"
                 style={{
                     top: `${attribute.top}px`,
                     left: `${attribute.left}px`,
                     width: `${attribute.width}px`,
                     height: `${attribute.height}px`,
-                    transform: `translateY(${-attribute.height - 1}px)`,
+                    transform: `translateY(${-attribute.height - 2}px)`,
                 }}
             >
                 <div className="flex h-full relative mb-2">
                     <textarea
                         ref={textAreaRef}
-                        className={`${theme.itemTheme == "rounded-sm" ? "rounded-sm" : ""} text-sm h-full bg-gray-50 border-2 py-4 px-4 text-gray-600 border-black shadow-[0_3px_0_0] shadow-black leading-normal overflow-y-hidden resize-none w-full font-medium placeholder-gray-400 focus:outline-hidden focus:bg-gray-50`}
+                        className={`${theme.itemTheme == "rounded-sm" ? "rounded-sm" : ""} text-sm h-full bg-gray-50 border-2 border-b-3 py-4 px-4 text-gray-600 leading-normal overflow-y-hidden resize-none w-full font-medium placeholder-gray-400`}
                         style={{
-                            boxShadow: `${card.highlight == null ? "0 3px 0 0 #4b5563" : `0 3px 0 0 ${card.highlight}`}`,
                             borderColor: `${card.highlight == null ? "#4b5563" : `${card.highlight}`}`,
                         }}
                         placeholder="Title for this card"
-                        onChange={handleTextAreaChanged}
+                        onChange={handleTextAreaChange}
                         onKeyDown={handleTextAreaOnEnter}
                         value={initialTitle}
                         maxLength={200}
                     />
                     <div className="flex flex-col gap-2 absolute top-0 -right-1 translate-x-full justify-start items-start w-50">
-                        {openHighlightPicker && (
-                            <QuickEditorHighlightPicker card={card} />
-                        )}
+                        {openHighlightPicker && <HighlightPicker card={card} />}
 
                         <button
                             onClick={handleOpenCardModal}

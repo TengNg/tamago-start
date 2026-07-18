@@ -42,7 +42,7 @@ const addList = async (req, res) => {
         description: '',
     })
 
-    return res.status(201).json({ newList });
+    return res.status(201).json(newList);
 }
 
 /**
@@ -88,17 +88,22 @@ const reorder = async (req, res) => {
         });
     }
 
-    res.status(200).json({ newList: foundList });
+    res.json(foundList);
 };
 
 /**
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  */
-const updateTitle = async (req, res) => {
+const updateList = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
-    const { title } = req.body;
+    const { field, value } = req.body;
+
+    const allowedFields = ["title"];
+    if (!allowedFields.includes(field)) {
+        return res.status(400).json({ message: "Invalid field to update" });
+    }
 
     const foundList = await List.findById(id);
     if (!foundList) {
@@ -110,23 +115,32 @@ const updateTitle = async (req, res) => {
         userId,
         resource: "list",
         action: "edit"
-    })
+    });
 
-    const prevTitle = foundList.title;
-    foundList.title = title;
+    if (foundList[field] === value) {
+        return res.status(200).json(foundList);
+    }
+
+    const prevValue = foundList[field];
+    foundList[field] = value;
     await foundList.save();
+
+    const actionMap = {
+        title: "list.title_updated",
+    };
+    const description = `"${prevValue}" → "${value}"`.trim();
 
     await saveBoardActivity({
         userId,
         boardId: foundList.boardId,
         docId: foundList._id,
-        action: "list.title_updated",
+        action: actionMap[field] || "list.updated",
         docModel: "List",
         docTitle: foundList.title,
-        description: `"${prevTitle}" → "${foundList.title}"`,
+        description,
     });
 
-    res.status(200).json({ newList: foundList });
+    res.status(200).json(foundList);
 };
 
 /**
@@ -236,7 +250,7 @@ const copyList = async (req, res) => {
         description: `a copy of "${foundList.title}" created`,
     })
 
-    res.status(200).json({ list, cards: copiedCards, message: 'list copied' });
+    res.status(200).json({ list, cards: copiedCards });
 };
 
 /**
@@ -337,7 +351,7 @@ const moveList = async (req, res) => {
 
 export {
     addList,
-    updateTitle,
+    updateList,
     deleteList,
     copyList,
     reorder,

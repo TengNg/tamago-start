@@ -53,8 +53,8 @@ const deleteAllBoardActivities = async (req, res) => {
         return res.status(401).json({ message: 'Not authorize' });
     }
 
-    // await BoardActivity.deleteMany({ board: foundBoard._id });
-    return res.status(200).json({ message: "activities removed" });
+    await BoardActivity.deleteMany({ board: foundBoard._id });
+    return res.sendStatus(204);
 };
 
 export {

@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import Loading from "../ui/Loading";
 import {
     SortableContext,
     useSortable,
@@ -18,17 +17,20 @@ import {
 } from "@dnd-kit/core";
 import { createPortal } from "react-dom";
 import Icon from "../shared/Icon";
-import useCurrentUserContext from "../../hooks/useCurrentUserContext";
-import { axiosPrivate } from "../../api/axios";
 import useToast from "../../hooks/useToast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { meApi } from "../../services/api";
+import useAuth from "../../hooks/useAuth";
+import { getErrorMessage } from "../../utils/getErrorMessage";
 
-const Pinned = ({
-    boardId,
-    title,
-    handleOpenBoard,
-    handleDeletePinnedBoard,
-    isDeleting,
-}) => {
+/**
+ * @param {{ boardId: string; title: string }} props
+ */
+const Pinned = ({ boardId, title }) => {
+    const queryClient = useQueryClient();
+
+    const toast = useToast();
+
     const { attributes, listeners, setNodeRef, transform, isDragging } =
         useSortable({
             id: boardId,
@@ -38,17 +40,53 @@ const Pinned = ({
             },
         });
 
+    /** @type {React.CSSProperties} */
     const style = {
         transform: transform ? CSS.Translate.toString(transform) : undefined,
-        transition: null,
         opacity: isDragging ? 0.2 : 1,
     };
 
     const location = useLocation();
-    const isInCurrentBoard = useMemo(() => {
-        const parts = location.pathname.split("/");
-        return parts[1] === "b" && parts[2] === boardId;
-    }, [location]);
+
+    const navigate = useNavigate();
+
+    const parts = location.pathname.split("/");
+    const isInCurrentBoard = parts[1] === "b" && parts[2] === boardId;
+
+    const deleteMutation = useMutation({
+        mutationFn: async () => meApi.deletePinnedBoard(boardId),
+        onSuccess: (data) => {
+            queryClient.setQueryData(
+                ["me"],
+                /** @param {CurrentUser} old */
+                (old) => {
+                    return {
+                        ...old,
+                        pinnedBoardIdCollection: data.pinnedBoards,
+                    };
+                },
+            );
+        },
+        onError: (err) => {
+            const errMsg = getErrorMessage(
+                err,
+                "Failed to delete pinned board",
+            );
+            toast.error(errMsg);
+        },
+    });
+
+    const navigateToBoard = () => {
+        if (!deleteMutation.isPending) {
+            navigate(`/b/${boardId}`);
+        }
+    };
+
+    /** @param {React.MouseEvent<HTMLButtonElement>} e */
+    const deleteBoard = (e) => {
+        e.stopPropagation();
+        deleteMutation.mutate();
+    };
 
     return (
         <div
@@ -56,14 +94,14 @@ const Pinned = ({
             style={style}
             {...attributes}
             {...listeners}
-            className={`${isInCurrentBoard ? "underline" : ""} ${isDeleting ? "opacity-20 bg-red-200 line-through" : ""} select-none touch-none flex items-center justify-between relative max-w-75 overflow-hidden whitespace-nowrap text-ellipsis top-left-auto bg-gray-200 text-[0.75rem] flex-1 border-2 border-b-4 border-gray-700 shadow-gray-700 p-3 cursor-pointer`}
-            onClick={() => handleOpenBoard(boardId)}
+            className={`${isInCurrentBoard ? "underline" : ""} ${deleteMutation.isPending ? "opacity-20 bg-red-200 line-through" : "bg-gray-200 hover:bg-gray-100"} select-none touch-none flex items-center justify-between relative overflow-hidden whitespace-nowrap text-ellipsis top-left-auto text-[0.75rem] flex-1 border-2 border-b-5 border-gray-700 shadow-gray-700 p-3 cursor-pointer`}
+            onClick={navigateToBoard}
         >
             <p>{title}</p>
             <button
-                onClick={(e) => handleDeletePinnedBoard(e, boardId)}
-                disabled={isDeleting}
-                className="text-gray-400 hover:bg-red-300 hover:text-white p-1 grid place-items-center"
+                onClick={deleteBoard}
+                disabled={deleteMutation.isPending}
+                className="text-gray-400 hover:bg-rose-500 hover:text-white p-1 grid place-items-center"
             >
                 <Icon className="w-3 h-3" name="xmark" />
             </button>
@@ -71,21 +109,35 @@ const Pinned = ({
     );
 };
 
-const PinnedBoards = ({ setOpen }) => {
-    const { currentUser, currentUserQuery } = useCurrentUserContext();
+const PinnedBoards = () => {
+    const queryClient = useQueryClient();
 
-    const [pinnedBoards, setPinnedBoards] = useState([]);
-    const [activeItem, setActiveItem] = useState(null);
-    const [cleaned, setCleaned] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [deletingBoardId, setDeletingBoardId] = useState(null);
+    const { currentUser } = useAuth();
 
-    const navigate = useNavigate();
+    const [pinnedBoards, setPinnedBoards] = useState(
+        /** @type {string[][]} */ ([]),
+    );
+    const [activeItem, setActiveItem] = useState(
+        /** @type {import('@dnd-kit/core').Active | null} */ (null),
+    );
 
     const toast = useToast();
 
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 10,
+            },
+        }),
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                distance: 10,
+            },
+        }),
+    );
+
     useEffect(() => {
-        const idCollection = currentUser.pinnedBoardIdCollection;
+        const idCollection = currentUser?.pinnedBoardIdCollection;
         if (idCollection) {
             const entries = Object.entries(idCollection).map((entry, _) => {
                 const [boardId, obj] = entry;
@@ -96,51 +148,36 @@ const PinnedBoards = ({ setOpen }) => {
         }
     }, [currentUser?.pinnedBoardIdCollection]);
 
-    const handleClose = () => {
-        setOpen(false);
-    };
-
-    const handleOpenBoard = (boardId) => {
-        navigate(`/b/${boardId}`);
-    };
-
-    const handleDeletePinnedBoard = async (e, boardId) => {
-        e.stopPropagation();
-        try {
-            setDeletingBoardId(boardId);
-
-            await axiosPrivate.delete(`/me/pinned-boards/${boardId}`);
-            await currentUserQuery.refetch();
-        } catch (err) {
-            const errMsg =
-                err?.response?.data?.message || "Failed to remove this board";
+    const cleanMutation = useMutation({
+        mutationFn: meApi.cleanPinnedBoards,
+        onSuccess: () => {
+            queryClient.setQueryData(
+                ["me"],
+                /** @param {CurrentUser} old */
+                (old) => {
+                    return {
+                        ...old,
+                        pinnedBoardIdCollection: {},
+                    };
+                },
+            );
+        },
+        onError: (err) => {
+            const errMsg = getErrorMessage(
+                err,
+                "Failed to clean pinned boards",
+            );
             toast.error(errMsg);
-        } finally {
-            setDeletingBoardId(null);
-        }
-    };
+        },
+    });
 
-    const handleCleanPinnedBoards = async () => {
-        if (cleaned) return;
-
-        try {
-            setLoading(true);
-            await axiosPrivate.delete(`/me/pinned-boards`);
-            await currentUserQuery.refetch();
-            setLoading(false);
-            setCleaned(true);
-        } catch (err) {
-            setLoading(false);
-            const errMsg = err?.response?.data?.message || "Failed to clean";
-            toast.error(errMsg);
-        }
-    };
-
+    /** @param {import('@dnd-kit/core').DragStartEvent} e */
     const handleOnDragStart = (e) => {
         const { active } = e;
         setActiveItem(active);
     };
 
+    /** @param {import('@dnd-kit/core').DragEndEvent} e */
     const handleOnDragEnd = async (e) => {
         setActiveItem(null);
 
@@ -172,23 +209,28 @@ const PinnedBoards = ({ setOpen }) => {
             const mappedPinnedBoards = [...newPinnedBoards].reduce(
                 (obj, board) => {
                     const [boardId, boardTitle] = board;
-                    obj[boardId] ||= {};
-                    obj[boardId]["title"] = boardTitle;
+                    obj[boardId] ||= { title: boardTitle };
                     return obj;
                 },
-                {},
+                /** @type {Record<string, { title: string }>} */ ({}),
             );
-            await axiosPrivate.patch(
-                `/me/pinned-boards`,
-                JSON.stringify({
-                    pinnedBoards: mappedPinnedBoards,
-                }),
+
+            const data = await meApi.updatePinnedBoards(mappedPinnedBoards);
+            queryClient.setQueryData(
+                ["me"],
+                /** @param {CurrentUser} old */
+                (old) => {
+                    return {
+                        ...old,
+                        pinnedBoardIdCollection: data.pinnedBoards,
+                    };
+                },
             );
-            currentUserQuery.refetch();
         } catch (err) {
-            const errMsg =
-                err?.response?.data?.message ||
-                "Failed to update pinned boards";
+            const errMsg = getErrorMessage(
+                err,
+                "Failed to update pinned boards",
+            );
             toast.error(errMsg);
         }
     };
@@ -197,103 +239,49 @@ const PinnedBoards = ({ setOpen }) => {
         return pinnedBoards.map(([boardId, _title]) => boardId);
     }, [pinnedBoards]);
 
-    const sensors = useSensors(
-        useSensor(PointerSensor, {
-            activationConstraint: {
-                distance: 10,
-            },
-        }),
-        useSensor(TouchSensor, {
-            activationConstraint: {
-                distance: 10,
-            },
-        }),
-    );
-
     return (
-        <>
-            <div
-                onClick={handleClose}
-                className="select-none fixed box-border top-0 left-0 text-gray-600 font-bold h-screen text-[1.25rem] w-full bg-gray-500 opacity-40 z-50 cursor-auto"
-            ></div>
-
-            <div className="fixed box--style flex flex-col gap-4 items-start p-3 top-1/2 right-1/2 left-[50%] -translate-x-[50%] -translate-y-1/2 w-fit min-w-75 max-h-120 max-w-100 border-black border-2 z-50 cursor-auto bg-gray-200">
-                <Loading
-                    loading={loading}
-                    position={"absolute"}
-                    displayText={"loading..."}
-                    fontSize={"0.75rem"}
-                />
-
-                <div className="flex w-full justify-between items-center border-b border-black pb-3">
-                    <div className="flex items-center gap-2">
-                        <span className="font-normal text-gray-700">
-                            pinned boards
-                        </span>
-
-                        {pinnedBoards.length > 0 && (
-                            <button
-                                onClick={handleCleanPinnedBoards}
-                                className="me-auto text-[0.65rem] badge text-red-600 bg-red-100 cursor-pointer"
-                            >
-                                clear
-                            </button>
-                        )}
-                    </div>
-
-                    <button
-                        className="text-gray-600 flex justify-center items-center"
-                        onClick={() => setOpen(false)}
+        <div className="w-full relative">
+            <DndContext
+                collisionDetection={closestCorners}
+                onDragStart={handleOnDragStart}
+                onDragEnd={handleOnDragEnd}
+                sensors={sensors}
+            >
+                <div className="h-full w-full flex flex-col gap-2 overflow-auto">
+                    <SortableContext
+                        items={boardIds}
+                        strategy={verticalListSortingStrategy}
                     >
-                        <Icon className="w-4 h-4" name="xmark" />
-                    </button>
+                        {pinnedBoards.map(([id, title]) => (
+                            <Pinned key={id} boardId={id} title={title} />
+                        ))}
+                    </SortableContext>
                 </div>
 
-                <DndContext
-                    collisionDetection={closestCorners}
-                    onDragStart={handleOnDragStart}
-                    onDragEnd={handleOnDragEnd}
-                    sensors={sensors}
-                >
-                    <div className="h-full w-full flex flex-col gap-3 pb-3 overflow-auto">
-                        <SortableContext
-                            items={boardIds}
-                            strategy={verticalListSortingStrategy}
-                        >
-                            {pinnedBoards.map(([id, title], index) => (
-                                <Pinned
-                                    key={id}
-                                    index={index}
-                                    boardId={id}
-                                    title={title}
-                                    isDeleting={deletingBoardId === id}
-                                    handleOpenBoard={handleOpenBoard}
-                                    handleDeletePinnedBoard={
-                                        handleDeletePinnedBoard
-                                    }
-                                />
-                            ))}
-                        </SortableContext>
-                    </div>
+                {createPortal(
+                    <DragOverlay>
+                        {activeItem && (
+                            <Pinned
+                                boardId={/** @type {string} */ (activeItem.id)}
+                                title={activeItem.data.current?.title || ""}
+                            />
+                        )}
+                    </DragOverlay>,
+                    /** @type {HTMLElement} */ (
+                        document.getElementById("root")
+                    ),
+                )}
+            </DndContext>
 
-                    {createPortal(
-                        <DragOverlay>
-                            {activeItem && (
-                                <Pinned
-                                    boardId={activeItem.id}
-                                    title={activeItem.data.current.title}
-                                    handleOpenBoard={handleOpenBoard}
-                                    handleDeletePinnedBoard={
-                                        handleDeletePinnedBoard
-                                    }
-                                />
-                            )}
-                        </DragOverlay>,
-                        document.getElementById("root"),
-                    )}
-                </DndContext>
-            </div>
-        </>
+            {pinnedBoards.length > 1 && (
+                <button
+                    onClick={() => cleanMutation.mutate()}
+                    className="me-auto text-[10px] badge border-red-600 border border-b-3 text-red-600 bg-red-100 cursor-pointer mt-3 px-3"
+                >
+                    delete all
+                </button>
+            )}
+        </div>
     );
 };
 

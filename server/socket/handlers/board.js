@@ -1,5 +1,8 @@
 import BoardMembership from '../../models/BoardMembership.js';
 import { SOCKET_EVENTS } from '../../../shared/socket-events.js';
+import { allowedFields } from '../validate.js';
+
+const BOARD_UPDATE_ALLOWED = ['field', 'value'];
 
 /**
  * @param {import('socket.io').Server} io
@@ -32,24 +35,24 @@ export default function registerBoardHandlers(io, socket) {
         const boardId = socket.boardId;
         if (!boardId) return;
 
-        const user = socket.user;
-        socket.to(boardId).emit(SOCKET_EVENTS.BOARD_MEMBER_LEFT, { username: user.username });
+        socket.to(boardId).emit(SOCKET_EVENTS.BOARD_MEMBER_LEFT, { memberId: socket.user.id });
 
         delete socket.boardId;
         socket.leave(boardId);
     });
 
-    socket.on(SOCKET_EVENTS.BOARD_KICK, (memberId) => {
+    socket.on(SOCKET_EVENTS.BOARD_KICK, (data) => {
         const boardId = socket.boardId;
         if (!boardId) return;
 
+        const { memberId } = data;
         const connectedSockets = io.sockets.sockets;
         const targetSocket = Array.from(connectedSockets.values()).find(s => s.user && s.user.username === memberId);
         if (!targetSocket) return;
         socket.to(boardId).emit(SOCKET_EVENTS.BOARD_MEMBER_KICKED, { userSocketId: targetSocket.id });
     });
 
-    socket.on(SOCKET_EVENTS.BOARD_CLOSE, (_) => {
+    socket.on(SOCKET_EVENTS.BOARD_CLOSE, (_data) => {
         const boardId = socket.boardId;
         if (!boardId) return;
         delete socket.boardId;
@@ -57,15 +60,10 @@ export default function registerBoardHandlers(io, socket) {
         socket.to(boardId).emit(SOCKET_EVENTS.BOARD_CLOSED);
     });
 
-    socket.on(SOCKET_EVENTS.BOARD_UPDATE_TITLE, (data) => {
+    socket.on(SOCKET_EVENTS.BOARD_UPDATE, (data) => {
         const boardId = socket.boardId;
         if (!boardId) return;
-        socket.to(boardId).emit(SOCKET_EVENTS.BOARD_TITLE_UPDATED, data);
-    });
-
-    socket.on(SOCKET_EVENTS.BOARD_UPDATE_DESCRIPTION, (data) => {
-        const boardId = socket.boardId;
-        if (!boardId) return;
-        socket.to(boardId).emit(SOCKET_EVENTS.BOARD_DESCRIPTION_UPDATED, data);
+        if (!allowedFields(data, BOARD_UPDATE_ALLOWED)) return;
+        socket.to(boardId).emit(SOCKET_EVENTS.BOARD_UPDATED, data);
     });
 }

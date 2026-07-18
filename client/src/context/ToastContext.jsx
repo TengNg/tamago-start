@@ -4,23 +4,29 @@ import Toast from "../components/shared/Toast";
 const DURATION = 3000;
 const AUTOCLOSE = true;
 
-export const ToastContext = createContext({});
-export default ToastContext;
+/** @type {React.Context<ToastContextValue>} */
+const ToastContext = createContext(/** @type {ToastContextValue} */ ({}));
 
+/** @param {{ children: React.ReactNode }} props */
 export const ToastContextProvider = ({ children }) => {
-    const [toasts, setToasts] = useState([]);
+    const [toasts, setToasts] = useState(/** @type {ToastItem[]} */ ([]));
 
-    const removeToast = useCallback((id) => {
-        setToasts((prev) => {
-            const toast = prev.find((t) => t.id === id);
-            if (toast?.timeoutId) {
-                clearTimeout(toast.timeoutId);
-            }
-            return prev.filter((t) => t.id !== id);
-        });
-    }, []);
+    const removeToast = useCallback(
+        /** @param {string} id */
+        (id) => {
+            setToasts((prev) => {
+                const toast = prev.find((t) => t.id === id);
+                if (toast?.timeoutId) {
+                    clearTimeout(toast.timeoutId);
+                }
+                return prev.filter((t) => t.id !== id);
+            });
+        },
+        [],
+    );
 
     const addToast = useCallback(
+        /** @param {{ type: ToastItem["type"], message: string, duration?: number }} params */
         ({ type, message, duration }) => {
             const id = crypto.randomUUID();
             const toastDuration =
@@ -39,6 +45,7 @@ export const ToastContextProvider = ({ children }) => {
     );
 
     const success = useCallback(
+        /** @param {string} message @param {number} [duration] */
         (message, duration) => {
             addToast({ type: "success", message, duration });
         },
@@ -46,6 +53,7 @@ export const ToastContextProvider = ({ children }) => {
     );
 
     const error = useCallback(
+        /** @param {string} message @param {number} [duration] */
         (message, duration) => {
             addToast({ type: "error", message, duration });
         },
@@ -68,3 +76,5 @@ export const ToastContextProvider = ({ children }) => {
         </ToastContext.Provider>
     );
 };
+
+export default ToastContext;

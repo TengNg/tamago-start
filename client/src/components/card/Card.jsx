@@ -7,8 +7,10 @@ import { useSearchParams } from "react-router-dom";
 import Icon from "../shared/Icon";
 import Loading from "../ui/Loading";
 
+/**
+ * @param {{ card: Card }} props
+ */
 export default function Card({ card }) {
-    const cardRef = useRef();
     const [searchParams, setSearchParams] = useSearchParams();
     const {
         setOpenedCardQuickEditor,
@@ -29,12 +31,20 @@ export default function Card({ card }) {
 
     const style = {
         borderColor: `${card.highlight == null ? "#4b5563" : `${card.highlight}`}`,
+        boxShadow: `0 2px 0 ${card.highlight ?? "#4b5563"}`,
         opacity: isDragging ? 0.25 : 1,
     };
 
+    /** @type {React.MutableRefObject<HTMLDivElement | null>} */
+    const cardRef = useRef(null);
+
+    /**
+     * @param {React.MouseEvent<HTMLDivElement | HTMLButtonElement>} e
+     */
     const handleOpenQuickEditor = (e) => {
         e.stopPropagation();
-        if (cardRef) {
+
+        if (cardRef.current) {
             const rect = cardRef.current.getBoundingClientRect();
             const top = rect.bottom + window.scrollY;
             const left = rect.left + window.scrollX;
@@ -42,13 +52,12 @@ export default function Card({ card }) {
             const height = rect.height;
 
             setOpenedCardQuickEditor({
-                open: true,
-                card: card,
+                card,
                 attribute: { top, left, width, height },
             });
 
             setFocusedCard({
-                id: card._id,
+                _id: card._id,
                 listId: card.listId,
                 focused: false,
             });
@@ -58,10 +67,10 @@ export default function Card({ card }) {
     const handleOpenCardDetail = () => {
         searchParams.set("card", card._id);
         setSearchParams(searchParams, { replace: true });
-        setFocusedCard({ id: card._id, listId: card.listId, focused: true });
+        setFocusedCard({ _id: card._id, listId: card.listId, focused: true });
     };
 
-    if (card.onLoading) {
+    if (card._id.includes("temp-")) {
         return (
             <div
                 className={`card__item relative d-flex justify-center items-center text-[0.75rem] text-gray-500 w-full h-27.5 border-2 border-b-4 border-gray-600 px-2 py-4 flex flex-col shadow-gray-600 cursor-not-allowed`}
@@ -75,7 +84,7 @@ export default function Card({ card }) {
                     position={"absolute"}
                     displayText={"creating new card..."}
                     fontSize={"0.75rem"}
-                    zIndex={10}
+                    zIndex={"10"}
                 />
             </div>
         );
@@ -92,22 +101,18 @@ export default function Card({ card }) {
             {...(isLargeScreen ? listeners : {})}
             data-card-item={`${card._id}-${card.listId}`}
             className={`card__item
-                ${focusedCard?.id === card._id && focusedCard?.focused ? "focused" : ""}
+                ${focusedCard?._id === card._id && focusedCard?.focused ? "focused" : ""}
                 ${card.hiddenByFilter ? "hidden" : ""}
                 ${theme.itemTheme == "rounded-sm" ? "rounded-sm" : ""}
                 ${isLargeScreen ? "touch-none" : ""}
                 ${dateToCompare(card?.dueDate) ? "past__due__card" : ""}
-                relative select-none w-full group border-2 border-b-5 border-gray-600 p-4 flex flex-col gap-2 cursor-pointer scroll-mx-7
+                relative select-none w-full group border-2 border-b-3 border-gray-600 p-4 flex flex-col gap-2 cursor-pointer scroll-mx-7
+                translate-y-0 hover:translate-y-0.5 hover:shadow-none!
             `}
             onKeyDown={(e) => {
                 if (e.key == "Enter") {
                     e.preventDefault();
                     handleOpenCardDetail();
-                    return;
-                }
-                if (e.key == "q") {
-                    e.preventDefault();
-                    handleOpenQuickEditor(e);
                     return;
                 }
             }}

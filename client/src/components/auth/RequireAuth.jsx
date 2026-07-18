@@ -1,14 +1,10 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import useCurrentUserContext from "../../hooks/useCurrentUserContext";
-import { useEffect } from "react";
+import useAuth from "../../hooks/useAuth";
+import { CurrentUserContextProvider } from "../../context/CurrentUserContext";
 
 export default function RequireAuth() {
     const location = useLocation();
-    const { currentUser, currentUserQuery } = useCurrentUserContext();
-
-    useEffect(() => {
-        currentUserQuery.refetch();
-    }, []);
+    const { currentUserQuery, currentUser } = useAuth();
 
     if (currentUserQuery.isPending) {
         return (
@@ -36,5 +32,9 @@ export default function RequireAuth() {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    return <Outlet />;
+    return (
+        <CurrentUserContextProvider user={currentUser}>
+            <Outlet />
+        </CurrentUserContextProvider>
+    );
 }

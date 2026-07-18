@@ -1,23 +1,31 @@
 import Avatar from "../avatar/Avatar";
 import { useNavigate } from "react-router-dom";
 import dateFormatter from "../../utils/dateFormatter";
-import {
-    acceptJoinRequest,
-    fetchJoinRequests,
-    rejectJoinRequest,
-    removeJoinRequest,
-} from "../../api/joinRequest";
+import { joinRequestApi } from "../../services/api";
 import {
     useInfiniteQuery,
     useMutation,
     useQueryClient,
 } from "@tanstack/react-query";
 import { useMemo } from "react";
+import useToast from "../../hooks/useToast";
+import { joinRequestKeys } from "../../queries/joinRequestKeys";
+import { getErrorMessage } from "../../utils/getErrorMessage";
 
+/**
+ * @typedef {Object} JoinRequestsProps
+ * @property {boolean} show
+ */
+
+/**
+ * @param {JoinRequestsProps} props
+ */
 export default function JoinRequests({ show }) {
     const navigate = useNavigate();
 
     const queryClient = useQueryClient();
+
+    const toast = useToast();
 
     const {
         data,
@@ -31,92 +39,148 @@ export default function JoinRequests({ show }) {
     } = useInfiniteQuery({
         staleTime: Infinity,
         queryKey: ["boardRequests"],
-        queryFn: ({ pageParam = 1 }) => fetchJoinRequests({ page: pageParam }),
+        queryFn: ({ pageParam }) =>
+            joinRequestApi.fetchJoinRequests({ page: pageParam }),
+        initialPageParam: 1,
         getNextPageParam: (lastPage, _pages) => {
             return lastPage.nextPage;
         },
     });
 
     const acceptMutation = useMutation({
+        /**
+         * @param {{
+         *   id: string;
+         *   boardId: string;
+         *   requesterId: string;
+         * }} params
+         */
         mutationFn: ({ id, boardId, requesterId }) =>
-            acceptJoinRequest({ id, boardId, requesterId }),
+            joinRequestApi.acceptJoinRequest({ id, boardId, requesterId }),
         onSuccess: (_data, variables, _context) => {
             const { id: requestId } = variables;
-            queryClient.setQueryData(["boardRequests"], (old) => {
-                return {
-                    ...old,
-                    pages: [...old.pages].map((page) => {
-                        return {
-                            ...page,
-                            joinRequests: [...page.joinRequests].map((item) => {
-                                return item._id === requestId
-                                    ? { ...item, status: "accepted" }
-                                    : item;
-                            }),
-                        };
-                    }),
-                };
-            });
+            queryClient.setQueryData(
+                joinRequestKeys.all(),
+                /**
+                 * @param {import("@tanstack/react-query").InfiniteData<GetJoinRequestsResponse> | undefined} old
+                 */
+                (old) => {
+                    if (!old) {
+                        return;
+                    }
+
+                    return {
+                        ...old,
+                        pages: [...old.pages].map((page) => {
+                            return {
+                                ...page,
+                                joinRequests: [...page.joinRequests].map(
+                                    (item) => {
+                                        return item._id === requestId
+                                            ? { ...item, status: "accepted" }
+                                            : item;
+                                    },
+                                ),
+                            };
+                        }),
+                    };
+                },
+            );
         },
         onError: (err, _, _context) => {
-            const errMsg =
-                err.response?.data?.message || "Failed to accept this request";
+            const errMsg = getErrorMessage(
+                err,
+                "Failed to accept this request",
+            );
             toast.error(errMsg);
         },
     });
 
     const rejectMutation = useMutation({
+        /**
+         * @param {{
+         *   id: string;
+         *   boardId: string;
+         *   requesterId: string;
+         * }} params
+         */
         mutationFn: ({ id, boardId, requesterId }) =>
-            rejectJoinRequest({ id, boardId, requesterId }),
+            joinRequestApi.rejectJoinRequest({ id, boardId, requesterId }),
         onSuccess: (_data, variables, _context) => {
             const { id: requestId } = variables;
-            queryClient.setQueryData(["boardRequests"], (old) => {
-                return {
-                    ...old,
-                    pages: [...old.pages].map((page) => {
-                        return {
-                            ...page,
-                            joinRequests: [...page.joinRequests].map((item) => {
-                                return item._id === requestId
-                                    ? { ...item, status: "rejected" }
-                                    : item;
-                            }),
-                        };
-                    }),
-                };
-            });
+            queryClient.setQueryData(
+                joinRequestKeys.all(),
+                /**
+                 * @param {import("@tanstack/react-query").InfiniteData<GetJoinRequestsResponse> | undefined} old
+                 */
+                (old) => {
+                    if (!old) {
+                        return old;
+                    }
+
+                    return {
+                        ...old,
+                        pages: [...old.pages].map((page) => {
+                            return {
+                                ...page,
+                                joinRequests: [...page.joinRequests].map(
+                                    (item) => {
+                                        return item._id === requestId
+                                            ? { ...item, status: "rejected" }
+                                            : item;
+                                    },
+                                ),
+                            };
+                        }),
+                    };
+                },
+            );
         },
         onError: (err, _, _context) => {
-            const errMsg =
-                err.response?.data?.message || "Failed to accept this request";
+            const errMsg = getErrorMessage(
+                err,
+                "Failed to accept this request",
+            );
             toast.error(errMsg);
         },
     });
 
     const removeMutation = useMutation({
-        mutationFn: ({ id, boardId, requesterId }) =>
-            removeJoinRequest({ id, boardId, requesterId }),
+        mutationFn: (/** @type {string} */ id) =>
+            joinRequestApi.removeJoinRequest(id),
         onSuccess: (_data, variables, _context) => {
-            const { id: requestId } = variables;
-            queryClient.setQueryData(["boardRequests"], (old) => {
-                return {
-                    ...old,
-                    pages: [...old.pages].map((page) => {
-                        return {
-                            ...page,
-                            joinRequests: [...page.joinRequests].filter(
-                                (item) => {
-                                    return item._id !== requestId;
-                                },
-                            ),
-                        };
-                    }),
-                };
-            });
+            const requestId = variables;
+            queryClient.setQueryData(
+                joinRequestKeys.all(),
+                /**
+                 * @param {import("@tanstack/react-query").InfiniteData<GetJoinRequestsResponse> | undefined} old
+                 */
+                (old) => {
+                    if (!old) {
+                        return old;
+                    }
+
+                    return {
+                        ...old,
+                        pages: [...old.pages].map((page) => {
+                            return {
+                                ...page,
+                                joinRequests: [...page.joinRequests].filter(
+                                    (item) => {
+                                        return item._id !== requestId;
+                                    },
+                                ),
+                            };
+                        }),
+                    };
+                },
+            );
         },
         onError: (err, _, _context) => {
-            const errMsg =
-                err.response?.data?.message || "Failed to accept this request";
+            const errMsg = getErrorMessage(
+                err,
+                "Failed to accept this request",
+            );
             toast.error(errMsg);
         },
     });
@@ -254,8 +318,8 @@ export default function JoinRequests({ show }) {
                                     <div className="ms-auto flex gap-2">
                                         <button
                                             disabled={
-                                                acceptMutation.isLoading &&
-                                                acceptMutation.variables.id ===
+                                                acceptMutation.isPending &&
+                                                acceptMutation.variables?.id ===
                                                     _id
                                             }
                                             onClick={() =>
@@ -267,14 +331,14 @@ export default function JoinRequests({ show }) {
                                             }
                                             className="button--style--rounded rounded-none px-3 py-2 text-[0.65rem] sm:text-[0.75rem] text-blue-700 border-blue-700 bg-gray-100"
                                         >
-                                            {acceptMutation.isLoading &&
-                                            acceptMutation.variables.id === _id
+                                            {acceptMutation.isPending &&
+                                            acceptMutation.variables?.id === _id
                                                 ? "Accepting..."
                                                 : "Accept"}
                                         </button>
                                         <button
                                             disabled={
-                                                rejectMutation.isLoading &&
+                                                rejectMutation.isPending &&
                                                 rejectMutation.variables.id ===
                                                     _id
                                             }
@@ -287,7 +351,7 @@ export default function JoinRequests({ show }) {
                                             }
                                             className="button--style--rounded rounded-none px-3 py-2 bg-white text-[0.65rem] sm:text-[0.75rem] text-red-700 border-red-700"
                                         >
-                                            {rejectMutation.isLoading &&
+                                            {rejectMutation.isPending &&
                                             rejectMutation.variables.id === _id
                                                 ? "Rejecting..."
                                                 : "Reject"}
@@ -296,20 +360,16 @@ export default function JoinRequests({ show }) {
                                 ) : (
                                     <button
                                         disabled={
-                                            removeMutation.isLoading &&
-                                            removeMutation.variables.id === _id
+                                            removeMutation.isPending &&
+                                            removeMutation.variables === _id
                                         }
                                         onClick={() =>
-                                            removeMutation.mutate({
-                                                id: _id,
-                                                boardId: board._id,
-                                                requesterId,
-                                            })
+                                            removeMutation.mutate(_id)
                                         }
                                         className="ms-auto button--style--rounded rounded-none px-3 py-2 border-gray-600 text-[0.65rem] sm:text-[0.75rem] text-gray-600 bg-gray-100"
                                     >
-                                        {rejectMutation.isLoading &&
-                                        rejectMutation.variables.id === _id
+                                        {rejectMutation.isPending &&
+                                        rejectMutation.variables?.id === _id
                                             ? "Removing..."
                                             : "Remove"}
                                     </button>

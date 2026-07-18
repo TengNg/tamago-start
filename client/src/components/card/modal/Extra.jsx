@@ -11,16 +11,30 @@ import useToast from "../../../hooks/useToast";
 import Attachments from "../attachment/Attachments";
 import Uploader from "../attachment/Uploader";
 import ViewerDialog from "../attachment/ViewerDialog";
+import Modal from "../../ui/Modal";
 
+/**
+ * @typedef {Object} ExtraProps
+ * @property {Card} card
+ * @property {(arg: string) => void} handleCardOwnerChange
+ * @property {(arg: string) => void} handleCardPriorityLevelChange
+ * @property {(arg: string) => void} handleCardDueDateChange
+ */
+
+/**
+ * @param {ExtraProps} props
+ */
 const Extra = ({
     card,
     handleCardOwnerChange,
     handleCardPriorityLevelChange,
-    handleChangeDueDate,
+    handleCardDueDateChange,
 }) => {
     const { boardState } = useBoardState();
 
-    const [viewedAttachment, setViewedAttachment] = useState(null);
+    const [viewedAttachment, setViewedAttachment] = useState(
+        /** @type {Attachment | null} */ (null),
+    );
 
     const toast = useToast();
 
@@ -31,6 +45,9 @@ const Extra = ({
         return boardState.members.map((m) => m.username);
     }, [boardState.members]);
 
+    /**
+     * @param {React.MouseEvent<HTMLButtonElement>} e
+     */
     function handleCopyCardCode(e) {
         const button = e.currentTarget;
         if (button.textContent === "✓ copied") {
@@ -124,7 +141,7 @@ const Extra = ({
                     id="due-date"
                     value={dueDate}
                     onChange={(e) => {
-                        handleChangeDueDate(e.target.value);
+                        handleCardDueDateChange(e.target.value);
                     }}
                 />
             </div>
@@ -146,10 +163,19 @@ const Extra = ({
                 setViewedAttachment={setViewedAttachment}
             />
             <Uploader card={card} />
-            <ViewerDialog
-                viewedAttachment={viewedAttachment}
-                setViewedAttachment={setViewedAttachment}
-            />
+            <Modal
+                open={!!viewedAttachment}
+                setOpen={() => setViewedAttachment(null)}
+                title={viewedAttachment?.originalname}
+                showCloseButton={true}
+                className="w-auto min-w-81.25"
+            >
+                <ViewerDialog
+                    viewedAttachment={
+                        /** @type {Attachment} */ (viewedAttachment)
+                    }
+                />
+            </Modal>
         </div>
     );
 };
