@@ -43,7 +43,10 @@
 }
 
 @utility form--style {
-  @apply border-gray-700 border-2 shadow-[5px_6px_0_0_black] shadow-gray-700 bg-gray-100 rounded-xs;
+    @apply border-2 shadow-[5px_6px_0_0_black] rounded-xs;
+    border-color: rgb(var(--color-border));
+    box-shadow: 5px 6px 0 0 rgb(var(--color-shadow));
+    background: rgb(var(--color-surface));
 }
 
 @utility box--style {
@@ -51,7 +54,10 @@
 }
 
 @utility modal--content {
-  @apply box--style flex flex-col border-gray-700 border-2 bg-gray-200 shadow-gray-700;
+    @apply flex flex-col border-2;
+    border-color: rgb(var(--color-border));
+    background: rgb(var(--color-surface));
+    box-shadow: 4px 6px 0 0 rgb(var(--color-shadow));
 }
 
 @utility board--style {
@@ -67,85 +73,187 @@
 }
 
 @utility button--style {
-  @apply border-gray-700 border-2 px-3 py-2 text-gray-700 box-border font-medium;
+    @apply border-2 px-3 py-2 box-border font-medium;
+    border-color: rgb(var(--color-border));
+    color: rgb(var(--color-text));
 }
 
 @utility button--style--dark {
-  @apply p-3 bg-gray-600 text-white hover:bg-gray-500 font-medium text-sm;
+    @apply p-3 text-white hover:brightness-110 font-medium text-sm;
+    background: rgb(var(--color-neutral));
 }
 
 @utility button--style--rounded {
-  @apply shadow-[0_3px_0_0] border-2 rounded-md font-medium;
+    @apply shadow-[0_3px_0_0] border-2 rounded-md font-medium;
+    border-color: rgb(var(--color-border));
+    box-shadow: 0 3px 0 0 rgb(var(--color-shadow));
 }
 
 @utility anchor--style {
-  @apply flex justify-center items-center py-1 md:px-2 px-1 text-gray-700! hover:underline! select-none;
+    @apply flex justify-center items-center py-1 md:px-2 px-1 hover:underline! select-none;
+    color: rgb(var(--color-text));
 }
 
 @utility anchor--style--selected {
-  @apply text-gray-50! bg-gray-600 flex justify-center items-center py-1 md:px-2 px-1 select-none;
+    @apply flex justify-center items-center py-1 md:px-2 px-1 select-none;
+    background: rgb(var(--color-neutral));
+    color: white;
 }
 
 @utility card--detail--button {
-  @apply bg-gray-100 border-2 border-black shadow-[0_3px_0_0] w-fit text-[0.8rem] px-3 py-4 cursor-pointer;
+    @apply border-2 shadow-[0_3px_0_0] w-fit text-[0.8rem] px-3 py-4 cursor-pointer;
+    background: rgb(var(--color-surface));
+    border-color: rgb(var(--color-border));
+    box-shadow: 0 3px 0 0 rgb(var(--color-shadow));
 }
 
 @utility key {
-  @apply bg-gray-100/30 border-[1.5px] border-gray-600 shadow-[0_2px_0_0] shadow-gray-600 p-1 px-2 text-[10px] text-gray-600 font-medium hover:bg-gray-400 hover:text-white select-none;
+    @apply border-[1.5px] shadow-[0_2px_0_0] p-1 px-2 text-[10px] font-medium hover:brightness-90 select-none;
+    background: rgb(var(--color-surface)) / 0.3;
+    border-color: rgb(var(--color-border));
+    box-shadow: 0 2px 0 0 rgb(var(--color-shadow));
+    color: rgb(var(--color-muted));
 }
 
 @utility card--details--button {
-  @apply flex items-center justify-center gap-1 w-fit min-w-10 h-8.75 border-2 shadow-[0_2px_0_0] bg-gray-100 text-[9px] sm:text-[0.75rem] p-2 font-semibold hover:shadow-[0_1px_0_0] hover:mt-px;
+    @apply flex items-center justify-center gap-1 w-fit min-w-10 h-8.75 border-2 shadow-[0_2px_0_0] text-[9px] sm:text-[0.75rem] p-2 font-semibold hover:shadow-[0_1px_0_0] hover:mt-px;
+    background: rgb(var(--color-surface));
+    border-color: rgb(var(--color-border));
+    box-shadow: 0 2px 0 0 rgb(var(--color-shadow));
 }
 
 @utility card__item {
-  @apply text-gray-800 dark:text-white;
-  background: rgb(var(--card-item-bg));
+    color: rgb(var(--color-text));
+    background: rgb(var(--card-item-bg));
 
-  &.focused {
-    @apply text-gray-800 dark:text-white;
-    background: rgb(var(--card-item-focused-bg)) !important;
-  }
+    &.focused {
+        color: rgb(var(--color-text));
+        background: rgb(var(--card-item-focused-bg)) !important;
+    }
 }
 
 @utility past__due__card {
-  @apply text-gray-800 dark:text-white;
-  background: rgb(var(--past-due-card-bg));
+    color: rgb(var(--color-text));
+    background: rgb(var(--past-due-card-bg));
 }
 
 @utility focused {
-  &.card__item {
-    @apply text-gray-800 dark:text-white;
-    background: rgb(var(--card-item-focused-bg)) !important;
-  }
+    &.card__item {
+        color: rgb(var(--color-text));
+        background: rgb(var(--card-item-focused-bg)) !important;
+    }
 }
 
 @utility list__item {
-  @apply text-gray-800 dark:text-white;
-  background: rgb(var(--card-item-bg));
+    color: rgb(var(--color-text));
+    background: rgb(var(--card-item-bg));
 }
 
 @utility list__menu {
-  @apply text-gray-800 dark:text-white;
-  background: rgb(var(--card-item-bg));
+    color: rgb(var(--color-text));
+    background: rgb(var(--card-item-bg));
 }
 
 @utility account__menu {
-  @apply text-gray-800 dark:text-white;
-  background: rgb(var(--card-item-bg));
+    color: rgb(var(--color-text));
+    background: rgb(var(--card-item-bg));
 }
 
 @layer base {
   :root {
+    --color-bg: 241, 241, 241;
+    --color-surface: 255, 255, 255;
+    --color-border: 45, 54, 80;
+    --color-text: 35, 42, 61;
+    --color-muted: 91, 97, 114;
+    --color-shadow: 45, 54, 80;
+    --color-danger: 201, 66, 90;
+    --color-success: 47, 143, 126;
+    --color-neutral: 136, 144, 163;
+    --color-tag: 184, 147, 63;
     --card-item-bg: 241, 241, 241;
     --past-due-card-bg: 255, 194, 231;
     --card-item-focused-bg: 173, 216, 230;
   }
 
   [data-theme="mist"] {
+    --color-bg: 204, 204, 204;
+    --color-surface: 230, 230, 230;
+    --color-border: 50, 55, 70;
+    --color-text: 30, 35, 50;
+    --color-muted: 80, 88, 105;
+    --color-shadow: 50, 55, 70;
+    --color-danger: 201, 66, 90;
+    --color-success: 47, 143, 126;
+    --color-neutral: 120, 128, 145;
+    --color-tag: 184, 147, 63;
     --card-item-bg: 220, 220, 220;
     --past-due-card-bg: 255, 194, 231;
     --card-item-focused-bg: 173, 216, 230;
+  }
+
+  [data-theme="gruvbox"] {
+    --color-bg: 40, 40, 40;
+    --color-surface: 60, 56, 54;
+    --color-border: 80, 73, 65;
+    --color-text: 235, 219, 178;
+    --color-muted: 168, 153, 132;
+    --color-shadow: 80, 73, 65;
+    --color-danger: 251, 73, 52;
+    --color-success: 184, 187, 38;
+    --color-neutral: 146, 131, 116;
+    --color-tag: 215, 153, 33;
+    --card-item-bg: 60, 56, 54;
+    --card-item-focused-bg: 80, 73, 65;
+    --past-due-card-bg: 250, 189, 47;
+  }
+
+  [data-theme="midnight"] {
+    --color-bg: 30, 32, 48;
+    --color-surface: 39, 42, 62;
+    --color-border: 59, 63, 88;
+    --color-text: 205, 214, 244;
+    --color-muted: 147, 153, 178;
+    --color-shadow: 59, 63, 88;
+    --color-danger: 243, 139, 168;
+    --color-success: 166, 227, 161;
+    --color-neutral: 108, 112, 134;
+    --color-tag: 249, 226, 175;
+    --card-item-bg: 39, 42, 62;
+    --card-item-focused-bg: 49, 50, 68;
+    --past-due-card-bg: 243, 139, 168;
+  }
+
+  [data-theme="forest"] {
+    --color-bg: 232, 239, 232;
+    --color-surface: 242, 247, 242;
+    --color-border: 45, 65, 50;
+    --color-text: 30, 45, 35;
+    --color-muted: 85, 105, 90;
+    --color-shadow: 45, 65, 50;
+    --color-danger: 185, 60, 60;
+    --color-success: 60, 130, 80;
+    --color-neutral: 120, 145, 125;
+    --color-tag: 140, 120, 60;
+    --card-item-bg: 242, 247, 242;
+    --card-item-focused-bg: 210, 230, 215;
+    --past-due-card-bg: 255, 210, 210;
+  }
+
+  [data-theme="ocean"] {
+    --color-bg: 228, 241, 246;
+    --color-surface: 240, 248, 252;
+    --color-border: 40, 70, 85;
+    --color-text: 25, 50, 65;
+    --color-muted: 80, 115, 135;
+    --color-shadow: 40, 70, 85;
+    --color-danger: 190, 65, 75;
+    --color-success: 45, 140, 120;
+    --color-neutral: 115, 145, 160;
+    --color-tag: 60, 130, 160;
+    --card-item-bg: 240, 248, 252;
+    --card-item-focused-bg: 200, 225, 240;
+    --past-due-card-bg: 255, 210, 215;
   }
 }
 
@@ -161,7 +269,7 @@
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    background: #f1f1f1;
+    background: rgb(var(--color-bg));
 }
 
 a {

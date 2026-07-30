@@ -25,6 +25,7 @@ import useLocalStorage from "./hooks/useLocalStorage";
 
 import { PAGES } from "./constants/pages";
 import LOCAL_STORAGE_KEYS from "./constants/localStorageKeys";
+import THEMES from "./constants/themes";
 import Icon from "./components/shared/Icon";
 import PinnedBoards from "./components/board/PinnedBoards";
 import Modal from "./components/ui/Modal";
@@ -51,10 +52,12 @@ function App() {
 
     const [openPinnedBoards, setOpenPinnedBoards] = useState(false);
     const [openThemesDialog, setOpenThemesDialog] = useState(false);
-    const [backgroundTheme, setBackgroundTheme] = useLocalStorage(
+    const [themeStyle, setThemeStyle] = useLocalStorage(
         LOCAL_STORAGE_KEYS.APP_BACKGROUND_THEME,
-        { theme: "offwhite", hex: "#f1f1f1" },
+        /** @type {keyof typeof THEMES} */ ("offwhite"),
     );
+
+    const currentTheme = THEMES[themeStyle] || THEMES.offwhite;
 
     useEffect(() => {
         if ("scrollRestoration" in window.history) {
@@ -80,13 +83,11 @@ function App() {
         /** @type {HTMLDivElement | null} */
         const root = document.querySelector("#root");
         if (root) {
-            root.style.backgroundColor = backgroundTheme?.hex || "#f1f1f1";
+            root.style.backgroundColor = `rgb(${currentTheme.bg})`;
+            root.style.color = `rgb(${currentTheme.text})`;
         }
-        document.documentElement.setAttribute(
-            "data-theme",
-            backgroundTheme.theme,
-        );
-    }, [backgroundTheme]);
+        document.documentElement.setAttribute("data-theme", themeStyle);
+    }, [themeStyle, currentTheme]);
 
     useEffect(() => {
         if (pathname.includes("/b/")) return;
@@ -133,16 +134,20 @@ function App() {
                 bodyClassName="px-0!"
             >
                 <ThemesDialog
-                    backgroundTheme={backgroundTheme}
-                    setBackgroundTheme={setBackgroundTheme}
+                    themeStyle={themeStyle}
+                    setThemeStyle={setThemeStyle}
                 />
             </Modal>
 
             <button
                 onClick={() => setOpenThemesDialog(true)}
-                className="fixed grid place-items-center sm:right-4 sm:bottom-4 text-[14px] sm:text-[1rem] right-2.5 bottom-2.5 sm:w-8.75 sm:h-8.75 w-7.5 h-7.5 rounded-full bg-gray-500 text-transparent hover:bg-gray-500/75"
-                style={{ color: backgroundTheme?.hex || "#f1f1f1" }}
-                title={backgroundTheme?.theme}
+                className="fixed grid place-items-center sm:right-4 sm:bottom-4 text-[14px] sm:text-[1rem] right-2.5 bottom-2.5 sm:w-8.75 sm:h-8.75 w-7.5 h-7.5 rounded-full hover:brightness-110"
+                style={{
+                    backgroundColor: `rgb(${currentTheme.bg})`,
+                    color: `rgb(${currentTheme.text})`,
+                    border: `2px solid rgb(${currentTheme.border})`,
+                }}
+                title={themeStyle}
             >
                 <Icon className="w-4 h-4" name="pallete" />
             </button>

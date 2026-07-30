@@ -1,35 +1,77 @@
-import backgroundThemes from "../../constants/backgroundThemes";
+import THEMES from "../../constants/themes";
 
 /**
  * @typedef {Object} ThemesDialogProps
- * @property {{ theme: string; hex: string }} backgroundTheme
- * @property {React.Dispatch<React.SetStateAction<{ theme: string; hex: string; }>>} setBackgroundTheme
+ * @property {ThemeStyle} themeStyle
+ * @property {React.Dispatch<React.SetStateAction<ThemeStyle>>} setThemeStyle
  */
 
 /**
  * @param {ThemesDialogProps} props
  */
-const ThemesDialog = ({ backgroundTheme, setBackgroundTheme }) => {
+const ThemesDialog = ({ themeStyle, setThemeStyle }) => {
     return (
-        <div className="flex flex-col gap-3 h-fit">
-            {Object.entries(backgroundThemes).map((el) => {
-                const [title, color] = el;
+        <div className="flex flex-col gap-2 p-2">
+            {Object.entries(THEMES).map((entry) => {
+                const [k, t] = /** @type {[ThemeStyle, ThemeAttributes]} */ (
+                    entry
+                );
+                const isSelected = themeStyle === k;
                 return (
                     <button
-                        className="w-full h-12.5 border border-gray-700 shadow-gray-700 shadow-[0px_3px_0_0] text-center grid items-center"
+                        key={k}
+                        onClick={() => setThemeStyle(k)}
+                        className="w-full text-left border-2 rounded-md p-3 transition-all hover:brightness-105"
                         style={{
-                            backgroundColor: color,
-                            textDecoration:
-                                backgroundTheme?.theme === title
-                                    ? "underline"
-                                    : "none",
+                            backgroundColor: `rgb(${t.surface})`,
+                            borderColor: isSelected
+                                ? `rgb(${t.border})`
+                                : `rgb(${t.border}) / 0.3`,
+                            boxShadow: isSelected
+                                ? `3px 4px 0 0 rgb(${t.shadow})`
+                                : "none",
                         }}
-                        onClick={() =>
-                            setBackgroundTheme({ theme: title, hex: color })
-                        }
-                        key={color}
                     >
-                        {title} [{color}]
+                        <div className="flex items-center gap-3">
+                            <div className="flex flex-col gap-0.5">
+                                <div
+                                    className="w-full h-2 rounded-sm"
+                                    style={{
+                                        backgroundColor: `rgb(${t.bg})`,
+                                    }}
+                                />
+                                <div
+                                    className="w-full h-2 rounded-sm"
+                                    style={{
+                                        backgroundColor: `rgb(${t.surface})`,
+                                    }}
+                                />
+                                <div
+                                    className="w-full h-2 rounded-sm"
+                                    style={{
+                                        backgroundColor: `rgb(${t.tag})`,
+                                    }}
+                                />
+                            </div>
+                            <div className="flex flex-col">
+                                <span
+                                    className="text-sm font-semibold"
+                                    style={{
+                                        color: `rgb(${t.text})`,
+                                    }}
+                                >
+                                    {k}
+                                </span>
+                                <span
+                                    className="text-xs"
+                                    style={{
+                                        color: `rgb(${t.muted})`,
+                                    }}
+                                >
+                                    {k}
+                                </span>
+                            </div>
+                        </div>
                     </button>
                 );
             })}
