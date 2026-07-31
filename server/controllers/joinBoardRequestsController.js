@@ -107,6 +107,11 @@ const sendRequest = async (req, res) => {
 const acceptRequest = async (req, res) => {
     const { boardId, requesterId } = req.body;
 
+    const board = await Board.findById(boardId);
+    if (!board) {
+        return res.status(403).json({ message: "board not found" });
+    }
+
     const requester = await User.findById(requesterId);
     if (!requester) {
         return res.status(403).json({ message: "requester not found" });
@@ -123,8 +128,20 @@ const acceptRequest = async (req, res) => {
         return res.sendStatus(404);
     }
 
+    const membershipCount = await BoardMembership.countDocuments({ boardId });
+    if (membershipCount >= board.limits.maxMembers) {
+        const msg = `Maximum member count reached for this board (maximum: ${board.limits.maxMembers})`;
+        return res.status(400).json({ message: msg });
+    }
+
     acceptedRequest.status = 'accepted';
-    acceptedRequest.save();
+    await acceptedRequest.save();
+
+    await BoardMembership.create({
+        boardId,
+        userId: requester._id,
+        role: 'member',
+    });
 
     return res.sendStatus(204);
 };

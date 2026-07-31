@@ -1,5 +1,4 @@
 import { Schema, model } from 'mongoose';
-import { MAX_BOARD_MEMBER_COUNT } from '../constants/limits.js';
 import { DEFAULT_BOARD_PERMISSIONS } from '../constants/permissions.js';
 
 const boardMembershipSchema = new Schema({
@@ -59,16 +58,5 @@ const boardMembershipSchema = new Schema({
 }, { collection: 'board_memberships' });
 
 boardMembershipSchema.index({ boardId: 1, userId: 1 }, { unique: true });
-
-boardMembershipSchema.pre('save', async function(next) {
-    if (this.isNew) {
-        const BoardMembership = model('BoardMembership');
-        const membershipCount = await BoardMembership.countDocuments({ boardId: this.boardId });
-        if (membershipCount >= MAX_BOARD_MEMBER_COUNT) {
-            const error = new Error(`Maximum member count reached (maximum: ${MAX_BOARD_MEMBER_COUNT})`);
-            return next(error);
-        }
-    }
-});
 
 export default model('BoardMembership', boardMembershipSchema);

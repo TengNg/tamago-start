@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import List from "./List";
 import useBoardState from "../../hooks/useBoardState";
 import AddList from "./AddList";
-import { lexorank } from "../../lib/lexorank";
 import {
     DndContext,
     DragOverlay,
@@ -118,16 +117,8 @@ const ListContainer = () => {
             const [removed] = newLists.splice(srcIndex, 1);
             newLists.splice(destIndex, 0, removed);
 
-            let prevRank = newLists[destIndex - 1]?.order;
-            let nextRank = newLists[destIndex + 1]?.order;
-
-            let [rank, ok] = lexorank.insert(prevRank, nextRank);
-            if (!ok) {
-                toast.error("Failed to reorder list, rank is invalid");
-                return;
-            }
-
-            removed.order = rank;
+            const prevListId = newLists[destIndex - 1]?._id;
+            const nextListId = newLists[destIndex + 1]?._id;
 
             try {
                 dispatch({
@@ -136,9 +127,11 @@ const ListContainer = () => {
                 });
 
                 await listApi.reorderList(removed._id, {
-                    rank,
-                    sourceIndex: srcIndex,
-                    destinationIndex: destIndex,
+                    boardId: boardState.board._id,
+                    prevListId,
+                    nextListId,
+                    oldPos: srcIndex,
+                    newPos: destIndex,
                 });
 
                 socket.emit(SOCKET_EVENTS.LIST_MOVE, {
@@ -175,37 +168,28 @@ const ListContainer = () => {
         const cards = [...boardState.cards[activeListId]];
         const activeIndex = cards.findIndex((c) => c._id == activeId);
 
-        const prevOrder = cards[activeIndex - 1]?.order;
-        const nextOrder = cards[activeIndex + 1]?.order;
+        const prevId = cards[activeIndex - 1]?._id;
+        const nextId = cards[activeIndex + 1]?._id;
 
-        const [rank, ok] = lexorank.insert(prevOrder, nextOrder);
-        if (!ok) {
-            toast.error("Failed to reorder card. Error: invalid order");
-            dispatch({
-                type: BOARD_ACTIONS.SET_STATE,
-                payload: { data: clonedBoardState },
-            });
-            return;
-        }
-
-        // drag to the same list, and same position
+        // no active card or drag to the same list, and same position
         if (
-            activeCard &&
-            activeCard.listId === activeListId &&
-            activeCard.srcIndex === activeIndex
+            !activeCard ||
+            (activeCard &&
+                activeCard.listId === activeListId &&
+                activeCard.srcIndex === activeIndex)
         ) {
             return;
         }
 
         try {
-            const data = await cardApi.reorderCard(activeId, {
-                rank,
+            const newCard = await cardApi.reorderCard(activeId, {
                 listId: activeListId,
-                oldPos: activeCard ? activeCard.srcIndex + 1 : 0,
+                prevCardId: prevId,
+                nextCardId: nextId,
+                oldPos: activeCard.srcIndex,
                 newPos: activeIndex + 1,
             });
 
-            const newCard = data.newCard;
             dispatch({
                 type: BOARD_ACTIONS.SET_CARD,
                 payload: {
@@ -216,12 +200,14 @@ const ListContainer = () => {
                 },
             });
 
-            socket.emit(SOCKET_EVENTS.CARD_MOVE_TO_LIST, {
-                oldListId: data.oldListId,
-                newListId: newCard.listId,
-                insertedIndex: activeIndex,
-                card: newCard,
-            });
+            if (activeCard) {
+                socket.emit(SOCKET_EVENTS.CARD_MOVE_TO_LIST, {
+                    oldListId: activeCard?.listId,
+                    newListId: newCard.listId,
+                    insertedIndex: activeIndex,
+                    card: newCard,
+                });
+            }
         } catch (err) {
             const errMsg = getErrorMessage(err, "Failed to reorder card");
             toast.error(errMsg);

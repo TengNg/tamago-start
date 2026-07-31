@@ -13,7 +13,11 @@ function moveList(movedListId, selectedBoardId, selectedIndex) {
 }
 
 /**
- * @param {{ title: string, order: string, boardId: string }} listData
+ * @param {{
+ *  title: string;
+ *  boardId: string;
+ *  prevListId?: string;
+ * }} listData
  * @returns {Promise<List>}
  */
 function createList(listData) {
@@ -40,16 +44,26 @@ function deleteList(listId) {
 
 /**
  * @param {string} listId
- * @param {string} rank
+ * @param {string | undefined} prevId
+ * @param {string | undefined} nextId
  * @returns {Promise<{ list: List; cards: Card[] }>}
  */
-function copyList(listId, rank) {
-    return apiClient.post(`/lists/copy/${listId}`, { rank });
+function copyList(listId, prevId, nextId) {
+    return apiClient.post(`/lists/copy/${listId}`, {
+        prevListId: prevId,
+        nextListId: nextId,
+    });
 }
 
 /**
  * @param {string} listId
- * @param {any} data
+ * @param {{
+ *   boardId: string;
+ *   prevListId: string | null | undefined;
+ *   nextListId: string | null | undefined;
+ *   oldPos: number;
+ *   newPos: number;
+ * }} data
  * @returns {Promise<List>}
  */
 function reorderList(listId, data) {

@@ -1,5 +1,4 @@
 import { Schema, model } from 'mongoose';
-import { MAX_CARD_COUNT } from '../constants/limits.js';
 
 const cardSchema = new Schema({
     listId: {
@@ -81,32 +80,5 @@ const cardSchema = new Schema({
 
 cardSchema.index({ boardId: 1, order: 1 });
 cardSchema.index({ listId: 1, order: 1 });
-
-cardSchema.pre('save', async function(next) {
-    if (this.isNew) {
-        const count = await model('Card').countDocuments({ boardId: this.boardId });
-        if (count >= MAX_CARD_COUNT) {
-            const error = new Error(`Maximum card count reached for this board (maximum: ${MAX_CARD_COUNT})`);
-            return next(error);
-        }
-    } else {
-        this.updatedAt = new Date();
-    }
-
-    try {
-        if (this.dueDate) {
-            this.dueDate.setHours(0, 0, 0, 0);
-        }
-    } catch (err) {
-        console.log(err);
-    }
-
-    next();
-});
-
-cardSchema.post('findOneAndDelete', async function(doc) {
-    await model('Attachment').deleteMany({ docModel: "Card", doc: doc._id });
-    await model('CardComment').deleteMany({ cardId: doc._id });
-});
 
 export default model('Card', cardSchema);

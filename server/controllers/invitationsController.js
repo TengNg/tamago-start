@@ -102,6 +102,12 @@ const acceptInvitation = async (req, res) => {
         return res.status(404);
     }
 
+    const membershipCount = await BoardMembership.countDocuments({ boardId });
+    if (membershipCount >= board.limits.maxMembers) {
+        const msg = `Maximum member count reached for this board (maximum: ${board.limits.maxMembers})`;
+        return res.status(400).json({ message: msg });
+    }
+
     invitation.status = "accepted";
     await invitation.save();
 

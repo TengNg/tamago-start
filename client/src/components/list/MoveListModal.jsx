@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import useBoardState from "../../hooks/useBoardState";
-import { lexorank } from "../../lib/lexorank";
 import Loading from "../ui/Loading";
 import useToast from "../../hooks/useToast";
 import { SOCKET_EVENTS } from "@shared/socket-events.js";
@@ -80,13 +79,15 @@ const MoveListModal = () => {
 
     const reorderMutation = useMutation({
         /**
-         * @param {{ rank: string; currentIndex: number }} params
+         * @param {{ prevListId: string | null | undefined; nextListId: string | null | undefined; currentIndex: number }} params
          */
-        mutationFn: ({ rank, currentIndex }) =>
+        mutationFn: ({ prevListId, nextListId, currentIndex }) =>
             listApi.reorderList(listToMove._id, {
-                rank,
-                sourceIndex: currentIndex,
-                destinationIndex: selectedIndex,
+                boardId: boardState.board._id,
+                prevListId,
+                nextListId,
+                oldPos: currentIndex,
+                newPos: selectedIndex,
             }),
         onSuccess: (_data, { currentIndex }) => {
             socket.emit(SOCKET_EVENTS.LIST_MOVE, {
@@ -168,26 +169,15 @@ const MoveListModal = () => {
 
         newLists.splice(selectedIndex, 0, removed);
 
-        let prevRank = newLists[+selectedIndex - 1]?.order;
-        let nextRank = newLists[+selectedIndex + 1]?.order;
-
-        let [rank, ok] = lexorank.insert(prevRank, nextRank);
-
-        if (!ok) {
-            toast.error(
-                "Cannot move this list in current board, try again or enable #debug_mode to see what happened",
-            );
-            return;
-        }
-
-        removed.order = rank;
+        const prevListId = newLists[+selectedIndex - 1]?._id;
+        const nextListId = newLists[+selectedIndex + 1]?._id;
 
         dispatch({
             type: BOARD_ACTIONS.SET_LISTS,
             payload: { lists: newLists },
         });
 
-        reorderMutation.mutate({ rank, currentIndex });
+        reorderMutation.mutate({ prevListId, nextListId, currentIndex });
     };
 
     return (

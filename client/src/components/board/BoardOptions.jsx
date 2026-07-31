@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useContext } from "react";
+import { useMutation } from "@tanstack/react-query";
 import useBoardState from "../../hooks/useBoardState";
 import { useNavigate } from "react-router-dom";
 import { formatDateToYYYYMMDD } from "../../utils/dateFormatter";
@@ -8,9 +9,13 @@ import { boardApi } from "../../services/api";
 import useToast from "../../hooks/useToast";
 import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { getErrorMessage } from "../../utils/getErrorMessage";
+import useClickOutside from "../../hooks/useClickOutside";
+import ModalStackContext from "../../context/ModalStackContext";
+import { useKeybind } from "../../hooks/useKeybind";
 
 /**
  * @param {{
+ *   open: boolean;
  *   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
  *   setOpenCopyBoardForm: React.Dispatch<React.SetStateAction<boolean>>;
  *   setOpenBoardConfiguration: React.Dispatch<React.SetStateAction<boolean>>;
@@ -18,14 +23,21 @@ import { getErrorMessage } from "../../utils/getErrorMessage";
  * }} props
  */
 const BoardOptions = ({
+    open,
     setOpen,
     setOpenCopyBoardForm,
     setOpenBoardConfiguration,
     setOpenBoardActivities,
 }) => {
     const currentUser = useCurrentUser();
-    const { boardState, removeMemberFromBoard, socket } = useBoardState();
+    const { boardState, updateBoardField, removeMemberFromBoard, socket } =
+        useBoardState();
 
+    const { isAnyModalOpen } = useContext(ModalStackContext);
+
+    const [description, setDescription] = useState(
+        boardState.board.description,
+    );
     const [showDescription, setShowDescription] = useState(false);
 
     const navigate = useNavigate();
@@ -35,9 +47,13 @@ const BoardOptions = ({
 
     const toast = useToast();
 
-    useEffect(() => {
-        if (containerRef.current) containerRef.current.focus();
-    }, []);
+    useKeybind("esc", () => {
+        if (open && !isAnyModalOpen) setOpen(false);
+    });
+
+    useClickOutside(containerRef, () => {
+        if (open && !isAnyModalOpen) setOpen(false);
+    });
 
     const handleLeaveBoard = async () => {
         try {
@@ -70,55 +86,38 @@ const BoardOptions = ({
         }
     };
 
-    /**
-     * @param {React.FocusEvent<HTMLTextAreaElement, Element>} e
-     */
-    const handleUpdateDescription = async (e) => {
-        if (e.target.value.trim() === boardState.board.description) {
-            return;
-        }
-
-        try {
-            await boardApi.updateBoard(
+    const descriptionMutation = useMutation({
+        mutationFn: () =>
+            boardApi.updateBoard(
                 boardState.board._id,
                 "description",
-                e.target.value.trim(),
-            );
+                description.trim(),
+            ),
+        onSuccess: (data) => {
+            updateBoardField({
+                field: "description",
+                value: data.description,
+            });
             socket.emit(SOCKET_EVENTS.BOARD_UPDATE, {
                 field: "description",
-                value: e.target.value.trim(),
+                value: data.description,
             });
-        } catch (err) {
-            const errMsg = getErrorMessage(err, "Failed to update board title");
+        },
+        onError: (err) => {
+            const errMsg = getErrorMessage(
+                err,
+                "Failed to update board description",
+            );
             toast.error(errMsg);
-        }
-    };
-
-    /**
-     * @param {React.FocusEvent<HTMLDivElement, Element>} e
-     */
-    const handleCloseMenuOnBlur = (e) => {
-        if (!containerRef.current) {
-            return;
-        }
-
-        if (
-            !containerRef.current.contains(e.relatedTarget) &&
-            e.relatedTarget !=
-                containerRef.current.parentElement?.querySelector("button")
-        ) {
-            setOpen(false);
-        }
-    };
+        },
+    });
 
     return (
         <>
             <div
                 ref={containerRef}
                 id="board-menu"
-                tabIndex={-1}
-                onBlur={handleCloseMenuOnBlur}
-                className="bg-[rgb(var(--card-item-bg))] cursor-auto absolute outline-hidden bottom-0 right-0 overflow-x-hidden flex flex-col min-w-[300px] min-h-[200px] box--style shadow-gray-600 border-2 border-gray-600 p-3 gap-2 translate-y-[105%]"
+                className="bg-[rgb(var(--card-item-bg))] cursor-auto absolute outline-hidden bottom-0 right-0 overflow-x-hidden flex flex-col min-w-75 min-h-50 box--style shadow-gray-600 border-2 border-gray-600 p-3 gap-2 translate-y-[105%]"
             >
                 <div className="font-medium text-gray-600 flex-1 flex--center border-b border-black pb-1 mb-1">
                     options
@@ -126,7 +125,10 @@ const BoardOptions = ({
 
                 <div className="flex justify-start">
                     <button
-                        onClick={() => setShowDescription(true)}
+                        onClick={() => {
+                            setDescription(boardState.board.description);
+                            setShowDescription(true);
+                        }}
                         className="button--style--dark flex items-center gap-2 ps-20 text-[0.75rem] font-medium text-start text-gray-200 w-full"
                     >
                         <Icon className="w-4 h-4" name="lightbulb" />
@@ -217,7 +219,7 @@ const BoardOptions = ({
                         className="font-normal text-[0.75rem] text-start mt-2 cursor-pointer hover:opacity-75"
                         onClick={() => {
                             navigator.clipboard
-                                .writeText(boardState?.board?._id)
+                                .writeText(boardState.board._id)
                                 .then(() => {
                                     toast.success(
                                         "board code copied to clipboard",
@@ -229,11 +231,21 @@ const BoardOptions = ({
                     </p>
 
                     <textarea
-                        className="border-gray-600 mt-4 shadow-[0_3px_0_0] h-[80px] overflow-auto border-2 px-3 py-2 shadow-gray-600 bg-gray-100 w-full focus:outline-hidden font-medum sm:text-[0.75rem] text-gray-600 leading-normal"
-                        placeholder="Write a short description..."
-                        onBlur={handleUpdateDescription}
-                        defaultValue={boardState.board.description}
+                        className="border-gray-600 mt-4 shadow-[0_3px_0_0] h-25 overflow-auto border-2 px-3 py-2 shadow-gray-600 bg-gray-100 w-full focus:outline-hidden font-medum sm:text-[0.75rem] text-gray-600 leading-normal"
+                        placeholder="description for this board..."
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
                     />
+                    <button
+                        onClick={() => descriptionMutation.mutate()}
+                        disabled={
+                            descriptionMutation.isPending ||
+                            description.trim() === boardState.board.description
+                        }
+                        className="button--style--dark w-25 mt-2 self-end text-[0.75rem] font-medium text-gray-200 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {descriptionMutation.isPending ? "saving..." : "save"}
+                    </button>
                 </div>
             </div>
         </>

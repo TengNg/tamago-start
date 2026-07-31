@@ -128,8 +128,6 @@ const CardQuickEditor = ({
         const textarea = textAreaRef.current;
         if (textarea) {
             setInitialTitle(textarea.value);
-            const littleOffset = 4; // prevent resizing when start typing
-            textarea.style.height = `${textarea.scrollHeight + littleOffset}px`;
         }
     };
 

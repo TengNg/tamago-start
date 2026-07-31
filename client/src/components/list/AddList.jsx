@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from "react";
 import useBoardState from "../../hooks/useBoardState";
-import { lexorank } from "../../lib/lexorank";
 import { listApi } from "../../services/api";
 import useToast from "../../hooks/useToast";
 import { SOCKET_EVENTS } from "@shared/socket-events.js";
@@ -45,17 +44,15 @@ const AddList = () => {
                 return;
             }
 
-            let prevOrder = "";
-            if (boardState.lists.length > 0) {
-                prevOrder = boardState.lists[boardState.lists.length - 1].order;
-            }
-
-            const [rank, _] = lexorank.insert(prevOrder);
+            const prevListId =
+                boardState.lists.length > 0
+                    ? boardState.lists[boardState.lists.length - 1]._id
+                    : undefined;
 
             const newList = {
                 title: title,
-                order: rank,
                 boardId: boardState.board._id,
+                prevListId,
             };
 
             const data = await listApi.createList(newList);
@@ -65,6 +62,7 @@ const AddList = () => {
             if (data) {
                 socket.emit(SOCKET_EVENTS.LIST_CREATE, data);
                 addListToBoard(data);
+                setTitle("");
             }
         },
         onError: (err) => {
@@ -79,8 +77,8 @@ const AddList = () => {
         }
     };
 
-    const handleAddList = () => {
-        addListMutation.mutateAsync();
+    const handleAddList = async () => {
+        await addListMutation.mutateAsync();
     };
 
     /**

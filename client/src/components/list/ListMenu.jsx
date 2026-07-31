@@ -12,8 +12,8 @@ import ModalStackContext from "../../context/ModalStackContext";
  * @property {boolean} open
  * @property {React.Dispatch<React.SetStateAction<boolean>>} setOpen
  * @property {() => Promise<void>} handleDelete
- * @property {(id: string) => Promise<void>} handleCopy
- * @property {{ msg: string; processing: boolean }} processingList
+ * @property {(id: string) => void} handleCopy
+ * @property {boolean} isCopying
  */
 
 /**
@@ -25,7 +25,7 @@ export default function ListMenu({
     setOpen,
     handleDelete,
     handleCopy,
-    processingList,
+    isCopying,
 }) {
     const {
         boardState,
@@ -110,9 +110,9 @@ export default function ListMenu({
                 </button>
                 <button
                     onClick={duplicate}
-                    className={`${processingList?.processing ? "cursor-not-allowed" : ""} text-[12px] sm:text-[0.75rem] text-white bg-gray-600 px-1 py-2 hover:bg-gray-500`}
+                    className={`${isCopying ? "cursor-not-allowed" : ""} text-[12px] sm:text-[0.75rem] text-white bg-gray-600 px-1 py-2 hover:bg-gray-500`}
                 >
-                    {processingList.processing ? "duplicating..." : "duplicate"}
+                    {isCopying ? "duplicating..." : "duplicate"}
                 </button>
                 <button
                     onClick={handleOpenMoveListForm}

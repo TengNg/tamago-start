@@ -3,11 +3,11 @@ import List from '../models/List.js';
 import Card from '../models/Card.js';
 import CardComment from '../models/CardComment.js';
 import Attachment from '../models/Attachment.js';
-import { lexorank } from '../lib/lexorank.js';
+import Board from '../models/Board.js';
 
 import saveBoardActivity from '../services/saveBoardActivity.js';
 import { checkBoardPermission } from '../services/boardPermissionService.js';
-import { MAX_CARD_COUNT, MAX_LIST_COUNT } from '../constants/limits.js';
+import { generateListOrder } from '../services/listService.js';
 
 /**
  * @param {import('express').Request} req
@@ -15,34 +15,62 @@ import { MAX_CARD_COUNT, MAX_LIST_COUNT } from '../constants/limits.js';
  */
 const addList = async (req, res) => {
     const { userId } = req.user;
-    const { title, order, boardId } = req.body;
+    const { title, boardId, prevListId, nextListId } = req.body;
 
-    await checkBoardPermission({
+    const { board } = await checkBoardPermission({
         boardId,
         userId,
         resource: "list",
         action: "create"
     })
 
-    const newList = new List({
-        title,
-        order,
-        boardId,
-    });
+    if (board.stats.listCount >= board.limits.maxLists) {
+        const msg = `Maximum list count reached for this board (maximum: ${board.limits.maxLists})`;
+        return res.status(400).json({ message: msg });
+    }
 
-    await newList.save();
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    await saveBoardActivity({
-        boardId,
-        userId,
-        docId: newList._id,
-        action: "list.created",
-        docModel: "List",
-        docTitle: newList.title,
-        description: '',
-    })
+    try {
+        const order = await generateListOrder({
+            boardId,
+            prevListId,
+            nextListId,
+            session,
+        });
 
-    return res.status(201).json(newList);
+        const [newList] = await List.create(
+            [{ title, order, boardId }],
+            { session }
+        );
+
+        await Board.updateOne(
+            { _id: board._id },
+            { $inc: { "stats.listCount": 1 } },
+            { session }
+        );
+
+        await saveBoardActivity({
+            boardId,
+            userId,
+            docId: newList._id,
+            action: "list.created",
+            docModel: "List",
+            docTitle: newList.title,
+            description: '',
+            session,
+        })
+
+        await session.commitTransaction();
+
+        return res.status(201).json(newList);
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
+    }
 }
 
 /**
@@ -52,7 +80,7 @@ const addList = async (req, res) => {
 const reorder = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
-    const { rank, sourceIndex, destinationIndex } = req.body;
+    const { boardId, prevListId, nextListId, oldPos, newPos } = req.body;
 
     const foundList = await List.findById(id);
     if (!foundList) return res.sendStatus(404);
@@ -64,31 +92,52 @@ const reorder = async (req, res) => {
         action: "edit"
     })
 
-    if (foundList.order === rank) {
-        return res.status(200).json({ newList: foundList });
-    }
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    foundList.order = rank;
-    await foundList.save();
-
-    if (
-        sourceIndex !== undefined
-        && destinationIndex !== undefined
-        && !isNaN(+sourceIndex)
-        && !isNaN(+destinationIndex)
-    ) {
-        await saveBoardActivity({
-            userId,
-            boardId: foundList.boardId,
-            docId: foundList._id,
-            action: "list.reordered",
-            docModel: "List",
-            docTitle: foundList.title,
-            description: `(${+sourceIndex + 1}) → (${+destinationIndex + 1})`,
+    try {
+        const newOrder = await generateListOrder({
+            boardId,
+            prevListId: prevListId || null,
+            nextListId: nextListId || null,
+            session,
         });
-    }
 
-    res.json(foundList);
+        if (foundList.order === newOrder) {
+            await session.abortTransaction();
+            return res.json(foundList);
+        }
+
+        foundList.order = newOrder;
+        await foundList.save({ session });
+
+        if (
+            oldPos !== undefined
+            && newPos !== undefined
+            && !isNaN(+oldPos)
+            && !isNaN(+newPos)
+        ) {
+            await saveBoardActivity({
+                userId,
+                boardId: foundList.boardId,
+                docId: foundList._id,
+                action: "list.reordered",
+                docModel: "List",
+                docTitle: foundList.title,
+                description: `(${+oldPos + 1}) → (${+newPos + 1})`,
+                session,
+            });
+        }
+
+        await session.commitTransaction();
+
+        res.json(foundList);
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
+    }
 };
 
 /**
@@ -160,7 +209,7 @@ const deleteList = async (req, res) => {
             return res.sendStatus(404);
         }
 
-        await checkBoardPermission({
+        const { board } = await checkBoardPermission({
             boardId: foundList.boardId.toString(),
             userId,
             resource: "list",
@@ -169,12 +218,23 @@ const deleteList = async (req, res) => {
 
         const cardIds = await Card.find({ listId: foundList._id }).distinct('_id');
         if (cardIds.length > 0) {
-            await Attachment.deleteMany({ docModel: 'Card', doc: { $in: cardIds } });
-            await CardComment.deleteMany({ cardId: { $in: cardIds } });
-            await Card.deleteMany({ _id: { $in: cardIds } });
+            await Attachment.deleteMany({ docModel: 'Card', doc: { $in: cardIds } }).session(session);
+            await CardComment.deleteMany({ cardId: { $in: cardIds } }).session(session);
+            await Card.deleteMany({ _id: { $in: cardIds } }).session(session);
         }
 
-        await List.findByIdAndDelete(id);
+        await List.findByIdAndDelete(id).session(session);
+
+        await Board.updateOne(
+            { _id: board._id },
+            {
+                $inc: {
+                    "stats.listCount": -1,
+                    "stats.cardCount": -cardIds.length,
+                },
+            },
+            { session }
+        );
 
         await saveBoardActivity({
             userId,
@@ -184,7 +244,10 @@ const deleteList = async (req, res) => {
             docModel: "List",
             docTitle: foundList.title,
             description: `list with title "${foundList.title}" deleted`,
+            session,
         });
+
+        await session.commitTransaction();
 
         res.sendStatus(204);
     } catch (error) {
@@ -203,7 +266,7 @@ const deleteList = async (req, res) => {
 const copyList = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
-    const { rank } = req.body;
+    const { prevListId, nextListId } = req.body;
 
     const foundList = await List.findById(id);
     if (!foundList) {
@@ -212,45 +275,83 @@ const copyList = async (req, res) => {
 
     const { title, boardId } = foundList;
 
-    await checkBoardPermission({
+    const { board } = await checkBoardPermission({
         boardId: foundList.boardId.toString(),
         userId,
         resource: "list",
         action: "create"
     })
 
-    const listData = {
-        _id: new mongoose.Types.ObjectId(),
-        title,
-        order: rank,
-        boardId,
-    };
+    if (board.stats.listCount >= board.limits.maxLists) {
+        const msg = `Maximum list count reached for this board (maximum: ${board.limits.maxLists})`;
+        return res.status(400).json({ message: msg });
+    }
 
-    const list = new List(listData);
-    await list.save();
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    const cards = await Card.find({ boardId, listId: id }).lean();
+    try {
+        const order = await generateListOrder({
+            boardId: boardId.toString(),
+            prevListId: prevListId || null,
+            nextListId: nextListId || null,
+            session,
+        });
 
-    const cardDocs = cards.map(card => ({
-        ...card,
-        _id: new mongoose.Types.ObjectId(),
-        listId: list._id,
-        boardId: list.boardId,
-    }));
+        const [list] = await List.create(
+            [{
+                _id: new mongoose.Types.ObjectId(),
+                title,
+                order,
+                boardId,
+            }],
+            { session }
+        );
 
-    const copiedCards = cardDocs.length > 0 ? await Card.insertMany(cardDocs) : [];
+        const cards = await Card.find({ boardId, listId: id }).lean();
 
-    await saveBoardActivity({
-        boardId,
-        userId,
-        docId: foundList._id,
-        action: "list.copied",
-        docModel: "List",
-        docTitle: foundList.title,
-        description: `a copy of "${foundList.title}" created`,
-    })
+        const cardDocs = cards.map(card => ({
+            ...card,
+            _id: new mongoose.Types.ObjectId(),
+            listId: list._id,
+            boardId: list.boardId,
+        }));
 
-    res.status(200).json({ list, cards: copiedCards });
+        const copiedCards = cardDocs.length > 0
+            ? await Card.insertMany(cardDocs, { session })
+            : [];
+
+        await Board.updateOne(
+            { _id: board._id },
+            {
+                $inc: {
+                    "stats.listCount": 1,
+                    "stats.cardCount": copiedCards.length,
+                },
+            },
+            { session }
+        );
+
+        await saveBoardActivity({
+            boardId,
+            userId,
+            docId: foundList._id,
+            action: "list.copied",
+            docModel: "List",
+            docTitle: foundList.title,
+            description: `a copy of "${foundList.title}" created`,
+            session,
+        })
+
+        await session.commitTransaction();
+
+        res.status(200).json({ list, cards: copiedCards });
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
+    }
 };
 
 /**
@@ -270,83 +371,91 @@ const moveList = async (req, res) => {
         return res.sendStatus(404);
     }
 
-    // check for both sides, move on current board or move to another board
-    // if move to different board, it's like remove from current and create from new
-
     const initialBoardId = foundList.boardId.toString();
     const isMovedToDifferentBoard = initialBoardId !== boardId;
-    let boardToMove = null;
-    if (isMovedToDifferentBoard) {
-        const { board: _currentBoard } = await checkBoardPermission({
-            boardId: foundList.boardId.toString(),
-            userId,
-            resource: "list",
-            action: "delete"
+
+    let targetBoard = null;
+    let prevListId = null;
+    let nextListId = null;
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        if (isMovedToDifferentBoard) {
+            const { board: _currentBoard } = await checkBoardPermission({
+                boardId: foundList.boardId.toString(),
+                userId,
+                resource: "list",
+                action: "delete"
+            });
+
+            const { board: newBoard } = await checkBoardPermission({
+                boardId,
+                userId,
+                resource: "list",
+                action: "create"
+            })
+
+            if (newBoard.stats.listCount >= newBoard.limits.maxLists) {
+                const msg = `Maximum list count reached for board "${newBoard.title}" (maximum: ${newBoard.limits.maxLists})`;
+                return res.status(400).json({ message: msg });
+            }
+            const movedCardCount = await Card.countDocuments({ boardId: newBoard._id, listId: foundList._id });
+            if (newBoard.stats.cardCount + movedCardCount > newBoard.limits.maxCards) {
+                const msg = `Maximum card count reached for board "${newBoard.title}" (maximum: ${newBoard.limits.maxCards})`;
+                return res.status(400).json({ message: msg });
+            }
+
+            targetBoard = newBoard;
+
+            const sortedLists = await List.find({ boardId }).sort({ order: 'asc' });
+            const insertionIdx = Math.min(Math.max(+index, 0), sortedLists.length);
+            prevListId = insertionIdx > 0 ? sortedLists[insertionIdx - 1]?._id.toString() : null;
+            nextListId = insertionIdx < sortedLists.length ? sortedLists[insertionIdx]?._id.toString() : null;
+        } else {
+            const { board } = await checkBoardPermission({
+                boardId,
+                userId,
+                resource: "list",
+                action: "edit"
+            });
+
+            targetBoard = board;
+
+            const sortedLists = await List.find({ boardId }).sort({ order: 'asc' });
+            const movedListIdx = sortedLists.findIndex(l => l._id.toString() === foundList._id.toString());
+
+            const rest = sortedLists.filter((_, i) => i !== movedListIdx);
+            const insertionIdx = Math.min(Math.max(+index, 0), rest.length);
+            prevListId = insertionIdx > 0 ? rest[insertionIdx - 1]?._id.toString() : null;
+            nextListId = insertionIdx < rest.length ? rest[insertionIdx]?._id.toString() : null;
+        }
+
+        const newOrder = await generateListOrder({
+            boardId: targetBoard._id.toString(),
+            prevListId,
+            nextListId,
+            session,
         });
 
-        const { board: newBoard } = await checkBoardPermission({
-            boardId,
-            userId,
-            resource: "list",
-            action: "create"
-        })
+        foundList.order = newOrder;
+        foundList.boardId = targetBoard._id;
+        await foundList.save({ session });
 
-        const [listCount, existingCardCount] = await Promise.all([
-            List.countDocuments({ boardId: newBoard._id }),
-            Card.countDocuments({ boardId: newBoard._id }),
-        ]);
-        if (listCount >= MAX_LIST_COUNT) {
-            const errMsg = `Maximum list count reached for board ${newBoard.title} (maximum: ${MAX_LIST_COUNT})`;
-            return res.status(429).json({ message: errMsg })
-        }
-        const movedCardCount = await Card.countDocuments({ boardId: newBoard._id, listId: foundList._id });
-        if (existingCardCount + movedCardCount > MAX_CARD_COUNT) {
-            const errMsg = `Maximum card count reached for board ${newBoard.title} (maximum: ${MAX_CARD_COUNT})`;
-            return res.status(429).json({ message: errMsg })
-        }
+        await Card.updateMany({ listId: id }, { boardId: targetBoard._id }).session(session);
+        const newCards = await Card.find({ listId: id, boardId: targetBoard._id }).sort({ order: 'asc' }).session(session);
 
-        boardToMove = newBoard;
-    } else {
-        const { board } = await checkBoardPermission({
-            boardId,
-            userId,
-            resource: "list",
-            action: "edit"
-        });
+        await session.commitTransaction();
 
-        boardToMove = board;
+        return res.status(200).json({ list: foundList, cards: newCards });
+    } catch (err) {
+        await session.abortTransaction();
+        const status = err.status || 500;
+        res.status(status).json({ message: err.message });
+    } finally {
+        session.endSession();
     }
-
-    const sortedLists = await List.find({ boardId }).sort({ order: 'asc' });
-    const indexToMove = +index < 0
-        ? 0
-        : +index > sortedLists.length + 1
-            ? sortedLists.length
-            : +index
-    const movedListIndex = sortedLists.findIndex(l => {
-        return l._id.toString() === foundList._id.toString();
-    });
-    const srcOrder =
-        movedListIndex < +index && foundList.boardId.toString() === boardId
-            ? sortedLists[+indexToMove]?.order
-            : sortedLists[+indexToMove - 1]?.order
-    const dstOrder =
-        movedListIndex < +index && foundList.boardId.toString() === boardId
-            ? sortedLists[+indexToMove + 1]?.order
-            : sortedLists[+indexToMove]?.order
-    const [newOrder, ok] = lexorank.insert(srcOrder, dstOrder);
-    if (!ok) {
-        return res.status(403).send("list's order is invalid");
-    }
-
-    foundList.order = newOrder;
-    foundList.boardId = boardToMove._id;
-    await foundList.save();
-
-    await Card.updateMany({ listId: id }, { boardId: boardToMove._id });
-    const newCards = await Card.find({ listId: id, boardId: boardToMove._id }).sort({ order: 'asc' });
-
-    return res.status(200).json({ list: foundList, cards: newCards });
 };
 
 export {

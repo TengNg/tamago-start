@@ -156,6 +156,7 @@ const BoardHeader = ({ setOpenCopyBoardForm }) => {
 
                     {openBoardOptions && (
                         <BoardOptions
+                            open={openBoardOptions}
                             setOpen={setOpenBoardOptions}
                             setOpenCopyBoardForm={setOpenCopyBoardForm}
                             setOpenBoardConfiguration={

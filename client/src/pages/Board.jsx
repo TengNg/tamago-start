@@ -56,7 +56,6 @@ const Board = () => {
         queryKey: boardKeys.detail(/** @type {string} */ (boardId)),
         queryFn: () => boardApi.fetchBoard(/** @type {string} */ (boardId)),
         enabled: !!boardId,
-        staleTime: Infinity,
     });
 
     useEffect(() => {
@@ -94,10 +93,10 @@ const Board = () => {
         copyCard,
         moveCardToList,
         moveCardByIndex,
-        processingCard,
+        isProcessing,
     } = useBoardMutations();
 
-    if (boardQuery.isLoading) {
+    if (boardQuery.isLoading || boardQuery.isPending) {
         return (
             <>
                 <div className="font-medium mx-auto text-center mt-20 text-gray-600">
@@ -162,7 +161,7 @@ const Board = () => {
             <CardModalContextProvider>
                 <CardModal
                     key={cardId}
-                    processingCard={processingCard}
+                    isProcessing={isProcessing}
                     handleDeleteCard={deleteCard}
                     handleCopyCard={copyCard}
                     handleMoveCardToList={moveCardToList}

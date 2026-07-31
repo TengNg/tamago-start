@@ -25,11 +25,11 @@ import ModalStackContext from "../../context/ModalStackContext";
 
 /**
  * @typedef {Object} CardModalProps
- * @property {{ msg: string; processing: boolean }} processingCard
  * @property {(card: Card) => void} handleDeleteCard
  * @property {(card: Card) => void} handleCopyCard
  * @property {(card: Card, newListId: string) => void} handleMoveCardToList
  * @property {(card: Card, insertedIndex: number) => void} handleMoveCardByIndex
+ * @property {boolean} isProcessing
  */
 
 /**
@@ -37,11 +37,11 @@ import ModalStackContext from "../../context/ModalStackContext";
  * @returns {JSX.Element | null}
  */
 const CardModal = ({
-    processingCard,
     handleDeleteCard,
     handleCopyCard,
     handleMoveCardToList,
     handleMoveCardByIndex,
+    isProcessing,
 }) => {
     const [searchParams, setSearchParams] = useSearchParams();
 
@@ -319,10 +319,10 @@ const CardModal = ({
                     <Loading
                         position={"absolute"}
                         fontSize={"1rem"}
-                        loading={processingCard.processing}
-                        displayText={"action is in process, please wait"}
+                        loading={isProcessing}
+                        displayText={"processing"}
                         displayTextClassName={
-                            "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
+                            "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-41"
                         }
                         withLoader={true}
                     />

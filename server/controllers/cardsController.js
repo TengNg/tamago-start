@@ -1,10 +1,14 @@
 import mongoose from 'mongoose';
 import Card from '../models/Card.js';
 import List from '../models/List.js';
+import Board from '../models/Board.js';
+import Attachment from '../models/Attachment.js';
+import CardComment from '../models/CardComment.js';
 
 import { checkBoardPermission } from '../services/boardPermissionService.js';
 import saveBoardActivity from '../services/saveBoardActivity.js';
 import dateFormatter from '../utils/dateFormatter.js';
+import { generateCardOrder } from '../services/cardService.js';
 
 /**
  * @param {import('express').Request} req
@@ -35,41 +39,68 @@ const getCard = async (req, res) => {
  */
 const addCard = async (req, res) => {
     const { userId } = req.user;
-    const { title, order, listId } = req.body;
+    const { title, listId, prevCardId, nextCardId } = req.body;
 
     const foundList = await List.findById(listId).lean();
     if (!foundList) {
         return res.status(403).json({ message: "list not found" });
     }
 
-    await checkBoardPermission({
+    const { board } = await checkBoardPermission({
         boardId: foundList.boardId.toString(),
         userId,
         resource: "card",
-        action: "create"
+        action: "create",
     });
 
-    const newCard = new Card({
-        title,
-        order,
-        listId,
-        boardId: foundList.boardId,
-    });
+    if (board.stats.cardCount >= board.limits.maxCards) {
+        const msg = `Maximum card count reached for this board (maximum: ${board.limits.maxCards})`;
+        return res.status(400).json({ message: msg });
+    }
 
-    await newCard.save();
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    await saveBoardActivity({
-        userId,
-        boardId: foundList.boardId,
-        docId: newCard._id,
-        action: "card.created",
-        docModel: "Card",
-        docTitle: newCard.title,
-        description: `created in list "${foundList.title}"`,
-        createdAt: newCard.updatedAt,
-    })
+    try {
+        const order = await generateCardOrder({
+            listId: foundList._id.toString(),
+            prevCardId,
+            nextCardId,
+            session,
+        });
 
-    return res.status(201).json(newCard);
+        const [newCard] = await Card.create(
+            [{ title, order, listId, boardId: board._id }],
+            { session }
+        );
+
+        await Board.updateOne(
+            { _id: board._id },
+            { $inc: { "stats.cardCount": 1 } },
+            { session }
+        );
+
+        await saveBoardActivity({
+            userId,
+            boardId: foundList.boardId,
+            docId: newCard._id,
+            action: "card.created",
+            docModel: "Card",
+            docTitle: newCard.title,
+            description: `created in list "${foundList.title}"`,
+            createdAt: newCard.updatedAt,
+            session,
+        })
+
+        await session.commitTransaction();
+
+        return res.status(201).json(newCard);
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
+    }
 };
 
 /**
@@ -79,7 +110,7 @@ const addCard = async (req, res) => {
 const reorder = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
-    const { rank, listId, oldPos, newPos } = req.body;
+    const { prevCardId, nextCardId, listId, oldPos, newPos } = req.body;
 
     const foundCard = await Card.findById(id).populate({
         path: 'listId',
@@ -89,6 +120,14 @@ const reorder = async (req, res) => {
         return res.sendStatus(404);
     }
 
+    const populatedList = /** @type {any} */(foundCard.listId);
+    const currentListId = populatedList._id;
+    const currentCardListTitle = populatedList.title;
+    const foundList = await List.findById(populatedList._id).lean();
+    if (!foundList) {
+        return res.status(403).json({ message: "list not found" });
+    }
+
     await checkBoardPermission({
         boardId: foundCard.boardId.toString(),
         userId,
@@ -96,40 +135,57 @@ const reorder = async (req, res) => {
         action: "edit"
     });
 
-    const populatedList = /** @type {any} */(foundCard.listId);
-    const currentListId = populatedList._id;
-    const currentCardListTitle = populatedList.title;
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    const foundList = await List.findById(listId).lean();
-    if (!foundList) {
-        return res.status(403).json({ message: "list not found" });
-    }
-
-    if (foundCard.order === rank) {
-        return res.status(200).json({
-            oldListId: currentListId,
-            newCard: foundCard,
+    try {
+        const newOrder = await generateCardOrder({
+            listId,
+            prevCardId: prevCardId || null,
+            nextCardId: nextCardId || null,
+            session,
         });
+
+        if (foundCard.order === newOrder) {
+            await session.abortTransaction();
+            return res.status(200).json({
+                oldListId: currentListId,
+                newCard: foundCard,
+            });
+        }
+
+        foundCard.order = newOrder;
+        foundCard.listId = listId;
+        foundCard.updatedAt = new Date();
+        await foundCard.save({ session });
+
+        if (
+            oldPos !== undefined
+            && newPos !== undefined
+            && !isNaN(+oldPos)
+            && !isNaN(+newPos)
+        ) {
+            await saveBoardActivity({
+                userId,
+                boardId: foundList.boardId,
+                docId: foundCard._id,
+                action: "card.moved",
+                docModel: "Card",
+                docTitle: foundCard.title,
+                description: `${currentCardListTitle} (${oldPos}) → ${foundList.title} (${newPos})`,
+                session,
+            });
+        }
+
+        await session.commitTransaction();
+
+        res.json(foundCard);
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
     }
-
-    foundCard.order = rank;
-    foundCard.listId = listId;
-    await foundCard.save();
-
-    await saveBoardActivity({
-        userId,
-        boardId: foundList.boardId,
-        docId: foundCard._id,
-        action: "card.moved",
-        docModel: "Card",
-        docTitle: foundCard.title,
-        description: `${currentCardListTitle} (${oldPos}) → ${foundList.title} (${newPos})`,
-    });
-
-    res.status(200).json({
-        oldListId: currentListId,
-        newCard: foundCard,
-    });
 };
 
 /**
@@ -167,6 +223,7 @@ const updateCard = async (req, res) => {
 
     const prevValue = foundCard[field];
     foundCard[field] = value;
+    foundCard.updatedAt = new Date();
     const newCard = await foundCard.save();
 
     const actionMap = {
@@ -181,8 +238,8 @@ const updateCard = async (req, res) => {
     const description = field === "verified"
         ? null
         : field === "dueDate"
-        ? `${dateFormatter(prevValue) || "none"} → ${dateFormatter(value) || "none"}`
-        : `"${prevValue}" → "${value}"`;
+            ? `${dateFormatter(prevValue) || "none"} →  ${dateFormatter(value) || "none"}`
+            : `"${prevValue}" →  "${value}"`;
 
     await saveBoardActivity({
         userId,
@@ -210,26 +267,46 @@ const deleteCard = async (req, res) => {
         return res.sendStatus(404);
     }
 
-    await checkBoardPermission({
+    const { board } = await checkBoardPermission({
         boardId: foundCard.boardId.toString(),
         userId,
         resource: "card",
         action: "delete"
     });
 
-    await Card.findOneAndDelete({ _id: id });
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    await saveBoardActivity({
-        userId,
-        boardId: foundCard.boardId,
-        docId: foundCard._id,
-        action: "card.deleted",
-        docModel: "Card",
-        docTitle: foundCard.title,
-        description: `card with title "${foundCard.title}" deleted`,
-    });
+    try {
+        await Attachment.deleteMany({ docModel: 'Card', doc: foundCard._id }).session(session);
+        await CardComment.deleteMany({ cardId: foundCard._id }).session(session);
+        await Card.findOneAndDelete({ _id: id }).session(session);
 
-    res.sendStatus(204);
+        await Board.updateOne(
+            { _id: board._id },
+            { $inc: { "stats.cardCount": -1 } },
+            { session }
+        );
+
+        await saveBoardActivity({
+            userId,
+            boardId: foundCard.boardId,
+            docId: foundCard._id,
+            action: "card.deleted",
+            docModel: "Card",
+            docTitle: foundCard.title,
+            description: `card with title "${foundCard.title}" deleted`,
+        });
+
+        await session.commitTransaction();
+
+        res.sendStatus(204);
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
+    }
 };
 
 /**
@@ -239,41 +316,77 @@ const deleteCard = async (req, res) => {
 const copyCard = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
-    const { rank } = req.body;
+    const { prevCardId, nextCardId } = req.body;
 
     const foundCard = await Card.findById(id).lean();
     if (!foundCard) {
         return res.sendStatus(404);
     }
 
-    await checkBoardPermission({
+    const foundList = await List.findById(foundCard.listId).lean();
+    if (!foundList) {
+        return res.status(403).json({ message: "list not found" });
+    }
+
+    const { board } = await checkBoardPermission({
         boardId: foundCard.boardId.toString(),
         userId,
         resource: "card",
         action: "create"
     });
 
-    const newCard = new Card({
-        ...foundCard,
-        _id: new mongoose.Types.ObjectId(),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        order: rank,
-    });
+    if (board.stats.cardCount >= board.limits.maxCards) {
+        const msg = `Maximum card count reached for this board (maximum: ${board.limits.maxCards})`;
+        return res.status(400).json({ message: msg });
+    }
 
-    await newCard.save();
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-    await saveBoardActivity({
-        boardId: newCard.boardId,
-        userId,
-        docId: newCard._id,
-        action: "card.copied",
-        docModel: "Card",
-        docTitle: foundCard.title,
-        description: `a copy of "${foundCard.title}" created`,
-    })
+    try {
+        const order = await generateCardOrder({
+            listId: foundCard.listId.toString(),
+            prevCardId: prevCardId || null,
+            nextCardId: nextCardId || null,
+            session,
+        });
 
-    return res.json(newCard);
+        const [newCard] = await Card.create(
+            [{
+                ...foundCard,
+                _id: new mongoose.Types.ObjectId(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                order,
+            }],
+            { session }
+        );
+
+        await Board.updateOne(
+            { _id: board._id },
+            { $inc: { "stats.cardCount": 1 } },
+            { session }
+        );
+
+        await saveBoardActivity({
+            boardId: newCard.boardId,
+            userId,
+            docId: newCard._id,
+            action: "card.copied",
+            docModel: "Card",
+            docTitle: foundCard.title,
+            description: `a copy of "${foundCard.title}" created`,
+            session,
+        });
+
+        await session.commitTransaction();
+        return res.json(newCard);
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
+    }
 };
 
 export {

@@ -1,5 +1,4 @@
 import { Schema, model } from 'mongoose';
-import { MAX_BOARD_COUNT } from '../constants/limits.js';
 
 const boardSchema = new Schema({
     title: {
@@ -30,16 +29,40 @@ const boardSchema = new Schema({
         required: true,
         default: Date.now,
     },
-});
 
-boardSchema.pre('save', async function(next) {
-    if (this.isNew) {
-        const boardCount = await model('Board').countDocuments({ createdBy: this.createdBy });
-        if (boardCount >= MAX_BOARD_COUNT) {
-            const error = new Error(`Maximum board count reached (maximum: ${MAX_BOARD_COUNT})`);
-            return next(error);
-        }
-    }
+    stats: {
+        listCount: {
+            type: Number,
+            default: 0,
+            min: 0,
+        },
+
+        cardCount: {
+            type: Number,
+            default: 0,
+            min: 0,
+        },
+    },
+
+    limits: {
+        maxLists: {
+            type: Number,
+            default: 20,
+            min: 1,
+        },
+
+        maxCards: {
+            type: Number,
+            default: 5000,
+            min: 1,
+        },
+
+        maxMembers: {
+            type: Number,
+            default: 10,
+            min: 1,
+        },
+    },
 });
 
 export default model('Board', boardSchema);

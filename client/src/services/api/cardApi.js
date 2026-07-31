@@ -11,15 +11,16 @@ function fetchCard(cardId, { signal } = {}) {
 
 /**
  * @param {{
+ *   title: string
  *   boardId: string;
  *   listId: string;
- *   order: string;
- *   title: string
- * }} cardData
+ *   prevCardId?: string;
+ *   nextCardId?: string;
+ * }} params
  * @returns {Promise<Card>}
  */
-function createCard(cardData) {
-    return apiClient.post("/cards", cardData);
+function createCard(params) {
+    return apiClient.post("/cards", params);
 }
 
 /**
@@ -32,22 +33,27 @@ function deleteCard(cardId) {
 
 /**
  * @param {string} cardId
- * @param {string} rank
+ * @param {string} prevId
+ * @param {string} nextId
  * @returns {Promise<Card>}
  */
-function copyCard(cardId, rank) {
-    return apiClient.post(`/cards/${cardId}/copy`, { rank });
+function copyCard(cardId, prevId, nextId) {
+    return apiClient.post(`/cards/${cardId}/copy`, {
+        prevCardId: prevId,
+        nextCardId: nextId,
+    });
 }
 
 /**
  * @param {string} cardId
  * @param {{
- *   rank: string;
  *   listId: string;
+ *   prevCardId: string | null | undefined;
+ *   nextCardId: string | null | undefined;
  *   oldPos: number;
  *   newPos: number;
  * }} data
- * @returns {Promise<{ oldListId: string; newCard: Card }>}
+ * @returns {Promise<Card>}
  */
 function reorderCard(cardId, data) {
     return apiClient.patch(`/cards/${cardId}/reorder`, data);

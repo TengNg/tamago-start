@@ -1,11 +1,11 @@
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useMemo, useState, useRef, useCallback, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
 import Card from "../card/Card";
 import useBoardState from "../../hooks/useBoardState";
 import CardComposer from "../card/CardComposer";
 import ListMenu from "./ListMenu";
-import { lexorank } from "../../lib/lexorank";
 import { listApi } from "../../services/api";
 import Icon from "../shared/Icon";
 import useToast from "../../hooks/useToast";
@@ -48,11 +48,6 @@ const List = ({ index, list, cards }) => {
     const [openCardComposer, setOpenCardComposer] = useState(false);
     const [openListMenu, setOpenListMenu] = useState(false);
 
-    const [processingList, setProcessingList] = useState({
-        msg: "loading...",
-        processing: false,
-    });
-
     /** @type {React.MutableRefObject<HTMLTextAreaElement | null>} */
     const textAreaRef = useRef(null);
 
@@ -68,6 +63,59 @@ const List = ({ index, list, cards }) => {
     });
 
     const toast = useToast();
+
+    const copyListMutation = useMutation({
+        mutationFn: (/** @type {string} */ id) => {
+            const lists = boardState.lists;
+            const currentIndex = lists.findIndex((el) => el._id == id);
+            if (currentIndex === -1) {
+                throw new Error(`couldn't find list with id ${id}`);
+            }
+
+            const nextElement =
+                index < lists.length - 1 ? lists[index + 1] : null;
+
+            return listApi.copyList(
+                id,
+                lists[currentIndex]?._id,
+                nextElement?._id,
+            );
+        },
+        onSuccess: (data) => {
+            const lists = [...boardState.lists];
+            const newList = data.list;
+            const newCards = data.cards;
+            newCards.sort((a, b) => (a.order > b.order ? 1 : -1));
+            lists.splice(index + 1, 0, newList);
+
+            dispatch({
+                type: BOARD_ACTIONS.SET_STATE,
+                payload: {
+                    data: {
+                        ...boardState,
+                        lists,
+                        cards: {
+                            ...boardState.cards,
+                            [newList._id]: newCards,
+                        },
+                    },
+                },
+            });
+
+            socket.emit(SOCKET_EVENTS.LIST_UPDATE_ALL, lists);
+        },
+        onError: (err) => {
+            const errMsg = getErrorMessage(err);
+            toast.error(errMsg);
+        },
+    });
+
+    /**
+     * @param {string} id
+     */
+    const handleCopyList = async (id) => {
+        await copyListMutation.mutateAsync(id);
+    };
 
     const handleScroll = useCallback(() => {
         const el = scrollRef.current;
@@ -204,70 +252,6 @@ const List = ({ index, list, cards }) => {
         }
     };
 
-    /**
-     * @param {string} id
-     */
-    const handleCopyList = async (id) => {
-        const lists = boardState.lists;
-        const tempLists = [...boardState.lists];
-
-        try {
-            setProcessingList({
-                msg: "copying...",
-                processing: true,
-            });
-
-            const currentIndex = lists.findIndex((el) => el._id == id);
-            if (currentIndex === -1) {
-                throw `couldn't find list with id ${id}`;
-            }
-
-            const nextElement =
-                index < lists.length - 1 ? lists[index + 1] : null;
-
-            const [rank, ok] = lexorank.insert(
-                lists[currentIndex]?.order,
-                nextElement?.order,
-            );
-
-            if (!ok) {
-                toast.error("Failed to duplicate, rank is not valid");
-                return;
-            }
-
-            const data = await listApi.copyList(id, rank);
-            const newList = data.list;
-            const newCards = data.cards;
-            newCards.sort((a, b) => (a.order > b.order ? 1 : -1));
-            lists.splice(index + 1, 0, newList);
-
-            dispatch({
-                type: BOARD_ACTIONS.SET_STATE,
-                payload: {
-                    data: {
-                        ...boardState,
-                        lists,
-                        cards: {
-                            ...boardState.cards,
-                            [newList._id]: newCards,
-                        },
-                    },
-                },
-            });
-
-            socket.emit(SOCKET_EVENTS.LIST_UPDATE_ALL, lists);
-        } catch (err) {
-            const errMsg = getErrorMessage(err);
-            toast.error(errMsg);
-            dispatch({
-                type: BOARD_ACTIONS.SET_LISTS,
-                payload: { lists: tempLists },
-            });
-        } finally {
-            setProcessingList({ msg: "", processing: false });
-        }
-    };
-
     const cardIds = useMemo(() => {
         return cards.map((c) => c._id);
     }, [cards]);
@@ -333,7 +317,7 @@ const List = ({ index, list, cards }) => {
                     setOpen={setOpenListMenu}
                     handleDelete={handleDeleteList}
                     handleCopy={handleCopyList}
-                    processingList={processingList}
+                    isCopying={copyListMutation.isPending}
                 />
             )}
 

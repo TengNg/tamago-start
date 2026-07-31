@@ -55,12 +55,6 @@ const CardComposer = ({ list, open, setOpen }) => {
         const textarea = textAreaRef.current;
         if (textarea) {
             setText(textarea.value);
-            const littleOffset = 4; // prevent resizing when start typing
-            textarea.style.height = `${textarea.scrollHeight + littleOffset}px`;
-        }
-
-        if (composerRef.current) {
-            composerRef.current.scrollIntoView({ block: "end" });
         }
     };
 

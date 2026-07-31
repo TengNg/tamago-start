@@ -4,7 +4,6 @@ import useBoardState from "./useBoardState";
 import useToast from "./useToast";
 import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { BOARD_ACTIONS } from "../state/boardActionTypes";
-import { lexorank } from "../lib/lexorank";
 import { getErrorMessage } from "../utils/getErrorMessage";
 import { cardKeys } from "../queries/cardKeys";
 
@@ -46,18 +45,9 @@ const useBoardMutations = () => {
             const currentIndex = cards.findIndex(
                 (/** @type {{ _id: string }} */ el) => el._id == card._id,
             );
-            const [rank, ok] = lexorank.insert(
-                cards[currentIndex]?.order,
-                cards[currentIndex + 1]?.order,
-            );
-
-            if (!ok) {
-                throw new Error(
-                    "Failed to create a copy of this card, rank is not valid",
-                );
-            }
-
-            const data = await cardApi.copyCard(card._id, rank);
+            const prevId = cards[currentIndex]?._id;
+            const nextId = cards[currentIndex + 1]?._id;
+            const data = await cardApi.copyCard(card._id, prevId, nextId);
             return {
                 card: data,
                 currentIndex,
@@ -83,18 +73,11 @@ const useBoardMutations = () => {
             { listId, title },
         ) => {
             const currentCards = boardState.cards[listId];
-            const [rank, ok] = lexorank.insert(
-                currentCards[currentCards.length - 1]?.order,
-                "",
-            );
-            if (!ok) {
-                throw new Error("Invalid rank for new card position");
-            }
-
+            const prevId = currentCards[currentCards.length - 1]?._id;
             return cardApi.createCard({
                 boardId: boardState.board._id,
                 listId,
-                order: rank,
+                prevCardId: prevId,
                 title,
             });
         },
@@ -155,28 +138,21 @@ const useBoardMutations = () => {
                 throw new Error("List not found");
             }
 
-            const cardsFromNewList = boardState.cards[newList._id];
-            const [rank, ok] = lexorank.insert(
-                cardsFromNewList[cardsFromNewList.length - 1]?.order,
-                "",
-            );
-
-            if (!ok) {
-                throw new Error("Failed to reorder card");
-            }
-
+            const cards = boardState.cards[newList._id];
+            const prevId = cards[cards.length - 1]?._id;
             const currentIndex = boardState.cards[card.listId].findIndex(
-                (/** @type {{ _id: string }} */ el) => el._id == card._id,
+                (el) => el._id == card._id,
             );
 
-            const data = await cardApi.reorderCard(card._id, {
-                rank,
+            const newCard = await cardApi.reorderCard(card._id, {
                 listId: newListId,
+                prevCardId: prevId,
+                nextCardId: null,
                 oldPos: currentIndex,
-                newPos: cardsFromNewList.length - 1,
+                newPos: cards.length - 1,
             });
 
-            return { newCard: data.newCard, oldListId: card.listId, newListId };
+            return { newCard, oldListId: card.listId, newListId };
         },
         onSuccess: (
             /** @type {{ newCard: Card, oldListId: string, newListId: string }} */ data,
@@ -216,16 +192,11 @@ const useBoardMutations = () => {
             );
             const prev = insertedIndex - 1;
             const next = insertedIndex;
-            const [rank, ok] = lexorank.insert(
-                cards[prev]?.order,
-                cards[next]?.order,
-            );
-
-            if (!ok) return;
+            const prevId = cards[prev]?._id;
+            const nextId = cards[next]?._id;
 
             const newCards = [...cards];
             const [moved] = newCards.splice(currentIndex, 1);
-            moved.order = rank;
             newCards.splice(insertedIndex, 0, moved);
 
             dispatch({
@@ -238,8 +209,9 @@ const useBoardMutations = () => {
 
             return cardApi
                 .reorderCard(card._id, {
-                    rank,
                     listId: card.listId,
+                    prevCardId: prevId,
+                    nextCardId: nextId,
                     oldPos: currentIndex,
                     newPos: insertedIndex,
                 })
@@ -286,10 +258,11 @@ const useBoardMutations = () => {
             opts,
         ) => createCardMutation.mutateAsync(opts),
         isCreatingCard: createCardMutation.isPending,
-        processingCard: {
-            msg: "processing...",
-            processing: isProcessing,
-        },
+        isDeletingCard: deleteCardMutation.isPending,
+        isCopyingCard: copyCardMutation.isPending,
+        isMovingCardToList: moveCardToListMutation.isPending,
+        isMovingCardByIndex: moveCardByIndexMutation.isPending,
+        isProcessing,
     };
 };
 

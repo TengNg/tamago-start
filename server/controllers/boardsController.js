@@ -9,6 +9,8 @@ import CardComment from "../models/CardComment.js";
 import saveBoardActivity from '../services/saveBoardActivity.js';
 import { checkAllowedRoles } from '../services/boardPermissionService.js';
 
+const MAX_BOARD_COUNT = 10;
+
 /**
  * @param {import('mongoose').Types.ObjectId} boardId
  */
@@ -241,6 +243,12 @@ const createBoard = async (req, res) => {
     const { userId } = req.user;
     const { title, description } = req.body;
 
+    const boardCount = await Board.countDocuments({ createdBy: userId });
+    if (boardCount >= MAX_BOARD_COUNT) {
+        const msg = `Maximum board count reached (maximum: ${MAX_BOARD_COUNT})`;
+        return res.status(400).json({ message: msg });
+    }
+
     const newBoard = await Board.create({
         title,
         description,
@@ -402,34 +410,33 @@ const removeMemberFromBoard = async (req, res) => {
  * @param {import('express').Response} res
  */
 const closeBoard = async (req, res) => {
+    const { userId } = req.user;
+    const { id } = req.params;
+
+    const board = await Board.findById(id);
+    if (!board) {
+        return res.sendStatus(404);
+    }
+
+    await checkAllowedRoles({
+        roles: ["owner"],
+        userId,
+        boardId: id,
+    });
+
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-        const { userId } = req.user;
-        const { id } = req.params;
-
-        const board = await Board.findById(id);
-        if (!board) {
-            return res.sendStatus(404);
-        }
-
-        await checkAllowedRoles({
-            roles: ["owner"],
-            userId,
-            boardId: id,
-        });
-
-        await Card.deleteMany({ boardId: id }, { session });
-        await List.deleteMany({ boardId: id }, { session });
-        await BoardMembership.deleteMany({ boardId: id }, { session });
-
-        const cardIds = await Card.find({ boardId: id }).distinct('_id').session(session);
+        const cardIds = await Card.find({ boardId: id }).distinct('_id');
         if (cardIds.length > 0) {
             await Attachment.deleteMany({ docModel: 'Card', doc: { $in: cardIds } }, { session });
             await CardComment.deleteMany({ cardId: { $in: cardIds } }, { session });
         }
 
+        await Card.deleteMany({ boardId: id }, { session });
+        await List.deleteMany({ boardId: id }, { session });
+        await BoardMembership.deleteMany({ boardId: id }, { session });
         await Board.deleteOne({ _id: id }, { session });
 
         await session.commitTransaction();
@@ -449,25 +456,31 @@ const closeBoard = async (req, res) => {
  * @param {import('express').Response} res
  */
 const copyBoard = async (req, res) => {
+    const { id } = req.params;
+    const { title, description } = req.body;
+    const { userId } = req.user
+
+    const board = await Board.findById(id);
+    if (!board) {
+        return res.sendStatus(404);
+    }
+
+    await checkAllowedRoles({
+        roles: ["owner", "member"],
+        userId,
+        boardId: board._id.toString()
+    });
+
+    const boardCount = await Board.countDocuments({ createdBy: userId });
+    if (boardCount >= MAX_BOARD_COUNT) {
+        const msg = `Maximum board count reached (maximum: ${MAX_BOARD_COUNT})`;
+        return res.status(400).json({ message: msg });
+    }
+
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-        const { id } = req.params;
-        const { title, description } = req.body;
-        const { userId } = req.user
-
-        const board = await Board.findById(id);
-        if (!board) {
-            return res.sendStatus(404);
-        }
-
-        await checkAllowedRoles({
-            roles: ["owner", "member"],
-            userId,
-            boardId: board._id.toString()
-        });
-
         // create board
         const newBoardId = new mongoose.Types.ObjectId();
         const newBoard = new Board({
@@ -524,7 +537,6 @@ const copyBoard = async (req, res) => {
         session.endSession();
     }
 };
-
 
 /**
  * @param {import('express').Request} req

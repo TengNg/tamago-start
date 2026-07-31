@@ -5,4 +5,12 @@ declare type Board = {
     visibility: 'private' | 'public';
     createdBy: { _id: string; username: string; createdAt?: string };
     createdAt: string;
+    stats: {
+        cardCount: number;
+        listCount: number;
+    },
+    limits: {
+        maxCards: number;
+        maxLists: number;
+    },
 };

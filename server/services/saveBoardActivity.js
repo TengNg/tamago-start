@@ -10,6 +10,7 @@ import BoardActivity from '../models/BoardActivity.js';
  * @property {string} action
  * @property {'Board' | 'List' | 'Card'} docModel
  * @property {string} docTitle
+ * @property {import('mongoose').mongo.ClientSession | null} [session]
  */
 
 /**
@@ -23,8 +24,9 @@ const saveBoardActivity = async ({
     docTitle = "",
     action,
     description,
+    session = null,
 }) => {
-    const activity = await BoardActivity.create({
+    const activity = new BoardActivity({
         board: boardId,
         user: userId,
         docModel,
@@ -33,6 +35,7 @@ const saveBoardActivity = async ({
         action,
         description,
     });
+    await activity.save({ session });
     return activity;
 };
 

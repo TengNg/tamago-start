@@ -70,18 +70,14 @@ const BoardBottomBar = () => {
             <button
                 onClick={() => setOpenVisibilityConfig((prev) => !prev)}
                 className={`
-                    w-fit ${openVisibilityConfig ? "mt-1 text-gray-100 shadow-[0_1px_0_0]" : "shadow-gray-600 shadow-[0_3px_0_0]"}
+                    w-25 ${openVisibilityConfig ? "mt-1 text-gray-100 shadow-[0_1px_0_0]" : "shadow-gray-600 shadow-[0_3px_0_0]"}
                     bg-[rgb(var(--card-item-bg))] border-2 border-gray-600 text-gray-600 px-3 py-2 text-[0.65rem] sm:text-[0.65rem] font-medium
                 `}
             >
-                <span>{boardState.board?.visibility}</span>
+                <span>{boardState.board.visibility}</span>
             </button>
 
             <div className="flex gap-3 ms-3 text-[0.75rem] items-center justify-center text-gray-700">
-                <p className="md:block hidden select-none m-0 p-0">
-                    lists: {boardState?.lists?.length || 0} / 20
-                </p>
-
                 <button
                     className="sm:grid place-items-center hidden w-6 h-6 bg-gray-500 hover:bg-gray-600 text-white font-bold rounded-full"
                     onClick={() => {
