@@ -95,16 +95,84 @@ export const formatDateToYYYYMMDD = (
 };
 
 /**
- * @param {string | number | Date | undefined} miliseconds
+ * @param {string | null | undefined} dateValue  // "YYYY-MM-DD"
+ * @returns {boolean}
  */
-export const dateToCompare = (miliseconds) => {
-    if (!miliseconds) return "";
+export const isPastDue = (dateValue) => {
+    if (!dateValue) return false;
 
-    const date = new Date(miliseconds);
-    const today = new Date();
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    const today = `${y}-${m}-${d}`;
 
-    date.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
+    return dateValue <= today;
+};
 
-    return date.getTime() <= today.getTime();
+/**
+ * Format a due date string to a short display string (e.g. "Mon, Apr 01").
+ * @param {string | null | undefined} dateValue  // "YYYY-MM-DD"
+ * @returns {string}
+ */
+export const formatDueDate = (dateValue) => {
+    if (!dateValue) return "";
+
+    const [year, month, day] = dateValue.split("-").map(Number);
+    if (!year || !month || !day) return "";
+
+    const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const months = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ];
+
+    const d = new Date(year, month - 1, day);
+    const wday = weekdays[d.getDay()];
+    const monthName = months[d.getMonth()];
+
+    return `${wday}, ${monthName} ${String(day).padStart(2, "0")}`;
+};
+
+/**
+ * Returns a relative label for a due date (e.g. "due today", "1 day overdue").
+ * @param {string | null | undefined} dateValue  // "YYYY-MM-DD"
+ * @returns {string}
+ */
+export const getRelativeDueLabel = (dateValue) => {
+    if (!dateValue) return "";
+
+    const [year, month, day] = dateValue.split("-").map(Number);
+    if (!year || !month || !day) return "";
+
+    const dueDay = Date.UTC(year, month - 1, day);
+    const now = new Date();
+    const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffDays = Math.round((dueDay - today) / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+        return Math.abs(diffDays) === 1
+            ? "1 day overdue"
+            : `${Math.abs(diffDays)} days overdue`;
+    }
+
+    if (diffDays === 0) {
+        return "due today";
+    }
+
+    if (diffDays === 1) {
+        return "due tomorrow";
+    }
+
+    return `due in ${diffDays} days`;
 };

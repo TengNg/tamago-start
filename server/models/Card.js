@@ -63,7 +63,33 @@ const cardSchema = new Schema({
     },
 
     dueDate: {
-        type: Date,
+        type: String,
+        default: null,
+        validate: [
+            {
+                validator: function(/** @type {string | null} */value) {
+                    if (!value) return true;
+                    return /^\d{4}-\d{2}-\d{2}$/.test(value);
+                },
+                message: 'must be in YYYY-MM-DD format'
+            },
+            {
+                validator: function(/** @type {string | null} */value) {
+                    if (!value) return true;
+                    const month = parseInt(value.split("-")[1], 10);
+                    return month >= 1 && month <= 12;
+                },
+                message: 'month must be between 1 and 12'
+            },
+            {
+                validator: function(/** @type {string | null} */value) {
+                    if (!value) return true;
+                    const day = parseInt(value.split("-")[2], 10);
+                    return day >= 1 && day <= 31;
+                },
+                message: 'day must be between 1 and 31'
+            }
+        ],
     },
 
     updatedAt: {

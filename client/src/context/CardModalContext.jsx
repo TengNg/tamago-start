@@ -1,9 +1,12 @@
 import { createContext, useCallback } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { cardApi } from "../services/api";
 import { cardKeys } from "../queries/cardKeys";
 import { useSearchParams } from "react-router-dom";
 import { getErrorMessage } from "../utils/getErrorMessage";
+import { SOCKET_EVENTS } from "@shared/socket-events.js";
+import useBoardState from "../hooks/useBoardState";
+import useToast from "../hooks/useToast";
 
 const CardModalContext = createContext(
     /** @type {CardModalContextValue} */ ({}),
@@ -14,6 +17,10 @@ export const CardModalContextProvider = ({ children }) => {
     const [searchParams, setSearchParams] = useSearchParams();
     const cardId = searchParams.get("card");
 
+    const { updateCardField, socket } = useBoardState();
+    const queryClient = useQueryClient();
+    const toast = useToast();
+
     const cardQuery = useQuery({
         queryKey: cardKeys.detail(/** @type {string} */ (cardId)),
         queryFn: ({ signal }) =>
@@ -22,6 +29,54 @@ export const CardModalContextProvider = ({ children }) => {
     });
 
     const card = cardQuery.data;
+
+    const cardMutation = useMutation({
+        mutationFn: (
+            /** @type {{ field: CardUpdateField, value: any }} */ {
+                field,
+                value,
+            },
+        ) =>
+            cardApi.updateCard(/** @type {string} */ (card?._id), field, value),
+        onSuccess: (
+            data,
+            /** @type {{ field: CardUpdateField, value: any }} */ {
+                field,
+                value,
+            },
+        ) => {
+            if (!card) {
+                return;
+            }
+
+            const resolvedValue = data[field] ?? value;
+
+            updateCardField({
+                id: card._id,
+                listId: card.listId,
+                field,
+                value: resolvedValue,
+            });
+
+            queryClient.setQueryData(
+                cardKeys.detail(card._id),
+                (/** @type {Card | undefined} */ old) => {
+                    if (!old) return old;
+                    return { ...old, [field]: resolvedValue };
+                },
+            );
+
+            socket.emit(SOCKET_EVENTS.CARD_UPDATE, {
+                id: card._id,
+                listId: card.listId,
+                field,
+                value: resolvedValue,
+            });
+        },
+        onError: () => {
+            toast.error("Failed to update card");
+        },
+    });
 
     const handleCancel = useCallback(() => {
         const next = new URLSearchParams(searchParams);
@@ -77,7 +132,7 @@ export const CardModalContextProvider = ({ children }) => {
     }
 
     return (
-        <CardModalContext.Provider value={{ cardQuery, card }}>
+        <CardModalContext.Provider value={{ cardQuery, card, cardMutation }}>
             {children}
         </CardModalContext.Provider>
     );

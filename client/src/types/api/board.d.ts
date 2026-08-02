@@ -16,8 +16,6 @@ declare type BoardStatsResponse = {
     board: Board;
     members: BoardMember[];
     priorityLevelStats: { _id: Card["priorityLevel"]; count: number }[];
-    listCount: number;
-    staleCardCount: number;
 };
 
 declare type ActivityItem = {

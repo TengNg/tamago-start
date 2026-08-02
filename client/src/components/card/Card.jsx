@@ -1,6 +1,10 @@
 import { useSortable } from "@dnd-kit/sortable";
 import useBoardState from "../../hooks/useBoardState";
-import dateFormatter, { dateToCompare } from "../../utils/dateFormatter";
+import dateFormatter, {
+    isPastDue,
+    formatDueDate,
+    getRelativeDueLabel,
+} from "../../utils/dateFormatter";
 import PRIORITY_LEVELS from "../../constants/priorityLevels";
 import { useRef } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -105,7 +109,7 @@ export default function Card({ card }) {
                 ${card.hiddenByFilter ? "hidden" : ""}
                 ${theme.itemTheme == "rounded-sm" ? "rounded-sm" : ""}
                 ${isLargeScreen ? "touch-none" : ""}
-                ${dateToCompare(card?.dueDate) ? "past__due__card" : ""}
+                ${isPastDue(card?.dueDate) ? "past__due__card" : ""}
                 relative select-none w-full group border-2 border-b-3 border-gray-600 p-4 flex flex-col gap-2 cursor-pointer scroll-mx-7
                 translate-y-0 hover:translate-y-0.5 hover:shadow-none!
             `}
@@ -195,12 +199,13 @@ export default function Card({ card }) {
 
             <div className="flex flex-col gap-1">
                 {card?.dueDate && (
-                    <div className="text-[12px] text-gray-700 font-medium">
-                        due:{" "}
-                        {dateFormatter(card.dueDate, {
-                            weekdayFormat: true,
-                            withTime: false,
-                        })}
+                    <div
+                        className={`text-[12px] font-medium flex items-center gap-1 ${isPastDue(card.dueDate) ? "text-red-700" : "text-gray-700"}`}
+                    >
+                        <span>due: {formatDueDate(card.dueDate)}</span>
+                        <span className="text-[11px] opacity-80">
+                            ({getRelativeDueLabel(card.dueDate)})
+                        </span>
                     </div>
                 )}
 

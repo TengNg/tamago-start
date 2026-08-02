@@ -217,21 +217,10 @@ const getBoardStats = async (req, res) => {
         }
     ]);
 
-    const listCount = await List.countDocuments({ boardId: id });
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0)
-    const staleCardCount = await Card.countDocuments({
-        boardId: id,
-        dueDate: { $lt: today }
-    });
-
-    res.status(200).json({
+    res.json({
         board: foundBoard,
         members: memberships,
-        listCount,
         priorityLevelStats,
-        staleCardCount
     });
 };
 

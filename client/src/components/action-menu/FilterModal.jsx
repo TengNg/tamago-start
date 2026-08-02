@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import useBoardState from "../../hooks/useBoardState";
 import { useSearchParams } from "react-router-dom";
 
-import { dateToCompare } from "../../utils/dateFormatter";
+import { isPastDue } from "../../utils/dateFormatter";
 import PRIORITY_LEVELS from "../../constants/priorityLevels";
 import Icon from "../shared/Icon";
 import useToast from "../../hooks/useToast";
@@ -89,7 +89,7 @@ const FilterModal = () => {
                     const isFilteredByPriority = priorities.includes(
                         c.priorityLevel,
                     );
-                    const isFilteredByStale = dateToCompare(c.dueDate);
+                    const isFilteredByStale = isPastDue(c.dueDate);
 
                     const lowerOwner = c.owner ? c.owner.toLowerCase() : null;
                     const isFilteredByOwner =

@@ -8,7 +8,7 @@ import {
 } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { cardApi, attachmentApi } from "../../services/api";
+import { attachmentApi } from "../../services/api";
 import useBoardState from "../../hooks/useBoardState";
 import useToast from "../../hooks/useToast";
 import Loading from "../ui/Loading";
@@ -17,7 +17,6 @@ import ListSelectOptions from "./modal/ListSelectOptions";
 import Actions from "./modal/Actions";
 import Extra from "./modal/Extra";
 import Comments from "./modal/Comments";
-import { cardKeys } from "../../queries/cardKeys";
 import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { getErrorMessage } from "../../utils/getErrorMessage";
 import CardModalContext from "../../context/CardModalContext";
@@ -45,9 +44,9 @@ const CardModal = ({
 }) => {
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const { boardState, updateCardField, socket } = useBoardState();
+    const { boardState, socket } = useBoardState();
     const { isAnyModalOpen } = useContext(ModalStackContext);
-    const { card } = useContext(CardModalContext);
+    const { card, cardMutation } = useContext(CardModalContext);
 
     const queryClient = useQueryClient();
     const toast = useToast();
@@ -141,49 +140,6 @@ const CardModal = ({
             modalEl?.removeEventListener("scroll", handleScroll);
         };
     }, [card, handleCancel, isAnyModalOpen, textareaRef]);
-
-    const cardMutation = useMutation({
-        mutationFn: (
-            /** @type {{ field: CardUpdateField, value: any }} */ {
-                field,
-                value,
-            },
-        ) => cardApi.updateCard(card._id, field, value),
-        onSuccess: (
-            data,
-            /** @type {{ field: CardUpdateField, value: any }} */ {
-                field,
-                value,
-            },
-        ) => {
-            const resolvedValue = data[field] ?? value;
-
-            updateCardField({
-                id: card._id,
-                listId: card.listId,
-                field,
-                value: resolvedValue,
-            });
-
-            queryClient.setQueryData(
-                cardKeys.detail(card._id),
-                (/** @type {Card | undefined} */ old) => {
-                    if (!old) return old;
-                    return { ...old, [field]: resolvedValue };
-                },
-            );
-
-            socket.emit(SOCKET_EVENTS.CARD_UPDATE, {
-                id: card._id,
-                listId: card.listId,
-                field,
-                value: resolvedValue,
-            });
-        },
-        onError: () => {
-            toast.error("Failed to update card");
-        },
-    });
 
     const fileUploadMutation = useMutation({
         mutationFn: async (/** @type {FormData} */ formData) => {
@@ -395,30 +351,7 @@ const CardModal = ({
                             />
                         </div>
 
-                        <Extra
-                            card={card}
-                            handleCardOwnerChange={(
-                                /** @type {string} */ name,
-                            ) =>
-                                cardMutation.mutate({
-                                    field: "owner",
-                                    value: name,
-                                })
-                            }
-                            handleCardPriorityLevelChange={(
-                                /** @type {string} */ value,
-                            ) =>
-                                cardMutation.mutate({
-                                    field: "priorityLevel",
-                                    value,
-                                })
-                            }
-                            handleCardDueDateChange={(
-                                /** @type {string} */ value,
-                            ) =>
-                                cardMutation.mutate({ field: "dueDate", value })
-                            }
-                        />
+                        <Extra />
 
                         <Comments card={card} />
                     </div>

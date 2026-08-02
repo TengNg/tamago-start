@@ -1,36 +1,21 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useContext } from "react";
 import useBoardState from "../../../hooks/useBoardState";
+import CardModalContext from "../../../context/CardModalContext";
 import dateFormatter from "../../../utils/dateFormatter";
 import PRIORITY_LEVELS from "../../../constants/priorityLevels";
 
-import { formatDateToYYYYMMDD } from "../../../utils/dateFormatter";
-
-import { dateToCompare } from "../../../utils/dateFormatter";
+import { isPastDue } from "../../../utils/dateFormatter";
 import Icon from "../../shared/Icon";
 import useToast from "../../../hooks/useToast";
 import Attachments from "../attachment/Attachments";
 import Uploader from "../attachment/Uploader";
 import ViewerDialog from "../attachment/ViewerDialog";
 import Modal from "../../ui/Modal";
+import DatePicker from "./DatePicker";
 
-/**
- * @typedef {Object} ExtraProps
- * @property {Card} card
- * @property {(arg: string) => void} handleCardOwnerChange
- * @property {(arg: string) => void} handleCardPriorityLevelChange
- * @property {(arg: string) => void} handleCardDueDateChange
- */
-
-/**
- * @param {ExtraProps} props
- */
-const Extra = ({
-    card,
-    handleCardOwnerChange,
-    handleCardPriorityLevelChange,
-    handleCardDueDateChange,
-}) => {
+const Extra = () => {
     const { boardState } = useBoardState();
+    const { card, cardMutation } = useContext(CardModalContext);
 
     const [viewedAttachment, setViewedAttachment] = useState(
         /** @type {Attachment | null} */ (null),
@@ -39,7 +24,9 @@ const Extra = ({
     const toast = useToast();
 
     const priorityLevel = card?.priorityLevel || "";
-    const dueDate = card?.dueDate ? formatDateToYYYYMMDD(card.dueDate) : "";
+
+    const isSavingDueDate =
+        cardMutation.isPending && cardMutation.variables?.field === "dueDate";
 
     const memberNames = useMemo(() => {
         return boardState.members.map((m) => m.username);
@@ -87,7 +74,10 @@ const Extra = ({
                 <select
                     value={priorityLevel}
                     onChange={(e) =>
-                        handleCardPriorityLevelChange(e.target.value)
+                        cardMutation.mutate({
+                            field: "priorityLevel",
+                            value: e.target.value,
+                        })
                     }
                     className="font-medium max-w-40 px-1 cursor-pointer appearance-none bg-transparent"
                     style={{
@@ -119,7 +109,12 @@ const Extra = ({
                 )}
                 <select
                     value={card.owner || ""}
-                    onChange={(e) => handleCardOwnerChange(e.target.value)}
+                    onChange={(e) =>
+                        cardMutation.mutate({
+                            field: "owner",
+                            value: e.target.value,
+                        })
+                    }
                     className="max-w-40 cursor-pointer appearance-none bg-transparent text-gray-800 font-medium"
                 >
                     <option value={""}>...</option>
@@ -133,16 +128,17 @@ const Extra = ({
                 </select>
             </div>
 
-            <div className={`${dateToCompare(dueDate) && "text-red-700"}`}>
-                <span>due: </span>
-                <input
-                    className="bg-transparent"
-                    type="date"
-                    id="due-date"
-                    value={dueDate}
-                    onChange={(e) => {
-                        handleCardDueDateChange(e.target.value);
-                    }}
+            <div
+                className={`flex flex-start items-center w-fit max-w-40 ${isPastDue(card?.dueDate) && "text-red-700"}`}
+            >
+                <span className="me-2">due:</span>
+                <DatePicker
+                    value={card?.dueDate}
+                    onChange={(value) =>
+                        cardMutation.mutate({ field: "dueDate", value })
+                    }
+                    isPastDue={isPastDue(card?.dueDate)}
+                    isLoading={isSavingDueDate}
                 />
             </div>
 

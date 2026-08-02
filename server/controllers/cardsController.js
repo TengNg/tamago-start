@@ -7,7 +7,6 @@ import CardComment from '../models/CardComment.js';
 
 import { checkBoardPermission } from '../services/boardPermissionService.js';
 import saveBoardActivity from '../services/saveBoardActivity.js';
-import dateFormatter from '../utils/dateFormatter.js';
 import { generateCardOrder } from '../services/cardService.js';
 
 /**
@@ -217,11 +216,12 @@ const updateCard = async (req, res) => {
         action: "edit"
     });
 
+    const prevValue = foundCard[field];
+
     if (foundCard[field] === value) {
         return res.status(200).json(foundCard);
     }
 
-    const prevValue = foundCard[field];
     foundCard[field] = value;
     foundCard.updatedAt = new Date();
     const newCard = await foundCard.save();
@@ -238,7 +238,7 @@ const updateCard = async (req, res) => {
     const description = field === "verified"
         ? null
         : field === "dueDate"
-            ? `${dateFormatter(prevValue) || "none"} →  ${dateFormatter(value) || "none"}`
+            ? `${prevValue || "none"} →  ${value || "none"}`
             : `"${prevValue}" →  "${value}"`;
 
     await saveBoardActivity({

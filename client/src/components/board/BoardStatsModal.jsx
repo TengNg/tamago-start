@@ -25,8 +25,7 @@ const BoardStatsModal = ({ boardId, open, setOpen }) => {
         enabled: open && !!boardId,
     });
 
-    const { board, members, priorityLevelStats, listCount, staleCardCount } =
-        statsQuery.data ?? {};
+    const { board, members, priorityLevelStats } = statsQuery.data ?? {};
 
     const stats = priorityLevelStats
         ? [...priorityLevelStats].sort((a, b) => {
@@ -96,7 +95,9 @@ const BoardStatsModal = ({ boardId, open, setOpen }) => {
                 <div className="w-full flex flex-col gap-2 text-gray-700 text-[0.65rem] sm:text-[0.75rem] border border-dashed border-gray-700 p-4">
                     <p>
                         list count:{" "}
-                        <span className="font-medium">{listCount}</span>
+                        <span className="font-medium">
+                            {board?.stats?.listCount}
+                        </span>
                     </p>
 
                     <p>
@@ -181,19 +182,6 @@ const BoardStatsModal = ({ boardId, open, setOpen }) => {
                             );
                         })}
                     </div>
-                </div>
-
-                <div
-                    className="w-full gap-2 text-gray-700 text-[0.65rem] sm:text-[0.75rem] border border-dashed border-gray-700 py-2 px-4 cursor-pointer"
-                    onClick={() => {
-                        navigate({
-                            pathname: `/b/${board?._id}`,
-                            search: "?stale=true",
-                        });
-                    }}
-                >
-                    stale cards:{" "}
-                    <span className="font-medium">{staleCardCount || "0"}</span>
                 </div>
             </div>
         </Modal>
