@@ -38,8 +38,7 @@ export const CardModalContextProvider = ({ children }) => {
             },
         ) =>
             cardApi.updateCard(/** @type {string} */ (card?._id), field, value),
-        onSuccess: (
-            data,
+        onMutate: (
             /** @type {{ field: CardUpdateField, value: any }} */ {
                 field,
                 value,
@@ -49,17 +48,47 @@ export const CardModalContextProvider = ({ children }) => {
                 return;
             }
 
-            const resolvedValue = data[field] ?? value;
+            queryClient.setQueryData(
+                cardKeys.detail(card._id),
+                (/** @type {Card | undefined} */ old) => {
+                    if (!old) return old;
+                    return { ...old, [field]: value };
+                },
+            );
 
             updateCardField({
                 id: card._id,
                 listId: card.listId,
                 field,
+                value,
+            });
+
+            return { previousCard: card };
+        },
+        onSuccess: (
+            data,
+            /** @type {{ field: CardUpdateField, value: any }} */ {
+                field,
+                value,
+            },
+            /** @type {{ previousCard: Card } | undefined} */ context,
+        ) => {
+            const target = context?.previousCard ?? card;
+            if (!target) {
+                return;
+            }
+
+            const resolvedValue = data[field] ?? value;
+
+            updateCardField({
+                id: target._id,
+                listId: target.listId,
+                field,
                 value: resolvedValue,
             });
 
             queryClient.setQueryData(
-                cardKeys.detail(card._id),
+                cardKeys.detail(target._id),
                 (/** @type {Card | undefined} */ old) => {
                     if (!old) return old;
                     return { ...old, [field]: resolvedValue };
@@ -67,13 +96,36 @@ export const CardModalContextProvider = ({ children }) => {
             );
 
             socket.emit(SOCKET_EVENTS.CARD_UPDATE, {
-                id: card._id,
-                listId: card.listId,
+                id: target._id,
+                listId: target.listId,
                 field,
                 value: resolvedValue,
             });
         },
-        onError: () => {
+        onError: (
+            _error,
+            /** @type {{ field: CardUpdateField, value: any }} */ { field },
+            /** @type {{ previousCard: Card } | undefined} */ context,
+        ) => {
+            if (context) {
+                const previous = context.previousCard;
+
+                updateCardField({
+                    id: previous._id,
+                    listId: previous.listId,
+                    field,
+                    value: previous[field],
+                });
+
+                queryClient.setQueryData(
+                    cardKeys.detail(previous._id),
+                    (/** @type {Card | undefined} */ old) => {
+                        if (!old) return old;
+                        return { ...old, [field]: previous[field] };
+                    },
+                );
+            }
+
             toast.error("Failed to update card");
         },
     });

@@ -9,7 +9,6 @@ import PRIORITY_LEVELS from "../../constants/priorityLevels";
 import { useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import Icon from "../shared/Icon";
-import Loading from "../ui/Loading";
 import { getUsernameByUserId } from "../../utils/boardMembers";
 
 /**
@@ -17,6 +16,7 @@ import { getUsernameByUserId } from "../../utils/boardMembers";
  */
 export default function Card({ card }) {
     const [searchParams, setSearchParams] = useSearchParams();
+
     const {
         setOpenedCardQuickEditor,
         focusedCard,
@@ -25,18 +25,21 @@ export default function Card({ card }) {
         debugModeEnabled,
         isLargeScreen,
         boardState,
+        pendingReorder,
     } = useBoardState();
 
     const ownerName = getUsernameByUserId(boardState.members, card.owner);
 
     const { attributes, listeners, isDragging, setNodeRef } = useSortable({
         id: card._id,
+        disabled: pendingReorder.has(card._id),
         data: {
             type: "card",
             card,
         },
     });
 
+    /** @type {React.CSSProperties} */
     const style = {
         borderColor: `${card.highlight == null ? "#4b5563" : `${card.highlight}`}`,
         boxShadow: `0 2px 0 ${card.highlight ?? "#4b5563"}`,
@@ -81,19 +84,12 @@ export default function Card({ card }) {
     if (card._id.includes("temp-")) {
         return (
             <div
-                className={`card__item relative d-flex justify-center items-center text-[0.75rem] text-gray-500 w-full h-27.5 border-2 border-b-4 border-gray-600 px-2 py-4 flex flex-col shadow-gray-600 cursor-not-allowed`}
+                className={`card__item relative select-none w-full border-2 border-b-5 border-gray-600 p-4 flex flex-col gap-2 shadow-gray-600 cursor-not-allowed`}
             >
-                <p className="w-full h-full bg-inherit font-medium text-gray-600 py-1 px-2 focus:outline-hidden text-sm wrap-break-word whitespace-pre-line">
+                <p className="w-full bg-transparent font-medium text-gray-700 focus:outline-hidden text-sm wrap-break-word whitespace-pre-line">
                     {card.title}
                 </p>
-
-                <Loading
-                    loading={true}
-                    position={"absolute"}
-                    displayText={"creating new card..."}
-                    fontSize={"0.75rem"}
-                    zIndex={"10"}
-                />
+                <div className="loader-circle mx-auto w-5! h-5!"></div>
             </div>
         );
     }
@@ -130,7 +126,7 @@ export default function Card({ card }) {
             }}
             onClick={handleOpenCardDetail}
         >
-            <p className="w-full h-full bg-transparent font-medium text-gray-700 focus:outline-hidden text-sm wrap-break-word whitespace-pre-line">
+            <p className="w-full bg-transparent font-medium text-gray-700 focus:outline-hidden text-sm wrap-break-word whitespace-pre-line">
                 {card.title}
             </p>
 
@@ -255,6 +251,10 @@ export default function Card({ card }) {
                 >
                     <Icon name="grip-lines" className="w-5 h-5" />
                 </button>
+            )}
+
+            {pendingReorder.has(card._id) && (
+                <div className="absolute right-1.25 bottom-1.25 loader-circle w-4! h-4!"></div>
             )}
         </div>
     );

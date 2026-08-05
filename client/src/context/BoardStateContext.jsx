@@ -30,6 +30,8 @@ export const BoardStateContextProvider = ({ children }) => {
     const [hasFilter, setHasFilter] = useState(false);
     const [isAtBottomOfChatBox, setIsAtBottomOfChatBox] = useState(true);
 
+    const [pendingReorder, setPendingReorder] = useState(() => new Set());
+
     const [openedCardQuickEditor, setOpenedCardQuickEditor] = useState(
         /** @type {CardQuickEditorData | undefined} */ (undefined),
     );
@@ -190,6 +192,9 @@ export const BoardStateContextProvider = ({ children }) => {
             value={{
                 boardState,
                 dispatch,
+
+                pendingReorder,
+                setPendingReorder,
 
                 socket,
                 isConnected,

@@ -261,7 +261,8 @@ dialog button:focus {
 /* Loader ==================================================================================================== */
 
 .loader {
-    width: 1.5rem;
+    width: 2rem;
+    height: 2rem;
     aspect-ratio: 1;
     --c:no-repeat linear-gradient(#4b5563 0 0);
     background: var(--c), var(--c), var(--c);
@@ -278,7 +279,6 @@ dialog button:focus {
 }
 
 .loader-circle {
-    width: 1.5rem;
     aspect-ratio: 1;
     border: 2px solid rgb(75 85 99 / 0.25);
     border-top-color: #4b5563;

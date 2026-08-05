@@ -16,6 +16,9 @@ declare type BoardContextValue = {
     boardState: BoardState;
     dispatch: React.Dispatch<BoardAction>;
 
+    pendingReorder: Set<string>;
+    setPendingReorder: React.Dispatch<React.SetStateAction<Set<string>>>;
+
     socket: any;
     isConnected: boolean;
 

@@ -24,15 +24,6 @@ import { getErrorMessage } from "../../utils/getErrorMessage";
  * @param {ListProps} props
  */
 const List = ({ index, list, cards }) => {
-    const { attributes, listeners, setNodeRef, transform, isDragging } =
-        useSortable({
-            id: list._id,
-            data: {
-                type: "list",
-                list,
-            },
-        });
-
     const {
         boardState,
         dispatch,
@@ -42,7 +33,19 @@ const List = ({ index, list, cards }) => {
         debugModeEnabled,
         hasFilter,
         socket,
+        pendingReorder,
     } = useBoardState();
+
+    const { attributes, listeners, setNodeRef, transform, isDragging } =
+        useSortable({
+            id: list._id,
+            disabled:
+                pendingReorder.has(list._id) || list._id.includes("temp-"),
+            data: {
+                type: "list",
+                list,
+            },
+        });
 
     const [initialListTitle, setInitialListTitle] = useState(list.title);
     const [openCardComposer, setOpenCardComposer] = useState(false);
@@ -263,6 +266,26 @@ const List = ({ index, list, cards }) => {
         opacity: isDragging ? 0.25 : 1,
     };
 
+    if (list._id.includes("temp-")) {
+        return (
+            <div className="list__item__wrapper relative select-none w-75 min-w-75 cursor-not-allowed">
+                <div
+                    className={`${theme.itemTheme == "rounded-sm" ? "rounded-md shadow-[0_4px_0_0]" : "box--style"} list__item relative flex flex-col justify-start w-75 h-25.5 overflow-hidden border-2 select-none border-gray-700 shadow-gray-700`}
+                >
+                    <div className="w-full flex justify-between items-center px-3 pb-1 pt-2">
+                        <p className="w-60 font-medium sm:font-semibold text-gray-700 wrap-break-word whitespace-pre-line">
+                            {list.title}
+                        </p>
+                    </div>
+
+                    <div className="w-full h-full grid place-items-center">
+                        <div className="loader-circle mx-auto w-5! h-5!"></div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     if (list.collapsed) {
         return (
             <div
@@ -359,6 +382,12 @@ const List = ({ index, list, cards }) => {
                     </button>
                 </div>
 
+                {pendingReorder.has(list._id) && (
+                    <div className="absolute top-2 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+                        <div className="loader-circle w-5! h-5!"></div>
+                    </div>
+                )}
+
                 <div
                     ref={scrollRef}
                     className="overflow-y-auto min-h-0 flex-1 flex flex-col"
@@ -393,7 +422,7 @@ const List = ({ index, list, cards }) => {
                 {!openCardComposer && (
                     <div className="mx-3 mt-2 mb-3 group">
                         <button
-                            className="w-full py-2 px-4 flex text-gray-400 text-sm group-hover:bg-gray-600/10 font-medium text-start"
+                            className="w-full p-2 flex text-gray-400 text-sm group-hover:bg-gray-600/10 font-medium text-start"
                             onClick={() => setOpenCardComposer(true)}
                         >
                             <span>+ new card</span>

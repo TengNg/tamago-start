@@ -21,6 +21,7 @@ const AddList = () => {
         theme,
         boardState,
         addListToBoard,
+        deleteList,
         socket,
     } = useBoardState();
 
@@ -44,9 +45,12 @@ const AddList = () => {
                 return;
             }
 
+            const realLists = boardState.lists.filter(
+                (list) => !list._id.includes("temp-"),
+            );
             const prevListId =
-                boardState.lists.length > 0
-                    ? boardState.lists[boardState.lists.length - 1]._id
+                realLists.length > 0
+                    ? realLists[realLists.length - 1]._id
                     : undefined;
 
             const newList = {
@@ -58,14 +62,49 @@ const AddList = () => {
             const data = await listApi.createList(newList);
             return data;
         },
-        onSuccess: (data) => {
-            if (data) {
-                socket.emit(SOCKET_EVENTS.LIST_CREATE, data);
-                addListToBoard(data);
-                setTitle("");
-            }
+        onMutate: () => {
+            /** @type {List} */
+            const tempList = {
+                _id: "temp-" + Date.now(),
+                boardId: boardState.board._id,
+                title: title,
+                order: "",
+                collapsed: false,
+                createdAt: Date.now().toString(),
+            };
+
+            addListToBoard(tempList);
+            return { tempId: tempList._id };
         },
-        onError: (err) => {
+        onSuccess: (
+            data,
+            _,
+            /** @type {{ tempId: string } | undefined} */ context,
+        ) => {
+            if (!data) {
+                if (context?.tempId) {
+                    deleteList(context.tempId);
+                }
+                return;
+            }
+
+            if (context?.tempId) {
+                deleteList(context.tempId);
+            }
+
+            socket.emit(SOCKET_EVENTS.LIST_CREATE, data);
+            addListToBoard(data);
+            setTitle("");
+        },
+        onError: (
+            err,
+            _,
+            /** @type {{ tempId: string } | undefined} */ context,
+        ) => {
+            if (context?.tempId) {
+                deleteList(context.tempId);
+            }
+
             const errMsg = getErrorMessage(err, "Failed to add new list");
             toast.error(errMsg);
         },
@@ -78,6 +117,11 @@ const AddList = () => {
     };
 
     const handleAddList = async () => {
+        if (title.trim() === "") {
+            setOpen(false);
+            return;
+        }
+
         await addListMutation.mutateAsync();
     };
 
@@ -97,6 +141,10 @@ const AddList = () => {
         setTitle(e.target.value);
     };
 
+    if (addListMutation.isPending) {
+        return null;
+    }
+
     return (
         <div
             ref={containerRef}
@@ -112,11 +160,9 @@ const AddList = () => {
                 </button>
             )}
 
-            <div
-                className={`flex-col flex h-27.75 py-2 px-2 gap-3 -mt-[100%] ${open && "mt-0"}`}
-            >
+            <div className={`flex-col flex gap-3 -mt-[100%] ${open && "mt-0"}`}>
                 <input
-                    className="border text-sm border-gray-500 text-gray-700 font-medium p-2 focus:outline-hidden"
+                    className="border-gray-500 text-gray-700 font-medium pt-2 px-3 focus:outline-hidden"
                     type="text"
                     autoComplete="off"
                     placeholder="list title goes here..."
@@ -126,12 +172,12 @@ const AddList = () => {
                     onKeyDown={handleKeyDown}
                 />
 
-                <div className="flex gap-1 w-full">
+                <div className="flex gap-1 w-full pt-1 pb-2 px-3">
                     <button
                         onClick={handleAddList}
                         className="button--style--dark grid place-items-center w-1/2 font-medium text-sm"
                     >
-                        {!addListMutation.isPending ? "+ add" : "adding..."}
+                        + add
                     </button>
                     <button
                         onClick={() => setOpen(false)}

@@ -26,7 +26,8 @@ import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { getErrorMessage } from "../../utils/getErrorMessage";
 
 const ListContainer = () => {
-    const { boardState, dispatch, setOpenAddList, socket } = useBoardState();
+    const { boardState, dispatch, setOpenAddList, socket, setPendingReorder } =
+        useBoardState();
 
     const [clonedBoardState, setClonedBoardState] = useState(
         /** @type {BoardState | null} */ (null),
@@ -78,6 +79,21 @@ const ListContainer = () => {
         setOpenAddList((prev) => !prev);
     });
 
+    /** @param {string} id */
+    const addPendingReorder = (id) => {
+        setPendingReorder((prev) => new Set(prev).add(id));
+    };
+
+    /** @param {string} id */
+    const removePendingReorder = (id) => {
+        setPendingReorder((prev) => {
+            if (!prev.has(id)) return prev;
+            const next = new Set(prev);
+            next.delete(id);
+            return next;
+        });
+    };
+
     /** @param {import("@dnd-kit/core").DragEndEvent} e */
     async function handleOnDragEnd(e) {
         setActiveCard(null);
@@ -126,6 +142,8 @@ const ListContainer = () => {
                     payload: { lists: newLists },
                 });
 
+                addPendingReorder(removed._id);
+
                 await listApi.reorderList(removed._id, {
                     boardId: boardState.board._id,
                     prevListId,
@@ -133,6 +151,8 @@ const ListContainer = () => {
                     oldPos: srcIndex,
                     newPos: destIndex,
                 });
+
+                setClonedBoardState(null);
 
                 socket.emit(SOCKET_EVENTS.LIST_MOVE, {
                     id: removed._id,
@@ -142,25 +162,21 @@ const ListContainer = () => {
             } catch (err) {
                 const errMsg = getErrorMessage(err, "Failed to reorder list");
                 toast.error(errMsg);
-                dispatch({
-                    type: BOARD_ACTIONS.SET_STATE,
-                    payload: { data: clonedBoardState },
-                });
+                if (clonedBoardState) {
+                    dispatch({
+                        type: BOARD_ACTIONS.SET_STATE,
+                        payload: { data: clonedBoardState },
+                    });
+                    setClonedBoardState(null);
+                }
+            } finally {
+                removePendingReorder(removed._id);
             }
 
             return;
         }
 
         // type card
-
-        // Note: for when user keep moving the card around containers fast
-        if (Object.keys(active).length === 0) {
-            dispatch({
-                type: BOARD_ACTIONS.SET_STATE,
-                payload: { data: clonedBoardState },
-            });
-            return;
-        }
 
         const activeId = /** @type {string} */ (active.id);
         const activeListId = activeData.card.listId;
@@ -182,6 +198,8 @@ const ListContainer = () => {
         }
 
         try {
+            addPendingReorder(activeId);
+
             const newCard = await cardApi.reorderCard(activeId, {
                 listId: activeListId,
                 prevCardId: prevId,
@@ -189,6 +207,8 @@ const ListContainer = () => {
                 oldPos: activeCard.srcIndex,
                 newPos: activeIndex + 1,
             });
+
+            setClonedBoardState(null);
 
             dispatch({
                 type: BOARD_ACTIONS.SET_CARD,
@@ -211,10 +231,15 @@ const ListContainer = () => {
         } catch (err) {
             const errMsg = getErrorMessage(err, "Failed to reorder card");
             toast.error(errMsg);
-            dispatch({
-                type: BOARD_ACTIONS.SET_STATE,
-                payload: { data: clonedBoardState },
-            });
+            if (clonedBoardState) {
+                dispatch({
+                    type: BOARD_ACTIONS.SET_STATE,
+                    payload: { data: clonedBoardState },
+                });
+                setClonedBoardState(null);
+            }
+        } finally {
+            removePendingReorder(activeId);
         }
     }
 
