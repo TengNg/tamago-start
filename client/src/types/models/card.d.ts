@@ -17,7 +17,7 @@ declare type Card = {
     highlight: string;
     priorityLevel: 'none' | 'low' | 'medium' | 'high' | 'critical';
     verified: boolean;
-    owner: string;
+    owner: string | null;
     dueDate: string;
     updatedAt: string;
     createdAt: string;

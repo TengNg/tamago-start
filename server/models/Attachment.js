@@ -22,11 +22,7 @@ const AttachmentSchema = new Schema({
     originalname: {
         type: String,
         default: ''
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
     }
-});
+}, { timestamps: true });
 
 export default model('Attachment', AttachmentSchema);

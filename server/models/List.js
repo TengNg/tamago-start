@@ -16,13 +16,7 @@ const listSchema = new Schema({
         ref: 'Board',
         required: true,
     },
-
-    createdAt: {
-        type: Date,
-        required: true,
-        default: Date.now,
-    },
-});
+}, { timestamps: true });
 
 listSchema.index({ boardId: 1, order: 1 });
 

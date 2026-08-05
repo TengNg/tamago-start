@@ -12,6 +12,7 @@ import Uploader from "../attachment/Uploader";
 import ViewerDialog from "../attachment/ViewerDialog";
 import Modal from "../../ui/Modal";
 import DatePicker from "./DatePicker";
+import { getUsernameByUserId } from "../../../utils/boardMembers";
 
 const Extra = () => {
     const { boardState } = useBoardState();
@@ -31,6 +32,8 @@ const Extra = () => {
     const memberNames = useMemo(() => {
         return boardState.members.map((m) => m.username);
     }, [boardState.members]);
+
+    const ownerName = getUsernameByUserId(boardState.members, card?.owner);
 
     /**
      * @param {React.MouseEvent<HTMLButtonElement>} e
@@ -99,7 +102,7 @@ const Extra = () => {
 
             <div className="flex flex-start items-center w-fit max-w-120">
                 <span className="me-2">owner:</span>
-                {card.owner && (
+                {ownerName && (
                     <Icon
                         name="profile2"
                         className="text-gray-700 me-0.5"
@@ -108,7 +111,7 @@ const Extra = () => {
                     />
                 )}
                 <select
-                    value={card.owner || ""}
+                    value={ownerName || ""}
                     onChange={(e) =>
                         cardMutation.mutate({
                             field: "owner",

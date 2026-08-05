@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import Card from '../models/Card.js';
 import List from '../models/List.js';
 import Board from '../models/Board.js';
+import User from '../models/User.js';
+import BoardMembership from '../models/BoardMembership.js';
 import Attachment from '../models/Attachment.js';
 import CardComment from '../models/CardComment.js';
 
@@ -155,7 +157,6 @@ const reorder = async (req, res) => {
 
         foundCard.order = newOrder;
         foundCard.listId = listId;
-        foundCard.updatedAt = new Date();
         await foundCard.save({ session });
 
         if (
@@ -218,12 +219,33 @@ const updateCard = async (req, res) => {
 
     const prevValue = foundCard[field];
 
-    if (foundCard[field] === value) {
-        return res.status(200).json(foundCard);
+    if (field === "owner") {
+        if (!value) {
+            foundCard.owner = null;
+        } else {
+            const ownerUser = await User.findOne({ username: value }).lean();
+            if (!ownerUser) {
+                return res.status(400).json({ message: "user not found" });
+            }
+
+            const isMember = await BoardMembership.exists({
+                boardId: foundCard.boardId,
+                userId: ownerUser._id,
+            });
+            if (!isMember) {
+                return res.status(400).json({ message: "user is not a member of this board" });
+            }
+
+            foundCard.owner = ownerUser._id;
+        }
+    } else {
+        if (foundCard[field] === value) {
+            return res.status(200).json(foundCard);
+        }
+
+        foundCard[field] = value;
     }
 
-    foundCard[field] = value;
-    foundCard.updatedAt = new Date();
     const newCard = await foundCard.save();
 
     const actionMap = {
@@ -235,11 +257,23 @@ const updateCard = async (req, res) => {
         dueDate: "card.due_date_updated",
         verified: foundCard.verified ? "card.verified" : "card.unverified",
     };
-    const description = field === "verified"
-        ? null
-        : field === "dueDate"
-            ? `${prevValue || "none"} →  ${value || "none"}`
-            : `"${prevValue}" →  "${value}"`;
+
+    let description;
+    if (field === "owner") {
+        const prevOwnerName = prevValue
+            ? (await User.findById(prevValue).select("username").lean())?.username || "unknown"
+            : "none";
+        const newOwnerName = newCard.owner
+            ? (await User.findById(newCard.owner).select("username").lean())?.username || "unknown"
+            : "none";
+        description = `${prevOwnerName} → ${newOwnerName}`;
+    } else if (field === "verified") {
+        description = null;
+    } else if (field === "dueDate") {
+        description = `${prevValue || "none"} → ${value || "none"}`;
+    } else {
+        description = `"${prevValue}" → "${value}"`;
+    }
 
     await saveBoardActivity({
         userId,
@@ -355,8 +389,6 @@ const copyCard = async (req, res) => {
             [{
                 ...foundCard,
                 _id: new mongoose.Types.ObjectId(),
-                createdAt: new Date(),
-                updatedAt: new Date(),
                 order,
             }],
             { session }

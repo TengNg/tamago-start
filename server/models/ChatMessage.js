@@ -24,13 +24,7 @@ const chatSchema = new Schema({
         ref: 'User',
         required: true,
     },
-
-    createdAt: {
-        type: Date,
-        required: true,
-        default: Date.now,
-    },
-}, { collection: 'chat_messages' });
+}, { collection: 'chat_messages', timestamps: true });
 
 chatSchema.index({ boardId: 1, createdAt: -1 });
 

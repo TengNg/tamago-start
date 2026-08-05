@@ -91,7 +91,13 @@ const FilterModal = () => {
                     );
                     const isFilteredByStale = isPastDue(c.dueDate);
 
-                    const lowerOwner = c.owner ? c.owner.toLowerCase() : null;
+                    const lowerOwner = c.owner
+                        ? (
+                              boardState.members.find(
+                                  (m) => m.userId === c.owner,
+                              )?.username || ""
+                          ).toLowerCase()
+                        : null;
                     const isFilteredByOwner =
                         (owners.includes("unassigned") && !lowerOwner) ||
                         (lowerOwner && owners.includes(lowerOwner));

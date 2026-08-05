@@ -10,6 +10,7 @@ import { useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import Icon from "../shared/Icon";
 import Loading from "../ui/Loading";
+import { getUsernameByUserId } from "../../utils/boardMembers";
 
 /**
  * @param {{ card: Card }} props
@@ -23,7 +24,10 @@ export default function Card({ card }) {
         theme,
         debugModeEnabled,
         isLargeScreen,
+        boardState,
     } = useBoardState();
+
+    const ownerName = getUsernameByUserId(boardState.members, card.owner);
 
     const { attributes, listeners, isDragging, setNodeRef } = useSortable({
         id: card._id,
@@ -179,13 +183,13 @@ export default function Card({ card }) {
                 </div>
             )}
 
-            {card.owner && (
+            {ownerName && (
                 <div className="flex items-center gap-1 text-[12px] w-fit max-w-full font-medium text-gray-700 overflow-hidden whitespace-nowrap text-ellipsis">
                     <Icon
                         name="profile"
                         className="text-gray-600 w-3.5 h-3.5"
                     />
-                    {card.owner}
+                    {ownerName}
                 </div>
             )}
 

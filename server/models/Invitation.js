@@ -24,13 +24,7 @@ const invitationSchema = new Schema({
         enum: ['pending', 'accepted', 'rejected'],
         default: 'pending',
     },
-
-    createdAt: {
-        type: Date,
-        required: true,
-        default: Date.now,
-    },
-});
+}, { timestamps: true });
 
 invitationSchema.index({ invitedUserId: 1, createdAt: -1 });
 

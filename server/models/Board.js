@@ -24,12 +24,6 @@ const boardSchema = new Schema({
         required: true,
     },
 
-    createdAt: {
-        type: Date,
-        required: true,
-        default: Date.now,
-    },
-
     stats: {
         listCount: {
             type: Number,
@@ -63,6 +57,6 @@ const boardSchema = new Schema({
             min: 1,
         },
     },
-});
+}, { timestamps: true });
 
 export default model('Board', boardSchema);

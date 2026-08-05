@@ -20,13 +20,7 @@ const cardCommentSchema = new Schema({
         minLength: 1,
         maxLength: 1000,
     },
-
-    createdAt: {
-        type: Date,
-        required: true,
-        default: Date.now,
-    },
-}, { collection: 'card_comments' });
+}, { collection: 'card_comments', timestamps: true });
 
 cardCommentSchema.index({ cardId: 1 });
 

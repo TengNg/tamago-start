@@ -31,28 +31,9 @@ const writedownSchema = new Schema({
         type: String,
         default: ""
     },
-
-    createdAt: {
-        type: Date,
-        required: true,
-        default: Date.now,
-    },
-
-    updatedAt: {
-        type: Date,
-        default: Date.now,
-    },
-});
+}, { timestamps: true });
 
 writedownSchema.index({ owner: 1, order: 1 });
-
-writedownSchema.pre('save', function(next) {
-    if (!this.isNew) {
-        this.updatedAt = new Date();
-    }
-
-    next();
-});
 
 writedownSchema.post('findOneAndDelete', async function(doc) {
     const Attachment = model('Attachment');

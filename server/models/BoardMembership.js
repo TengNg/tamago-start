@@ -19,12 +19,6 @@ const boardMembershipSchema = new Schema({
         required: true,
     },
 
-    createdAt: {
-        type: Date,
-        required: true,
-        default: Date.now,
-    },
-
     permissions: {
         type: {
             lists: {
@@ -55,7 +49,7 @@ const boardMembershipSchema = new Schema({
             return DEFAULT_BOARD_PERMISSIONS;
         }
     },
-}, { collection: 'board_memberships' });
+}, { collection: 'board_memberships', timestamps: true });
 
 boardMembershipSchema.index({ boardId: 1, userId: 1 }, { unique: true });
 

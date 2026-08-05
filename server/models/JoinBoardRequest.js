@@ -18,30 +18,9 @@ const joinBoardRequestSchema = new Schema({
         enum: ['pending', 'accepted', 'rejected'],
         default: 'pending',
     },
-
-    createdAt: {
-        type: Date,
-        required: true,
-        default: Date.now,
-    },
-
-    updatedAt: {
-        type: Date,
-        required: true,
-        default: Date.now,
-    },
-});
+}, { timestamps: true });
 
 joinBoardRequestSchema.index({ boardId: 1, createdAt: -1 });
-
-// update 'updatedAt' field when 'status' is modified
-joinBoardRequestSchema.pre('save', function(next) {
-    if (!this.isNew) {
-        this.updatedAt = new Date();
-    }
-
-    next();
-});
 
 joinBoardRequestSchema.post('save', async function(doc) {
     if (doc.status === 'accepted') {

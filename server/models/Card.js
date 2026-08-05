@@ -58,7 +58,8 @@ const cardSchema = new Schema({
     },
 
     owner: {
-        type: String,
+        type: Schema.Types.ObjectId,
+        ref: 'User',
         default: null,
     },
 
@@ -91,18 +92,7 @@ const cardSchema = new Schema({
             }
         ],
     },
-
-    updatedAt: {
-        type: Date,
-        default: Date.now,
-    },
-
-    createdAt: {
-        type: Date,
-        required: true,
-        default: Date.now,
-    },
-});
+}, { timestamps: true });
 
 cardSchema.index({ boardId: 1, order: 1 });
 cardSchema.index({ listId: 1, order: 1 });

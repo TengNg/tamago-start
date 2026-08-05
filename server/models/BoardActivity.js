@@ -71,13 +71,7 @@ const boardActivitySchema = new Schema({
         type: String,
         default: ""
     },
-
-    createdAt: {
-        type: Date,
-        default: Date.now,
-        required: true,
-    },
-}, { collection: 'board_activities' });
+}, { collection: 'board_activities', timestamps: true });
 
 boardActivitySchema.index({ board: 1, createdAt: -1 });
 boardActivitySchema.index({ createdAt: 1 }, { expireAfterSeconds: 90 * 86400 });

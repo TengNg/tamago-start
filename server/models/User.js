@@ -75,12 +75,6 @@ const UserSchema = new Schema({
         default: null
     },
 
-    createdAt: {
-        type: Date,
-        required: true,
-        default: Date.now,
-    },
-
     recentlyViewedBoardId: {
         type: Schema.Types.ObjectId,
         ref: 'Board',
@@ -105,7 +99,7 @@ const UserSchema = new Schema({
         default: 0,
         required: true,
     }
-});
+}, { timestamps: true });
 
 export default model('User', UserSchema);
 
