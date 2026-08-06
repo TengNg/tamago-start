@@ -556,12 +556,12 @@ export function useBoardSocket({
 
         socket.on(
             SOCKET_EVENTS.ATTACHMENT_CREATED,
-            /** @param {{ attachment: Attachment & { refId: string } }} data */ (
+            /** @param {{ attachment: Attachment & { doc: string } }} data */ (
                 data,
             ) => {
                 const { attachment } = data;
                 queryClient.setQueryData(
-                    cardKeys.attachments(attachment.refId),
+                    cardKeys.attachments(attachment.doc),
                     /** @param {Attachment[] | undefined} old */
                     (old) => {
                         if (!old) {

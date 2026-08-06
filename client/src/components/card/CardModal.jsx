@@ -21,6 +21,7 @@ import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { getErrorMessage } from "../../utils/getErrorMessage";
 import CardModalContext from "../../context/CardModalContext";
 import ModalStackContext from "../../context/ModalStackContext";
+import { cardKeys } from "../../queries/cardKeys";
 
 /**
  * @typedef {Object} CardModalProps
@@ -150,8 +151,8 @@ const CardModal = ({
         },
         onSuccess: (data) => {
             queryClient.setQueryData(
-                ["card-attachments", card._id],
-                (/** @type {any[] | undefined} */ old) => {
+                cardKeys.attachments(card._id),
+                (/** @type {Attachment[] | undefined} */ old) => {
                     if (!old) return old;
                     return [...old, data];
                 },

@@ -162,9 +162,9 @@ const useBoardMutations = () => {
             addCardToList(newListId, newCard);
             queryClient.setQueryData(
                 cardKeys.detail(newCard._id),
-                (/** @type {{ card: Card } | undefined} */ old) => {
+                (/** @type {Card | undefined} */ old) => {
                     if (!old) return old;
-                    return { ...old, card: { ...old.card, listId: newListId } };
+                    return { ...old, listId: newListId };
                 },
             );
 

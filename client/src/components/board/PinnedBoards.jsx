@@ -58,11 +58,15 @@ const Pinned = ({ boardId, title }) => {
         onSuccess: (data) => {
             queryClient.setQueryData(
                 ["me"],
-                /** @param {CurrentUser} old */
+                /** @param {{ user: CurrentUser } | undefined} old */
                 (old) => {
+                    if (!old?.user) return old;
                     return {
                         ...old,
-                        pinnedBoardIdCollection: data.pinnedBoards,
+                        user: {
+                            ...old.user,
+                            pinnedBoardIdCollection: data.pinnedBoards,
+                        },
                     };
                 },
             );
@@ -153,11 +157,15 @@ const PinnedBoards = () => {
         onSuccess: () => {
             queryClient.setQueryData(
                 ["me"],
-                /** @param {CurrentUser} old */
+                /** @param {{ user: CurrentUser } | undefined} old */
                 (old) => {
+                    if (!old?.user) return old;
                     return {
                         ...old,
-                        pinnedBoardIdCollection: {},
+                        user: {
+                            ...old.user,
+                            pinnedBoardIdCollection: {},
+                        },
                     };
                 },
             );
@@ -218,11 +226,15 @@ const PinnedBoards = () => {
             const data = await meApi.updatePinnedBoards(mappedPinnedBoards);
             queryClient.setQueryData(
                 ["me"],
-                /** @param {CurrentUser} old */
+                /** @param {{ user: CurrentUser } | undefined} old */
                 (old) => {
+                    if (!old?.user) return old;
                     return {
                         ...old,
-                        pinnedBoardIdCollection: data.pinnedBoards,
+                        user: {
+                            ...old.user,
+                            pinnedBoardIdCollection: data.pinnedBoards,
+                        },
                     };
                 },
             );
