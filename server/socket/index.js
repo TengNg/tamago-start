@@ -1,6 +1,6 @@
-import jwt from 'jsonwebtoken';
 import { Server } from "socket.io";
 import { SOCKET_EVENTS } from '../../shared/socket-events.js';
+import { checkTokens } from '../middlewares/authenticateToken.js';
 
 // handlers
 import registerBoardHandlers from './handlers/board.js';
@@ -40,7 +40,6 @@ const initSocket = (server) => {
 
         const aTokenName = process.env.ACCESS_TOKEN_COOKIE_NAME;
         const rTokenName = process.env.REFRESH_TOKEN_COOKIE_NAME;
-        const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET;
 
         const accessToken = cookiePairs[aTokenName];
         const refreshToken = cookiePairs[rTokenName];
@@ -51,26 +50,16 @@ const initSocket = (server) => {
             console.log("socket-middleware#refreshToken: ", refreshToken);
         }
 
-        if (!accessToken) {
-            return next(new Error('Authentication error: No access token provided'));
+        if (!accessToken && !refreshToken) {
+            return next(new Error('Authentication error: No tokens provided'));
         }
 
         try {
-            const decoded = /** @type AuthJwtPayload */ (
-                jwt.verify(accessToken, accessTokenSecret)
-            );
-
-            if (process.env.NODE_ENV === "development") {
-                console.log("Token decoded data: ", decoded);
-            }
-
-            if (!decoded) {
-                return next(new Error('Authentication error: Invalid token'));
-            }
+            const { user } = await checkTokens(accessToken, refreshToken);
 
             socket.user = {
-                id: decoded.userId,
-                username: decoded.username,
+                id: user.userId,
+                username: user.username,
             };
 
             if (process.env.NODE_ENV === "development") {
@@ -79,8 +68,11 @@ const initSocket = (server) => {
 
             return next();
         } catch (err) {
-            console.log('Access token verification failed:', err.message);
-            return next(new Error('Authentication error: Invalid access token'));
+            if (process.env.NODE_ENV == "development") {
+                console.log('Socket authentication failed:', err.message);
+            }
+
+            return next(new Error('unauthorized'));
         }
     });
 

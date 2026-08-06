@@ -12,42 +12,53 @@ const rTokenName = process.env.REFRESH_TOKEN_COOKIE_NAME;
 /**
  * @param {string} accessToken
  * @param {string} refreshToken
- * @returns {Promise<import('express').Request["user"]>}
+ * @returns {Promise<{ user: import('express').Request["user"], refreshed: boolean }>}
  */
 const checkTokens = async (accessToken, refreshToken) => {
+    if (accessToken) {
+        try {
+            const data = verifyToken(accessToken, aTokenSecret);
+            return {
+                user: {
+                    userId: data.userId,
+                    username: data.username,
+                },
+                refreshed: false,
+            };
+        } catch {
+            // expired or otherwise invalid access token
+            // fall through to refresh
+        }
+    }
+
+    if (!refreshToken) {
+        throw new Error("unauthorized");
+    }
+
+    let data;
     try {
-        if (accessToken) {
-            const decoded = verifyToken(accessToken, aTokenSecret);
-            if (decoded) {
-                return {
-                    userId: decoded.userId,
-                    username: decoded.username,
-                    refreshTokenVersion: decoded.refreshTokenVersion,
-                };
-            }
-        }
+        data = verifyToken(refreshToken, rTokenSecret);
+    } catch {
+        throw new Error("unauthorized");
+    }
 
-        if (!refreshToken) {
-            console.log("middlewares#checkTokens error: no refresh token");
-            throw new Error('Invalid token');
-        }
-
-        const decoded = verifyToken(refreshToken, rTokenSecret);
-        const user = await User.findById(decoded.userId);
-        if (!user || user.refreshTokenVersion !== decoded.refreshTokenVersion) {
+    const user = await User.findById(data.userId);
+    if (!user || user.refreshTokenVersion !== data.refreshTokenVersion) {
+        if (process.env.NODE_ENV === "development") {
             console.log("middlewares#checkTokens error: user not found or invalid refresh token");
-            throw new Error('Invalid token');
         }
 
-        return {
+        throw new Error("unauthorized");
+    }
+
+    return {
+        user: {
             userId: user._id.toString(),
             username: user.username,
             refreshTokenVersion: user.refreshTokenVersion,
-        }
-    } catch (error) {
-        console.log("middlewares#checkTokens error: ", error);
-        throw error;
-    }
+        },
+        refreshed: true,
+    };
 };
 
 /**
@@ -59,14 +70,13 @@ const authenticateToken = async (req, res, next) => {
     try {
         const accessToken = req.cookies[aTokenName];
         const refreshToken = req.cookies[rTokenName];
-
         if (!accessToken && !refreshToken) {
             return res.status(401).json({ message: 'Unauthorized' });
         }
 
-        const decoded = await checkTokens(accessToken, refreshToken);
-        req.user = decoded;
-        if (decoded) {
+        const { user, refreshed } = await checkTokens(accessToken, refreshToken);
+        req.user = user;
+        if (refreshed) {
             const newAccessToken = createAccessToken(req.user);
             sendAccessTokenCookie(res, newAccessToken);
         }
@@ -93,4 +103,5 @@ const verifyToken = (token, secret) => {
     return /** @type {AuthJwtPayload} */ (decoded);
 };
 
+export { checkTokens };
 export default authenticateToken;
