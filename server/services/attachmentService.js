@@ -30,6 +30,11 @@ async function authorize({ docModel, doc, userId, resource, action }) {
             throw { status: 403, message };
         }
 
+        if (foundWritedown.owner.toString() !== userId) {
+            const message = "Not the owner of this writedown";
+            throw { status: 403, message };
+        }
+
         return;
     }
 

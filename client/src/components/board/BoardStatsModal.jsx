@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { boardApi } from "../../services/api";
 import { boardKeys } from "../../queries/boardKeys";
 import Modal from "../ui/Modal";
+import Icon from "../shared/Icon";
 
 /**
  * @param {{
@@ -73,15 +74,32 @@ const BoardStatsModal = ({ boardId, open, setOpen }) => {
                     </p>
 
                     <button
-                        className="p-3 bg-gray-200 hover:bg-indigo-200 rounded-sm group"
+                        className="p-3 bg-gray-200 hover:bg-indigo-200 group"
                         onClick={() => navigate(`/b/${board?._id}`)}
                         title="visit board"
                     >
-                        <div className="w-2.5 h-2.5 bg-gray-300 group-hover:bg-indigo-400 rounded-full"></div>
+                        <Icon
+                            name="arrow"
+                            className="rotate-180 group-hover:text-indigo-800 text-gray-400 w-3 h-3"
+                        />
                     </button>
                 </div>
 
                 <div className="w-full flex flex-col gap-2 text-gray-700 text-[0.65rem] sm:text-[0.75rem] border border-dashed border-gray-700 p-4">
+                    <p>
+                        created by{" "}
+                        <span className="font-medium">
+                            {board?.createdBy?.username}
+                        </span>
+                    </p>
+
+                    <p>
+                        created at{" "}
+                        <span className="font-medium">
+                            {dateFormatter(board?.createdAt)}
+                        </span>
+                    </p>
+
                     <div className="flex gap-2">
                         members:
                         <span className="font-medium">
@@ -94,69 +112,20 @@ const BoardStatsModal = ({ boardId, open, setOpen }) => {
 
                 <div className="w-full flex flex-col gap-2 text-gray-700 text-[0.65rem] sm:text-[0.75rem] border border-dashed border-gray-700 p-4">
                     <p>
-                        list count:{" "}
+                        lists:{" "}
                         <span className="font-medium">
-                            {board?.stats?.listCount}
+                            {board?.stats?.listCount || "unknown"} /{" "}
+                            {board?.limits?.maxLists || "unknown"}
                         </span>
                     </p>
 
                     <p>
-                        created by:{" "}
+                        cards:{" "}
                         <span className="font-medium">
-                            {board?.createdBy?.username}
+                            {board?.stats?.cardCount || "unknown"} /{" "}
+                            {board?.limits?.maxCards || "unknown"}
                         </span>
                     </p>
-
-                    <p>
-                        created at:{" "}
-                        <span className="font-medium">
-                            {dateFormatter(board?.createdAt)}
-                        </span>
-                    </p>
-                </div>
-
-                <div className="relative w-full flex flex-col gap-2 text-gray-700 text-[0.65rem] sm:text-[0.75rem] border border-dashed border-gray-700 px-4 pb-4 pt-3">
-                    <div className="flex justify-between">
-                        <p>cards by status:</p>
-
-                        <div className="flex items-center gap-3">
-                            <button
-                                className="text-[12px] text-gray-400 font-medium hover:text-yellow-600 hover:underline"
-                                onClick={() => {
-                                    const json = JSON.stringify(stats, null, 2);
-                                    navigator.clipboard
-                                        .writeText(json)
-                                        .then(() => {
-                                            toast.success(
-                                                "stats copied to clipboard (as json format)",
-                                            );
-                                        });
-                                }}
-                                title="copy board stats (json)"
-                            >
-                                json
-                            </button>
-                            <button
-                                className="text-[12px] text-gray-400 font-medium hover:text-purple-600 hover:underline"
-                                onClick={() => {
-                                    let str = "";
-                                    stats.forEach((item) => {
-                                        str += `${item._id}: ${item.count}\n`;
-                                    });
-                                    navigator.clipboard
-                                        .writeText(str)
-                                        .then(() => {
-                                            toast.success(
-                                                "stats copied to clipboard",
-                                            );
-                                        });
-                                }}
-                                title="copy board stats (text)"
-                            >
-                                txt
-                            </button>
-                        </div>
-                    </div>
 
                     <div className="flex flex-col gap-1">
                         {stats.map((item) => {
@@ -164,7 +133,7 @@ const BoardStatsModal = ({ boardId, open, setOpen }) => {
                             return (
                                 <div
                                     key={_id}
-                                    className="w-full p-1 px-3 text-gray-50 font-semibold cursor-pointer rounded-xs hover:opacity-80"
+                                    className="w-full p-1 px-3 text-gray-50 font-semibold cursor-pointer hover:opacity-80"
                                     style={{
                                         backgroundColor:
                                             PRIORITY_LEVELS[`${_id}`]?.color ||
@@ -173,7 +142,7 @@ const BoardStatsModal = ({ boardId, open, setOpen }) => {
                                     onClick={() => {
                                         navigate({
                                             pathname: `/b/${board?._id}`,
-                                            search: `?priority=${_id}`,
+                                            search: `?priorities=${_id}`,
                                         });
                                     }}
                                 >

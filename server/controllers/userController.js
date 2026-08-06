@@ -105,7 +105,7 @@ const addPinnedBoard = async (req, res) => {
 
     const foundBoard = await Board.findById(id);
     if (!foundBoard) {
-        return res.sendStatus(422).json({ message: "Board does not exist" });
+        return res.status(422).json({ message: "Board does not exist" });
     }
 
     if (foundUser.pinnedBoardIdCollection && foundUser.pinnedBoardIdCollection.has(id)) {

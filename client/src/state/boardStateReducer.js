@@ -185,11 +185,12 @@ export function boardStateReducer(state, action) {
 
         case BOARD_ACTIONS.DELETE_CARD: {
             const { listId, cardId } = action.payload;
+            const cards = [...(state.cards[listId] ?? [])];
             return {
                 ...state,
                 cards: {
                     ...state.cards,
-                    [listId]: [...state.cards[listId]].filter((c) => {
+                    [listId]: cards.filter((c) => {
                         return c._id !== cardId;
                     }),
                 },

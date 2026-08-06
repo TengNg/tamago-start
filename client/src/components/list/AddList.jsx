@@ -95,6 +95,7 @@ const AddList = () => {
             socket.emit(SOCKET_EVENTS.LIST_CREATE, data);
             addListToBoard(data);
             setTitle("");
+            setOpen(false);
         },
         onError: (
             err,

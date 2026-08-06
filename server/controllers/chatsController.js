@@ -2,12 +2,14 @@ import mongoose from 'mongoose';
 import ChatMessage from "../models/ChatMessage.js";
 import Board from "../models/Board.js";
 import BoardMembership from "../models/BoardMembership.js";
+import { checkBoardPermission } from '../services/boardPermissionService.js';
 
 /**
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  */
 const getMessages = async (req, res) => {
+    const { userId } = req.user;
     const { boardId } = req.params;
     const limit = typeof req.query.limit === 'string' ? parseInt(req.query.limit) : 20;
     const before = typeof req.query.before === 'string' && req.query.before;
@@ -16,6 +18,13 @@ const getMessages = async (req, res) => {
     if (!foundBoard) {
         return res.sendStatus(404);
     }
+
+    await checkBoardPermission({
+        boardId,
+        userId,
+        resource: "comment",
+        action: "view",
+    });
 
     let query = { boardId };
     if (before) {
@@ -56,6 +65,13 @@ const sendMessage = async (req, res) => {
     if (!foundBoard) {
         return res.sendStatus(404);
     }
+
+    await checkBoardPermission({
+        boardId,
+        userId,
+        resource: "comment",
+        action: "create",
+    });
 
     const chatMessage = new ChatMessage({
         sentBy: userId,

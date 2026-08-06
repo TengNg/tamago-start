@@ -70,16 +70,16 @@ const UserAccount = () => {
                 {!collapse && (
                     <div
                         ref={userInfoRef}
-                        className="account__menu absolute bottom-0 right-0 translate-y-[105%] flex flex-col box--style shadow-gray-700 border-2 border-gray-700 p-3 select-none gap-4 min-w-55"
+                        className="account__menu absolute -bottom-1 right-0 translate-y-full flex flex-col box--style shadow-gray-700 border-2 border-gray-700 p-3 select-none gap-4 min-w-55"
                     >
                         {currentUser && (
                             <>
                                 <div className="flex items-center justify-between">
-                                    <div className="font-medium text-[0.8rem] text-gray-400">
+                                    <div className="font-medium text-sm text-gray-600">
                                         Account
                                     </div>
                                     <button
-                                        className="text-gray-400"
+                                        className="text-gray-600"
                                         onClick={() => setCollapse(true)}
                                     >
                                         <Icon
@@ -91,15 +91,22 @@ const UserAccount = () => {
 
                                 <div className="h-px w-full bg-gray-400"></div>
 
-                                <div className="select-none font-medium text-[0.8rem] max-w-50 overflow-hidden whitespace-nowrap text-ellipsis text-gray-700">
-                                    username: {currentUser.username}
-                                </div>
+                                <div>
+                                    <div className="select-none font-medium text-sm max-w-60 overflow-hidden whitespace-nowrap text-ellipsis text-gray-800 mb-2">
+                                        <span className="text-gray-600">
+                                            username:
+                                        </span>{" "}
+                                        {currentUser.username}
+                                    </div>
 
-                                <div className="select-none font-medium text-[0.8rem] max-w-50 overflow-hidden whitespace-nowrap text-ellipsis text-gray-700">
-                                    joined:{" "}
-                                    {dateFormatter(currentUser.createdAt, {
-                                        withTime: false,
-                                    })}
+                                    <div className="select-none font-medium text-sm max-w-60 overflow-hidden whitespace-nowrap text-ellipsis text-gray-800">
+                                        <span className="text-gray-600">
+                                            joined:{" "}
+                                        </span>
+                                        {dateFormatter(currentUser.createdAt, {
+                                            withTime: false,
+                                        })}
+                                    </div>
                                 </div>
 
                                 <div className="h-px w-full bg-gray-400"></div>
@@ -107,7 +114,7 @@ const UserAccount = () => {
                                 <div className="flex flex-col gap-2">
                                     <Link
                                         to={`/profile`}
-                                        className="p-2 bg-violet-800 text-gray-50 text-[0.75rem] font-medium hover:bg-violet-700 grid place-items-center"
+                                        className="p-2 bg-violet-800 text-gray-50 text-sm font-medium hover:bg-violet-700 grid place-items-center"
                                     >
                                         <span
                                             className={`${pathname.includes("/profile") ? "underline" : ""}`}
@@ -117,7 +124,7 @@ const UserAccount = () => {
                                     </Link>
                                     <button
                                         onClick={handleLogout}
-                                        className="p-2 bg-gray-700 hover:bg-gray-600 text-[0.75rem] font-medium text-gray-200"
+                                        className="p-2 bg-gray-700 hover:bg-gray-600 text-sm font-medium text-gray-200"
                                     >
                                         Log out
                                     </button>

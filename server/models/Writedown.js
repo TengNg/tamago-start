@@ -35,9 +35,4 @@ const writedownSchema = new Schema({
 
 writedownSchema.index({ owner: 1, order: 1 });
 
-writedownSchema.post('findOneAndDelete', async function(doc) {
-    const Attachment = model('Attachment');
-    await Attachment.deleteMany({ type: "writedown", refId: doc._id });
-});
-
 export default model('Writedown', writedownSchema);

@@ -30,7 +30,33 @@ const blockedMimeTypes = [
     'application/java-archive',           // .jar
     'application/x-msi',                  // .msi
     'application/hta',                    // .hta
-    'application/vnd.ms-htmlhelp'         // .chm
+    'application/vnd.ms-htmlhelp',        // .chm
+    // Web script-bearing types (stored-XSS protection)
+    'text/html',
+    'application/xhtml+xml',
+    'image/svg+xml',
+    'text/xml',
+    'application/xml',
+];
+
+/**
+ * MIME types that must never be served/executed, regardless of how the file
+ * declares itself. Used against the `file-type` sniffed value at upload time.
+ */
+const dangerousMimeTypes = [
+    'text/html',
+    'application/xhtml+xml',
+    'image/svg+xml',
+    'text/xml',
+    'application/xml',
+    'application/xml-dtd',
+    'text/javascript',
+    'application/javascript',
+    'application/x-javascript',
+    'application/x-msdownload',
+    'application/x-dosexec',
+    'application/java-archive',
+    'application/x-php',
 ];
 
 /**
@@ -58,4 +84,7 @@ const upload = multer({
     fileFilter,
 });
 
-export default upload;
+export {
+    upload as default,
+    dangerousMimeTypes,
+};

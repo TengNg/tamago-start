@@ -64,7 +64,7 @@ const UserSchema = new Schema({
         type: String,
         required: [
             function() {
-                return !this.dissordId;
+                return !this.discordId;
             },
             "Password is required"
         ]

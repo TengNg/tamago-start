@@ -113,7 +113,7 @@ const createCardComment = async (req, res) => {
 
     const commentWithUser = await CardComment
         .findById(newComment._id)
-        .populate('userId', '_id username avatar')
+        .populate('userId', '_id username')
         .lean();
 
     let truncatedContent = "";

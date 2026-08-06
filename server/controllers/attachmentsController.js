@@ -1,5 +1,6 @@
 import Attachment from '../models/Attachment.js';
 import { authorize } from '../services/attachmentService.js';
+import { dangerousMimeTypes } from '../middlewares/attachmentUpload.js';
 
 /**
  * @param {import('express').Request} req
@@ -38,6 +39,7 @@ export const uploadAttachment = async (req, res) => {
         return res.status(422).json({ message: 'Invalid or missing attachment file' });
     }
 
+    let mimetype = req.file.mimetype;
     if (process.env.NODE_ENV !== "test") {
         const { fileTypeFromBuffer } = await import('file-type');
         const detectedType = await fileTypeFromBuffer(req.file.buffer);
@@ -46,13 +48,21 @@ export const uploadAttachment = async (req, res) => {
                 message: 'Could not determine file type (possibly corrupted or empty)'
             });
         }
+
+        if (dangerousMimeTypes.includes(detectedType.mime)) {
+            return res.status(422).json({
+                message: 'File type blocked for security reasons'
+            });
+        }
+
+        mimetype = detectedType.mime;
     }
 
     const attachment = new Attachment({
         docModel,
         doc,
         data: req.file.buffer,
-        mimetype: req.file.mimetype,
+        mimetype,
         originalname: req.file.originalname
     });
 
@@ -87,7 +97,14 @@ export const getAttachment = async (req, res) => {
         action: "view",
     });
 
+    const safeName = String(attachment.originalname || 'attachment')
+        .replace(/[\r\n"]/g, '')
+        .replace(/[^\x20-\x7E]/g, '');
+
     res.set('Content-Type', attachment.mimetype);
+    res.set('X-Content-Type-Options', 'nosniff');
+    res.set('Content-Disposition', `attachment; filename="${safeName}"`);
+    res.set('Content-Security-Policy', "sandbox; default-src 'none'");
     res.send(attachment.data);
 };
 
@@ -142,7 +159,7 @@ export const deleteAttachment = async (req, res) => {
         doc: attachment.doc.toString(),
         userId,
         resource: "attachment",
-        action: "view",
+        action: "delete",
     });
 
     const result = await Attachment.deleteOne({ _id: id });

@@ -47,6 +47,16 @@ const sendInvitation = async (req, res) => {
     const { userId, username } = req.user;
     const { boardId, receiverName } = req.body;
 
+    const board = await Board.findById(boardId);
+    if (!board) {
+        return res.status(404).json({ message: "board not found" });
+    }
+
+    const isMember = await BoardMembership.exists({ boardId, userId });
+    if (!isMember) {
+        return res.status(403).json({ message: "you must be a member of this board to send invitations" });
+    }
+
     const receiver = await User.findOne({ username: receiverName }).lean();
     if (!receiver) {
         return res.status(403).json({ message: "username is not found" });
@@ -89,6 +99,7 @@ const sendInvitation = async (req, res) => {
  * @param {import('express').Response} res
  */
 const acceptInvitation = async (req, res) => {
+    const { userId } = req.user;
     const { id } = req.params;
 
     let invitation = await Invitation.findById(id);
@@ -96,10 +107,23 @@ const acceptInvitation = async (req, res) => {
         return res.status(404).json({ message: 'Invitation not found' });
     }
 
+    if (invitation.invitedUserId.toString() !== userId) {
+        return res.status(403).json({ message: 'This invitation is not for you' });
+    }
+
+    if (invitation.status !== 'pending') {
+        return res.status(409).json({ message: 'This invitation has already been responded to' });
+    }
+
     const { boardId, invitedUserId } = invitation;
     const board = await Board.findById(boardId);
     if (!board) {
         return res.status(404);
+    }
+
+    const isAlreadyMember = await BoardMembership.exists({ boardId, userId });
+    if (isAlreadyMember) {
+        return res.status(409).json({ message: "you're already a member of this board" });
     }
 
     const membershipCount = await BoardMembership.countDocuments({ boardId });
@@ -125,13 +149,24 @@ const acceptInvitation = async (req, res) => {
  * @param {import('express').Response} res
  */
 const rejectInvitation = async (req, res) => {
+    const { userId } = req.user;
     const { id } = req.params;
 
-    const invitation = await Invitation.findByIdAndUpdate(
-        id,
-        { status: 'rejected' },
-        { new: true }
-    );
+    const invitation = await Invitation.findById(id);
+    if (!invitation) {
+        return res.status(404).json({ message: 'Invitation not found' });
+    }
+
+    if (invitation.invitedUserId.toString() !== userId) {
+        return res.status(403).json({ message: 'This invitation is not for you' });
+    }
+
+    if (invitation.status !== 'pending') {
+        return res.status(409).json({ message: 'This invitation has already been responded to' });
+    }
+
+    invitation.status = 'rejected';
+    await invitation.save();
 
     res.json({ invitation });
 }
@@ -141,12 +176,27 @@ const rejectInvitation = async (req, res) => {
  * @param {import('express').Response} res
  */
 const removeInvitation = async (req, res) => {
+    const { userId } = req.user;
     const { id } = req.params;
 
-    const removed = await Invitation.findByIdAndDelete(id);
-    if (!removed) {
+    const invitation = await Invitation.findById(id);
+    if (!invitation) {
         return res.sendStatus(404);
     }
+
+    const isInvitedUser = invitation.invitedUserId.toString() === userId;
+    const isInviter = invitation.invitedByUserId.toString() === userId;
+    const isOwner = await BoardMembership.exists({
+        boardId: invitation.boardId,
+        userId,
+        role: 'owner',
+    });
+
+    if (!isInvitedUser && !isInviter && !isOwner) {
+        return res.status(403).json({ message: 'Not authorized to remove this invitation' });
+    }
+
+    await invitation.deleteOne();
 
     res.sendStatus(204);
 };

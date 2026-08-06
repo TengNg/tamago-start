@@ -147,7 +147,7 @@ const reorder = async (req, res) => {
             session,
         });
 
-        if (foundCard.order === newOrder) {
+        if (foundCard.order === newOrder && foundCard.listId === targetList._id) {
             await session.abortTransaction();
             return res.status(200).json({
                 oldListId: currentListId,
@@ -156,7 +156,7 @@ const reorder = async (req, res) => {
         }
 
         foundCard.order = newOrder;
-        foundCard.listId = listId;
+        foundCard.listId = targetList._id;
         await foundCard.save({ session });
 
         if (

@@ -1,4 +1,6 @@
+import mongoose from 'mongoose';
 import Writedown from "../models/Writedown.js";
+import Attachment from "../models/Attachment.js";
 
 /**
  * @param {import('express').Request} req
@@ -110,8 +112,22 @@ const deleteWritedown = async (req, res) => {
         return res.sendStatus(404);
     }
 
-    await Writedown.findByIdAndDelete(writedown._id);
-    return res.sendStatus(204);
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        await Attachment.deleteMany({ docModel: "Writedown", doc: writedown._id }, { session });
+        await Writedown.findByIdAndDelete(writedown._id).session(session);
+
+        await session.commitTransaction();
+
+        return res.sendStatus(204);
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
+    }
 };
 
 /**
@@ -119,8 +135,27 @@ const deleteWritedown = async (req, res) => {
  * @param {import('express').Response} res
  */
 const deleteAllWritedowns = async (req, res) => {
-    await Writedown.deleteMany({ owner: req.user.userId });
-    return res.sendStatus(204);
+    const writedownIds = await Writedown.find({ owner: req.user.userId }).distinct('_id');
+    if (writedownIds.length === 0) {
+        return res.sendStatus(204);
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        await Attachment.deleteMany({ docModel: 'Ward', doc: { $in: writedownIds } }, { session });
+        await Writedown.deleteMany({ _id: { $in: writedownIds } }, { session });
+
+        await session.commitTransaction();
+
+        return res.sendStatus(204);
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
+    }
 };
 
 /**
