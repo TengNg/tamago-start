@@ -124,8 +124,9 @@ const reorder = async (req, res) => {
     const populatedList = /** @type {any} */(foundCard.listId);
     const currentListId = populatedList._id;
     const currentCardListTitle = populatedList.title;
-    const foundList = await List.findById(populatedList._id).lean();
-    if (!foundList) {
+
+    const targetList = await List.findById(listId).lean();
+    if (!targetList) {
         return res.status(403).json({ message: "list not found" });
     }
 
@@ -167,12 +168,12 @@ const reorder = async (req, res) => {
         ) {
             await saveBoardActivity({
                 userId,
-                boardId: foundList.boardId,
+                boardId: targetList.boardId,
                 docId: foundCard._id,
                 action: "card.moved",
                 docModel: "Card",
                 docTitle: foundCard.title,
-                description: `${currentCardListTitle} (${oldPos}) → ${foundList.title} (${newPos})`,
+                description: `${currentCardListTitle} (${oldPos}) → ${targetList.title} (${newPos})`,
                 session,
             });
         }

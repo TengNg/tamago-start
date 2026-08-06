@@ -179,11 +179,26 @@ const ListContainer = () => {
         // type card
 
         const activeId = /** @type {string} */ (active.id);
-        const activeListId = activeData.card.listId;
 
-        const cards = [...boardState.cards[activeListId]];
-        const activeIndex = cards.findIndex((c) => c._id == activeId);
+        // handleOnDragOver already moved the card into the target list in
+        // boardState, so locate it there instead of trusting
+        // activeData.card.listId, which is a stale snapshot from drag start.
+        let targetListId = null;
+        let activeIndex = -1;
+        for (const [listId, cards] of Object.entries(boardState.cards)) {
+            const idx = cards.findIndex((c) => c._id == activeId);
+            if (idx !== -1) {
+                targetListId = listId;
+                activeIndex = idx;
+                break;
+            }
+        }
 
+        if (!targetListId || activeIndex === -1) {
+            return;
+        }
+
+        const cards = boardState.cards[targetListId];
         const prevId = cards[activeIndex - 1]?._id;
         const nextId = cards[activeIndex + 1]?._id;
 
@@ -191,7 +206,7 @@ const ListContainer = () => {
         if (
             !activeCard ||
             (activeCard &&
-                activeCard.listId === activeListId &&
+                activeCard.listId === targetListId &&
                 activeCard.srcIndex === activeIndex)
         ) {
             return;
@@ -201,10 +216,10 @@ const ListContainer = () => {
             addPendingReorder(activeId);
 
             const newCard = await cardApi.reorderCard(activeId, {
-                listId: activeListId,
+                listId: targetListId,
                 prevCardId: prevId,
                 nextCardId: nextId,
-                oldPos: activeCard.srcIndex,
+                oldPos: activeCard.srcIndex + 1,
                 newPos: activeIndex + 1,
             });
 
@@ -215,7 +230,7 @@ const ListContainer = () => {
                 payload: {
                     card: {
                         ...newCard,
-                        listId: activeListId,
+                        listId: targetListId,
                     },
                 },
             });
@@ -223,7 +238,7 @@ const ListContainer = () => {
             if (activeCard) {
                 socket.emit(SOCKET_EVENTS.CARD_MOVE_TO_LIST, {
                     oldListId: activeCard?.listId,
-                    newListId: newCard.listId,
+                    newListId: targetListId,
                     insertedIndex: activeIndex,
                     card: newCard,
                 });
