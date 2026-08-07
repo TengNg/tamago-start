@@ -2,7 +2,7 @@ import { Router } from "express";
 const apiRouter = Router();
 
 import authenticateToken from '../../middlewares/authenticateToken.js';
-import rateLimiter from '../../middlewares/rateLimiter.js';
+import { registerLimiter, loginLimiter, userLimiter } from '../../middlewares/rateLimiter.js';
 
 // routes
 import discordRoutes from '../../routes/api/discord.js';
@@ -24,12 +24,13 @@ import attachmentsRoutes from '../../routes/api/attachments.js';
 apiRouter.use(discordRoutes);
 
 // auth
-apiRouter.use("/register", rateLimiter, registerRoutes);
-apiRouter.use("/login", rateLimiter, loginRoutes);
+apiRouter.use("/register", registerLimiter, registerRoutes);
+apiRouter.use("/login", loginLimiter, loginRoutes);
 apiRouter.use("/logout", logoutRoutes);
 
 // require-auth
 apiRouter.use(authenticateToken);
+apiRouter.use(userLimiter);
 apiRouter.use("/me", meRoutes);
 apiRouter.use("/boards", boardsRoutes);
 apiRouter.use("/lists", listsRoutes);

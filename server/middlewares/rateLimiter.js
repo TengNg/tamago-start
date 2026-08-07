@@ -1,53 +1,87 @@
-const RATE_LIMIT_DURATION = 2 * 60 * 1000;
-const BLOCK_PERIOD_MS = 5 * 60 * 1000;
-const MAX_REQUESTS = 10;
-
-/** @type {{[key: string]: number[]}} */
-const requestLogs = {};
-
-/** @type {{[key: string]: number}} */
-const blockedUsers = {};
+/**
+ * @typedef {Object} RateLimiterConfig
+ * @property {number} maxRequests - Max requests allowed in the window
+ * @property {number} windowMs - Time window in milliseconds
+ * @property {number} [blockMs] - Block duration after exceeding limit (0 = no block)
+ * @property {(req: import('express').Request) => string} [keyFn] - Function to extract the rate limit key from req
+ * @property {string} [message] - Custom 429 message
+ */
 
 /**
- * @param {import('express').Request} req
- * @param {import('express').Response} res
- * @param {import('express').NextFunction} next
+ * Creates an in-memory rate limiter middleware.
+ * Cleanup is lazy — stale entries are pruned on each request, no background timer.
+ * @param {RateLimiterConfig} config
+ * @returns {import('express').RequestHandler}
  */
-function rateLimiter(req, res, next) {
-    const userIP = req.ip;
-    const currentTime = Date.now();
-    const blocked = blockedUsers[userIP];
+export function createRateLimiter({
+    maxRequests,
+    windowMs,
+    blockMs = 0,
+    keyFn = (req) => req.ip,
+    message,
+}) {
+    /** @type {Map<string, number[]>} */
+    const logs = new Map();
 
-    if (blocked && currentTime < blocked) {
-        const remaining = Math.ceil((blocked - currentTime) / 1000);
-        if (remaining === 0) {
-            delete blockedUsers[userIP];
-        } else {
-            const errMsg = `Too many requests. Try again in ${remaining} seconds.`;
-            return res.status(429).json({ message: errMsg });
+    /** @type {Map<string, number>} */
+    const blocks = new Map();
+
+    return (req, res, next) => {
+        const key = keyFn(req);
+        const now = Date.now();
+
+        // Prune stale timestamps
+        const timestamps = (logs.get(key) || []).filter((t) => now - t < windowMs);
+        logs.set(key, timestamps);
+
+        // Check block
+        const blockedUntil = blocks.get(key);
+        if (blockedUntil && now < blockedUntil) {
+            const remaining = Math.ceil((blockedUntil - now) / 1000);
+            return res.status(429).json({
+                message: message || `Too many requests. Try again in ${remaining} seconds.`,
+            });
         }
-    }
 
-    if (!requestLogs[userIP]) {
-        requestLogs[userIP] = [];
-    }
+        if (blockedUntil) {
+            blocks.delete(key);
+        }
 
-    if (blocked && currentTime >= blocked) {
-        delete blockedUsers[userIP];
-    }
+        // Check limit
+        if (timestamps.length >= maxRequests) {
+            if (blockMs > 0) {
+                blocks.set(key, now + blockMs);
+            }
+            return res.status(429).json({
+                message: message || 'Too many requests. Try again later.',
+            });
+        }
 
-    if (requestLogs[userIP].length >= MAX_REQUESTS) {
-        blockedUsers[userIP] = currentTime + BLOCK_PERIOD_MS;
-        const errMsg = 'Too many requests. Please try again later 5 minutes.';
-        return res.status(429).json({ message: errMsg });
-    }
-
-    requestLogs[userIP] = requestLogs[userIP].filter(timestamp => {
-        return currentTime - timestamp < RATE_LIMIT_DURATION
-    });
-
-    requestLogs[userIP].push(currentTime);
-    next();
+        timestamps.push(now);
+        next();
+    };
 }
 
-export default rateLimiter;
+// 5 requests/hour per IP — register
+export const registerLimiter = createRateLimiter({
+    maxRequests: 5,
+    windowMs: 60 * 60 * 1000,
+    blockMs: 60 * 60 * 1000,
+    message: 'Too many registration attempts. Try again later.',
+});
+
+// 10 requests/15min per IP — login
+export const loginLimiter = createRateLimiter({
+    maxRequests: 10,
+    windowMs: 15 * 60 * 1000,
+    blockMs: 15 * 60 * 1000,
+    message: 'Too many login attempts. Try again later.',
+});
+
+// 60 requests/min per userId — authenticated routes
+export const userLimiter = createRateLimiter({
+    maxRequests: 60,
+    windowMs: 60 * 1000,
+    keyFn: (req) => req.user?.userId || req.ip,
+    message: 'Too many requests. Slow down.',
+});
