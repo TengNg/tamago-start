@@ -49,35 +49,39 @@ export default function registerListHandlers(socket) {
     });
 
     socket.on(SOCKET_EVENTS.LIST_MOVE_TO_BOARD, async (data) => {
-        const { boardId: targetBoardId, list, cards, index } = data;
-        const sourceBoardId = socket.boardId;
-        if (!sourceBoardId) {
-            log(`LIST_MOVE_TO_BOARD: no boardId (socket=${socket.id})`);
-            return;
-        }
-        if (!validate(data, SCHEMAS.LIST_MOVE_TO_BOARD)) {
-            log(`LIST_MOVE_TO_BOARD: invalid payload (socket=${socket.id})`);
-            return;
-        }
+        try {
+            const { boardId: targetBoardId, list, cards, index } = data;
+            const sourceBoardId = socket.boardId;
+            if (!sourceBoardId) {
+                log(`LIST_MOVE_TO_BOARD: no boardId (socket=${socket.id})`);
+                return;
+            }
+            if (!validate(data, SCHEMAS.LIST_MOVE_TO_BOARD)) {
+                log(`LIST_MOVE_TO_BOARD: invalid payload (socket=${socket.id})`);
+                return;
+            }
 
-        const membership = await BoardMembership.findOne({
-            boardId: targetBoardId,
-            userId: socket.user.id,
-        });
-        if (!membership) {
-            log(`LIST_MOVE_TO_BOARD: no membership (socket=${socket.id}, board=${targetBoardId})`);
-            return;
-        }
+            const membership = await BoardMembership.findOne({
+                boardId: targetBoardId,
+                userId: socket.user.id,
+            });
+            if (!membership) {
+                log(`LIST_MOVE_TO_BOARD: no membership (socket=${socket.id}, board=${targetBoardId})`);
+                return;
+            }
 
-        const sanitizedList = sanitize(list, LIST_FIELDS);
-        const sanitizedCards = Array.isArray(cards)
-            ? cards.map((c) => sanitize(c, CARD_FIELDS)).filter(Boolean)
-            : [];
-        socket.to(targetBoardId).emit(SOCKET_EVENTS.LIST_MOVED_TO_BOARD, {
-            list: sanitizedList,
-            cards: sanitizedCards,
-            index,
-        });
+            const sanitizedList = sanitize(list, LIST_FIELDS);
+            const sanitizedCards = Array.isArray(cards)
+                ? cards.map((c) => sanitize(c, CARD_FIELDS)).filter(Boolean)
+                : [];
+            socket.to(targetBoardId).emit(SOCKET_EVENTS.LIST_MOVED_TO_BOARD, {
+                list: sanitizedList,
+                cards: sanitizedCards,
+                index,
+            });
+        } catch (err) {
+            log(`LIST_MOVE_TO_BOARD: error=${err.message} (socket=${socket.id})`);
+        }
     });
 
     socket.on(SOCKET_EVENTS.LIST_CREATE, (data) => {

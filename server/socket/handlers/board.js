@@ -1,6 +1,6 @@
 import BoardMembership from '../../models/BoardMembership.js';
 import { SOCKET_EVENTS } from '../../../shared/socket-events.js';
-import { allowedFields } from '../validate.js';
+import { allowedFields, isObjectId, log } from '../validate.js';
 
 const BOARD_UPDATE_ALLOWED = ['field', 'value'];
 
@@ -11,23 +11,36 @@ const BOARD_UPDATE_ALLOWED = ['field', 'value'];
 export default function registerBoardHandlers(io, socket) {
 
     socket.on(SOCKET_EVENTS.BOARD_JOIN, async (data) => {
-        const { boardId } = data;
+        try {
+            const { boardId } = data;
 
-        const membership = await BoardMembership.findOne({
-            boardId,
-            userId: socket.user.id
-        });
+            if (!boardId || !isObjectId(boardId)) {
+                log(`BOARD_JOIN: invalid boardId (socket=${socket.id})`);
+                return;
+            }
 
-        if (!membership) {
-            socket.emit(SOCKET_EVENTS.BOARD_UNAUTHORIZED, { message: "You are not a member of this board" });
-            return;
-        }
+            // Leave previous board room if any
+            const prevBoardId = socket.boardId;
+            if (prevBoardId) {
+                socket.leave(prevBoardId);
+                socket.to(prevBoardId).emit(SOCKET_EVENTS.BOARD_MEMBER_LEFT, { memberId: socket.user.id });
+            }
 
-        socket.boardId = boardId;
-        socket.join(boardId);
+            const membership = await BoardMembership.findOne({
+                boardId,
+                userId: socket.user.id
+            });
+            if (!membership) {
+                socket.emit(SOCKET_EVENTS.BOARD_UNAUTHORIZED, { message: "You are not a member of this board" });
+                return;
+            }
 
-        if (process.env.NODE_ENV === "development") {
-            console.log(`User[id=${socket.user.id}][username=${socket.user.username}][socket_id=${socket.id}] joins board with id ${boardId}`);
+            socket.boardId = boardId;
+            socket.join(boardId);
+
+            log(`BOARD_JOIN: user=${socket.user.username} joined board=${boardId} (socket=${socket.id})`);
+        } catch (err) {
+            log(`BOARD_JOIN: error=${err.message} (socket=${socket.id})`);
         }
     });
 
@@ -41,29 +54,80 @@ export default function registerBoardHandlers(io, socket) {
         socket.leave(boardId);
     });
 
-    socket.on(SOCKET_EVENTS.BOARD_KICK, (data) => {
+    socket.on(SOCKET_EVENTS.BOARD_KICK, async (data) => {
         const boardId = socket.boardId;
         if (!boardId) return;
+
+        // Only the board owner can kick members
+        const callerMembership = await BoardMembership.findOne({
+            boardId,
+            userId: socket.user.id,
+            role: "owner",
+        });
+        if (!callerMembership || callerMembership.role !== 'owner') {
+            log(`BOARD_KICK: not owner (socket=${socket.id})`);
+            return;
+        }
 
         const { memberId } = data;
-        const connectedSockets = io.sockets.sockets;
-        const targetSocket = Array.from(connectedSockets.values()).find(s => s.user && s.user.username === memberId);
+        if (!memberId || !isObjectId(memberId)) {
+            log(`BOARD_KICK: invalid memberId (socket=${socket.id})`);
+            return;
+        }
+
+        const targetSocket = Array.from(io.sockets.sockets.values())
+            .find(s => s.user && s.user.id === memberId);
         if (!targetSocket) return;
+
+        // Remove target from the board room
+        targetSocket.leave(boardId);
+        delete targetSocket.boardId;
+
         socket.to(boardId).emit(SOCKET_EVENTS.BOARD_MEMBER_KICKED, { userSocketId: targetSocket.id });
+        log(`BOARD_KICK: user=${memberId} kicked from board=${boardId} (socket=${socket.id})`);
     });
 
-    socket.on(SOCKET_EVENTS.BOARD_CLOSE, (_data) => {
+    socket.on(SOCKET_EVENTS.BOARD_CLOSE, async (_data) => {
         const boardId = socket.boardId;
         if (!boardId) return;
+
+        // Only the board owner can close a board
+        const callerMembership = await BoardMembership.findOne({
+            boardId,
+            userId: socket.user.id,
+            role: "owner",
+        });
+        if (!callerMembership || callerMembership.role !== 'owner') {
+            log(`BOARD_CLOSE: not owner (socket=${socket.id})`);
+            return;
+        }
+
         delete socket.boardId;
         socket.leave(boardId);
         socket.to(boardId).emit(SOCKET_EVENTS.BOARD_CLOSED);
+        log(`BOARD_CLOSE: board=${boardId} closed by owner (socket=${socket.id})`);
     });
 
-    socket.on(SOCKET_EVENTS.BOARD_UPDATE, (data) => {
+    socket.on(SOCKET_EVENTS.BOARD_UPDATE, async (data) => {
         const boardId = socket.boardId;
         if (!boardId) return;
-        if (!allowedFields(data, BOARD_UPDATE_ALLOWED)) return;
+
+        // Only the board owner can broadcast board updates
+        const callerMembership = await BoardMembership.findOne({
+            boardId,
+            userId: socket.user.id,
+            role: "owner",
+        });
+        if (!callerMembership || callerMembership.role !== 'owner') {
+            log(`BOARD_UPDATE: not owner (socket=${socket.id})`);
+            return;
+        }
+
+        if (!allowedFields(data, BOARD_UPDATE_ALLOWED)) {
+            log(`BOARD_UPDATE: invalid fields (socket=${socket.id})`);
+            return;
+        }
+
         socket.to(boardId).emit(SOCKET_EVENTS.BOARD_UPDATED, data);
     });
 }
