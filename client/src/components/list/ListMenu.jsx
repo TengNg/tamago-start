@@ -60,11 +60,6 @@ export default function ListMenu({
         setOpen(false);
     };
 
-    const collapse = () => {
-        setOpen(false);
-        updateListField({ id: list._id, field: "collapsed", value: true });
-    };
-
     const handleOpenMoveListForm = () => {
         setOpenMoveListForm(true);
         setListToMove(list);
@@ -101,13 +96,7 @@ export default function ListMenu({
                 </div>
             </div>
 
-            <div className="flex flex-col gap-3 mt-3">
-                <button
-                    onClick={collapse}
-                    className="text-[14px] sm:text-[0.75rem] text-white bg-indigo-800 px-1 py-2 hover:bg-indigo-700"
-                >
-                    collapse
-                </button>
+            <div className="flex flex-col gap-2 mt-3 mb-1">
                 <button
                     onClick={duplicate}
                     className={`${isCopying ? "cursor-not-allowed" : ""} text-[12px] sm:text-[0.75rem] text-white bg-gray-600 px-1 py-2 hover:bg-gray-500`}

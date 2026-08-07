@@ -69,7 +69,6 @@ const AddList = () => {
                 boardId: boardState.board._id,
                 title: title,
                 order: "",
-                collapsed: false,
                 createdAt: Date.now().toString(),
             };
 

@@ -31,7 +31,7 @@ const useCardActions = ({
             const hasVisibleCards = boardState.cards[list._id]?.some(
                 (card) => !card.hiddenByFilter,
             );
-            return !list.collapsed && hasVisibleCards;
+            return hasVisibleCards;
         });
     }, [boardState.lists, boardState.cards]);
 

@@ -286,46 +286,6 @@ const List = ({ index, list, cards }) => {
         );
     }
 
-    if (list.collapsed) {
-        return (
-            <div
-                ref={setNodeRef}
-                {...attributes}
-                {...listeners}
-                style={style}
-                className="select-none w-16 h-80 bg-transparent touch-none"
-            >
-                <div
-                    className={`list__item ${theme.itemTheme == "rounded-sm" ? "rounded-sm shadow-[0_3px_0_0]" : "shadow-[3px_4px_0_0]"} border-2 border-gray-700 shadow-gray-700 p-2 relative`}
-                >
-                    <div
-                        className="text-center bg-gray-400 p-2 text-[10px] hover:bg-gray-400/75 grid place-items-center cursor-pointer"
-                        onClick={() => {
-                            updateListField({
-                                id: list._id,
-                                field: "collapsed",
-                                value: false,
-                            });
-                        }}
-                    >
-                        <div className="w-2.5 h-2.5 rounded-full bg-gray-200"></div>
-                    </div>
-                    <div
-                        className="font-medium sm:font-semibold text-gray-700 whitespace-nowrap px-3 h-62.5"
-                        style={{
-                            transform: "rotate(-90deg)",
-                            transformOrigin: "135px 50%",
-                        }}
-                    >
-                        {list.title.length > 20
-                            ? list.title.slice(0, 20) + "..."
-                            : list.title}
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div
             ref={setNodeRef}

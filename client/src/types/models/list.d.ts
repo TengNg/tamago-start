@@ -4,6 +4,4 @@ declare type List = {
     order: string;
     boardId: string;
     createdAt: string;
-
-    collapsed?: boolean;
 };

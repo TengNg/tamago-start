@@ -134,7 +134,7 @@ export const SCHEMAS = {
     // --- List ---
     LIST_CREATE: {
         required: ['_id', 'boardId', 'title', 'order'],
-        types: { _id: 'id', boardId: 'id', title: 'string', order: 'string', collapsed: 'boolean' },
+        types: { _id: 'id', boardId: 'id', title: 'string', order: 'string' },
     },
     LIST_DELETE: {
         required: ['id'],
@@ -224,7 +224,7 @@ export const SCHEMAS = {
 
 // --- Field allowlists for nested objects (strip injection vectors) ---
 
-export const LIST_FIELDS = ['_id', 'boardId', 'title', 'order', 'collapsed', 'createdAt', 'updatedAt'];
+export const LIST_FIELDS = ['_id', 'boardId', 'title', 'order', 'createdAt', 'updatedAt'];
 export const CARD_FIELDS = ['_id', 'boardId', 'listId', 'title', 'order', 'description', 'highlight', 'priorityLevel', 'verified', 'owner', 'dueDate', 'createdAt', 'updatedAt'];
 export const CHAT_MESSAGE_FIELDS = ['_id', 'content', 'sentBy', 'createdAt', 'type'];
 export const COMMENT_FIELDS = ['_id', 'cardId', 'content', 'createdBy', 'createdAt', 'deleted'];
