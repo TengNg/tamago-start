@@ -6,21 +6,48 @@ const PORT = process.env.PORT || 3001;
 const SERVER_URL = process.env.SERVER_URL || `http://localhost:${PORT}`;
 const FRONTEND_URL = __prod__ ? SERVER_URL : (process.env.FRONTEND_URL || "http://localhost:5173");
 
+import { timingSafeEqual } from 'crypto';
+
 import { sendAuthCookies } from '../../services/createAuthTokensService.js';
 import { generateRandomHex } from '../../utils/generateRandomHex.js';
 
 import User from "../../models/User.js";
 
+const OAUTH_STATE_COOKIE = "discord_oauth_state";
+const OAUTH_STATE_MAX_AGE = 10 * 60 * 1000;
+
+/** @type import('express').CookieOptions */
+const stateCookieOpts = {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    maxAge: OAUTH_STATE_MAX_AGE,
+};
+
+/**
+ * @param {string} a
+ * @param {string} b
+ * @returns {boolean}
+ */
+const safeEqual = (a, b) => {
+    const aBuf = Buffer.from(a);
+    const bBuf = Buffer.from(b);
+    return aBuf.length === bBuf.length && timingSafeEqual(aBuf, bBuf);
+};
+
 router.get("/auth/discord", (_req, res) => {
     const CLIENT_ID = process.env.DISCORD_CLIENT_ID;
     const CALLBACK_URL = `${SERVER_URL}/auth/discord/callback`;
     const SCOPE = "identify email";
+    const state = generateRandomHex(32);
     const discordAuthURL =
         "https://discord.com/oauth2/authorize?" +
         "client_id=" + CLIENT_ID + "&" +
         "redirect_uri=" + encodeURIComponent(CALLBACK_URL) + "&" +
         "response_type=code&" +
-        "scope=" + encodeURIComponent(SCOPE);
+        "scope=" + encodeURIComponent(SCOPE) + "&" +
+        "state=" + encodeURIComponent(state);
+    res.cookie(OAUTH_STATE_COOKIE, state, stateCookieOpts);
     res.redirect(discordAuthURL);
 });
 
@@ -31,14 +58,31 @@ router.get("/auth/discord/callback", async (req, res) => {
     const FAILURE_REDIRECT_URL = `${FRONTEND_URL}/login?authorize_failed=true`;
 
     const code = req.query.code;
+    const state = req.query.state;
+
+    const clearStateCookie = () => res.clearCookie(OAUTH_STATE_COOKIE, stateCookieOpts);
 
     if (typeof code !== 'string') {
+        clearStateCookie();
         return res.status(400).json({ message: 'Query parameter "code" must be a string' });
     }
 
     if (!code) {
+        clearStateCookie();
         return res.status(400).json({ message: "Authorization code not provided!" });
     }
+
+    const storedState = req.cookies[OAUTH_STATE_COOKIE];
+    if (
+        typeof state !== 'string' ||
+        typeof storedState !== 'string' ||
+        !safeEqual(state, storedState)
+    ) {
+        clearStateCookie();
+        return res.redirect(`${FAILURE_REDIRECT_URL}&message=invalid_oauth_state`);
+    }
+
+    clearStateCookie();
 
     try {
         /*
