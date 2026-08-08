@@ -83,7 +83,6 @@ const MoveListModal = () => {
          */
         mutationFn: ({ prevListId, nextListId, currentIndex }) =>
             listApi.reorderList(listToMove._id, {
-                boardId: boardState.board._id,
                 prevListId,
                 nextListId,
                 oldPos: currentIndex,

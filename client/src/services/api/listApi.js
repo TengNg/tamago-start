@@ -58,7 +58,6 @@ function copyList(listId, prevId, nextId) {
 /**
  * @param {string} listId
  * @param {{
- *   boardId: string;
  *   prevListId: string | null | undefined;
  *   nextListId: string | null | undefined;
  *   oldPos: number;

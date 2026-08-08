@@ -80,10 +80,12 @@ const addList = async (req, res) => {
 const reorder = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
-    const { boardId, prevListId, nextListId, oldPos, newPos } = req.body;
+    const { prevListId, nextListId, oldPos, newPos } = req.body;
 
     const foundList = await List.findById(id);
-    if (!foundList) return res.sendStatus(404);
+    if (!foundList) {
+        return res.sendStatus(404);
+    }
 
     await checkBoardPermission({
         boardId: foundList.boardId.toString(),
@@ -97,7 +99,7 @@ const reorder = async (req, res) => {
 
     try {
         const newOrder = await generateListOrder({
-            boardId,
+            boardId: foundList.boardId.toString(),
             prevListId: prevListId || null,
             nextListId: nextListId || null,
             session,

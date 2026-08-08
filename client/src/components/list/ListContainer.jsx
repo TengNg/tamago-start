@@ -145,7 +145,6 @@ const ListContainer = () => {
                 addPendingReorder(removed._id);
 
                 await listApi.reorderList(removed._id, {
-                    boardId: boardState.board._id,
                     prevListId,
                     nextListId,
                     oldPos: srcIndex,
