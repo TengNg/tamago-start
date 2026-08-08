@@ -3,15 +3,17 @@ import { writedownApi } from "../services/api";
 import useToast from "./useToast";
 import { getErrorMessage } from "../utils/getErrorMessage";
 import { writedownKeys } from "../queries/writedownKeys";
-import { lexorank } from "../lib/lexorank";
 
 const useWritedownMutations = () => {
     const queryClient = useQueryClient();
     const toast = useToast();
 
     const createMutation = useMutation({
-        mutationFn: async (/** @type {string} */ rank) => {
-            return writedownApi.createWritedown(rank);
+        mutationFn: async (
+            /** @type {{ prevId: string | null, nextId: string | null }} */
+            { prevId, nextId },
+        ) => {
+            return writedownApi.createWritedown(prevId, nextId);
         },
         onSuccess: (data) => {
             queryClient.setQueryData(
@@ -20,10 +22,7 @@ const useWritedownMutations = () => {
                     /** @type {{ writedowns: Writedown[] } | undefined} */ old,
                 ) => {
                     return {
-                        writedowns: [
-                            ...(old?.writedowns ?? []),
-                            data.newWritedown,
-                        ],
+                        writedowns: [...(old?.writedowns ?? []), data],
                     };
                 },
             );
@@ -158,36 +157,10 @@ const useWritedownMutations = () => {
 
     const reorderMutation = useMutation({
         mutationFn: async (
-            /** @type {{ id: string, oldIndex: number, newIndex: number }} */
-            { id, oldIndex, newIndex },
+            /** @type {{ id: string, prevId: string | null, nextId: string | null }} */
+            { id, prevId, nextId },
         ) => {
-            const cached =
-                /** @type {{ writedowns: Writedown[] } | undefined} */ (
-                    queryClient.getQueryData(writedownKeys.all())
-                );
-            if (!cached) return;
-
-            /** @type {Writedown[]} */
-            const items = [...cached.writedowns];
-            const [removed] = items.splice(oldIndex, 1);
-            items.splice(newIndex, 0, removed);
-
-            const prevRank = items[newIndex - 1]?.order;
-            const nextRank = items[newIndex + 1]?.order;
-            const [rank, ok] = lexorank.insert(prevRank, nextRank);
-
-            if (!ok) {
-                throw new Error(
-                    "Invalid order, please try dragging to another position",
-                );
-            }
-
-            removed.order = rank;
-            queryClient.setQueryData(writedownKeys.all(), {
-                writedowns: items,
-            });
-
-            await writedownApi.reorderWritedown(id, rank);
+            await writedownApi.reorderWritedown(id, prevId, nextId);
         },
         onError: (err) => {
             toast.error(
@@ -198,8 +171,10 @@ const useWritedownMutations = () => {
     });
 
     return {
-        createWritedown: (/** @type {string} */ rank) =>
-            createMutation.mutateAsync(rank),
+        createWritedown: (
+            /** @type {string | null} */ prevId,
+            /** @type {string | null} */ nextId,
+        ) => createMutation.mutateAsync({ prevId, nextId }),
         saveWritedown: (
             /** @type {string} */ id,
             /** @type {string} */ content,
@@ -214,9 +189,9 @@ const useWritedownMutations = () => {
         ) => updateTitleMutation.mutateAsync({ id, title }),
         reorderWritedown: (
             /** @type {string} */ id,
-            /** @type {number} */ oldIndex,
-            /** @type {number} */ newIndex,
-        ) => reorderMutation.mutateAsync({ id, oldIndex, newIndex }),
+            /** @type {string | null} */ prevId,
+            /** @type {string | null} */ nextId,
+        ) => reorderMutation.mutateAsync({ id, prevId, nextId }),
         isCreating: createMutation.isPending,
         isSaving: saveMutation.isPending,
     };

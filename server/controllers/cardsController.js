@@ -125,7 +125,7 @@ const reorder = async (req, res) => {
     const currentListId = populatedList._id;
     const currentCardListTitle = populatedList.title;
 
-    const targetList = await List.findById(listId).lean();
+    const targetList = await List.findOne({ _id: listId, boardId: foundCard.boardId }).lean();
     if (!targetList) {
         return res.status(403).json({ message: "list not found" });
     }
@@ -142,7 +142,7 @@ const reorder = async (req, res) => {
 
     try {
         const newOrder = await generateCardOrder({
-            listId,
+            listId: targetList._id.toString(),
             prevCardId: prevCardId || null,
             nextCardId: nextCardId || null,
             session,
@@ -331,6 +331,7 @@ const deleteCard = async (req, res) => {
             docModel: "Card",
             docTitle: foundCard.title,
             description: `card with title "${foundCard.title}" deleted`,
+            session,
         });
 
         await session.commitTransaction();

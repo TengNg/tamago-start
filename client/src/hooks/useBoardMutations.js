@@ -104,21 +104,13 @@ const useBoardMutations = () => {
             addCardToList(listId, tempCard);
             return { listId, tempId: tempCard._id };
         },
-        onSuccess: (
-            data,
-            _,
-            /** @type {{ listId: string, tempId: string } | undefined} */ context,
-        ) => {
+        onSuccess: (data, _, context) => {
             if (!context) return;
             removeCardFromBoard(context.listId, context.tempId);
             addCardToList(context.listId, data);
             socket.emit(SOCKET_EVENTS.CARD_CREATE, data);
         },
-        onError: (
-            err,
-            _,
-            /** @type {{ listId: string, tempId: string } | undefined} */ context,
-        ) => {
+        onError: (err, _, context) => {
             if (!context) return;
             removeCardFromBoard(context.listId, context.tempId);
             toast.error(getErrorMessage(err, "Failed to add new card"));
@@ -182,10 +174,16 @@ const useBoardMutations = () => {
     });
 
     const moveCardByIndexMutation = useMutation({
-        mutationFn: async (
+        onMutate: async (
             /** @type {{ card: { _id: string, listId: string }, insertedIndex: number }} */
-            { card, insertedIndex },
+            { card },
         ) => {
+            return {
+                originalCards: boardState.cards[card.listId],
+                listId: card.listId,
+            };
+        },
+        mutationFn: async ({ card, insertedIndex }) => {
             const cards = boardState.cards[card.listId];
             const currentIndex = cards.findIndex(
                 (/** @type {{ _id: string }} */ el) => el._id == card._id,
@@ -228,7 +226,16 @@ const useBoardMutations = () => {
                 listId,
             });
         },
-        onError: (err) => {
+        onError: (err, _, context) => {
+            if (context) {
+                dispatch({
+                    type: BOARD_ACTIONS.SET_LIST_CARDS,
+                    payload: {
+                        listId: context.listId,
+                        cards: context.originalCards,
+                    },
+                });
+            }
             const errMsg = getErrorMessage(err, "Failed to move this card");
             toast.error(errMsg);
         },

@@ -375,13 +375,17 @@ export function useBoardSocket({
 
                         const currentPages = [...old.pages];
                         const currentFirstPage = currentPages[0];
+                        const isFirstPageFull =
+                            currentFirstPage.nextCursor != null;
                         const newFirstPage = {
                             ...currentFirstPage,
                             messages: [
                                 chatMessage,
                                 ...currentFirstPage.messages.slice(
                                     0,
-                                    currentFirstPage.messages.length - 1,
+                                    isFirstPageFull
+                                        ? currentFirstPage.messages.length - 1
+                                        : currentFirstPage.messages.length,
                                 ),
                             ],
                         };

@@ -16,3 +16,15 @@ test:
 
 format:
 	cd client && npm run format
+
+client-type:
+	cd client && npm run type
+
+server-type:
+	cd server && npm run type 
+
+client-lint:
+	cd client && npm run lint
+
+server-lint:
+	cd server && npm run lint 

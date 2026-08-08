@@ -65,6 +65,16 @@ export const BoardStateContextProvider = ({ children }) => {
         setIsRemoved,
     });
 
+    // // TODO: band-aid
+    // // keep the board snapshot cache in sync with the live reducer state so a
+    // // remount never re-seeds the board with stale data
+    // useEffect(() => {
+    //     if (!boardId || Object.keys(boardState).length === 0) {
+    //         return;
+    //     }
+    //     queryClient.setQueryData(boardKeys.detail(boardId), boardState);
+    // }, [boardId, boardState, queryClient]);
+
     const boardUIState = useBoardUIState();
 
     /** @param {string} highlight */

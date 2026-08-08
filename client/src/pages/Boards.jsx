@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import BoardItem from "../components/board/BoardItem";
 import BoardForm from "../components/board/BoardForm";
 import Title from "../components/ui/Title";
@@ -32,10 +32,6 @@ const Boards = () => {
         queryKey: boardKeys.all(boardFilter),
         queryFn: () => boardApi.fetchBoards({ filter: boardFilter }),
     });
-
-    useEffect(() => {
-        boardsQuery.refetch();
-    }, []);
 
     /**
      * @param {"all" | "owned" | "joined"} status

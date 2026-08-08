@@ -5,6 +5,7 @@ import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import useToast from "../../hooks/useToast";
 import BoardOptions from "./BoardOptions";
 import { getErrorMessage } from "../../utils/getErrorMessage";
+import useCurrentUser from "../../hooks/useCurrentUser";
 
 /**
  * @param {{
@@ -27,10 +28,18 @@ const BoardHeader = ({ setOpenCopyBoardForm }) => {
         socket,
     } = useBoardState();
 
+    const currentUser = useCurrentUser();
+
     const toast = useToast();
 
     const [openBoardOptions, setOpenBoardOptions] = useState(false);
-    const [initialTitle, setInitialTitle] = useState("");
+    const [initialTitle, setInitialTitle] = useState(boardState.board.title);
+
+    const isOwner =
+        boardState.members.findIndex(
+            /** @param {BoardMember} m */
+            (m) => m.role === "owner" && m.userId === currentUser._id,
+        ) !== -1;
 
     /**
      * @param {string} value
@@ -47,11 +56,13 @@ const BoardHeader = ({ setOpenCopyBoardForm }) => {
                 "title",
                 value,
             );
-            setInitialTitle(data.title);
+
             updateBoardField({
                 field: "title",
                 value: data.title,
             });
+
+            setInitialTitle(data.title);
 
             socket.emit(SOCKET_EVENTS.BOARD_UPDATE, {
                 field: "title",
@@ -91,6 +102,7 @@ const BoardHeader = ({ setOpenCopyBoardForm }) => {
             <div>
                 <input
                     maxLength={80}
+                    disabled={!isOwner}
                     className="flex-1 bg-transparent overflow-hidden text-gray-700 whitespace-nowrap text-ellipsis border-b-2 border-gray-700 py-1 font-medium sm:font-bold select-none mb-2 focus:outline-hidden"
                     id="board-title-input"
                     style={{

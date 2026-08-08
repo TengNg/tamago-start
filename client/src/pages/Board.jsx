@@ -59,8 +59,14 @@ const Board = () => {
     });
 
     useEffect(() => {
+        socket.connect();
+        return () => {
+            socket.disconnect();
+        };
+    }, [boardId]);
+
+    useEffect(() => {
         if (boardQuery.data) {
-            socket.connect();
             dispatch({
                 type: BOARD_ACTIONS.SET_STATE,
                 payload: {
@@ -68,10 +74,6 @@ const Board = () => {
                 },
             });
         }
-
-        return () => {
-            socket.disconnect();
-        };
     }, [boardQuery.data]);
 
     useEffect(() => {
@@ -174,7 +176,7 @@ const Board = () => {
                 setOpen={setOpenCopyBoardForm}
                 title="create a copy of this board"
             >
-                <CopyBoardForm />
+                <CopyBoardForm setOpen={setOpenCopyBoardForm} />
             </Modal>
 
             {openedCardQuickEditor && (

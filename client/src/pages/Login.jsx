@@ -23,7 +23,7 @@ export default function Login() {
     const loginMutation = useMutation({
         mutationFn: () => authApi.login({ username, password }),
         onSuccess: (_data, _variables, _context) => {
-            queryClient.resetQueries({ queryKey: ["me"], exact: true });
+            queryClient.resetQueries();
             navigate(from, { replace: true });
         },
         onError: (err) => {

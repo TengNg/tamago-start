@@ -6,6 +6,8 @@ import User from "../models/User.js";
 import BoardMembership from "../models/BoardMembership.js";
 import Attachment from "../models/Attachment.js";
 import CardComment from "../models/CardComment.js";
+import BoardActivity from "../models/BoardActivity.js";
+import ChatMessage from "../models/ChatMessage.js";
 import saveBoardActivity from '../services/saveBoardActivity.js';
 import { checkAllowedRoles } from '../services/boardPermissionService.js';
 
@@ -385,13 +387,16 @@ const removeMemberFromBoard = async (req, res) => {
         return res.status(403).json({ message: 'cannot remove yourself' });
     }
 
-    await BoardMembership.deleteOne({
+    const result = await BoardMembership.deleteOne({
         boardId: board._id,
         userId: foundMember._id,
         role: 'member'
     });
+    if (result.deletedCount === 0) {
+        return res.status(400).json({ message: "failed to remove member" });
+    }
 
-    res.status(200).json({ message: 'Member removed from the board successfully' });
+    res.sendStatus(204);
 };
 
 /**
@@ -426,15 +431,16 @@ const closeBoard = async (req, res) => {
         await Card.deleteMany({ boardId: id }, { session });
         await List.deleteMany({ boardId: id }, { session });
         await BoardMembership.deleteMany({ boardId: id }, { session });
+        await BoardActivity.deleteMany({ boardId: id }, { session });
+        await ChatMessage.deleteMany({ boardId: id }, { session });
         await Board.deleteOne({ _id: id }, { session });
 
         await session.commitTransaction();
 
-        res.status(200).json({ message: 'board closed' });
+        res.sendStatus(204);
     } catch (error) {
         await session.abortTransaction();
-        const status = error.status || 500;
-        res.status(status).json({ message: error.message });
+        throw error;
     } finally {
         session.endSession();
     }
@@ -536,8 +542,14 @@ const getListCount = async (req, res) => {
 
     const foundBoard = await Board.findById(id);
     if (!foundBoard) {
-        return res.status(403).json({ message: 'board not found' });
+        return res.sendStatus(404);
     }
+
+    await checkAllowedRoles({
+        roles: ["member", "owner"],
+        userId: req.user.userId,
+        boardId: foundBoard._id.toString()
+    });
 
     const count = await List.countDocuments({ boardId: id });
     return res.status(200).json({ count });

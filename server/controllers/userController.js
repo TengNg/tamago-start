@@ -1,7 +1,7 @@
 import User from '../models/User.js';
 import Board from '../models/Board.js';
 import bcrypt from 'bcryptjs';
-import { usernameRegex } from '../constants/regex.js';
+import { isValidUsername } from '../services/usernameValidationService.js';
 import { sanitizeUser } from '../services/userService.js';
 
 /**
@@ -36,7 +36,7 @@ const updateUsername = async (req, res) => {
         return res.status(409).json({ message: "Username is already exists" });
     }
 
-    if (!usernameRegex.test(newUsername)) {
+    if (!isValidUsername(newUsername)) {
         return res.status(422).json({ message: "Invalid username" });
     }
 

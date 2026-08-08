@@ -7,7 +7,6 @@ import { useSearchParams } from "react-router-dom";
 import { closestCenter, DndContext, DragOverlay } from "@dnd-kit/core";
 import { rectSwappingStrategy, SortableContext } from "@dnd-kit/sortable";
 import { createPortal } from "react-dom";
-import { lexorank } from "../lib/lexorank";
 import useWritedownMutations from "../hooks/useWritedownMutations";
 import { writedownApi } from "../services/api";
 import { writedownKeys } from "../queries/writedownKeys";
@@ -38,10 +37,12 @@ const Writedowns = () => {
         queryFn: () => writedownApi.fetchWritedowns(),
     });
 
-    const writedowns = useMemo(
-        () => data?.writedowns ?? [],
-        [data?.writedowns],
-    );
+    const writedowns = useMemo(() => {
+        const all = data?.writedowns ?? [];
+        return searchParams.get("filter") === "pinned"
+            ? all.filter((w) => w.pinned)
+            : all;
+    }, [data?.writedowns, searchParams]);
 
     function handleFilterPinned() {
         if (searchParams.get("filter") === "pinned") {
@@ -66,12 +67,9 @@ const Writedowns = () => {
     async function handleCreateWritedown() {
         if (isCreating) return;
 
-        const rank = lexorank.insert(
-            writedowns[writedowns.length - 1]?.order,
-            undefined,
-        )[0];
+        const prevId = writedowns[writedowns.length - 1]?._id ?? null;
 
-        await createWritedown(rank);
+        await createWritedown(prevId, null);
     }
 
     /**
@@ -104,23 +102,41 @@ const Writedowns = () => {
      * @param {import("@dnd-kit/core").DragEndEvent} e
      */
     async function handleOnDragEnd(e) {
+        setActiveWritedown(null);
+
         const { active, over } = e;
 
-        if (!over || active.id == over.id) {
+        if (!over || active.id === over.id) {
             return;
         }
 
         const activeId = /** @type {string} */ (active.id);
         const overId = /** @type {string} */ (over.id);
 
-        const oldIndex = writedowns.findIndex((w) => w._id == activeId);
-        const newIndex = writedowns.findIndex((w) => w._id == overId);
+        const cached = /** @type {{ writedowns: Writedown[] } | undefined} */ (
+            queryClient.getQueryData(writedownKeys.all())
+        );
+        if (!cached) {
+            return;
+        }
+
+        const oldIndex = cached.writedowns.findIndex((w) => w._id == activeId);
+        const newIndex = cached.writedowns.findIndex((w) => w._id == overId);
 
         if (oldIndex === newIndex) {
             return;
         }
 
-        await reorderWritedown(activeId, oldIndex, newIndex);
+        const items = [...cached.writedowns];
+        const [moved] = items.splice(oldIndex, 1);
+        items.splice(newIndex, 0, moved);
+
+        const prevId = items[newIndex - 1]?._id ?? null;
+        const nextId = items[newIndex + 1]?._id ?? null;
+
+        queryClient.setQueryData(writedownKeys.all(), { writedowns: items });
+
+        await reorderWritedown(activeId, prevId, nextId);
     }
 
     /**

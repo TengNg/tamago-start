@@ -1,5 +1,6 @@
 import Board from "../models/Board.js";
 import BoardActivity from "../models/BoardActivity.js";
+import { checkAllowedRoles } from '../services/boardPermissionService.js';
 
 /**
  * @param {import('express').Request} req
@@ -11,6 +12,12 @@ const getBoardActivities = async (req, res) => {
     if (!foundBoard) {
         return res.sendStatus(404);
     }
+
+    await checkAllowedRoles({
+        roles: ["member", "owner"],
+        userId: req.user.userId,
+        boardId: foundBoard._id.toString()
+    });
 
     const perPage = 20;
     const page = typeof req.query.page === 'string'? parseInt(req.query.page, 10) : 1;

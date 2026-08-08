@@ -5,7 +5,12 @@ import useToast from "../../hooks/useToast";
 import { getErrorMessage } from "../../utils/getErrorMessage";
 import { useMutation } from "@tanstack/react-query";
 
-const CopyBoardForm = () => {
+/**
+ * @param {{
+ *   setOpen: React.Dispatch<React.SetStateAction<boolean>>
+ * }} params
+ */
+const CopyBoardForm = ({ setOpen }) => {
     const { boardState } = useBoardState();
 
     /** @type {React.MutableRefObject<HTMLInputElement | null>} */
@@ -22,6 +27,7 @@ const CopyBoardForm = () => {
         onSuccess: (_data, _variables, _context) => {
             setTitle("");
             setDescription("");
+            setOpen(false);
             toast.success("Board copied successfully");
         },
         onError: (err) => {

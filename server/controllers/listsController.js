@@ -254,8 +254,7 @@ const deleteList = async (req, res) => {
         res.sendStatus(204);
     } catch (error) {
         await session.abortTransaction();
-        const status = error.status || 500;
-        res.status(status).json({ message: error.message });
+        throw error;
     } finally {
         session.endSession();
     }
@@ -403,7 +402,8 @@ const moveList = async (req, res) => {
                 const msg = `Maximum list count reached for board "${newBoard.title}" (maximum: ${newBoard.limits.maxLists})`;
                 return res.status(400).json({ message: msg });
             }
-            const movedCardCount = await Card.countDocuments({ boardId: newBoard._id, listId: foundList._id });
+
+            const movedCardCount = await Card.countDocuments({ boardId: initialBoardId, listId: foundList._id });
             if (newBoard.stats.cardCount + movedCardCount > newBoard.limits.maxCards) {
                 const msg = `Maximum card count reached for board "${newBoard.title}" (maximum: ${newBoard.limits.maxCards})`;
                 return res.status(400).json({ message: msg });
@@ -453,8 +453,7 @@ const moveList = async (req, res) => {
         return res.status(200).json({ list: foundList, cards: newCards });
     } catch (err) {
         await session.abortTransaction();
-        const status = err.status || 500;
-        res.status(status).json({ message: err.message });
+        throw err;
     } finally {
         session.endSession();
     }

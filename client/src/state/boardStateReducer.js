@@ -57,7 +57,7 @@ export function boardStateReducer(state, action) {
             const { listId, field, value } = action.payload;
             return {
                 ...state,
-                lists: state.lists.map((list) =>
+                lists: (state.lists ?? []).map((list) =>
                     list._id === listId ? { ...list, [field]: value } : list,
                 ),
             };
@@ -67,7 +67,7 @@ export function boardStateReducer(state, action) {
             const { list } = action.payload;
             return {
                 ...state,
-                lists: [...state.lists, list],
+                lists: [...(state.lists ?? []), list],
                 cards: {
                     ...state.cards,
                     [list._id]: [],
@@ -77,7 +77,7 @@ export function boardStateReducer(state, action) {
 
         case BOARD_ACTIONS.ADD_LIST_TO_BOARD_BY_INDEX: {
             const { list, cards, index } = action.payload;
-            const newLists = [...state.lists];
+            const newLists = [...(state.lists ?? [])];
             newLists.splice(index, 0, list);
             return {
                 ...state,
@@ -92,7 +92,7 @@ export function boardStateReducer(state, action) {
         case BOARD_ACTIONS.MOVE_LIST: {
             const { listId, fromIndex, toIndex } = action.payload;
 
-            const foundListIndex = state.lists.findIndex(
+            const foundListIndex = (state.lists ?? []).findIndex(
                 (l) => l._id === listId,
             );
 
@@ -100,7 +100,7 @@ export function boardStateReducer(state, action) {
                 return state;
             }
 
-            const newLists = [...state.lists];
+            const newLists = [...(state.lists ?? [])];
             const [movedList] = newLists.splice(fromIndex, 1);
 
             newLists.splice(toIndex, 0, movedList);
@@ -112,7 +112,9 @@ export function boardStateReducer(state, action) {
 
         case BOARD_ACTIONS.DELETE_LIST: {
             const { listId } = action.payload;
-            const lists = [...state.lists].filter((l) => l._id !== listId);
+            const lists = [...(state.lists ?? [])].filter(
+                (l) => l._id !== listId,
+            );
             const cards = { ...state.cards };
             delete cards[listId];
             return { ...state, lists, cards };
@@ -203,7 +205,7 @@ export function boardStateReducer(state, action) {
             const { memberId } = action.payload;
             return {
                 ...state,
-                members: [...state.members].filter(
+                members: [...(state.members ?? [])].filter(
                     (member) => member.userId !== memberId,
                 ),
             };
@@ -213,7 +215,7 @@ export function boardStateReducer(state, action) {
             const { member } = action.payload;
             return {
                 ...state,
-                members: [...state.members, member],
+                members: [...(state.members ?? []), member],
             };
         }
 

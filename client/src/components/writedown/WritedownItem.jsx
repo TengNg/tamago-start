@@ -30,8 +30,7 @@ const WritedownItem = ({ writedown, open, remove, pin }) => {
 
     /** @type {React.CSSProperties} */
     const style = {
-        transition: undefined,
-        transform: CSS.Transform.toString(transform),
+        transform: transform ? CSS.Translate.toString(transform) : undefined,
         opacity: isDragging ? 0.2 : 1,
         cursor: "auto",
     };

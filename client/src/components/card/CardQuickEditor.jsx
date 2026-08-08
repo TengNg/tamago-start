@@ -86,6 +86,13 @@ const CardQuickEditor = ({
                 value: newTitle,
             });
         } catch (err) {
+            updateCardField({
+                id: card._id,
+                listId: card.listId,
+                field: "title",
+                value: card.title,
+            });
+            setInitialTitle(card.title);
             toast.error("Failed to update title");
         }
     };

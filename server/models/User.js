@@ -1,30 +1,5 @@
 import { Schema, model } from 'mongoose';
-
-const INVALID_USERNAMES = Object.freeze([
-  // Unknown
-  "unknown", "unassigned", "none", "invalid",
-
-  // System
-  "admin", "administrator", "root", "system", "support",
-  "moderator", "mod", "staff", "owner", "superuser",
-  "guest", "default", "public", "api", "server", "bot",
-  "null", "undefined", "true", "false",
-
-  // Routes
-  "login", "logout", "register", "signup", "signin",
-  "me", "profile", "settings", "dashboard", "account",
-  "users", "user", "boards", "board",
-  "search", "explore", "home", "about",
-  "contact", "terms", "privacy", "error",
-
-  // Placeholder
-  "test", "testing", "demo", "sample", "example",
-  "temp", "temporary", "deleted",
-  "anonymous", "anon",
-
-  // Sensitive
-  "verified", "official", "team", "security", "help", "info"
-]);
+import { isValidUsername } from '../services/usernameValidationService.js';
 
 const UserSchema = new Schema({
     username: {
@@ -32,31 +7,8 @@ const UserSchema = new Schema({
         required: true,
         unique: true,
         validate: {
-            /** @param {any} value */
-            validator: function (value) {
-                const v = String(value).trim().toLowerCase();
-
-                if (INVALID_USERNAMES.includes(v)) {
-                    return false;
-                }
-
-                if (v.length < 2) {
-                    return false;
-                }
-
-                // only numbers
-                if (/^\d+$/.test(v)) {
-                    return false;
-                }
-
-                // only allow safe chars
-                if (!/^[a-z0-9_]+$/.test(v)) {
-                    return false;
-                }
-
-                return true;
-            },
-            message: 'not allowed'
+            validator: isValidUsername,
+            message: 'username is not allowed'
         }
     },
 

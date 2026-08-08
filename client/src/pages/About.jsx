@@ -51,23 +51,23 @@ const Home = () => {
                                     <ul className="flex flex-col gap-4 ms-4 list-disc">
                                         <li>
                                             <span className="key">0</span>{" "}
-                                            navigate to Profile
+                                            navigate to About
                                         </li>
                                         <li>
                                             <span className="key">1</span>{" "}
-                                            navigate to Home
-                                        </li>
-                                        <li>
-                                            <span className="key">2</span>{" "}
                                             navigate to Boards
                                         </li>
                                         <li>
+                                            <span className="key">2</span>{" "}
+                                            navigate to Writedowns
+                                        </li>
+                                        <li>
                                             <span className="key">3</span>{" "}
-                                            navigate to Writedown
+                                            navigate to Activities
                                         </li>
                                         <li>
                                             <span className="key">4</span>{" "}
-                                            navigate to Activities
+                                            navigate to Profile
                                         </li>
                                         <li>
                                             <span className="key">5</span>{" "}

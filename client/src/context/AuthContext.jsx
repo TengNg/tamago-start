@@ -16,7 +16,7 @@ export const AuthContextProvider = ({ children }) => {
     /** @param {{ allDevices?: boolean }} opts */
     const logout = async (opts = { allDevices: false }) => {
         await authApi.logout(opts);
-        queryClient.resetQueries({ queryKey: ["me"], exact: true });
+        queryClient.resetQueries();
     };
 
     return (

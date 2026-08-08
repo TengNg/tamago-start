@@ -58,7 +58,7 @@ const BoardOptions = ({
     const handleLeaveBoard = async () => {
         try {
             await boardApi.leaveBoard(boardState.board._id);
-            removeMemberFromBoard(currentUser.username);
+            removeMemberFromBoard(currentUser._id);
             socket.emit(SOCKET_EVENTS.BOARD_LEAVE);
             navigate("/boards");
         } catch (err) {

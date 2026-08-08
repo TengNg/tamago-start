@@ -27,13 +27,8 @@ export default function ListMenu({
     handleCopy,
     isCopying,
 }) {
-    const {
-        boardState,
-        setListToMove,
-        setOpenMoveListForm,
-        updateListField,
-        theme,
-    } = useBoardState();
+    const { boardState, setListToMove, setOpenMoveListForm, theme } =
+        useBoardState();
 
     const { isAnyModalOpen } = useContext(ModalStackContext);
 
@@ -54,6 +49,7 @@ export default function ListMenu({
 
     const duplicate = () => {
         handleCopy(list._id);
+        setOpen(false);
     };
 
     const close = () => {

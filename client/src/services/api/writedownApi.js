@@ -17,11 +17,12 @@ function fetchWritedown(id) {
 }
 
 /**
- * @param {string} rank
- * @returns {Promise<{ newWritedown: Writedown }>}
+ * @param {string | null} [prevId]
+ * @param {string | null} [nextId]
+ * @returns {Promise<Writedown>}
  */
-function createWritedown(rank) {
-    return apiClient.post("/personal_writedowns", { rank });
+function createWritedown(prevId = null, nextId = null) {
+    return apiClient.post("/personal_writedowns", { prevId, nextId });
 }
 
 /**
@@ -67,11 +68,15 @@ function pinWritedown(id) {
 
 /**
  * @param {string} id
- * @param {string} rank
+ * @param {string | null} [prevId]
+ * @param {string | null} [nextId]
  * @returns {Promise<void>}
  */
-function reorderWritedown(id, rank) {
-    return apiClient.patch(`/personal_writedowns/${id}/reorder`, { rank });
+function reorderWritedown(id, prevId = null, nextId = null) {
+    return apiClient.patch(`/personal_writedowns/${id}/reorder`, {
+        prevId,
+        nextId,
+    });
 }
 
 export default {

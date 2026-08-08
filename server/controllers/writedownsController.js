@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import Writedown from "../models/Writedown.js";
 import Attachment from "../models/Attachment.js";
+import { generateWritedownOrder } from '../services/writedownService.js';
 
 /**
  * @param {import('express').Request} req
@@ -34,9 +35,24 @@ const getWritedown = async (req, res) => {
  */
 const createWritedown = async (req, res) => {
     const { userId } = req.user;
-    const { rank } = req.body;
-    const newWritedown = await Writedown.create({ owner: userId, order: rank });
-    return res.status(200).json({ newWritedown });
+    const { prevId, nextId } = req.body;
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const order = await generateWritedownOrder({ userId, prevId, nextId });
+        const newWritedown = await Writedown.create({ owner: userId, order });
+
+        await session.commitTransaction();
+
+        res.status(200).json(newWritedown);
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
+    }
 };
 
 /**
@@ -163,17 +179,33 @@ const deleteAllWritedowns = async (req, res) => {
  * @param {import('express').Response} res
  */
 const reorder = async (req, res) => {
+    const { userId } = req.user;
+    const { prevId, nextId } = req.body;
+
     const writedown = await Writedown.findOne({
         _id: req.params.writedownId,
-        owner: req.user.userId
+        owner: userId
     });
     if (!writedown) {
         return res.sendStatus(404);
     }
 
-    const { rank } = req.body;
-    await Writedown.findOneAndUpdate({ _id: writedown._id }, { order: rank });
-    return res.sendStatus(204);
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const order = await generateWritedownOrder({ userId, prevId, nextId, session });
+        await Writedown.findOneAndUpdate({ _id: writedown._id }, { order }).session(session);
+
+        await session.commitTransaction();
+
+        res.sendStatus(204);
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
+    }
 };
 
 export {
