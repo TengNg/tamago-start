@@ -46,7 +46,7 @@ const createWritedown = async (req, res) => {
 
         await session.commitTransaction();
 
-        res.status(200).json(newWritedown);
+        res.status(201).json(newWritedown);
     } catch (err) {
         await session.abortTransaction();
         throw err;

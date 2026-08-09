@@ -81,7 +81,7 @@ const getCardComment = async (req, res) => {
         onFirstPage: commentsBefore < COMMENTS_PER_PAGE,
     };
 
-    res.status(201).json({ comment });
+    res.status(200).json({ comment });
 };
 
 /**
@@ -133,7 +133,7 @@ const createCardComment = async (req, res) => {
         docTitle: foundCard.title,
     });
 
-    res.status(200).json({ comment: commentWithUser });
+    res.status(201).json({ comment: commentWithUser });
 };
 
 /**

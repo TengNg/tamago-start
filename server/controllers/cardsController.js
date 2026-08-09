@@ -390,7 +390,7 @@ const copyCard = async (req, res) => {
         });
 
         await session.commitTransaction();
-        return res.json(newCard);
+        return res.status(201).json(newCard);
     } catch (err) {
         await session.abortTransaction();
         throw err;

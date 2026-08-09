@@ -303,7 +303,7 @@ const copyList = async (req, res) => {
 
         await session.commitTransaction();
 
-        res.status(200).json({ list, cards });
+        res.status(201).json({ list, cards });
     } catch (err) {
         await session.abortTransaction();
         throw err;

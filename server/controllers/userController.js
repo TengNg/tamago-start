@@ -55,8 +55,7 @@ const updatePassword = async (req, res) => {
     const { currentPassword, newPassword } = req.body;
 
     if (!newPassword) {
-        return res.status(200).json({
-            notice: 'PLEASE_PROVIDE_NEW_PASSWORD',
+        return res.status(400).json({
             message: 'Please provide new password',
         })
     }
@@ -77,8 +76,7 @@ const updatePassword = async (req, res) => {
     }
 
     if (newPassword === currentPassword) {
-        return res.status(200).json({
-            notice: 'PASSWORD_NOT_CHANGED',
+        return res.status(422).json({
             message: "New password is the same as current password",
         });
     }

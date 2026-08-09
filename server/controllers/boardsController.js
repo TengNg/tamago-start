@@ -487,7 +487,7 @@ const copyBoard = async (req, res) => {
 
         await session.commitTransaction();
 
-        return res.status(200).json(newBoard);
+        return res.status(201).json(newBoard);
     } catch (error) {
         await session.abortTransaction();
         throw error;

@@ -85,20 +85,7 @@ const Profile = () => {
             }) => {
                 return meApi.updatePassword({ currentPassword, newPassword });
             },
-        onSuccess: (data, _variables, _context) => {
-            if (data?.notice === "PLEASE_PROVIDE_NEW_PASSWORD") {
-                setMsg({ error: true, content: "Please provide new password" });
-                return;
-            }
-
-            if (data?.notice === "PASSWORD_NOT_CHANGED") {
-                setMsg({
-                    error: true,
-                    content: "New password is the same as current password",
-                });
-                return;
-            }
-
+        onSuccess: (_data, _variables, _context) => {
             queryClient.invalidateQueries({ queryKey: ["me"], exact: true });
 
             setPassword("");
