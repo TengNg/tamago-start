@@ -59,4 +59,6 @@ const boardSchema = new Schema({
     },
 }, { timestamps: true });
 
+boardSchema.index({ createdBy: 1 });
+
 export default model('Board', boardSchema);

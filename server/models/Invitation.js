@@ -27,5 +27,6 @@ const invitationSchema = new Schema({
 }, { timestamps: true });
 
 invitationSchema.index({ invitedUserId: 1, createdAt: -1 });
+invitationSchema.index({ boardId: 1 });
 
 export default model('Invitation', invitationSchema);

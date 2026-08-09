@@ -8,6 +8,7 @@ import Board from '../models/Board.js';
 import saveBoardActivity from '../services/saveBoardActivity.js';
 import { checkBoardPermission } from '../services/boardPermissionService.js';
 import { generateListOrder } from '../services/listService.js';
+import { cloneList } from '../services/cloneService.js';
 
 /**
  * @param {import('express').Request} req
@@ -274,10 +275,10 @@ const copyList = async (req, res) => {
         return res.sendStatus(404);
     }
 
-    const { title, boardId } = foundList;
+    const boardId = foundList.boardId;
 
     const { board } = await checkBoardPermission({
-        boardId: foundList.boardId.toString(),
+        boardId: boardId.toString(),
         userId,
         resource: "list",
         action: "create"
@@ -292,61 +293,17 @@ const copyList = async (req, res) => {
     session.startTransaction();
 
     try {
-        const order = await generateListOrder({
-            boardId: boardId.toString(),
-            prevListId: prevListId || null,
-            nextListId: nextListId || null,
+        const { list, cards } = await cloneList({
+            list: foundList,
+            prevListId,
+            nextListId,
+            userId,
             session,
         });
 
-        const [list] = await List.create(
-            [{
-                _id: new mongoose.Types.ObjectId(),
-                title,
-                order,
-                boardId,
-            }],
-            { session }
-        );
-
-        const cards = await Card.find({ boardId, listId: id }).lean();
-
-        const cardDocs = cards.map(card => ({
-            ...card,
-            _id: new mongoose.Types.ObjectId(),
-            listId: list._id,
-            boardId: list.boardId,
-        }));
-
-        const copiedCards = cardDocs.length > 0
-            ? await Card.insertMany(cardDocs, { session })
-            : [];
-
-        await Board.updateOne(
-            { _id: board._id },
-            {
-                $inc: {
-                    "stats.listCount": 1,
-                    "stats.cardCount": copiedCards.length,
-                },
-            },
-            { session }
-        );
-
-        await saveBoardActivity({
-            boardId,
-            userId,
-            docId: foundList._id,
-            action: "list.copied",
-            docModel: "List",
-            docTitle: foundList.title,
-            description: `a copy of "${foundList.title}" created`,
-            session,
-        })
-
         await session.commitTransaction();
 
-        res.status(200).json({ list, cards: copiedCards });
+        res.status(200).json({ list, cards });
     } catch (err) {
         await session.abortTransaction();
         throw err;

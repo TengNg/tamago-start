@@ -10,6 +10,7 @@ import BoardActivity from "../models/BoardActivity.js";
 import ChatMessage from "../models/ChatMessage.js";
 import saveBoardActivity from '../services/saveBoardActivity.js';
 import { checkAllowedRoles } from '../services/boardPermissionService.js';
+import { cloneBoard } from '../services/cloneService.js';
 
 const MAX_BOARD_COUNT = 10;
 
@@ -453,7 +454,7 @@ const closeBoard = async (req, res) => {
 const copyBoard = async (req, res) => {
     const { id } = req.params;
     const { title, description } = req.body;
-    const { userId } = req.user
+    const { userId } = req.user;
 
     const board = await Board.findById(id);
     if (!board) {
@@ -476,58 +477,20 @@ const copyBoard = async (req, res) => {
     session.startTransaction();
 
     try {
-        // create board
-        const newBoardId = new mongoose.Types.ObjectId();
-        const newBoard = new Board({
-            _id: newBoardId,
-            title: title || board.title,
-            description: description || board.description,
-            createdBy: userId,
-        });
-        await newBoard.save({ session });
-
-        // create membership
-        const newMembership = new BoardMembership({
-            boardId: newBoardId,
+        const { board: newBoard } = await cloneBoard({
+            board,
+            title,
+            description,
             userId,
-            role: 'owner',
+            session,
         });
-        await newMembership.save({ session });
-
-        // create lists
-        const oldToNewListId = new Map();
-        const lists = await List.find({ boardId: board._id });
-        const listDocs = lists.map(list => {
-            const newListId = new mongoose.Types.ObjectId();
-            oldToNewListId.set(list._id.toString(), newListId);
-            return { _id: newListId, title: list.title, order: list.order, boardId: newBoardId };
-        });
-        if (listDocs.length > 0) {
-            await List.insertMany(listDocs, { session });
-        }
-
-        // create cards
-        const allCards = await Card.find({ listId: { $in: lists.map(l => l._id) } }).lean();
-        const cardDocs = allCards.map(card => ({
-            title: card.title,
-            description: card.description,
-            order: card.order,
-            highlight: card.highlight,
-            priorityLevel: card.priorityLevel,
-            boardId: newBoardId,
-            listId: oldToNewListId.get(card.listId.toString()),
-        }));
-        if (cardDocs.length > 0) {
-            await Card.insertMany(cardDocs, { session });
-        }
 
         await session.commitTransaction();
 
-        return res.sendStatus(204);
+        return res.status(200).json(newBoard);
     } catch (error) {
         await session.abortTransaction();
-        const status = error.status || 500;
-        res.status(status).json({ message: error.message });
+        throw error;
     } finally {
         session.endSession();
     }

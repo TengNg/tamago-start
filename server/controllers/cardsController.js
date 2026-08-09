@@ -10,6 +10,7 @@ import CardComment from '../models/CardComment.js';
 import { checkBoardPermission } from '../services/boardPermissionService.js';
 import saveBoardActivity from '../services/saveBoardActivity.js';
 import { generateCardOrder } from '../services/cardService.js';
+import { cloneCard } from '../services/cloneService.js';
 
 /**
  * @param {import('express').Request} req
@@ -380,36 +381,11 @@ const copyCard = async (req, res) => {
     session.startTransaction();
 
     try {
-        const order = await generateCardOrder({
-            listId: foundCard.listId.toString(),
-            prevCardId: prevCardId || null,
-            nextCardId: nextCardId || null,
-            session,
-        });
-
-        const [newCard] = await Card.create(
-            [{
-                ...foundCard,
-                _id: new mongoose.Types.ObjectId(),
-                order,
-            }],
-            { session }
-        );
-
-        await Board.updateOne(
-            { _id: board._id },
-            { $inc: { "stats.cardCount": 1 } },
-            { session }
-        );
-
-        await saveBoardActivity({
-            boardId: newCard.boardId,
+        const newCard = await cloneCard({
+            card: foundCard,
+            prevCardId,
+            nextCardId,
             userId,
-            docId: newCard._id,
-            action: "card.copied",
-            docModel: "Card",
-            docTitle: foundCard.title,
-            description: `a copy of "${foundCard.title}" created`,
             session,
         });
 
