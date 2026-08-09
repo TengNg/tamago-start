@@ -31,9 +31,6 @@ const Board = () => {
         boardState,
         dispatch,
 
-        isRemoved,
-        setIsRemoved,
-
         focusedCard,
         setFocusedCard,
 
@@ -75,13 +72,6 @@ const Board = () => {
             });
         }
     }, [boardQuery.data]);
-
-    useEffect(() => {
-        if (isRemoved) {
-            navigate("/notfound");
-            setIsRemoved(false);
-        }
-    }, [isRemoved]);
 
     useCardActions({
         boardState,

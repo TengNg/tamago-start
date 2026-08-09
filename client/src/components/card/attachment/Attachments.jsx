@@ -1,14 +1,7 @@
-import {
-    useMutation,
-    useMutationState,
-    useQuery,
-    useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useMutationState, useQuery } from "@tanstack/react-query";
 import { attachmentApi } from "../../../services/api";
 import Icon from "../../shared/Icon";
 import useToast from "../../../hooks/useToast";
-import useBoardState from "../../../hooks/useBoardState";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { getErrorMessage } from "../../../utils/getErrorMessage";
 import { cardKeys } from "../../../queries/cardKeys";
 
@@ -22,9 +15,7 @@ import { cardKeys } from "../../../queries/cardKeys";
  * @param {AttachmentsProps} props
  */
 function Attachments({ card, setViewedAttachment }) {
-    const queryClient = useQueryClient();
     const toast = useToast();
-    const { socket } = useBoardState();
 
     const {
         data: attachments = [],
@@ -41,24 +32,6 @@ function Attachments({ card, setViewedAttachment }) {
         mutationKey: ["delete-card-attachment"],
         mutationFn: async (/** @type {string} */ attachmentId) => {
             return await attachmentApi.deleteAttachment(attachmentId);
-        },
-        onSuccess: (data) => {
-            queryClient.setQueryData(
-                cardKeys.attachments(card._id),
-                /** @param {Attachment[]} old */
-                (old) => {
-                    if (!old) {
-                        return old;
-                    }
-
-                    const updated = [...old].filter((a) => a._id != data.id);
-                    return updated;
-                },
-            );
-            socket.emit(SOCKET_EVENTS.ATTACHMENT_DELETE, {
-                id: data.id,
-                cardId: card._id,
-            });
         },
         onError: (err) => {
             const errMsg = getErrorMessage(err, "Failed to delete attachment");

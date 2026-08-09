@@ -3,27 +3,20 @@ import ChatMessage from "./ChatMessage";
 import ChatInput from "./ChatInput";
 import Icon from "../shared/Icon";
 import { chatApi } from "../../services/api";
-import {
-    useInfiniteQuery,
-    useMutation,
-    useQueryClient,
-} from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import useBoardState from "../../hooks/useBoardState";
 import useCurrentUser from "../../hooks/useCurrentUser";
 import { chatKeys } from "../../queries/chatKeys";
 import useToast from "../../hooks/useToast";
 import { useKeybind } from "../../hooks/useKeybind";
 import { kb } from "../../constants/keybinds";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { getErrorMessage } from "../../utils/getErrorMessage";
 
 /** @returns {JSX.Element} */
 const ChatBox = () => {
-    const queryClient = useQueryClient();
     const currentUser = useCurrentUser();
     const {
         boardState,
-        socket,
         openChatBox: open,
         setOpenChatBox: setOpen,
         isAtBottomOfChatBox: isAtBottom,
@@ -65,15 +58,9 @@ const ChatBox = () => {
         getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     });
 
-    chatQuery.data;
-
     const clearMessagesMutation = useMutation({
         mutationFn: () => chatApi.clearMessages(boardState.board._id),
         onSuccess: (_data, _variables, _context) => {
-            queryClient.invalidateQueries({
-                queryKey: chatKeys.messages(boardState.board._id),
-            });
-            socket.emit(SOCKET_EVENTS.CHAT_CLEAR);
             toast.success("Chat cleared");
         },
         onError: (err) => {

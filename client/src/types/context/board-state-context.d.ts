@@ -22,13 +22,10 @@ declare type BoardContextValue = {
     socket: any;
     isConnected: boolean;
 
-    isRemoved: boolean;
-    setIsRemoved: React.Dispatch<React.SetStateAction<boolean>>;
-
     openedCardQuickEditor: CardQuickEditorData | undefined;
     setOpenedCardQuickEditor: React.Dispatch<React.SetStateAction<CardQuickEditorData | undefined>>;
 
-    setCardQuickEditorHighlight: (highlight: string) => void;
+    setCardQuickEditorHighlight: (highlight: string | null) => void;
 
     listToMove: any;
     setListToMove: React.Dispatch<React.SetStateAction<any>>;
@@ -58,7 +55,6 @@ declare type BoardContextValue = {
     deleteCard: (listId: string, cardId: string) => void;
     addListToBoard: (list: List) => void;
     addCardToList: (listId: string, card: Card) => void;
-    addCopiedCard: (card: Card, index: number) => void;
     removeMemberFromBoard: (memberId: string) => void;
     addMemberToBoard: (member: BoardMember) => void;
 

@@ -37,8 +37,7 @@ export default function JoinRequests({ show }) {
         isRefetching,
         isError,
     } = useInfiniteQuery({
-        staleTime: Infinity,
-        queryKey: ["boardRequests"],
+        queryKey: joinRequestKeys.all(),
         queryFn: ({ pageParam }) =>
             joinRequestApi.fetchJoinRequests({ page: pageParam }),
         initialPageParam: 1,

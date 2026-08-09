@@ -1,10 +1,7 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { attachmentApi } from "../../../services/api";
 import useToast from "../../../hooks/useToast";
-import useBoardState from "../../../hooks/useBoardState";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
-import { cardKeys } from "../../../queries/cardKeys";
 import { getErrorMessage } from "../../../utils/getErrorMessage";
 
 /**
@@ -16,10 +13,8 @@ import { getErrorMessage } from "../../../utils/getErrorMessage";
  * @param {UploaderProps} props
  */
 function Uploader({ card }) {
-    const queryClient = useQueryClient();
     const [selectedFileName, setSelectedFileName] = useState("");
     const toast = useToast();
-    const { socket } = useBoardState();
 
     /** @type {React.MutableRefObject<HTMLInputElement | null>} */
     const fileInputRef = useRef(null);
@@ -34,29 +29,13 @@ function Uploader({ card }) {
                 signal: abortControllerRef.current.signal,
             });
         },
-        onSuccess: (data) => {
-            queryClient.setQueryData(
-                cardKeys.attachments(card._id),
-                /**
-                 * @param {Attachment[]} old
-                 */
-                (old) => {
-                    if (!old) {
-                        return old;
-                    }
-
-                    const updated = [...old, data];
-                    return updated;
-                },
-            );
-
+        onSuccess: (_data) => {
             if (fileInputRef.current) {
                 fileInputRef.current.value = "";
             }
 
             toast.success("Attachment uploaded");
             setSelectedFileName("");
-            socket.emit(SOCKET_EVENTS.ATTACHMENT_CREATE, { attachment: data });
         },
         onError: (err, _, _context) => {
             if (err.name === "CanceledError" || err.name === "AbortError") {

@@ -11,6 +11,9 @@ import { checkBoardPermission } from '../services/boardPermissionService.js';
 import saveBoardActivity from '../services/saveBoardActivity.js';
 import { generateCardOrder } from '../services/cardService.js';
 import { cloneCard } from '../services/cloneService.js';
+import { UPDATE_FIELDS } from '../constants/updateFields.js';
+import { SOCKET_EVENTS } from '../../shared/socket-events.js';
+import { emitToBoard } from '../socket/registry.js';
 
 /**
  * @param {import('express').Request} req
@@ -95,6 +98,8 @@ const addCard = async (req, res) => {
         })
 
         await session.commitTransaction();
+
+        emitToBoard(board._id, SOCKET_EVENTS.CARD_CREATED, newCard.toJSON());
 
         return res.status(201).json(newCard);
     } catch (err) {
@@ -181,6 +186,13 @@ const reorder = async (req, res) => {
 
         await session.commitTransaction();
 
+        emitToBoard(foundCard.boardId, SOCKET_EVENTS.CARD_MOVED, {
+            oldListId: currentListId.toString(),
+            newListId: targetList._id.toString(),
+            id: foundCard._id.toString(),
+            newCard: foundCard.toJSON(),
+        });
+
         res.json(foundCard);
     } catch (err) {
         await session.abortTransaction();
@@ -199,10 +211,7 @@ const updateCard = async (req, res) => {
     const { id } = req.params;
     const { field, value } = req.body;
 
-    const allowedFields = [
-        "title", "description", "highlight", "priorityLevel",
-        "owner", "dueDate", "verified",
-    ];
+    const allowedFields = UPDATE_FIELDS.card;
     if (!allowedFields.includes(field)) {
         return res.status(400).json({ message: "Invalid field to update" });
     }
@@ -287,6 +296,13 @@ const updateCard = async (req, res) => {
         description,
     });
 
+    emitToBoard(foundCard.boardId, SOCKET_EVENTS.CARD_UPDATED, {
+        id: foundCard._id.toString(),
+        listId: foundCard.listId.toString(),
+        field,
+        value: newCard[field],
+    });
+
     res.status(200).json(newCard);
 };
 
@@ -336,6 +352,11 @@ const deleteCard = async (req, res) => {
         });
 
         await session.commitTransaction();
+
+        emitToBoard(foundCard.boardId, SOCKET_EVENTS.CARD_DELETED, {
+            listId: foundCard.listId.toString(),
+            id: foundCard._id.toString(),
+        });
 
         res.sendStatus(204);
     } catch (err) {
@@ -390,6 +411,11 @@ const copyCard = async (req, res) => {
         });
 
         await session.commitTransaction();
+
+        emitToBoard(foundCard.boardId, SOCKET_EVENTS.CARD_COPIED, {
+            card: newCard.toJSON(),
+        });
+
         return res.status(201).json(newCard);
     } catch (err) {
         await session.abortTransaction();

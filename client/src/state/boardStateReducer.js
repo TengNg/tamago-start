@@ -90,23 +90,44 @@ export function boardStateReducer(state, action) {
         }
 
         case BOARD_ACTIONS.MOVE_LIST: {
-            const { listId, fromIndex, toIndex } = action.payload;
+            const { listId, order } = action.payload;
 
-            const foundListIndex = (state.lists ?? []).findIndex(
-                (l) => l._id === listId,
-            );
+            const lists = [...(state.lists ?? [])]
+                .map((l) => (l._id === listId ? { ...l, order } : l))
+                .sort((a, b) => {
+                    const aOrder = a.order || "";
+                    const bOrder = b.order || "";
+                    if (aOrder === bOrder) return 0;
+                    if (aOrder === "") return 1;
+                    if (bOrder === "") return -1;
+                    return aOrder.localeCompare(bOrder);
+                });
 
-            if (foundListIndex !== fromIndex) {
-                return state;
-            }
-
-            const newLists = [...(state.lists ?? [])];
-            const [movedList] = newLists.splice(fromIndex, 1);
-
-            newLists.splice(toIndex, 0, movedList);
             return {
                 ...state,
-                lists: newLists,
+                lists,
+            };
+        }
+
+        case BOARD_ACTIONS.COPY_LIST: {
+            const { list, cards } = action.payload;
+
+            const lists = [...(state.lists ?? []), list].sort((a, b) => {
+                const aOrder = a.order || "";
+                const bOrder = b.order || "";
+                if (aOrder === bOrder) return 0;
+                if (aOrder === "") return 1;
+                if (bOrder === "") return -1;
+                return aOrder.localeCompare(bOrder);
+            });
+
+            return {
+                ...state,
+                lists,
+                cards: {
+                    ...state.cards,
+                    [list._id]: cards,
+                },
             };
         }
 
@@ -147,40 +168,28 @@ export function boardStateReducer(state, action) {
             };
         }
 
-        case BOARD_ACTIONS.ADD_CARD_TO_LIST: {
+        case BOARD_ACTIONS.ADD_CARD: {
             const { listId, card } = action.payload;
             const cards = [...(state.cards[listId] ?? [])];
-            return {
-                ...state,
-                cards: {
-                    ...state.cards,
-                    [listId]: [...cards, { ...card, listId }],
-                },
-            };
-        }
+            const exists = cards.some((c) => c._id === card._id);
 
-        case BOARD_ACTIONS.ADD_CARD_TO_LIST_BY_INDEX: {
-            const { listId, index, card } = action.payload;
-            const cards = [...(state.cards[listId] ?? [])];
-            cards.splice(index, 0, { ...card, listId });
             return {
                 ...state,
                 cards: {
                     ...state.cards,
-                    [listId]: cards,
-                },
-            };
-        }
-
-        case BOARD_ACTIONS.COPY_CARD: {
-            const { index, card } = action.payload;
-            const cards = [...(state.cards[card.listId] ?? [])];
-            cards.splice(index + 1, 0, card);
-            return {
-                ...state,
-                cards: {
-                    ...state.cards,
-                    [card.listId]: cards,
+                    [listId]: (exists
+                        ? cards.map((c) =>
+                              c._id === card._id ? { ...card, listId } : c,
+                          )
+                        : [...cards, { ...card, listId }]
+                    ).sort((a, b) => {
+                        const aOrder = a.order || "";
+                        const bOrder = b.order || "";
+                        if (aOrder === bOrder) return 0;
+                        if (aOrder === "") return 1;
+                        if (bOrder === "") return -1;
+                        return aOrder.localeCompare(bOrder);
+                    }),
                 },
             };
         }

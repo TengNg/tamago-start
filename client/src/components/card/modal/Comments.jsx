@@ -1,9 +1,4 @@
-import {
-    useInfiniteQuery,
-    useMutation,
-    useQueryClient,
-} from "@tanstack/react-query";
-import useBoardState from "../../../hooks/useBoardState";
+import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import dateFormatter from "../../../utils/dateFormatter";
 import { useState, useRef, useMemo, useEffect } from "react";
 import Icon from "../../shared/Icon";
@@ -11,7 +6,6 @@ import { useSearchParams } from "react-router-dom";
 import useCurrentUser from "../../../hooks/useCurrentUser";
 import { commentApi } from "../../../services/api";
 import useToast from "../../../hooks/useToast";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { getErrorMessage } from "../../../utils/getErrorMessage";
 import { cardKeys } from "../../../queries/cardKeys";
 
@@ -24,8 +18,6 @@ import { cardKeys } from "../../../queries/cardKeys";
  * @param {CommentsProps} props
  */
 const Comments = ({ card }) => {
-    const queryClient = useQueryClient();
-    const { socket } = useBoardState();
     const currentUser = useCurrentUser();
 
     const [content, setContent] = useState("");
@@ -124,12 +116,6 @@ const Comments = ({ card }) => {
 
     const addCommentQuery = useMutation({
         mutationFn: (/** @type {string} */ content) => addComment(content),
-        onSuccess: (data, _variables, _context) => {
-            queryClient.invalidateQueries({
-                queryKey: cardKeys.comments(card._id),
-            });
-            socket.emit(SOCKET_EVENTS.COMMENT_CREATE, { comment: data });
-        },
         onError: (err) => {
             const errMsg = getErrorMessage(err, "Failed to add new comment");
             toast.error(errMsg);
@@ -138,15 +124,6 @@ const Comments = ({ card }) => {
 
     const deleteCommentQuery = useMutation({
         mutationFn: (/** @type {string} */ id) => deleteComment(id),
-        onSuccess: (_data, commentId, _context) => {
-            queryClient.invalidateQueries({
-                queryKey: cardKeys.comments(card._id),
-            });
-            socket.emit(SOCKET_EVENTS.COMMENT_DELETE, {
-                commentId,
-                cardId: card._id,
-            });
-        },
         onError: (err) => {
             const errMsg = getErrorMessage(err, "Failed to delete comment");
             toast.error(errMsg);

@@ -7,7 +7,7 @@ import {
     useContext,
 } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { attachmentApi } from "../../services/api";
 import useBoardState from "../../hooks/useBoardState";
 import useToast from "../../hooks/useToast";
@@ -17,11 +17,9 @@ import ListSelectOptions from "./modal/ListSelectOptions";
 import Actions from "./modal/Actions";
 import Extra from "./modal/Extra";
 import Comments from "./modal/Comments";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { getErrorMessage } from "../../utils/getErrorMessage";
 import CardModalContext from "../../context/CardModalContext";
 import ModalStackContext from "../../context/ModalStackContext";
-import { cardKeys } from "../../queries/cardKeys";
 
 /**
  * @typedef {Object} CardModalProps
@@ -45,11 +43,10 @@ const CardModal = ({
 }) => {
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const { boardState, socket } = useBoardState();
+    const { boardState } = useBoardState();
     const { isAnyModalOpen } = useContext(ModalStackContext);
     const { card, cardMutation } = useContext(CardModalContext);
 
-    const queryClient = useQueryClient();
     const toast = useToast();
 
     /** @type {React.MutableRefObject<HTMLDivElement | null>} */
@@ -149,17 +146,8 @@ const CardModal = ({
                 signal: abortControllerRef.current.signal,
             });
         },
-        onSuccess: (data) => {
-            queryClient.setQueryData(
-                cardKeys.attachments(card._id),
-                (/** @type {Attachment[] | undefined} */ old) => {
-                    if (!old) return old;
-                    return [...old, data];
-                },
-            );
-
+        onSuccess: (_data) => {
             toast.success("Attachment uploaded successfully");
-            socket.emit(SOCKET_EVENTS.ATTACHMENT_CREATE, { attachment: data });
         },
         onError: (err) => {
             if (err.name === "CanceledError" || err.name === "AbortError") {

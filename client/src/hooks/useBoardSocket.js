@@ -3,9 +3,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { chatKeys } from "../queries/chatKeys";
 import { BOARD_ACTIONS } from "../state/boardActionTypes";
 import { useSearchParams } from "react-router-dom";
-import dateFormatter from "../utils/dateFormatter";
 import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { cardKeys } from "../queries/cardKeys";
+import useCurrentUser from "./useCurrentUser";
 
 /**
  * @param {Card} card
@@ -36,11 +36,10 @@ function applyFilter(card, filters) {
 /**
  * @typedef {Object} UseBoardSocketParams
  * @property {import("@tanstack/react-query").QueryClient} queryClient
- * @property {React.Dispatch<BoardAction>} dispatch
+ * @property {BoardContextValue["dispatch"]} dispatch
  * @property {string | undefined} boardId
  * @property {ToastContextValue} toast
  * @property {boolean} isAtBottomOfChatBox
- * @property {React.Dispatch<React.SetStateAction<boolean>>} setIsRemoved
  */
 
 /**
@@ -53,11 +52,12 @@ export function useBoardSocket({
     boardId,
     toast,
     isAtBottomOfChatBox,
-    setIsRemoved,
 }) {
     const [isConnected, setIsConnected] = useState(false);
 
     const [searchParams] = useSearchParams();
+
+    const currentUser = useCurrentUser();
 
     const getFilters = useCallback(
         () => ({
@@ -71,6 +71,7 @@ export function useBoardSocket({
     const getFiltersRef = useRef(getFilters);
     const toastRef = useRef(toast);
     const isAtBottomOfChatBoxRef = useRef(isAtBottomOfChatBox);
+    const currentUserIdRef = useRef(currentUser._id);
 
     useEffect(() => {
         if (!boardId) {
@@ -80,6 +81,7 @@ export function useBoardSocket({
         getFiltersRef.current = getFilters;
         toastRef.current = toast;
         isAtBottomOfChatBoxRef.current = isAtBottomOfChatBox;
+        currentUserIdRef.current = currentUser._id;
 
         const onConnect = async () => {
             socket.emit(SOCKET_EVENTS.BOARD_JOIN, { boardId });
@@ -95,15 +97,13 @@ export function useBoardSocket({
         socket.on("disconnect", onDisconnect);
 
         socket.on(SOCKET_EVENTS.BOARD_CLOSED, (_) => {
-            toastRef.current.error("board not found");
-            setIsRemoved(true);
+            window.location.reload();
         });
 
         socket.on(
             SOCKET_EVENTS.BOARD_UNAUTHORIZED,
-            /** @param {{ message?: string }} data */ (data) => {
-                toastRef.current.error(data.message || "Unauthorized");
-                setIsRemoved(true);
+            /** @param {{ message?: string }} _data */ (_data) => {
+                window.location.reload();
             },
         );
 
@@ -118,20 +118,15 @@ export function useBoardSocket({
         );
 
         socket.on(
-            SOCKET_EVENTS.BOARD_MEMBER_JOINED,
-            (/** @type {{ username: string }} */ data) => {
-                const { username } = data;
-                const timestamp = Date.now();
-                console.log(
-                    `${username} joined the board, at ${dateFormatter(timestamp)}`,
-                );
-            },
-        );
-
-        socket.on(
             SOCKET_EVENTS.BOARD_MEMBER_LEFT,
             /** @param {{ memberId: string }} data */ (data) => {
                 const { memberId } = data;
+
+                if (memberId === currentUserIdRef.current) {
+                    window.location.reload();
+                    return;
+                }
+
                 dispatch({
                     type: BOARD_ACTIONS.REMOVE_MEMBER,
                     payload: {
@@ -173,27 +168,14 @@ export function useBoardSocket({
 
         socket.on(
             SOCKET_EVENTS.LIST_MOVED,
-            (
-                /** @type {{ id: string, fromIndex: number, toIndex: number }} */ data,
-            ) => {
-                const { id, fromIndex, toIndex } = data;
+            (/** @type {{ id: string, order: string }} */ data) => {
+                const { id, order } = data;
                 dispatch({
                     type: BOARD_ACTIONS.MOVE_LIST,
                     payload: {
                         listId: id,
-                        fromIndex,
-                        toIndex,
+                        order,
                     },
-                });
-            },
-        );
-
-        socket.on(
-            SOCKET_EVENTS.LIST_UPDATED_ALL,
-            /** @param {List[]} data */ (data) => {
-                dispatch({
-                    type: BOARD_ACTIONS.SET_LISTS,
-                    payload: { lists: data },
                 });
             },
         );
@@ -206,6 +188,16 @@ export function useBoardSocket({
                     payload: {
                         list: data,
                     },
+                });
+            },
+        );
+
+        socket.on(
+            SOCKET_EVENTS.LIST_COPIED,
+            /** @param {{ list: List, cards: Card[] }} data */ (data) => {
+                dispatch({
+                    type: BOARD_ACTIONS.COPY_LIST,
+                    payload: data,
                 });
             },
         );
@@ -227,7 +219,7 @@ export function useBoardSocket({
                 const card = applyFilter(data, filters);
 
                 dispatch({
-                    type: BOARD_ACTIONS.ADD_CARD_TO_LIST,
+                    type: BOARD_ACTIONS.ADD_CARD,
                     payload: { listId: card.listId, card },
                 });
             },
@@ -235,14 +227,14 @@ export function useBoardSocket({
 
         socket.on(
             SOCKET_EVENTS.CARD_COPIED,
-            /** @param {{ card: Card, index: number }} data */ (data) => {
+            /** @param {{ card: Card }} data */ (data) => {
                 const filters = getFiltersRef.current();
-                const { card, index } = data;
+                const { card } = data;
                 applyFilter(card, filters);
 
                 dispatch({
-                    type: BOARD_ACTIONS.COPY_CARD,
-                    payload: { index, card },
+                    type: BOARD_ACTIONS.ADD_CARD,
+                    payload: { listId: card.listId, card },
                 });
             },
         );
@@ -277,51 +269,17 @@ export function useBoardSocket({
 
                 const newCard = { ...card, listId: newListId };
                 dispatch({
-                    type: BOARD_ACTIONS.ADD_CARD_TO_LIST,
+                    type: BOARD_ACTIONS.ADD_CARD,
                     payload: { listId: newListId, card: newCard },
                 });
-            },
-        );
 
-        socket.on(
-            SOCKET_EVENTS.CARD_MOVED_BY_INDEX,
-            /** @param {{ cards: Card[], listId: string }} data */ (data) => {
-                const filters = getFiltersRef.current();
-                let { cards, listId } = data;
-                cards = cards.map((card) => applyFilter(card, filters));
-
-                dispatch({
-                    type: BOARD_ACTIONS.SET_LIST_CARDS,
-                    payload: { listId, cards },
-                });
-            },
-        );
-
-        socket.on(
-            SOCKET_EVENTS.CARD_MOVED_TO_LIST,
-            /** @param {{ oldListId: string, newListId: string, insertedIndex: number, card: Card }} data */ (
-                data,
-            ) => {
-                const filters = getFiltersRef.current();
-                const { oldListId, newListId, insertedIndex, card } = data;
-                applyFilter(card, filters);
-
-                dispatch({
-                    type: BOARD_ACTIONS.DELETE_CARD,
-                    payload: {
-                        listId: oldListId,
-                        cardId: card._id,
+                queryClient.setQueryData(
+                    cardKeys.detail(id),
+                    (/** @type {Card | undefined} */ old) => {
+                        if (!old) return old;
+                        return { ...old, listId: newListId };
                     },
-                });
-
-                dispatch({
-                    type: BOARD_ACTIONS.ADD_CARD_TO_LIST_BY_INDEX,
-                    payload: {
-                        index: insertedIndex,
-                        listId: newListId,
-                        card,
-                    },
-                });
+                );
             },
         );
 
@@ -478,7 +436,7 @@ export function useBoardSocket({
                 queryClient.setQueryData(
                     cardKeys.comments(comment.cardId),
                     /**
-                     * @param {import("@tanstack/react-query").InfiniteData<{ comments: CardComment[] }> | undefined} old
+                     * @param {import("@tanstack/react-query").InfiniteData<{ comments: CardComment[]; nextPage: number | null }> | undefined} old
                      */ (old) => {
                         if (!old) {
                             return old;
@@ -486,6 +444,8 @@ export function useBoardSocket({
 
                         const currentPages = [...old.pages];
                         const currentFirstPage = currentPages[0];
+                        const isFirstPageFull =
+                            currentFirstPage.nextPage != null;
 
                         const newFirstPage = {
                             ...currentFirstPage,
@@ -493,7 +453,9 @@ export function useBoardSocket({
                                 comment,
                                 ...currentFirstPage.comments.slice(
                                     0,
-                                    currentFirstPage.comments.length - 1,
+                                    isFirstPageFull
+                                        ? currentFirstPage.comments.length - 1
+                                        : currentFirstPage.comments.length,
                                 ),
                             ],
                         };
@@ -603,21 +565,18 @@ export function useBoardSocket({
             socket.off(SOCKET_EVENTS.BOARD_CLOSED);
             socket.off(SOCKET_EVENTS.BOARD_UNAUTHORIZED);
             socket.off(SOCKET_EVENTS.BOARD_MEMBER_KICKED);
-            socket.off(SOCKET_EVENTS.BOARD_MEMBER_JOINED);
             socket.off(SOCKET_EVENTS.BOARD_MEMBER_LEFT);
             socket.off(SOCKET_EVENTS.BOARD_UPDATED);
             socket.off(SOCKET_EVENTS.LIST_MOVED_TO_BOARD);
             socket.off(SOCKET_EVENTS.LIST_MOVED);
-            socket.off(SOCKET_EVENTS.LIST_UPDATED_ALL);
             socket.off(SOCKET_EVENTS.LIST_CREATED);
+            socket.off(SOCKET_EVENTS.LIST_COPIED);
             socket.off(SOCKET_EVENTS.LIST_DELETED);
             socket.off(SOCKET_EVENTS.LIST_UPDATED);
             socket.off(SOCKET_EVENTS.CARD_CREATED);
             socket.off(SOCKET_EVENTS.CARD_COPIED);
             socket.off(SOCKET_EVENTS.CARD_DELETED);
             socket.off(SOCKET_EVENTS.CARD_MOVED);
-            socket.off(SOCKET_EVENTS.CARD_MOVED_BY_INDEX);
-            socket.off(SOCKET_EVENTS.CARD_MOVED_TO_LIST);
             socket.off(SOCKET_EVENTS.CARD_UPDATED);
             socket.off(SOCKET_EVENTS.CHAT_RECEIVED);
             socket.off(SOCKET_EVENTS.CHAT_DELETED);

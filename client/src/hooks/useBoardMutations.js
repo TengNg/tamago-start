@@ -1,36 +1,21 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { cardApi } from "../services/api";
 import useBoardState from "./useBoardState";
 import useToast from "./useToast";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
-import { BOARD_ACTIONS } from "../state/boardActionTypes";
 import { getErrorMessage } from "../utils/getErrorMessage";
-import { cardKeys } from "../queries/cardKeys";
 
 const useBoardMutations = () => {
     const {
         boardState,
-        dispatch,
-        socket,
-        addCopiedCard,
         addCardToList,
         deleteCard: removeCardFromBoard,
     } = useBoardState();
-
-    const queryClient = useQueryClient();
 
     const toast = useToast();
 
     const deleteCardMutation = useMutation({
         mutationFn: (/** @type {{ _id: string, listId: string }} */ card) =>
             cardApi.deleteCard(card._id),
-        onSuccess: (_, /** @type {{ _id: string, listId: string }} */ card) => {
-            removeCardFromBoard(card.listId, card._id);
-            socket.emit(SOCKET_EVENTS.CARD_DELETE, {
-                listId: card.listId,
-                id: card._id,
-            });
-        },
         onError: (err) => {
             const errMsg = getErrorMessage(err, "Failed to delete card");
             toast.error(errMsg);
@@ -47,20 +32,7 @@ const useBoardMutations = () => {
             );
             const prevId = cards[currentIndex]?._id;
             const nextId = cards[currentIndex + 1]?._id;
-            const data = await cardApi.copyCard(card._id, prevId, nextId);
-            return {
-                card: data,
-                currentIndex,
-            };
-        },
-        onSuccess: (data) => {
-            const { card, currentIndex } = data;
-            addCopiedCard(card, currentIndex);
-
-            socket.emit(SOCKET_EVENTS.CARD_COPY, {
-                card,
-                index: currentIndex,
-            });
+            return cardApi.copyCard(card._id, prevId, nextId);
         },
         onError: (err) => {
             toast.error(getErrorMessage(err, "Failed to copy card"));
@@ -104,11 +76,9 @@ const useBoardMutations = () => {
             addCardToList(listId, tempCard);
             return { listId, tempId: tempCard._id };
         },
-        onSuccess: (data, _, context) => {
+        onSuccess: (_, _variables, context) => {
             if (!context) return;
             removeCardFromBoard(context.listId, context.tempId);
-            addCardToList(context.listId, data);
-            socket.emit(SOCKET_EVENTS.CARD_CREATE, data);
         },
         onError: (err, _, context) => {
             if (!context) return;
@@ -119,7 +89,7 @@ const useBoardMutations = () => {
 
     const moveCardToListMutation = useMutation({
         mutationFn: async (
-            /** @type {{ card: { _id: string, listId: string }, newListId: string }} */
+            /** @type {{ card: Card, newListId: string }} */
             { card, newListId },
         ) => {
             const newList = boardState.lists.find(
@@ -146,27 +116,6 @@ const useBoardMutations = () => {
 
             return { newCard, oldListId: card.listId, newListId };
         },
-        onSuccess: (
-            /** @type {{ newCard: Card, oldListId: string, newListId: string }} */ data,
-        ) => {
-            const { newCard, oldListId, newListId } = data;
-            removeCardFromBoard(oldListId, newCard._id);
-            addCardToList(newListId, newCard);
-            queryClient.setQueryData(
-                cardKeys.detail(newCard._id),
-                (/** @type {Card | undefined} */ old) => {
-                    if (!old) return old;
-                    return { ...old, listId: newListId };
-                },
-            );
-
-            socket.emit(SOCKET_EVENTS.CARD_MOVE, {
-                oldListId,
-                newListId,
-                id: newCard._id,
-                newCard,
-            });
-        },
         onError: (err) => {
             const errMsg = getErrorMessage(err, "Failed to move card");
             toast.error(errMsg);
@@ -174,16 +123,10 @@ const useBoardMutations = () => {
     });
 
     const moveCardByIndexMutation = useMutation({
-        onMutate: async (
-            /** @type {{ card: { _id: string, listId: string }, insertedIndex: number }} */
-            { card },
+        mutationFn: async (
+            /** @type {{ card: Card, insertedIndex: number }} */
+            { card, insertedIndex },
         ) => {
-            return {
-                originalCards: boardState.cards[card.listId],
-                listId: card.listId,
-            };
-        },
-        mutationFn: async ({ card, insertedIndex }) => {
             const cards = boardState.cards[card.listId];
             const currentIndex = cards.findIndex(
                 (/** @type {{ _id: string }} */ el) => el._id == card._id,
@@ -193,49 +136,15 @@ const useBoardMutations = () => {
             const prevId = cards[prev]?._id;
             const nextId = cards[next]?._id;
 
-            const newCards = [...cards];
-            const [moved] = newCards.splice(currentIndex, 1);
-            newCards.splice(insertedIndex, 0, moved);
-
-            dispatch({
-                type: BOARD_ACTIONS.SET_LIST_CARDS,
-                payload: {
-                    listId: card.listId,
-                    cards: newCards,
-                },
-            });
-
-            return cardApi
-                .reorderCard(card._id, {
-                    listId: card.listId,
-                    prevCardId: prevId,
-                    nextCardId: nextId,
-                    oldPos: currentIndex,
-                    newPos: insertedIndex,
-                })
-                .then(() => ({
-                    cards: newCards,
-                    listId: card.listId,
-                }));
-        },
-        onSuccess: (data) => {
-            if (!data) return;
-            const { cards, listId } = data;
-            socket.emit(SOCKET_EVENTS.CARD_MOVE_BY_INDEX, {
-                cards,
-                listId,
+            return cardApi.reorderCard(card._id, {
+                listId: card.listId,
+                prevCardId: prevId,
+                nextCardId: nextId,
+                oldPos: currentIndex,
+                newPos: insertedIndex,
             });
         },
-        onError: (err, _, context) => {
-            if (context) {
-                dispatch({
-                    type: BOARD_ACTIONS.SET_LIST_CARDS,
-                    payload: {
-                        listId: context.listId,
-                        cards: context.originalCards,
-                    },
-                });
-            }
+        onError: (err) => {
             const errMsg = getErrorMessage(err, "Failed to move this card");
             toast.error(errMsg);
         },

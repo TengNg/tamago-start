@@ -1,6 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import useBoardMutations from "../../hooks/useBoardMutations";
 import useToast from "../../hooks/useToast";
+import { useKeybind } from "../../hooks/useKeybind";
+import useClickOutside from "../../hooks/useClickOutside";
+import ModalStackContext from "../../context/ModalStackContext";
 
 /**
  * @param {{
@@ -12,6 +15,10 @@ import useToast from "../../hooks/useToast";
 const CardComposer = ({ list, open, setOpen }) => {
     const { createCard, isCreatingCard } = useBoardMutations();
 
+    const { isAnyModalOpen } = useContext(ModalStackContext);
+
+    const toast = useToast();
+
     /** @type {React.MutableRefObject<HTMLTextAreaElement | null>} */
     const textAreaRef = useRef(null);
 
@@ -19,27 +26,6 @@ const CardComposer = ({ list, open, setOpen }) => {
     const composerRef = useRef(null);
 
     const [text, setText] = useState("");
-
-    const toast = useToast();
-
-    useEffect(() => {
-        const handleClickOutside = (/** @type {MouseEvent} */ event) => {
-            if (
-                composerRef.current &&
-                !composerRef.current.contains(
-                    /** @type {Node} */ (event.target),
-                )
-            ) {
-                setOpen(false);
-            }
-        };
-
-        window.addEventListener("mousedown", handleClickOutside);
-
-        return () => {
-            window.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, []);
 
     useEffect(() => {
         if (textAreaRef.current && open) {
@@ -50,6 +36,18 @@ const CardComposer = ({ list, open, setOpen }) => {
             composerRef.current.scrollIntoView({ block: "end" });
         }
     }, [open]);
+
+    useKeybind("esc", () => {
+        if (open && !isAnyModalOpen) {
+            setOpen(false);
+        }
+    });
+
+    useClickOutside(composerRef, () => {
+        if (open && !isAnyModalOpen) {
+            setOpen(false);
+        }
+    });
 
     const handleTextAreaChanged = () => {
         const textarea = textAreaRef.current;

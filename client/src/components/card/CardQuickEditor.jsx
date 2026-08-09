@@ -4,9 +4,9 @@ import HighlightPicker from "./quick-editor/HighlightPicker";
 import { cardApi } from "../../services/api";
 import { useSearchParams } from "react-router-dom";
 import useToast from "../../hooks/useToast";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { useKeybind } from "../../hooks/useKeybind";
 import ModalStackContext from "../../context/ModalStackContext";
+import { getErrorMessage } from "../../utils/getErrorMessage";
 
 /**
  * @typedef {Object} CardQuickEditorProps
@@ -25,7 +25,7 @@ const CardQuickEditor = ({
     handleCopyCard,
     handleDeleteCard,
 }) => {
-    const { setOpenedCardQuickEditor, updateCardField, theme, socket } =
+    const { setOpenedCardQuickEditor, updateCardField, theme } =
         useBoardState();
 
     const [initialTitle, setInitialTitle] = useState(card.title);
@@ -79,12 +79,6 @@ const CardQuickEditor = ({
 
             setInitialTitle(newTitle);
             await cardApi.updateCard(card._id, "title", newTitle);
-            socket.emit(SOCKET_EVENTS.CARD_UPDATE, {
-                id: card._id,
-                listId: card.listId,
-                field: "title",
-                value: newTitle,
-            });
         } catch (err) {
             updateCardField({
                 id: card._id,
@@ -93,7 +87,7 @@ const CardQuickEditor = ({
                 value: card.title,
             });
             setInitialTitle(card.title);
-            toast.error("Failed to update title");
+            toast.error(getErrorMessage(err, "Failed to update title"));
         }
     };
 
@@ -104,28 +98,9 @@ const CardQuickEditor = ({
 
         try {
             setIsVerifying(true);
-            const data = await cardApi.updateCard(
-                card._id,
-                "verified",
-                !card.verified,
-            );
-            const { verified } = data;
-
-            updateCardField({
-                id: card._id,
-                listId: card.listId,
-                field: "verified",
-                value: verified,
-            });
-
-            socket.emit(SOCKET_EVENTS.CARD_UPDATE, {
-                id: card._id,
-                listId: card.listId,
-                field: "verified",
-                value: verified,
-            });
+            await cardApi.updateCard(card._id, "verified", !card.verified);
         } catch (err) {
-            toast.error("Failed to toggle verified");
+            toast.error(getErrorMessage(err, "Failed to verify"));
         } finally {
             setIsVerifying(false);
         }

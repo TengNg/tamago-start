@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 import useBoardState from "../../hooks/useBoardState";
 import Loading from "../ui/Loading";
 import useToast from "../../hooks/useToast";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { BOARD_ACTIONS } from "../../state/boardActionTypes";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { boardApi } from "../../services/api";
@@ -16,7 +15,6 @@ const MoveListModal = () => {
     const [selectedIndex, setSelectedIndex] = useState(0);
 
     const {
-        socket,
         boardState,
         dispatch,
         listToMove,
@@ -52,22 +50,7 @@ const MoveListModal = () => {
     const moveToBoardMutation = useMutation({
         mutationFn: () =>
             listApi.moveList(listToMove._id, effectiveBoardId, selectedIndex),
-        onSuccess: (data) => {
-            const { list, cards } = data;
-
-            dispatch({
-                type: BOARD_ACTIONS.DELETE_LIST,
-                payload: { listId: list._id },
-            });
-
-            socket.emit(SOCKET_EVENTS.LIST_DELETE, { id: list._id });
-            socket.emit(SOCKET_EVENTS.LIST_MOVE_TO_BOARD, {
-                boardId: effectiveBoardId,
-                list,
-                cards,
-                index: selectedIndex,
-            });
-
+        onSuccess: () => {
             handleClose();
         },
         onError: (err) => {
@@ -88,14 +71,22 @@ const MoveListModal = () => {
                 oldPos: currentIndex,
                 newPos: selectedIndex,
             }),
-        onSuccess: (_data, { currentIndex }) => {
-            socket.emit(SOCKET_EVENTS.LIST_MOVE, {
-                id: listToMove._id,
-                fromIndex: +currentIndex,
-                toIndex: +selectedIndex,
-            });
+        onMutate: () => {
+            return { previousLists: [...boardState.lists] };
         },
-        onError: (err) => {
+        onError: (
+            err,
+            _variables,
+            /** @type {{ previousLists?: List[] } | undefined} */ context,
+        ) => {
+            const previousLists = context?.previousLists;
+            if (previousLists) {
+                dispatch({
+                    type: BOARD_ACTIONS.SET_LISTS,
+                    payload: { lists: previousLists },
+                });
+            }
+
             toast.error(
                 getErrorMessage(
                     err,
@@ -176,7 +167,11 @@ const MoveListModal = () => {
             payload: { lists: newLists },
         });
 
-        reorderMutation.mutate({ prevListId, nextListId, currentIndex });
+        reorderMutation.mutate({
+            prevListId,
+            nextListId,
+            currentIndex,
+        });
     };
 
     return (

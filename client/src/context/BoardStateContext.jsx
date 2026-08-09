@@ -25,7 +25,6 @@ export const BoardStateContextProvider = ({ children }) => {
     const { width: windowWidth } = useWindowSize();
     const isLargeScreen = windowWidth >= 769;
 
-    const [isRemoved, setIsRemoved] = useState(false);
     const [listToMove, setListToMove] = useState();
     const [hasFilter, setHasFilter] = useState(false);
     const [isAtBottomOfChatBox, setIsAtBottomOfChatBox] = useState(true);
@@ -62,7 +61,6 @@ export const BoardStateContextProvider = ({ children }) => {
         boardId,
         toast,
         isAtBottomOfChatBox,
-        setIsRemoved,
     });
 
     // // TODO: band-aid
@@ -77,7 +75,7 @@ export const BoardStateContextProvider = ({ children }) => {
 
     const boardUIState = useBoardUIState();
 
-    /** @param {string} highlight */
+    /** @param {string | null} highlight */
     const setCardQuickEditorHighlight = (highlight) => {
         setOpenedCardQuickEditor((prev) => {
             if (!prev) return prev;
@@ -132,23 +130,9 @@ export const BoardStateContextProvider = ({ children }) => {
      */
     const addCardToList = (listId, card) => {
         dispatch({
-            type: BOARD_ACTIONS.ADD_CARD_TO_LIST,
+            type: BOARD_ACTIONS.ADD_CARD,
             payload: {
                 listId,
-                card,
-            },
-        });
-    };
-
-    /**
-     * @param {Card} card
-     * @param {number} index
-     */
-    const addCopiedCard = (card, index) => {
-        dispatch({
-            type: BOARD_ACTIONS.COPY_CARD,
-            payload: {
-                index,
                 card,
             },
         });
@@ -209,9 +193,6 @@ export const BoardStateContextProvider = ({ children }) => {
                 socket,
                 isConnected,
 
-                isRemoved,
-                setIsRemoved,
-
                 openedCardQuickEditor,
                 setOpenedCardQuickEditor,
 
@@ -244,7 +225,6 @@ export const BoardStateContextProvider = ({ children }) => {
                 deleteCard,
                 addListToBoard,
                 addCardToList,
-                addCopiedCard,
                 removeMemberFromBoard,
                 addMemberToBoard,
 

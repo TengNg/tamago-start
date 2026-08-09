@@ -3,12 +3,9 @@ import { useLocation, Link } from "react-router-dom";
 import Icon from "../shared/Icon";
 import validUrl from "../../utils/validUrl";
 import useCurrentUser from "../../hooks/useCurrentUser";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import useToast from "../../hooks/useToast";
 import { chatApi } from "../../services/api";
-import useBoardState from "../../hooks/useBoardState";
-import { chatKeys } from "../../queries/chatKeys";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { getErrorMessage } from "../../utils/getErrorMessage";
 
 /**
@@ -24,9 +21,7 @@ const ChatMessage = ({ chatMessage }) => {
     const { pathname } = location;
 
     const currentUser = useCurrentUser();
-    const queryClient = useQueryClient();
     const toast = useToast();
-    const { boardState, socket } = useBoardState();
 
     const { _id, content, sentBy, createdAt, error, type } = chatMessage;
     const chatContent = type !== "MESSAGE" ? content.split(" ")[1] : content;
@@ -34,35 +29,6 @@ const ChatMessage = ({ chatMessage }) => {
 
     const deleteMessageMutation = useMutation({
         mutationFn: () => chatApi.deleteMessage(_id),
-        onSuccess: (_data, _variables, _context) => {
-            queryClient.setQueryData(
-                chatKeys.messages(boardState.board._id),
-                /**
-                 * @param {import("@tanstack/react-query").InfiniteData<GetChatResponse, unknown> | undefined} old
-                 */
-                (old) => {
-                    if (!old) {
-                        return old;
-                    }
-
-                    const newPages = old.pages.map((page) => {
-                        return {
-                            ...page,
-                            messages: [...page.messages].filter((message) => {
-                                return message._id !== _id;
-                            }),
-                        };
-                    });
-
-                    return {
-                        ...old,
-                        pages: newPages,
-                    };
-                },
-            );
-
-            socket.emit(SOCKET_EVENTS.CHAT_DELETE, { id: _id });
-        },
         onError: (err) => {
             const errMsg = getErrorMessage(err, "Failed to send message");
             toast.error(errMsg);

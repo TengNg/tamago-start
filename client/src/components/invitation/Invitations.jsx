@@ -37,8 +37,7 @@ export default function Invitations({ show }) {
         isRefetching,
         isError,
     } = useInfiniteQuery({
-        staleTime: Infinity,
-        queryKey: ["invitations"],
+        queryKey: invitationKeys.all(),
         initialPageParam: 1,
         queryFn: ({ pageParam }) =>
             invitationApi.fetchInvitations({ page: pageParam }),

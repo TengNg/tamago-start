@@ -1,6 +1,9 @@
 import Attachment from '../models/Attachment.js';
+import Card from '../models/Card.js';
 import { authorize } from '../services/attachmentService.js';
 import { dangerousMimeTypes } from '../middlewares/attachmentUpload.js';
+import { SOCKET_EVENTS } from '../../shared/socket-events.js';
+import { emitToBoard } from '../socket/registry.js';
 
 /**
  * @param {import('express').Request} req
@@ -68,13 +71,24 @@ export const uploadAttachment = async (req, res) => {
 
     await attachment.save();
 
-    res.status(201).json({
+    const attachmentPayload = {
         _id: attachment._id,
         docModel: attachment.docModel,
         doc: attachment.doc,
         mimetype: attachment.mimetype,
         originalname: attachment.originalname
-    });
+    };
+
+    if (attachment.docModel === "Card") {
+        const card = await Card.findById(attachment.doc).lean();
+        if (card) {
+            emitToBoard(card.boardId, SOCKET_EVENTS.ATTACHMENT_CREATED, {
+                attachment: attachmentPayload,
+            });
+        }
+    }
+
+    res.status(201).json(attachmentPayload);
 };
 
 /**
@@ -165,6 +179,16 @@ export const deleteAttachment = async (req, res) => {
     const result = await Attachment.deleteOne({ _id: id });
     if (result.deletedCount === 0) {
         return res.sendStatus(404);
+    }
+
+    if (attachment.docModel === "Card") {
+        const card = await Card.findById(attachment.doc).lean();
+        if (card) {
+            emitToBoard(card.boardId, SOCKET_EVENTS.ATTACHMENT_DELETED, {
+                id: attachment._id.toString(),
+                cardId: attachment.doc.toString(),
+            });
+        }
     }
 
     res.json({ id });

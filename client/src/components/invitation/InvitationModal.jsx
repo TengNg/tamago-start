@@ -1,10 +1,9 @@
 import { useState } from "react";
 import useBoardState from "../../hooks/useBoardState";
 import Member from "./Member";
-import { invitationApi } from "../../services/api";
+import { invitationApi, boardApi } from "../../services/api";
 import { useKeybind } from "../../hooks/useKeybind";
 import { kb } from "../../constants/keybinds";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { useMutation } from "@tanstack/react-query";
 import useToast from "../../hooks/useToast";
 import Modal from "../ui/Modal";
@@ -19,7 +18,6 @@ const InvitationModal = () => {
         removeMemberFromBoard,
         openInvitationForm: open,
         setOpenInvitationForm: setOpen,
-        socket,
     } = useBoardState();
 
     const [username, setUsername] = useState("");
@@ -40,10 +38,9 @@ const InvitationModal = () => {
 
     const removeMemberMutation = useMutation({
         mutationFn: (/** @type {string} */ memberId) =>
-            invitationApi.removeBoardMember(boardState.board._id, memberId),
+            boardApi.removeBoardMember(boardState.board._id, memberId),
         onSuccess: (_data, memberId) => {
             removeMemberFromBoard(memberId);
-            socket.emit(SOCKET_EVENTS.BOARD_KICK, { memberId });
             toast.success("member removed");
         },
         onError: (err) => {

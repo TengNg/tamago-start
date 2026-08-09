@@ -7,7 +7,6 @@ import Icon from "../shared/Icon";
 import useCurrentUser from "../../hooks/useCurrentUser";
 import { boardApi } from "../../services/api";
 import useToast from "../../hooks/useToast";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { getErrorMessage } from "../../utils/getErrorMessage";
 import useClickOutside from "../../hooks/useClickOutside";
 import ModalStackContext from "../../context/ModalStackContext";
@@ -18,19 +17,11 @@ import { useKeybind } from "../../hooks/useKeybind";
  *   open: boolean;
  *   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
  *   setOpenCopyBoardForm: React.Dispatch<React.SetStateAction<boolean>>;
- *   setOpenBoardConfiguration: React.Dispatch<React.SetStateAction<boolean>>;
- *   setOpenBoardActivities: React.Dispatch<React.SetStateAction<boolean>>;
  * }} props
  */
-const BoardOptions = ({
-    open,
-    setOpen,
-    setOpenCopyBoardForm,
-    setOpenBoardConfiguration,
-    setOpenBoardActivities,
-}) => {
+const BoardOptions = ({ open, setOpen, setOpenCopyBoardForm }) => {
     const currentUser = useCurrentUser();
-    const { boardState, updateBoardField, removeMemberFromBoard, socket } =
+    const { boardState, setOpenConfiguration, setOpenBoardActivities } =
         useBoardState();
 
     const { isAnyModalOpen } = useContext(ModalStackContext);
@@ -58,8 +49,6 @@ const BoardOptions = ({
     const handleLeaveBoard = async () => {
         try {
             await boardApi.leaveBoard(boardState.board._id);
-            removeMemberFromBoard(currentUser._id);
-            socket.emit(SOCKET_EVENTS.BOARD_LEAVE);
             navigate("/boards");
         } catch (err) {
             const errMsg = getErrorMessage(err, "Failed to leave this board");
@@ -74,7 +63,6 @@ const BoardOptions = ({
         ) {
             try {
                 await boardApi.deleteBoard(boardState.board._id);
-                socket.emit(SOCKET_EVENTS.BOARD_CLOSE);
                 navigate("/boards");
             } catch (err) {
                 const errMsg = getErrorMessage(
@@ -93,16 +81,6 @@ const BoardOptions = ({
                 "description",
                 description.trim(),
             ),
-        onSuccess: (data) => {
-            updateBoardField({
-                field: "description",
-                value: data.description,
-            });
-            socket.emit(SOCKET_EVENTS.BOARD_UPDATE, {
-                field: "description",
-                value: data.description,
-            });
-        },
         onError: (err) => {
             const errMsg = getErrorMessage(
                 err,
@@ -148,7 +126,7 @@ const BoardOptions = ({
 
                 <div className="flex justify-start">
                     <button
-                        onClick={() => setOpenBoardConfiguration(true)}
+                        onClick={() => setOpenConfiguration(true)}
                         className="button--style--dark flex items-center gap-2 ps-20 text-[0.75rem] font-medium text-start text-gray-200 w-full"
                     >
                         <Icon className="w-4 h-4" name="gear" />

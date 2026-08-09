@@ -14,7 +14,7 @@ declare type Card = {
     title: string;
     description: string;
     order: string;
-    highlight: string;
+    highlight: string | null;
     priorityLevel: 'none' | 'low' | 'medium' | 'high' | 'critical';
     verified: boolean;
     owner: string | null;

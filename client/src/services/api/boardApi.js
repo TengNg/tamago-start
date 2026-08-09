@@ -91,6 +91,15 @@ function copyBoard(boardId, { title, desciption }) {
     return apiClient.post(`/boards/copy/${boardId}`, { title, desciption });
 }
 
+/**
+ * @param {string} boardId
+ * @param {string} memberId
+ * @returns {Promise<{ message: string }>}
+ */
+function removeBoardMember(boardId, memberId) {
+    return apiClient.delete(`/boards/${boardId}/members/${memberId}`);
+}
+
 export default {
     fetchBoards,
     fetchBoard,
@@ -103,4 +112,5 @@ export default {
     deleteBoard,
     leaveBoard,
     copyBoard,
+    removeBoardMember,
 };

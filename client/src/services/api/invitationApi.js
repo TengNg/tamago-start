@@ -45,20 +45,10 @@ function sendInvitation(boardId, receiverName) {
     return apiClient.post("/invitations", { boardId, receiverName });
 }
 
-/**
- * @param {string} boardId
- * @param {string} memberId
- * @returns {Promise<{ message: string }>}
- */
-function removeBoardMember(boardId, memberId) {
-    return apiClient.delete(`/boards/${boardId}/members/${memberId}`);
-}
-
 export default {
     fetchInvitations,
     acceptInvitation,
     rejectInvitation,
     removeInvitation,
     sendInvitation,
-    removeBoardMember,
 };

@@ -4,7 +4,6 @@ import { cardApi } from "../services/api";
 import { cardKeys } from "../queries/cardKeys";
 import { useSearchParams } from "react-router-dom";
 import { getErrorMessage } from "../utils/getErrorMessage";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import useBoardState from "../hooks/useBoardState";
 import useToast from "../hooks/useToast";
 
@@ -17,7 +16,7 @@ export const CardModalContextProvider = ({ children }) => {
     const [searchParams, setSearchParams] = useSearchParams();
     const cardId = searchParams.get("card");
 
-    const { updateCardField, socket } = useBoardState();
+    const { updateCardField } = useBoardState();
     const queryClient = useQueryClient();
     const toast = useToast();
 
@@ -94,13 +93,6 @@ export const CardModalContextProvider = ({ children }) => {
                     return { ...old, [field]: resolvedValue };
                 },
             );
-
-            socket.emit(SOCKET_EVENTS.CARD_UPDATE, {
-                id: target._id,
-                listId: target.listId,
-                field,
-                value: resolvedValue,
-            });
         },
         onError: (
             _error,

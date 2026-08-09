@@ -3,7 +3,6 @@ import useBoardState from "../../../hooks/useBoardState";
 import Icon from "../../shared/Icon";
 import { cardApi } from "../../../services/api";
 import useToast from "../../../hooks/useToast";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
 
 /**
  * @param {{
@@ -11,33 +10,21 @@ import { SOCKET_EVENTS } from "@shared/socket-events.js";
  * }} props
  */
 const QuickEditorHighlightPicker = ({ card }) => {
-    const { setCardQuickEditorHighlight, updateCardField, socket } =
-        useBoardState();
+    const { setCardQuickEditorHighlight } = useBoardState();
 
     const toast = useToast();
 
     /**
-     * @param {string} value
+     * @param {string | null} value
      */
     const handleSetCardHighlight = async (value) => {
         if (card.highlight === value) return;
 
         try {
             setCardQuickEditorHighlight(value);
-            updateCardField({
-                id: card._id,
-                listId: card.listId,
-                field: "highlight",
-                value,
-            });
             await cardApi.updateCard(card._id, "highlight", value);
-            socket.emit(SOCKET_EVENTS.CARD_UPDATE, {
-                id: card._id,
-                listId: card.listId,
-                field: "highlight",
-                value,
-            });
         } catch (err) {
+            setCardQuickEditorHighlight(card.highlight);
             toast.error("Failed to update highlight");
         }
     };
@@ -57,7 +44,7 @@ const QuickEditorHighlightPicker = ({ card }) => {
 
             <div
                 className={`w-full h-5 mt-1 bg-transparent flex--center font-bold border-2 hover:border-blue-700 hover:text-blue-700 text-gray-600 border-gray-600 text-[0.75rem]`}
-                onClick={() => handleSetCardHighlight("")}
+                onClick={() => handleSetCardHighlight(null)}
             >
                 <Icon className="w-3 h-3" name="xmark" />
             </div>

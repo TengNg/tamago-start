@@ -11,6 +11,9 @@ import ChatMessage from "../models/ChatMessage.js";
 import saveBoardActivity from '../services/saveBoardActivity.js';
 import { checkAllowedRoles } from '../services/boardPermissionService.js';
 import { cloneBoard } from '../services/cloneService.js';
+import { UPDATE_FIELDS } from '../constants/updateFields.js';
+import { SOCKET_EVENTS } from '../../shared/socket-events.js';
+import { revokeUserBoardSockets, emitToBoard } from '../socket/registry.js';
 
 const MAX_BOARD_COUNT = 10;
 
@@ -265,7 +268,7 @@ const updateBoard = async (req, res) => {
     const { field, value } = req.body;
     const { userId } = req.user;
 
-    const allowedFields = ["title", "description", "visibility"];
+    const allowedFields = UPDATE_FIELDS.board;
     if (!allowedFields.includes(field)) {
         return res.status(400).json({ message: "Invalid field to update" });
     }
@@ -288,6 +291,11 @@ const updateBoard = async (req, res) => {
     const prevValue = board[field];
     board[field] = value;
     await board.save();
+
+    emitToBoard(board._id, SOCKET_EVENTS.BOARD_UPDATED, {
+        field,
+        value: board[field],
+    });
 
     const actionMap = {
         title: "board.title_updated",
@@ -357,6 +365,10 @@ const leaveBoard = async (req, res) => {
         description: `${username} left`,
     })
 
+    emitToBoard(board._id, SOCKET_EVENTS.BOARD_MEMBER_LEFT, {
+        memberId: userId,
+    });
+
     res.sendStatus(204);
 };
 
@@ -396,6 +408,8 @@ const removeMemberFromBoard = async (req, res) => {
     if (result.deletedCount === 0) {
         return res.status(400).json({ message: "failed to remove member" });
     }
+
+    revokeUserBoardSockets(foundMember._id.toString(), board._id);
 
     res.sendStatus(204);
 };
@@ -437,6 +451,8 @@ const closeBoard = async (req, res) => {
         await Board.deleteOne({ _id: id }, { session });
 
         await session.commitTransaction();
+
+        emitToBoard(id, SOCKET_EVENTS.BOARD_CLOSED);
 
         res.sendStatus(204);
     } catch (error) {

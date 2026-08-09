@@ -9,6 +9,9 @@ import saveBoardActivity from '../services/saveBoardActivity.js';
 import { checkBoardPermission } from '../services/boardPermissionService.js';
 import { generateListOrder } from '../services/listService.js';
 import { cloneList } from '../services/cloneService.js';
+import { UPDATE_FIELDS } from '../constants/updateFields.js';
+import { SOCKET_EVENTS } from '../../shared/socket-events.js';
+import { emitToBoard } from '../socket/registry.js';
 
 /**
  * @param {import('express').Request} req
@@ -64,6 +67,8 @@ const addList = async (req, res) => {
         })
 
         await session.commitTransaction();
+
+        emitToBoard(board._id, SOCKET_EVENTS.LIST_CREATED, newList.toJSON());
 
         return res.status(201).json(newList);
     } catch (err) {
@@ -134,6 +139,11 @@ const reorder = async (req, res) => {
 
         await session.commitTransaction();
 
+        emitToBoard(foundList.boardId, SOCKET_EVENTS.LIST_MOVED, {
+            id: foundList._id.toString(),
+            order: foundList.order,
+        });
+
         res.json(foundList);
     } catch (err) {
         await session.abortTransaction();
@@ -152,7 +162,7 @@ const updateList = async (req, res) => {
     const { id } = req.params;
     const { field, value } = req.body;
 
-    const allowedFields = ["title"];
+    const allowedFields = UPDATE_FIELDS.list;
     if (!allowedFields.includes(field)) {
         return res.status(400).json({ message: "Invalid field to update" });
     }
@@ -190,6 +200,12 @@ const updateList = async (req, res) => {
         docModel: "List",
         docTitle: foundList.title,
         description,
+    });
+
+    emitToBoard(foundList.boardId, SOCKET_EVENTS.LIST_UPDATED, {
+        id: foundList._id.toString(),
+        field,
+        value: foundList[field],
     });
 
     res.status(200).json(foundList);
@@ -252,6 +268,10 @@ const deleteList = async (req, res) => {
 
         await session.commitTransaction();
 
+        emitToBoard(foundList.boardId, SOCKET_EVENTS.LIST_DELETED, {
+            id: foundList._id.toString(),
+        });
+
         res.sendStatus(204);
     } catch (error) {
         await session.abortTransaction();
@@ -302,6 +322,11 @@ const copyList = async (req, res) => {
         });
 
         await session.commitTransaction();
+
+        emitToBoard(boardId, SOCKET_EVENTS.LIST_COPIED, {
+            list: list.toJSON(),
+            cards: cards.map((card) => card.toJSON()),
+        });
 
         res.status(201).json({ list, cards });
     } catch (err) {
@@ -406,6 +431,15 @@ const moveList = async (req, res) => {
         const newCards = await Card.find({ listId: id, boardId: targetBoard._id }).sort({ order: 'asc' }).session(session);
 
         await session.commitTransaction();
+
+        emitToBoard(foundList.boardId, SOCKET_EVENTS.LIST_DELETED, {
+            id: foundList._id.toString(),
+        });
+        emitToBoard(targetBoard._id, SOCKET_EVENTS.LIST_MOVED_TO_BOARD, {
+            list: foundList.toJSON(),
+            cards: newCards.map((card) => card.toJSON()),
+            index: +index,
+        });
 
         return res.status(200).json({ list: foundList, cards: newCards });
     } catch (err) {

@@ -22,11 +22,10 @@ import useToast from "../../hooks/useToast";
 import { useKeybind } from "../../hooks/useKeybind";
 import { kb } from "../../constants/keybinds";
 import { BOARD_ACTIONS } from "../../state/boardActionTypes";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { getErrorMessage } from "../../utils/getErrorMessage";
 
 const ListContainer = () => {
-    const { boardState, dispatch, setOpenAddList, socket, setPendingReorder } =
+    const { boardState, dispatch, setOpenAddList, setPendingReorder } =
         useBoardState();
 
     const [clonedBoardState, setClonedBoardState] = useState(
@@ -152,12 +151,6 @@ const ListContainer = () => {
                 });
 
                 setClonedBoardState(null);
-
-                socket.emit(SOCKET_EVENTS.LIST_MOVE, {
-                    id: removed._id,
-                    fromIndex: srcIndex,
-                    toIndex: destIndex,
-                });
             } catch (err) {
                 const errMsg = getErrorMessage(err, "Failed to reorder list");
                 toast.error(errMsg);
@@ -214,7 +207,7 @@ const ListContainer = () => {
         try {
             addPendingReorder(activeId);
 
-            const newCard = await cardApi.reorderCard(activeId, {
+            await cardApi.reorderCard(activeId, {
                 listId: targetListId,
                 prevCardId: prevId,
                 nextCardId: nextId,
@@ -223,25 +216,6 @@ const ListContainer = () => {
             });
 
             setClonedBoardState(null);
-
-            dispatch({
-                type: BOARD_ACTIONS.SET_CARD,
-                payload: {
-                    card: {
-                        ...newCard,
-                        listId: targetListId,
-                    },
-                },
-            });
-
-            if (activeCard) {
-                socket.emit(SOCKET_EVENTS.CARD_MOVE_TO_LIST, {
-                    oldListId: activeCard?.listId,
-                    newListId: targetListId,
-                    insertedIndex: activeIndex,
-                    card: newCard,
-                });
-            }
         } catch (err) {
             const errMsg = getErrorMessage(err, "Failed to reorder card");
             toast.error(errMsg);

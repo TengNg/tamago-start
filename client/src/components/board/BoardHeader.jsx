@@ -1,7 +1,6 @@
 import { useState } from "react";
 import useBoardState from "../../hooks/useBoardState";
 import { boardApi } from "../../services/api";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import useToast from "../../hooks/useToast";
 import BoardOptions from "./BoardOptions";
 import { getErrorMessage } from "../../utils/getErrorMessage";
@@ -23,9 +22,6 @@ const BoardHeader = ({ setOpenCopyBoardForm }) => {
         hasFilter,
         openInvitationForm,
         setOpenInvitationForm,
-        setOpenConfiguration: setOpenBoardConfiguration,
-        setOpenBoardActivities,
-        socket,
     } = useBoardState();
 
     const currentUser = useCurrentUser();
@@ -57,17 +53,7 @@ const BoardHeader = ({ setOpenCopyBoardForm }) => {
                 value,
             );
 
-            updateBoardField({
-                field: "title",
-                value: data.title,
-            });
-
             setInitialTitle(data.title);
-
-            socket.emit(SOCKET_EVENTS.BOARD_UPDATE, {
-                field: "title",
-                value: data.title,
-            });
         } catch (err) {
             const errMsg = getErrorMessage(err, "Failed to update board title");
             toast.error(errMsg);
@@ -171,10 +157,6 @@ const BoardHeader = ({ setOpenCopyBoardForm }) => {
                             open={openBoardOptions}
                             setOpen={setOpenBoardOptions}
                             setOpenCopyBoardForm={setOpenCopyBoardForm}
-                            setOpenBoardConfiguration={
-                                setOpenBoardConfiguration
-                            }
-                            setOpenBoardActivities={setOpenBoardActivities}
                         />
                     )}
                 </div>

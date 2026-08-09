@@ -141,6 +141,7 @@ const checkAllowedRoles = async ({ roles, userId, boardId }) => {
 
 export {
     isActionAuthorized,
+    hasPermission,
     checkBoardPermission,
     checkAllowedRoles,
 };

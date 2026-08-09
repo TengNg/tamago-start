@@ -1,14 +1,9 @@
 import { Server } from "socket.io";
+import { Types } from 'mongoose';
 import { SOCKET_EVENTS } from '../../shared/socket-events.js';
 import { checkTokens } from '../middlewares/authenticateToken.js';
-
-// handlers
-import registerBoardHandlers from './handlers/board.js';
-import registerListHandlers from './handlers/list.js';
-import registerCardHandlers from './handlers/card.js';
-import registerChatHandlers from './handlers/chat.js';
-import registerCardCommentHandlers from './handlers/cardComment.js';
-import registerCardAttachmentHandlers from './handlers/cardAttachment.js';
+import { setIo } from './registry.js';
+import BoardMembership from '../models/BoardMembership.js';
 
 const __prod__ = process.env.NODE_ENV === "production";
 const opts = __prod__ ? {} : {
@@ -25,6 +20,7 @@ const opts = __prod__ ? {} : {
  */
 const initSocket = (server) => {
     const io = new Server(server, opts);
+    setIo(io);
 
     io.use(async (socket, next) => {
         const cookies = socket.handshake.headers.cookie;
@@ -77,13 +73,42 @@ const initSocket = (server) => {
     });
 
     io.on('connection', (socket) => {
-        // register all feature handlers
-        registerBoardHandlers(io, socket);
-        registerListHandlers(socket);
-        registerCardHandlers(socket);
-        registerChatHandlers(socket);
-        registerCardCommentHandlers(socket);
-        registerCardAttachmentHandlers(socket);
+        socket.on(SOCKET_EVENTS.BOARD_JOIN, async (data) => {
+            try {
+                const boardId = data?.boardId;
+
+                if (typeof boardId !== 'string' || !Types.ObjectId.isValid(boardId)) {
+                    return;
+                }
+
+                const prevBoardId = socket.boardId;
+                if (prevBoardId === boardId) {
+                    // Reconnect/duplicate join for the same board — already there.
+                    socket.join(boardId);
+                    return;
+                }
+
+                const membership = await BoardMembership.findOne({
+                    boardId,
+                    userId: socket.user.id,
+                });
+                if (!membership) {
+                    socket.emit(SOCKET_EVENTS.BOARD_UNAUTHORIZED, { message: "You are not a member of this board" });
+                    return;
+                }
+
+                // Only leave the previous room after the new membership checks out.
+                if (prevBoardId) {
+                    socket.leave(prevBoardId);
+                    socket.to(prevBoardId).emit(SOCKET_EVENTS.BOARD_MEMBER_LEFT, { memberId: socket.user.id });
+                }
+
+                socket.boardId = boardId;
+                socket.join(boardId);
+            } catch (err) {
+                console.log('BOARD_JOIN error:', err.message);
+            }
+        });
 
         socket.on(SOCKET_EVENTS.BOARD_DISCONNECT, () => {
             const boardId = socket.boardId;

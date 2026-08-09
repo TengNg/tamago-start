@@ -9,8 +9,6 @@ import ListMenu from "./ListMenu";
 import { listApi } from "../../services/api";
 import Icon from "../shared/Icon";
 import useToast from "../../hooks/useToast";
-import { BOARD_ACTIONS } from "../../state/boardActionTypes";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { getErrorMessage } from "../../utils/getErrorMessage";
 
 /**
@@ -26,13 +24,10 @@ import { getErrorMessage } from "../../utils/getErrorMessage";
 const List = ({ index, list, cards }) => {
     const {
         boardState,
-        dispatch,
         updateListField,
-        deleteList,
         theme,
         debugModeEnabled,
         hasFilter,
-        socket,
         pendingReorder,
     } = useBoardState();
 
@@ -83,29 +78,6 @@ const List = ({ index, list, cards }) => {
                 lists[currentIndex]?._id,
                 nextElement?._id,
             );
-        },
-        onSuccess: (data) => {
-            const lists = [...boardState.lists];
-            const newList = data.list;
-            const newCards = data.cards;
-            newCards.sort((a, b) => (a.order > b.order ? 1 : -1));
-            lists.splice(index + 1, 0, newList);
-
-            dispatch({
-                type: BOARD_ACTIONS.SET_STATE,
-                payload: {
-                    data: {
-                        ...boardState,
-                        lists,
-                        cards: {
-                            ...boardState.cards,
-                            [newList._id]: newCards,
-                        },
-                    },
-                },
-            });
-
-            socket.emit(SOCKET_EVENTS.LIST_UPDATE_ALL, lists);
         },
         onError: (err) => {
             const errMsg = getErrorMessage(err);
@@ -174,11 +146,6 @@ const List = ({ index, list, cards }) => {
                 textAreaRef.current.value,
             );
             setInitialListTitle(textAreaRef.current.value);
-            socket.emit(SOCKET_EVENTS.LIST_UPDATE, {
-                id: list._id,
-                field: "title",
-                value: textAreaRef.current.value,
-            });
         } catch (err) {
             updateListField({
                 id: list._id,
@@ -247,8 +214,6 @@ const List = ({ index, list, cards }) => {
         if (confirm("Are you want to delete this list ?")) {
             try {
                 await listApi.deleteList(list._id);
-                deleteList(list._id);
-                socket.emit(SOCKET_EVENTS.LIST_DELETE, { id: list._id });
             } catch (err) {
                 toast.error("Failed to delete list");
             }

@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from "react";
 import useBoardState from "../../hooks/useBoardState";
 import { listApi } from "../../services/api";
 import useToast from "../../hooks/useToast";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { getErrorMessage } from "../../utils/getErrorMessage";
 import { useMutation } from "@tanstack/react-query";
 
@@ -22,7 +21,6 @@ const AddList = () => {
         boardState,
         addListToBoard,
         deleteList,
-        socket,
     } = useBoardState();
 
     const toast = useToast();
@@ -91,8 +89,6 @@ const AddList = () => {
                 deleteList(context.tempId);
             }
 
-            socket.emit(SOCKET_EVENTS.LIST_CREATE, data);
-            addListToBoard(data);
             setTitle("");
             setOpen(false);
         },

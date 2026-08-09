@@ -1,15 +1,12 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useRef, useState, useEffect } from "react";
-import { chatKeys } from "../../queries/chatKeys";
 import { chatApi } from "../../services/api";
 import useBoardState from "../../hooks/useBoardState";
 import useToast from "../../hooks/useToast";
-import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { getErrorMessage } from "../../utils/getErrorMessage";
 
 const ChatInput = () => {
-    const queryClient = useQueryClient();
-    const { boardState, openChatBox, socket } = useBoardState();
+    const { boardState, openChatBox } = useBoardState();
     const [message, setMessage] = useState("");
     const toast = useToast();
 
@@ -19,48 +16,6 @@ const ChatInput = () => {
     const sendMessageMutation = useMutation({
         mutationFn: (/** @type {string} */ content) =>
             chatApi.sendMessage({ boardId: boardState.board._id, content }),
-        onSuccess: async (data, _variables, _context) => {
-            const chatMessage = data.chatMessage;
-            queryClient.setQueryData(
-                chatKeys.messages(boardState.board._id),
-                /**
-                 * @param {import('@tanstack/react-query').InfiniteData<GetChatResponse, unknown> | undefined} old
-                 */
-                (old) => {
-                    if (!old) {
-                        return old;
-                    }
-
-                    const currentPages = [...old.pages];
-                    const currentFirstPage = currentPages[0];
-                    const newFirstPage = {
-                        ...currentFirstPage,
-                        messages: [
-                            chatMessage,
-                            ...currentFirstPage.messages.slice(
-                                0,
-                                currentFirstPage.messages.length - 1,
-                            ),
-                        ],
-                    };
-
-                    if (old.pages.length === 1) {
-                        return {
-                            ...old,
-                            pages: [newFirstPage],
-                        };
-                    }
-
-                    currentPages[0] = newFirstPage;
-                    return {
-                        ...old,
-                        pages: currentPages,
-                    };
-                },
-            );
-
-            socket.emit(SOCKET_EVENTS.CHAT_SEND, { chatMessage });
-        },
         onError: (err) => {
             const errMsg = getErrorMessage(err, "Failed to send message");
             toast.error(errMsg);

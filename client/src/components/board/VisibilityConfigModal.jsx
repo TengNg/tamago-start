@@ -13,7 +13,6 @@ const AVAILABLE_VISIBILITIES = ["private", "public"];
 const VisibilityConfigModal = () => {
     const {
         boardState,
-        updateBoardField,
         openVisibilityConfig: open,
         setOpenVisibilityConfig: setOpen,
     } = useBoardState();
@@ -37,12 +36,6 @@ const VisibilityConfigModal = () => {
                 "visibility",
                 newVisibility,
             ),
-        onSuccess: (data) => {
-            updateBoardField({
-                field: "visibility",
-                value: data.visibility,
-            });
-        },
         onError: (err) => {
             const errMsg = getErrorMessage(
                 err,

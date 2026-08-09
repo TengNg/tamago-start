@@ -2,6 +2,8 @@ import CardComment from "../models/CardComment.js";
 import Card from "../models/Card.js";
 import { checkBoardPermission } from '../services/boardPermissionService.js';
 import saveBoardActivity from '../services/saveBoardActivity.js';
+import { SOCKET_EVENTS } from '../../shared/socket-events.js';
+import { emitToBoard } from '../socket/registry.js';
 
 const COMMENTS_PER_PAGE = 20;
 
@@ -133,6 +135,10 @@ const createCardComment = async (req, res) => {
         docTitle: foundCard.title,
     });
 
+    emitToBoard(foundCard.boardId, SOCKET_EVENTS.COMMENT_CREATED, {
+        comment: commentWithUser,
+    });
+
     res.status(201).json({ comment: commentWithUser });
 };
 
@@ -163,6 +169,13 @@ const deleteCardComment = async (req, res) => {
     }
 
     await CardComment.findOneAndDelete({ _id: commentId });
+
+    const cardId = /** @type any */(foundComment.cardId)._id.toString();
+    emitToBoard(/** @type any */(foundComment.cardId).boardId, SOCKET_EVENTS.COMMENT_DELETED, {
+        commentId,
+        cardId,
+    });
+
     res.sendStatus(204);
 };
 

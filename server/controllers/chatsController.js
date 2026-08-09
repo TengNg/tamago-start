@@ -3,6 +3,8 @@ import ChatMessage from "../models/ChatMessage.js";
 import Board from "../models/Board.js";
 import BoardMembership from "../models/BoardMembership.js";
 import { checkBoardPermission } from '../services/boardPermissionService.js';
+import { SOCKET_EVENTS } from '../../shared/socket-events.js';
+import { emitToBoard } from '../socket/registry.js';
 
 /**
  * @param {import('express').Request} req
@@ -61,6 +63,10 @@ const sendMessage = async (req, res) => {
     const { content } = req.body;
     const { boardId } = req.params;
 
+    if (typeof content !== 'string' || !content.trim()) {
+        return res.status(422).json({ message: 'Invalid message content' });
+    }
+
     const foundBoard = await Board.findById(boardId).lean();
     if (!foundBoard) {
         return res.sendStatus(404);
@@ -99,6 +105,10 @@ const sendMessage = async (req, res) => {
         select: "_id username"
     });
 
+    emitToBoard(foundBoard._id, SOCKET_EVENTS.CHAT_RECEIVED, {
+        chatMessage: chatMessage.toJSON(),
+    });
+
     res.status(201).json({ chatMessage });
 };
 
@@ -129,6 +139,10 @@ const deleteMessage = async (req, res) => {
 
     await chatMessage.deleteOne();
 
+    emitToBoard(chatMessage.boardId, SOCKET_EVENTS.CHAT_DELETED, {
+        id: chatMessage._id.toString(),
+    });
+
     res.sendStatus(204);
 };
 
@@ -155,6 +169,7 @@ const clearMessages = async (req, res) => {
     }
 
     await ChatMessage.deleteMany({ boardId });
+    emitToBoard(boardId, SOCKET_EVENTS.CHAT_CLEARED, {});
     res.sendStatus(204);
 };
 
