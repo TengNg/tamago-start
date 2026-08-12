@@ -27,8 +27,11 @@ const getCardComments = async (req, res) => {
     })
 
     let { perPage, page } = req.query;
-    const perPageNum = Number(Array.isArray(perPage) ? perPage[0] : perPage) || COMMENTS_PER_PAGE;
-    const pageNum = Number(Array.isArray(page) ? page[0] : page) || 1;
+    const perPageNum = Math.min(
+        Math.max(Number(Array.isArray(perPage) ? perPage[0] : perPage) || COMMENTS_PER_PAGE, 1),
+        50,
+    );
+    const pageNum = Math.max(Number(Array.isArray(page) ? page[0] : page) || 1, 1);
 
     const comments = await CardComment
         .find({ cardId: foundCard._id })

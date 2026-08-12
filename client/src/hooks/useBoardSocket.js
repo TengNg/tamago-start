@@ -1,8 +1,8 @@
 import socket from "../services/socket";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { chatKeys } from "../queries/chatKeys";
 import { BOARD_ACTIONS } from "../state/boardActionTypes";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { SOCKET_EVENTS } from "@shared/socket-events.js";
 import { cardKeys } from "../queries/cardKeys";
 import useCurrentUser from "./useCurrentUser";
@@ -55,6 +55,8 @@ export function useBoardSocket({
 }) {
     const [isConnected, setIsConnected] = useState(false);
 
+    const navigate = useNavigate();
+
     const [searchParams] = useSearchParams();
 
     const currentUser = useCurrentUser();
@@ -68,20 +70,10 @@ export function useBoardSocket({
         [searchParams],
     );
 
-    const getFiltersRef = useRef(getFilters);
-    const toastRef = useRef(toast);
-    const isAtBottomOfChatBoxRef = useRef(isAtBottomOfChatBox);
-    const currentUserIdRef = useRef(currentUser._id);
-
     useEffect(() => {
         if (!boardId) {
             return;
         }
-
-        getFiltersRef.current = getFilters;
-        toastRef.current = toast;
-        isAtBottomOfChatBoxRef.current = isAtBottomOfChatBox;
-        currentUserIdRef.current = currentUser._id;
 
         const onConnect = async () => {
             socket.emit(SOCKET_EVENTS.BOARD_JOIN, { boardId });
@@ -97,13 +89,13 @@ export function useBoardSocket({
         socket.on("disconnect", onDisconnect);
 
         socket.on(SOCKET_EVENTS.BOARD_CLOSED, (_) => {
-            window.location.reload();
+            navigate("/boards");
         });
 
         socket.on(
             SOCKET_EVENTS.BOARD_UNAUTHORIZED,
             /** @param {{ message?: string }} _data */ (_data) => {
-                window.location.reload();
+                navigate("/boards");
             },
         );
 
@@ -112,7 +104,7 @@ export function useBoardSocket({
             /** @param {{ userSocketId: string }} data */ (data) => {
                 const { userSocketId } = data;
                 if (socket.id === userSocketId) {
-                    window.location.reload();
+                    navigate("/boards");
                 }
             },
         );
@@ -122,8 +114,8 @@ export function useBoardSocket({
             /** @param {{ memberId: string }} data */ (data) => {
                 const { memberId } = data;
 
-                if (memberId === currentUserIdRef.current) {
-                    window.location.reload();
+                if (memberId === currentUser._id) {
+                    navigate("/boards");
                     return;
                 }
 
@@ -215,7 +207,7 @@ export function useBoardSocket({
         socket.on(
             SOCKET_EVENTS.CARD_CREATED,
             /** @param {Card} data */ (data) => {
-                const filters = getFiltersRef.current();
+                const filters = getFilters();
                 const card = applyFilter(data, filters);
 
                 dispatch({
@@ -228,7 +220,7 @@ export function useBoardSocket({
         socket.on(
             SOCKET_EVENTS.CARD_COPIED,
             /** @param {{ card: Card }} data */ (data) => {
-                const filters = getFiltersRef.current();
+                const filters = getFilters();
                 const { card } = data;
                 applyFilter(card, filters);
 
@@ -255,7 +247,7 @@ export function useBoardSocket({
             (
                 /** @type {{ oldListId: string, newListId: string, id: string, newCard: Card }} */ data,
             ) => {
-                const filters = getFiltersRef.current();
+                const filters = getFilters();
                 const { oldListId, newListId, id, newCard: card } = data;
                 applyFilter(card, filters);
 
@@ -363,8 +355,8 @@ export function useBoardSocket({
                     },
                 );
 
-                if (!isAtBottomOfChatBoxRef.current) {
-                    toastRef.current.success(
+                if (!isAtBottomOfChatBox) {
+                    toast.success(
                         `new message from ${chatMessage.sentBy.username}`,
                         3000,
                     );
@@ -422,7 +414,7 @@ export function useBoardSocket({
                 },
             );
 
-            toastRef.current.success("Chat cleared");
+            toast.success("Chat cleared");
         });
 
         // CARD_COMMENT ========================================================
@@ -586,7 +578,16 @@ export function useBoardSocket({
             socket.off(SOCKET_EVENTS.ATTACHMENT_CREATED);
             socket.off(SOCKET_EVENTS.ATTACHMENT_DELETED);
         };
-    }, [boardId]);
+    }, [
+        boardId,
+        currentUser._id,
+        dispatch,
+        getFilters,
+        isAtBottomOfChatBox,
+        navigate,
+        queryClient,
+        toast,
+    ]);
 
     return { isConnected };
 }

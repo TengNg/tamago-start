@@ -12,8 +12,8 @@ const handleLogin = async (req, res) => {
         return res.status(400).json({ message: "Username and Password are required" });
     }
 
-    const foundUser = await User.findOne({ username });
-    if (!foundUser) {
+    const foundUser = await User.findOne({ username: username.trim().toLowerCase() });
+    if (!foundUser || !foundUser.password) {
         return res.status(401).json({ message: "Invalid username or password" });
     }
 

@@ -10,7 +10,6 @@ import Modal from "../components/ui/Modal";
 import MoveListModal from "../components/list/MoveListModal";
 import CardModal from "../components/card/CardModal";
 import CardQuickEditor from "../components/card/CardQuickEditor";
-import MembersModal from "../components/board/MembersModal";
 import ConfigurationModal from "../components/board/ConfigurationModal";
 import FilterModal from "../components/action-menu/FilterModal";
 import VisibilityConfigModal from "../components/board/VisibilityConfigModal";
@@ -60,7 +59,7 @@ const Board = () => {
         return () => {
             socket.disconnect();
         };
-    }, [boardId]);
+    }, [boardId, socket]);
 
     useEffect(() => {
         if (boardQuery.data) {
@@ -183,7 +182,6 @@ const Board = () => {
             <MoveListModal />
             <FilterModal />
             <VisibilityConfigModal />
-            <MembersModal />
             <InvitationModal />
             <ConfigurationModal />
             <ChatBox />

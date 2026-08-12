@@ -1,5 +1,11 @@
 import socket from "../services/socket";
-import { createContext, useReducer, useState } from "react";
+import {
+    createContext,
+    useCallback,
+    useMemo,
+    useReducer,
+    useState,
+} from "react";
 import useLocalStorage from "../hooks/useLocalStorage";
 import LOCAL_STORAGE_KEYS from "../constants/localStorageKeys";
 import useWindowSize from "../hooks/useWindowSize";
@@ -10,6 +16,7 @@ import { useBoardSocket } from "../hooks/useBoardSocket";
 import { boardStateReducer } from "../state/boardStateReducer";
 import { BOARD_ACTIONS } from "../state/boardActionTypes";
 import { useParams } from "react-router-dom";
+import useCurrentUser from "../hooks/useCurrentUser";
 
 /** @type {React.Context<BoardContextValue>} */
 const BoardStateContext = createContext(/** @type {BoardContextValue} */ ({}));
@@ -75,162 +82,234 @@ export const BoardStateContextProvider = ({ children }) => {
 
     const boardUIState = useBoardUIState();
 
-    /** @param {string | null} highlight */
-    const setCardQuickEditorHighlight = (highlight) => {
-        setOpenedCardQuickEditor((prev) => {
-            if (!prev) return prev;
-            return { ...prev, card: { ...prev.card, highlight } };
-        });
-    };
+    const setCardQuickEditorHighlight = useCallback(
+        /** @param {string | null} highlight */
+        (highlight) => {
+            setOpenedCardQuickEditor((prev) => {
+                if (!prev) return prev;
+                return { ...prev, card: { ...prev.card, highlight } };
+            });
+        },
+        [],
+    );
 
     // board actions ==========================================================
 
-    /**
-     * @param {{ field: string, value: string }} params
-     */
-    const updateBoardField = ({ field, value }) => {
-        dispatch({
-            type: BOARD_ACTIONS.UPDATE_BOARD_FIELD,
-            payload: { field, value },
-        });
-    };
+    const updateBoardField = useCallback(
+        /**
+         * @param {{ field: string, value: string }} params
+         */
+        ({ field, value }) => {
+            dispatch({
+                type: BOARD_ACTIONS.UPDATE_BOARD_FIELD,
+                payload: { field, value },
+            });
+        },
+        [],
+    );
 
     // list actions ===========================================================
 
-    /**
-     * @param {{ id: string, field: string, value: string | boolean | null }} params
-     */
-    const updateListField = ({ id, field, value }) => {
-        dispatch({
-            type: BOARD_ACTIONS.UPDATE_LIST_FIELD,
-            payload: { listId: id, field, value },
-        });
-    };
+    const updateListField = useCallback(
+        /**
+         * @param {{ id: string, field: string, value: string | boolean | null }} params
+         */
+        ({ id, field, value }) => {
+            dispatch({
+                type: BOARD_ACTIONS.UPDATE_LIST_FIELD,
+                payload: { listId: id, field, value },
+            });
+        },
+        [],
+    );
 
-    /** @param {string} id */
-    const deleteList = (id) => {
-        dispatch({ type: BOARD_ACTIONS.DELETE_LIST, payload: { listId: id } });
-    };
+    const deleteList = useCallback(
+        /** @param {string} id */
+        (id) => {
+            dispatch({
+                type: BOARD_ACTIONS.DELETE_LIST,
+                payload: { listId: id },
+            });
+        },
+        [],
+    );
 
     // card actions ===========================================================
 
-    /**
-     * @param {{ id: string, listId: string, field: string, value: string | boolean | null }} params
-     */
-    const updateCardField = ({ id, listId, field, value }) => {
-        dispatch({
-            type: BOARD_ACTIONS.UPDATE_CARD_FIELD,
-            payload: { id, listId, field, value },
-        });
-    };
+    const updateCardField = useCallback(
+        /**
+         * @param {{ id: string, listId: string, field: string, value: string | boolean | null }} params
+         */
+        ({ id, listId, field, value }) => {
+            dispatch({
+                type: BOARD_ACTIONS.UPDATE_CARD_FIELD,
+                payload: { id, listId, field, value },
+            });
+        },
+        [],
+    );
 
-    /**
-     * @param {string} listId
-     * @param {Card} card
-     */
-    const addCardToList = (listId, card) => {
-        dispatch({
-            type: BOARD_ACTIONS.ADD_CARD,
-            payload: {
-                listId,
-                card,
-            },
-        });
-    };
+    const addCardToList = useCallback(
+        /**
+         * @param {string} listId
+         * @param {Card} card
+         */
+        (listId, card) => {
+            dispatch({
+                type: BOARD_ACTIONS.ADD_CARD,
+                payload: {
+                    listId,
+                    card,
+                },
+            });
+        },
+        [],
+    );
 
-    /**
-     * @param {string} listId
-     * @param {string} cardId
-     */
-    const deleteCard = (listId, cardId) => {
-        dispatch({
-            type: BOARD_ACTIONS.DELETE_CARD,
-            payload: { listId, cardId },
-        });
-    };
+    const deleteCard = useCallback(
+        /**
+         * @param {string} listId
+         * @param {string} cardId
+         */
+        (listId, cardId) => {
+            dispatch({
+                type: BOARD_ACTIONS.DELETE_CARD,
+                payload: { listId, cardId },
+            });
+        },
+        [],
+    );
 
-    /** @param {List} list */
-    const addListToBoard = (list) => {
-        dispatch({
-            type: BOARD_ACTIONS.ADD_LIST_TO_BOARD,
-            payload: {
-                list,
-            },
-        });
-    };
+    const addListToBoard = useCallback(
+        /** @param {List} list */
+        (list) => {
+            dispatch({
+                type: BOARD_ACTIONS.ADD_LIST_TO_BOARD,
+                payload: {
+                    list,
+                },
+            });
+        },
+        [],
+    );
 
     // member actions =========================================================
 
-    /** @param {string} memberId */
-    const removeMemberFromBoard = (memberId) => {
-        dispatch({
-            type: BOARD_ACTIONS.REMOVE_MEMBER,
-            payload: {
-                memberId,
-            },
-        });
-    };
+    const removeMemberFromBoard = useCallback(
+        /** @param {string} memberId */
+        (memberId) => {
+            dispatch({
+                type: BOARD_ACTIONS.REMOVE_MEMBER,
+                payload: {
+                    memberId,
+                },
+            });
+        },
+        [],
+    );
 
-    /** @param {BoardMember} member */
-    const addMemberToBoard = (member) => {
-        dispatch({
-            type: BOARD_ACTIONS.ADD_MEMBER,
-            payload: {
-                member,
-            },
-        });
-    };
+    const addMemberToBoard = useCallback(
+        /** @param {BoardMember} member */
+        (member) => {
+            dispatch({
+                type: BOARD_ACTIONS.ADD_MEMBER,
+                payload: {
+                    member,
+                },
+            });
+        },
+        [],
+    );
+
+    const currentUser = useCurrentUser();
+    const isOwner =
+        (boardState.members ?? []).findIndex(
+            /** @param {BoardMember} m */
+            (m) => m.role === "owner" && m.userId === currentUser._id,
+        ) !== -1;
+
+    const contextValue = useMemo(
+        () => ({
+            boardState,
+            dispatch,
+
+            isOwner,
+
+            pendingReorder,
+            setPendingReorder,
+
+            socket,
+            isConnected,
+
+            openedCardQuickEditor,
+            setOpenedCardQuickEditor,
+
+            setCardQuickEditorHighlight,
+
+            listToMove,
+            setListToMove,
+
+            focusedCard,
+            setFocusedCard,
+
+            theme,
+            setTheme,
+            debugModeEnabled,
+            setDebugModeEnabled,
+
+            hasFilter,
+            setHasFilter,
+
+            isAtBottomOfChatBox,
+            setIsAtBottomOfChatBox,
+
+            windowWidth,
+            isLargeScreen,
+
+            updateBoardField,
+            updateListField,
+            updateCardField,
+            deleteList,
+            deleteCard,
+            addListToBoard,
+            addCardToList,
+            removeMemberFromBoard,
+            addMemberToBoard,
+
+            ...boardUIState,
+        }),
+        [
+            boardState,
+            isOwner,
+            pendingReorder,
+            isConnected,
+            openedCardQuickEditor,
+            setCardQuickEditorHighlight,
+            listToMove,
+            focusedCard,
+            theme,
+            setTheme,
+            debugModeEnabled,
+            setDebugModeEnabled,
+            hasFilter,
+            isAtBottomOfChatBox,
+            windowWidth,
+            isLargeScreen,
+            updateBoardField,
+            updateListField,
+            updateCardField,
+            deleteList,
+            deleteCard,
+            addListToBoard,
+            addCardToList,
+            removeMemberFromBoard,
+            addMemberToBoard,
+            boardUIState,
+        ],
+    );
 
     return (
-        <BoardStateContext.Provider
-            value={{
-                boardState,
-                dispatch,
-
-                pendingReorder,
-                setPendingReorder,
-
-                socket,
-                isConnected,
-
-                openedCardQuickEditor,
-                setOpenedCardQuickEditor,
-
-                setCardQuickEditorHighlight,
-
-                listToMove,
-                setListToMove,
-
-                focusedCard,
-                setFocusedCard,
-
-                theme,
-                setTheme,
-                debugModeEnabled,
-                setDebugModeEnabled,
-
-                hasFilter,
-                setHasFilter,
-
-                isAtBottomOfChatBox,
-                setIsAtBottomOfChatBox,
-
-                windowWidth,
-                isLargeScreen,
-
-                updateBoardField,
-                updateListField,
-                updateCardField,
-                deleteList,
-                deleteCard,
-                addListToBoard,
-                addCardToList,
-                removeMemberFromBoard,
-                addMemberToBoard,
-
-                ...boardUIState,
-            }}
-        >
+        <BoardStateContext.Provider value={contextValue}>
             {children}
         </BoardStateContext.Provider>
     );

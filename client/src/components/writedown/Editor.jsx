@@ -63,7 +63,7 @@ const Editor = ({ writedownId, open, onClose }) => {
         } else {
             dialogEl.close();
         }
-    }, [open, isLoading, writedown]);
+    }, [open, isLoading, writedown, onClose]);
 
     /**
      * @param {React.MouseEvent<HTMLDialogElement>} e

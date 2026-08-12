@@ -54,16 +54,8 @@
   @apply box--style flex flex-col border-gray-700 border-2 bg-gray-200 shadow-gray-700;
 }
 
-@utility board--style {
-  @apply shadow-[0px_6px_0_0] cursor-pointer;
-}
-
-@utility board--style--sm {
-  @apply shadow-[0px_4px_0_0] cursor-pointer;
-}
-
 @utility board--hover {
-  @apply hover:mt-1.5 hover:shadow-none hover:brightness-110 transition-all;
+  @apply hover:translate-y-1.5 hover:shadow-none hover:brightness-110 transition-all;
 }
 
 @utility button--style {

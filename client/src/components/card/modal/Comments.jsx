@@ -58,7 +58,7 @@ const Comments = ({ card }) => {
         if (focusedCommentParam !== null && focusedCommentParam !== "") {
             fetchFocusedComment(focusedCommentParam);
         }
-    }, [searchParams]);
+    }, [searchParams, card._id]);
 
     useEffect(() => {
         if (focusedComment && focusedCommentRef && focusedCommentRef.current) {

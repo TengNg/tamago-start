@@ -40,11 +40,11 @@ const initSocket = (server) => {
         const accessToken = cookiePairs[aTokenName];
         const refreshToken = cookiePairs[rTokenName];
 
-        if (process.env.NODE_ENV == "development") {
-            console.log("socket-middleware#cookiePairs: ", cookiePairs);
-            console.log("socket-middleware#accessToken: ", accessToken);
-            console.log("socket-middleware#refreshToken: ", refreshToken);
-        }
+        // if (process.env.NODE_ENV == "development") {
+        //     console.log("socket-middleware#cookiePairs: ", cookiePairs);
+        //     console.log("socket-middleware#accessToken: ", accessToken);
+        //     console.log("socket-middleware#refreshToken: ", refreshToken);
+        // }
 
         if (!accessToken && !refreshToken) {
             return next(new Error('Authentication error: No tokens provided'));

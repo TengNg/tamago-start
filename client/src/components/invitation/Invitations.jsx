@@ -29,12 +29,9 @@ export default function Invitations({ show }) {
 
     const {
         data,
-        refetch,
         fetchNextPage,
         isFetchingNextPage,
         hasNextPage,
-        isLoading,
-        isRefetching,
         isError,
     } = useInfiniteQuery({
         queryKey: invitationKeys.all(),
@@ -149,7 +146,7 @@ export default function Invitations({ show }) {
                                 ...page,
                                 invitations: [...page.invitations].filter(
                                     (item) => {
-                                        return item._id === invitationId;
+                                        return item._id !== invitationId;
                                     },
                                 ),
                             };
@@ -192,20 +189,8 @@ export default function Invitations({ show }) {
             >
                 <div className="flex gap-1 sm:gap-0 justify-between items-center">
                     <p className="text-[0.75rem] text-gray-700 m-0 p-0">
-                        received invitations [{invitations.length}]
+                        received invitations: {invitations.length}
                     </p>
-
-                    <button
-                        disabled={isLoading || isRefetching}
-                        className="underline text-[0.75rem] text-gray-700 me-1"
-                        onClick={() => {
-                            refetch();
-                        }}
-                    >
-                        {isLoading || isRefetching
-                            ? "refreshing..."
-                            : "refresh"}
-                    </button>
                 </div>
 
                 <div className="relative box--style border-2 border-gray-600 shadow-gray-600 h-87.5 mx-auto overflow-auto p-4 md:p-8 bg-gray-100/30 flex flex-col gap-4">
@@ -280,12 +265,14 @@ export default function Invitations({ show }) {
                                             onClick={() =>
                                                 acceptMutation.mutate(_id)
                                             }
-                                            className="button--style--rounded rounded-none px-3 py-2 bg-gray-100 text-[0.65rem] sm:text-[0.75rem] text-blue-700 border-blue-700"
+                                            className="button--style--rounded rounded-none w-18 py-2 bg-gray-100 text-[0.65rem] sm:text-[0.75rem] text-blue-700 border-blue-700"
                                         >
                                             {acceptMutation.isPending &&
-                                            acceptMutation.variables === _id
-                                                ? "Accepting..."
-                                                : "Accept"}
+                                            acceptMutation.variables === _id ? (
+                                                <span className="loader-circle w-3 h-3 inline-block align-middle"></span>
+                                            ) : (
+                                                "Accept"
+                                            )}
                                         </button>
                                         <button
                                             disabled={
@@ -295,12 +282,14 @@ export default function Invitations({ show }) {
                                             onClick={() =>
                                                 rejectMutation.mutate(_id)
                                             }
-                                            className="button--style--rounded rounded-none px-3 py-2 bg-gray-100 text-[0.65rem] sm:text-[0.75rem] text-red-700 border-red-700"
+                                            className="button--style--rounded rounded-none w-18 py-2 bg-gray-100 text-[0.65rem] sm:text-[0.75rem] text-red-700 border-red-700"
                                         >
                                             {rejectMutation.isPending &&
-                                            rejectMutation.variables === _id
-                                                ? "Rejecting..."
-                                                : "Reject"}
+                                            rejectMutation.variables === _id ? (
+                                                <span className="loader-circle w-3 h-3 inline-block align-middle"></span>
+                                            ) : (
+                                                "Reject"
+                                            )}
                                         </button>
                                     </div>
                                 ) : (
@@ -313,12 +302,14 @@ export default function Invitations({ show }) {
                                             e.stopPropagation();
                                             removeMutation.mutate(_id);
                                         }}
-                                        className="ms-auto button--style--rounded rounded-none px-3 py-2 border-gray-600 text-[0.65rem] sm:text-[0.75rem] text-gray-600 bg-gray-100"
+                                        className="ms-auto button--style--rounded rounded-none w-18 py-2 border-gray-600 text-[0.65rem] sm:text-[0.75rem] text-gray-600 bg-gray-100"
                                     >
                                         {removeMutation.isPending &&
-                                        removeMutation.variables === _id
-                                            ? "Removing..."
-                                            : "Remove"}
+                                        removeMutation.variables === _id ? (
+                                            <span className="loader-circle w-3 h-3 inline-block align-middle"></span>
+                                        ) : (
+                                            "Remove"
+                                        )}
                                     </button>
                                 )}
                             </div>

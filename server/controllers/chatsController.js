@@ -13,7 +13,10 @@ import { emitToBoard } from '../socket/registry.js';
 const getMessages = async (req, res) => {
     const { userId } = req.user;
     const { boardId } = req.params;
-    const limit = typeof req.query.limit === 'string' ? parseInt(req.query.limit) : 20;
+    const limit = Math.min(
+        Math.max(Number(req.query.limit) || 20, 1),
+        100,
+    );
     const before = typeof req.query.before === 'string' && req.query.before;
 
     const foundBoard = await Board.findById(boardId).lean();

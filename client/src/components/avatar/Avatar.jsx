@@ -95,7 +95,11 @@ const Avatar = ({
                         {username?.charAt(0)?.toUpperCase()}
                     </div>
                 ) : (
-                    <img className="flex--center h-full w-full" />
+                    <img
+                        src={profileImage}
+                        alt={`${username}'s profile`}
+                        className="flex--center h-full w-full object-cover"
+                    />
                 )}
             </div>
 
@@ -118,7 +122,11 @@ const Avatar = ({
                                     {username?.charAt(0)?.toUpperCase()}
                                 </div>
                             ) : (
-                                <img className="flex--center h-full w-full" />
+                                <img
+                                    src={profileImage}
+                                    alt={`${username}'s profile`}
+                                    className="flex--center h-full w-full object-cover"
+                                />
                             )}
                         </div>
 

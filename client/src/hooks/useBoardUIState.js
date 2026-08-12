@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 export function useBoardUIState() {
     const [openMoveListForm, setOpenMoveListForm] = useState(false);
 
-    const [openMembers, setOpenMembers] = useState(false);
     const [openFilter, setOpenFilter] = useState(false);
     const [openChatBox, setOpenChatBox] = useState(false);
 
@@ -15,26 +14,37 @@ export function useBoardUIState() {
     const [openBoardActivities, setOpenBoardActivities] = useState(false);
     const [openVisibilityConfig, setOpenVisibilityConfig] = useState(false);
 
-    return {
-        openMoveListForm,
-        setOpenMoveListForm,
-        openMembers,
-        setOpenMembers,
-        openFilter,
-        setOpenFilter,
-        openChatBox,
-        setOpenChatBox,
-        openInvitationForm,
-        setOpenInvitationForm,
-        openAddList,
-        setOpenAddList,
-        openKeyBindings,
-        setOpenKeyBindings,
-        openConfiguration,
-        setOpenConfiguration,
-        openBoardActivities,
-        setOpenBoardActivities,
-        openVisibilityConfig,
-        setOpenVisibilityConfig,
-    };
+    return useMemo(
+        () => ({
+            openMoveListForm,
+            setOpenMoveListForm,
+            openFilter,
+            setOpenFilter,
+            openChatBox,
+            setOpenChatBox,
+            openInvitationForm,
+            setOpenInvitationForm,
+            openAddList,
+            setOpenAddList,
+            openKeyBindings,
+            setOpenKeyBindings,
+            openConfiguration,
+            setOpenConfiguration,
+            openBoardActivities,
+            setOpenBoardActivities,
+            openVisibilityConfig,
+            setOpenVisibilityConfig,
+        }),
+        [
+            openMoveListForm,
+            openFilter,
+            openChatBox,
+            openInvitationForm,
+            openAddList,
+            openKeyBindings,
+            openConfiguration,
+            openBoardActivities,
+            openVisibilityConfig,
+        ],
+    );
 }

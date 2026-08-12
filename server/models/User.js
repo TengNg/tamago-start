@@ -6,6 +6,8 @@ const UserSchema = new Schema({
         type: String,
         required: true,
         unique: true,
+        trim: true,
+        lowercase: true,
         validate: {
             validator: isValidUsername,
             message: 'username is not allowed'
@@ -52,6 +54,8 @@ const UserSchema = new Schema({
         required: true,
     }
 }, { timestamps: true });
+
+UserSchema.index({ discordId: 1 });
 
 export default model('User', UserSchema);
 

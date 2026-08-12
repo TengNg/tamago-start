@@ -5,7 +5,7 @@ import Title from "../components/ui/Title";
 import JoinBoardRequestForm from "../components/board/JoinBoardRequestForm";
 import BoardsHelp from "../components/ui/BoardsHelp";
 import Modal from "../components/ui/Modal";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { boardApi } from "../services/api";
 import { boardKeys } from "../queries/boardKeys";
 import { useKeybind } from "../hooks/useKeybind";
@@ -17,8 +17,6 @@ const FILTERS = Object.freeze({
 });
 
 const Boards = () => {
-    const queryClient = useQueryClient();
-
     const [boardFilter, setBoardFilter] = useState(
         /** @type {"all" | "owned" | "joined"} */ (FILTERS.ALL),
     );
@@ -38,13 +36,6 @@ const Boards = () => {
      */
     function handleFilter(status) {
         setBoardFilter(status);
-    }
-
-    function handleRefreshData() {
-        queryClient.invalidateQueries({
-            queryKey: ["boards", boardFilter],
-            exact: true,
-        });
     }
 
     useKeybind(["?"], () => setOpenHelp((prev) => !prev), {
@@ -163,17 +154,19 @@ const Boards = () => {
                             <button
                                 className="text-[0.75rem] text-gray-700 pe-1 text-end underline cursor-pointer sm:mb-0 mb-2"
                                 onClick={() =>
-                                    setOpenJoinBoardRequestForm((open) => !open)
+                                    setOpenBoardForm((open) => !open)
                                 }
                             >
-                                join board
+                                new board
                             </button>
 
                             <button
                                 className="text-[0.75rem] text-gray-700 pe-1 text-end underline cursor-pointer sm:mb-0 mb-2"
-                                onClick={handleRefreshData}
+                                onClick={() =>
+                                    setOpenJoinBoardRequestForm((open) => !open)
+                                }
                             >
-                                refresh
+                                join board
                             </button>
                         </div>
                     </div>
@@ -182,19 +175,6 @@ const Boards = () => {
                         {boardsQuery.data.boards.map((item) => {
                             return <BoardItem key={item._id} item={item} />;
                         })}
-
-                        <div className="relative ms-2 sm:ms-0 w-52.5 sm:w-62.5 h-30 sm:h-33.75">
-                            <div
-                                onClick={() =>
-                                    setOpenBoardForm((open) => !open)
-                                }
-                                className="board--style board--hover h-full w-full border-2 border-gray-500 shadow-gray-500 py-3 px-4 select-none bg-transparent"
-                            >
-                                <div className="flex items-center gap-2 text-gray-500 font-medium">
-                                    <span>+ new board</span>
-                                </div>
-                            </div>
-                        </div>
                     </div>
 
                     {boardsQuery.data.recentlyViewedBoard && (

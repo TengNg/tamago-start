@@ -11,6 +11,7 @@ const chatSchema = new Schema({
     content: {
         type: String,
         required: true,
+        maxLength: 2000,
     },
 
     boardId: {

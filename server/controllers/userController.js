@@ -1,8 +1,10 @@
 import User from '../models/User.js';
 import Board from '../models/Board.js';
+import BoardMembership from '../models/BoardMembership.js';
 import bcrypt from 'bcryptjs';
 import { isValidUsername } from '../services/usernameValidationService.js';
 import { sanitizeUser } from '../services/userService.js';
+import { sendAuthCookies, clearAuthCookies } from '../services/createAuthTokensService.js';
 
 /**
  * @param {import('express').Request} req
@@ -31,17 +33,26 @@ const updateUsername = async (req, res) => {
         return res.sendStatus(404);
     }
 
-    const foundUser = await User.findOne({ username: newUsername })
-    if (foundUser) {
-        return res.status(409).json({ message: "Username is already exists" });
-    }
-
     if (!isValidUsername(newUsername)) {
         return res.status(422).json({ message: "Invalid username" });
     }
 
-    user.username = newUsername;
+    const foundUser = await User.findOne({
+        username: newUsername.trim().toLowerCase(),
+        _id: { $ne: userId },
+    });
+    if (foundUser) {
+        return res.status(409).json({ message: "Username is already exists" });
+    }
+
+    user.username = newUsername.trim().toLowerCase();
     await user.save();
+
+    sendAuthCookies(res, {
+        userId: user._id.toString(),
+        username: user.username,
+        refreshTokenVersion: user.refreshTokenVersion,
+    });
 
     res.sendStatus(204);
 }
@@ -81,9 +92,18 @@ const updatePassword = async (req, res) => {
         });
     }
 
+    if (newPassword.length < 8) {
+        return res.status(422).json({
+            message: "Password must be at least 8 characters",
+        });
+    }
+
     const hashedPwd = await bcrypt.hash(newPassword, 10);
     foundUser.password = hashedPwd;
+    foundUser.refreshTokenVersion = (foundUser.refreshTokenVersion || 0) + 1;
     await foundUser.save();
+
+    clearAuthCookies(res);
 
     res.sendStatus(204);
 };
@@ -101,9 +121,16 @@ const addPinnedBoard = async (req, res) => {
         return res.sendStatus(404);
     }
 
-    const foundBoard = await Board.findById(id);
-    if (!foundBoard) {
+    const board = await Board.findById(id);
+    if (!board) {
         return res.status(422).json({ message: "Board does not exist" });
+    }
+
+    const isMember = await BoardMembership.exists({ boardId: board._id, userId });
+    const isPublic = board.visibility === 'public';
+    const isOwner = board.createdBy.toString() === userId;
+    if (!isMember && !isPublic && !isOwner) {
+        return res.status(403).json({ message: "you do not have access to this board" });
     }
 
     if (foundUser.pinnedBoardIdCollection && foundUser.pinnedBoardIdCollection.has(id)) {
@@ -117,7 +144,7 @@ const addPinnedBoard = async (req, res) => {
 
     const result = await User.findOneAndUpdate(
         { _id: userId },
-        { $set: { [`pinnedBoardIdCollection.${id}`]: { title: foundBoard?.title } } },
+        { $set: { [`pinnedBoardIdCollection.${id}`]: { title: board.title } } },
         { new: true, upsert: true }
     ).select('pinnedBoardIdCollection');
 

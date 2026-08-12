@@ -6,7 +6,7 @@ import dateFormatter, {
     getRelativeDueLabel,
 } from "../../utils/dateFormatter";
 import PRIORITY_LEVELS from "../../constants/priorityLevels";
-import { useRef } from "react";
+import { memo, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import Icon from "../shared/Icon";
 import { getUsernameByUserId } from "../../utils/boardMembers";
@@ -14,7 +14,7 @@ import { getUsernameByUserId } from "../../utils/boardMembers";
 /**
  * @param {{ card: Card }} props
  */
-export default function Card({ card }) {
+function Card({ card }) {
     const [searchParams, setSearchParams] = useSearchParams();
 
     const {
@@ -259,3 +259,5 @@ export default function Card({ card }) {
         </div>
     );
 }
+
+export default memo(Card);

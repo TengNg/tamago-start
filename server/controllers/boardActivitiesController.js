@@ -20,7 +20,7 @@ const getBoardActivities = async (req, res) => {
     });
 
     const perPage = 20;
-    const page = typeof req.query.page === 'string'? parseInt(req.query.page, 10) : 1;
+    const page = Math.max(Number(req.query.page) || 1, 1);
 
     const activities = await BoardActivity
         .find({ board: boardId })
@@ -56,9 +56,11 @@ const deleteAllBoardActivities = async (req, res) => {
         return res.sendStatus(404);
     }
 
-    if (foundBoard.createdBy.toString() !== userId) {
-        return res.status(401).json({ message: 'Not authorize' });
-    }
+    await checkAllowedRoles({
+        roles: ["owner"],
+        userId,
+        boardId: foundBoard._id.toString(),
+    });
 
     await BoardActivity.deleteMany({ board: foundBoard._id });
     return res.sendStatus(204);

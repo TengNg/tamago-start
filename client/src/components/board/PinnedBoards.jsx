@@ -208,6 +208,8 @@ const PinnedBoards = () => {
             return;
         }
 
+        const prevOrder = [...pinnedBoards];
+
         try {
             const newPinnedBoards = [...pinnedBoards];
             const [removed] = newPinnedBoards.splice(activeIndex, 1);
@@ -239,6 +241,7 @@ const PinnedBoards = () => {
                 },
             );
         } catch (err) {
+            setPinnedBoards(prevOrder);
             const errMsg = getErrorMessage(
                 err,
                 "Failed to update pinned boards",

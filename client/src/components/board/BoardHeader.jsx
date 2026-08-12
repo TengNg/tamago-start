@@ -4,7 +4,6 @@ import { boardApi } from "../../services/api";
 import useToast from "../../hooks/useToast";
 import BoardOptions from "./BoardOptions";
 import { getErrorMessage } from "../../utils/getErrorMessage";
-import useCurrentUser from "../../hooks/useCurrentUser";
 
 /**
  * @param {{
@@ -14,6 +13,7 @@ import useCurrentUser from "../../hooks/useCurrentUser";
 const BoardHeader = ({ setOpenCopyBoardForm }) => {
     const {
         boardState,
+        isOwner,
         updateBoardField,
         openChatBox,
         setOpenChatBox,
@@ -24,18 +24,10 @@ const BoardHeader = ({ setOpenCopyBoardForm }) => {
         setOpenInvitationForm,
     } = useBoardState();
 
-    const currentUser = useCurrentUser();
-
     const toast = useToast();
 
     const [openBoardOptions, setOpenBoardOptions] = useState(false);
     const [initialTitle, setInitialTitle] = useState(boardState.board.title);
-
-    const isOwner =
-        boardState.members.findIndex(
-            /** @param {BoardMember} m */
-            (m) => m.role === "owner" && m.userId === currentUser._id,
-        ) !== -1;
 
     /**
      * @param {string} value
@@ -111,6 +103,16 @@ const BoardHeader = ({ setOpenCopyBoardForm }) => {
             <div className="flex h-9 gap-2 z-20" id="board-options-wrapper">
                 <div>
                     <div
+                        onClick={() => setOpenInvitationForm(true)}
+                        className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-20 px-4 border-2 text-[0.75rem] text-gray-600 font-medium
+                                ${openInvitationForm ? "shadow-[0_1px_0_0] mt-0.5" : "shadow-[0_3px_0_0]"}`}
+                    >
+                        invite
+                    </div>
+                </div>
+
+                <div>
+                    <div
                         onClick={() => setOpenChatBox((prev) => !prev)}
                         className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-20 px-4 border-2 text-[0.75rem] text-gray-600 font-medium
                                 ${openChatBox ? "shadow-[0_1px_0_0] mt-0.5" : "shadow-[0_3px_0_0]"}`}
@@ -126,16 +128,6 @@ const BoardHeader = ({ setOpenCopyBoardForm }) => {
                                 ${openFilter ? "shadow-[0_1px_0_0] mt-0.5" : "shadow-[0_3px_0_0]"} ${hasFilter ? "text-white bg-teal-600" : ""}`}
                     >
                         filter
-                    </div>
-                </div>
-
-                <div>
-                    <div
-                        onClick={() => setOpenInvitationForm(true)}
-                        className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-20 px-4 border-2 text-[0.75rem] text-gray-600 font-medium
-                                ${openInvitationForm ? "shadow-[0_1px_0_0] mt-0.5" : "shadow-[0_3px_0_0]"}`}
-                    >
-                        invite
                     </div>
                 </div>
 

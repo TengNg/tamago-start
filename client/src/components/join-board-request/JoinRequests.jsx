@@ -29,12 +29,9 @@ export default function JoinRequests({ show }) {
 
     const {
         data,
-        refetch,
         fetchNextPage,
-        isLoading,
         isFetchingNextPage,
         hasNextPage,
-        isRefetching,
         isError,
     } = useInfiniteQuery({
         queryKey: joinRequestKeys.all(),
@@ -209,19 +206,8 @@ export default function JoinRequests({ show }) {
             >
                 <div className="flex justify-between items-center">
                     <p className="text-[0.75rem] text-gray-700 m-0 p-0">
-                        received requests [{requests.length}]
+                        received requests: {requests.length}
                     </p>
-                    <button
-                        disabled={isLoading || isRefetching}
-                        className="underline text-[0.75rem] text-gray-700 me-1"
-                        onClick={() => {
-                            refetch();
-                        }}
-                    >
-                        {isLoading || isRefetching
-                            ? "refreshing..."
-                            : "refresh"}
-                    </button>
                 </div>
 
                 <div className="relative box--style border-2 border-gray-600 shadow-gray-600 h-87.5 mx-auto overflow-auto p-4 md:p-8 bg-gray-100/30 flex flex-col gap-4">
@@ -328,12 +314,15 @@ export default function JoinRequests({ show }) {
                                                     requesterId,
                                                 })
                                             }
-                                            className="button--style--rounded rounded-none px-3 py-2 text-[0.65rem] sm:text-[0.75rem] text-blue-700 border-blue-700 bg-gray-100"
+                                            className="button--style--rounded rounded-none w-18 py-2 text-[0.65rem] sm:text-[0.75rem] text-blue-700 border-blue-700 bg-gray-100"
                                         >
                                             {acceptMutation.isPending &&
-                                            acceptMutation.variables?.id === _id
-                                                ? "Accepting..."
-                                                : "Accept"}
+                                            acceptMutation.variables?.id ===
+                                                _id ? (
+                                                <span className="loader-circle w-3 h-3 inline-block align-middle"></span>
+                                            ) : (
+                                                "Accept"
+                                            )}
                                         </button>
                                         <button
                                             disabled={
@@ -348,12 +337,14 @@ export default function JoinRequests({ show }) {
                                                     requesterId,
                                                 })
                                             }
-                                            className="button--style--rounded rounded-none px-3 py-2 bg-white text-[0.65rem] sm:text-[0.75rem] text-red-700 border-red-700"
+                                            className="button--style--rounded rounded-none w-18 py-2 bg-white text-[0.65rem] sm:text-[0.75rem] text-red-700 border-red-700"
                                         >
                                             {rejectMutation.isPending &&
-                                            rejectMutation.variables.id === _id
-                                                ? "Rejecting..."
-                                                : "Reject"}
+                                            rejectMutation.variables.id === _id ? (
+                                                <span className="loader-circle w-3 h-3 inline-block align-middle"></span>
+                                            ) : (
+                                                "Reject"
+                                            )}
                                         </button>
                                     </div>
                                 ) : (
@@ -365,12 +356,14 @@ export default function JoinRequests({ show }) {
                                         onClick={() =>
                                             removeMutation.mutate(_id)
                                         }
-                                        className="ms-auto button--style--rounded rounded-none px-3 py-2 border-gray-600 text-[0.65rem] sm:text-[0.75rem] text-gray-600 bg-gray-100"
+                                        className="ms-auto button--style--rounded rounded-none w-18 py-2 border-gray-600 text-[0.65rem] sm:text-[0.75rem] text-gray-600 bg-gray-100"
                                     >
-                                        {rejectMutation.isPending &&
-                                        rejectMutation.variables?.id === _id
-                                            ? "Removing..."
-                                            : "Remove"}
+                                        {removeMutation.isPending &&
+                                        removeMutation.variables === _id ? (
+                                            <span className="loader-circle w-3 h-3 inline-block align-middle"></span>
+                                        ) : (
+                                            "Remove"
+                                        )}
                                     </button>
                                 )}
                             </div>

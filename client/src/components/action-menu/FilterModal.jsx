@@ -2,7 +2,6 @@ import { useEffect, useState, useMemo } from "react";
 import useBoardState from "../../hooks/useBoardState";
 import { useSearchParams } from "react-router-dom";
 
-import { isPastDue } from "../../utils/dateFormatter";
 import PRIORITY_LEVELS from "../../constants/priorityLevels";
 import Icon from "../shared/Icon";
 import useToast from "../../hooks/useToast";
@@ -11,6 +10,7 @@ import { kb } from "../../constants/keybinds";
 import { BOARD_ACTIONS } from "../../state/boardActionTypes";
 import Modal from "../ui/Modal";
 import { getErrorMessage } from "../../utils/getErrorMessage";
+import { isCardVisibleByFilter } from "../../utils/cardFilter";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -76,57 +76,16 @@ const FilterModal = () => {
             Object.entries({ ...boardState.cards }).map((entry) => {
                 const [listId, cardList] = entry;
                 const updated = cardList.map((c) => {
-                    let hiddenByFilter = true;
+                    const visible = isCardVisibleByFilter(c, {
+                        search: searchValue,
+                        priorities,
+                        owners,
+                        stale,
+                        verified,
+                        members: boardState.members,
+                    });
 
-                    const isFilteredByTitle =
-                        c.title
-                            .toLowerCase()
-                            .includes(searchValue?.toLowerCase() || "") ||
-                        c._id
-                            .toLowerCase()
-                            .includes(searchValue?.toLowerCase() || "");
-
-                    const isFilteredByPriority = priorities.includes(
-                        c.priorityLevel,
-                    );
-                    const isFilteredByStale = isPastDue(c.dueDate);
-
-                    const lowerOwner = c.owner
-                        ? (
-                              boardState.members.find(
-                                  (m) => m.userId === c.owner,
-                              )?.username || ""
-                          ).toLowerCase()
-                        : null;
-                    const isFilteredByOwner =
-                        (owners.includes("unassigned") && !lowerOwner) ||
-                        (lowerOwner && owners.includes(lowerOwner));
-
-                    const isFilteredByVerified = c.verified;
-
-                    const hasActiveFilter =
-                        searchValue ||
-                        priorities.length > 0 ||
-                        stale === "true" ||
-                        owners.length > 0 ||
-                        verified === "true";
-
-                    if (!hasActiveFilter) {
-                        hiddenByFilter = false;
-                    } else {
-                        if (searchValue && isFilteredByTitle)
-                            hiddenByFilter = false;
-                        if (priorities.length > 0 && isFilteredByPriority)
-                            hiddenByFilter = false;
-                        if (stale === "true" && isFilteredByStale)
-                            hiddenByFilter = false;
-                        if (owners.length > 0 && isFilteredByOwner)
-                            hiddenByFilter = false;
-                        if (verified === "true" && isFilteredByVerified)
-                            hiddenByFilter = false;
-                    }
-
-                    return { ...c, hiddenByFilter };
+                    return { ...c, hiddenByFilter: !visible };
                 });
 
                 return [listId, updated];
@@ -220,7 +179,7 @@ const FilterModal = () => {
 
         const origin = window.location.origin;
         const pathname = window.location.pathname;
-        const filterUrl = `${origin}${pathname}${params.toString()}`;
+        const filterUrl = `${origin}${pathname}?${params.toString()}`;
         try {
             await navigator.clipboard.writeText(filterUrl);
             toast.success("Link copied");

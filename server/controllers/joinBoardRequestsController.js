@@ -14,7 +14,7 @@ const getAllRequests = async (req, res) => {
     const { userId } = req.user;
 
     let { page } = req.query;
-    const pageNum = Number(Array.isArray(page) ? page[0] : page) || 1;
+    const pageNum = Math.max(Number(Array.isArray(page) ? page[0] : page) || 1, 1);
 
     const ownedBoardIds = await Board.find({ createdBy: userId }).distinct('_id').lean();
 
@@ -52,10 +52,10 @@ const getAllRequests = async (req, res) => {
  */
 const getBoardRequests = async (req, res) => {
     const { userId } = req.user;
-    const { boardId } = req.body;
+    const { boardId } = req.params;
     const foundBoard = await Board.findById(boardId);
     if (!foundBoard) {
-        return res.status(403).json({ message: "board not found" });
+        return res.sendStatus(404);
     }
 
     await checkAllowedRoles({
@@ -133,6 +133,10 @@ const acceptRequest = async (req, res) => {
         return res.sendStatus(404);
     }
 
+    if (acceptedRequest.status !== 'pending') {
+        return res.status(409).json({ message: 'join request has already been responded to' });
+    }
+
     if (
         acceptedRequest.boardId.toString() !== board._id.toString() ||
         acceptedRequest.requester.toString() !== requesterId
@@ -191,6 +195,10 @@ const rejectRequest = async (req, res) => {
     const rejectedRequest = await JoinBoardRequest.findById(requestId);
     if (!rejectedRequest) {
         return res.sendStatus(404);
+    }
+
+    if (rejectedRequest.status !== 'pending') {
+        return res.status(409).json({ message: 'join request has already been responded to' });
     }
 
     if (rejectedRequest.boardId.toString() !== board._id.toString()) {

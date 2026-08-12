@@ -69,7 +69,9 @@ const fileFilter = (_req, file, cb) => {
     const mime = file.mimetype.toLowerCase();
 
     if (blockedExtensions.includes(ext) || blockedMimeTypes.includes(mime)) {
+        /** @type {Error & { status?: number }} */
         const error = new Error("File blocked for security reasons - dangerous type detected");
+        error.status = 415;
         return cb(error);
     }
 

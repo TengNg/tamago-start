@@ -77,18 +77,17 @@ const cardSchema = new Schema({
             {
                 validator: function(/** @type {string | null} */value) {
                     if (!value) return true;
-                    const month = parseInt(value.split("-")[1], 10);
-                    return month >= 1 && month <= 12;
+                    const [year, month, day] = value.split("-").map(Number);
+                    if (month < 1 || month > 12) return false;
+                    if (day < 1 || day > 31) return false;
+                    const date = new Date(Date.UTC(year, month - 1, day));
+                    return (
+                        date.getUTCFullYear() === year &&
+                        date.getUTCMonth() === month - 1 &&
+                        date.getUTCDate() === day
+                    );
                 },
-                message: 'month must be between 1 and 12'
-            },
-            {
-                validator: function(/** @type {string | null} */value) {
-                    if (!value) return true;
-                    const day = parseInt(value.split("-")[2], 10);
-                    return day >= 1 && day <= 31;
-                },
-                message: 'day must be between 1 and 31'
+                message: 'must be a valid calendar date'
             }
         ],
     },

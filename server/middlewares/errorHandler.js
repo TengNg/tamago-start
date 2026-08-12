@@ -1,5 +1,5 @@
 /**
- * @param {Error & { status: number }} err
+ * @param {Error & { status: number, code?: string, name?: string, path?: string }} err
  * @param {import('express').Request} _req
  * @param {import('express').Response} res
  * @param {import('express').NextFunction} _next
@@ -13,6 +13,21 @@ const errorHandler = (err, _req, res, _next) => {
             .join('; ');
         return res.status(400).json({
             message: message || err.message || 'Validation failed',
+        });
+    }
+
+    if (err && err.name === 'CastError') {
+        return res.status(404).json({
+            message: 'Resource not found',
+        });
+    }
+
+    if (err && err.name === 'MulterError') {
+        const status = err.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+        return res.status(status).json({
+            message: err.code === 'LIMIT_FILE_SIZE'
+                ? 'File too large (max 5MB)'
+                : err.message || 'File upload failed',
         });
     }
 

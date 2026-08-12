@@ -21,8 +21,12 @@ import { useKeybind } from "../../hooks/useKeybind";
  */
 const BoardOptions = ({ open, setOpen, setOpenCopyBoardForm }) => {
     const currentUser = useCurrentUser();
-    const { boardState, setOpenConfiguration, setOpenBoardActivities } =
-        useBoardState();
+    const {
+        boardState,
+        isOwner,
+        setOpenConfiguration,
+        setOpenBoardActivities,
+    } = useBoardState();
 
     const { isAnyModalOpen } = useContext(ModalStackContext);
 
@@ -212,18 +216,24 @@ const BoardOptions = ({ open, setOpen, setOpenCopyBoardForm }) => {
                         className="border-gray-600 mt-4 shadow-[0_3px_0_0] h-25 overflow-auto border-2 px-3 py-2 shadow-gray-600 bg-gray-100 w-full focus:outline-hidden font-medum sm:text-[0.75rem] text-gray-600 leading-normal"
                         placeholder="description for this board..."
                         value={description}
+                        disabled={!isOwner}
                         onChange={(e) => setDescription(e.target.value)}
                     />
-                    <button
-                        onClick={() => descriptionMutation.mutate()}
-                        disabled={
-                            descriptionMutation.isPending ||
-                            description.trim() === boardState.board.description
-                        }
-                        className="button--style--dark w-25 mt-2 self-end text-[0.75rem] font-medium text-gray-200 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {descriptionMutation.isPending ? "saving..." : "save"}
-                    </button>
+                    {isOwner && (
+                        <button
+                            onClick={() => descriptionMutation.mutate()}
+                            disabled={
+                                descriptionMutation.isPending ||
+                                description.trim() ===
+                                    boardState.board.description
+                            }
+                            className="button--style--dark w-25 mt-2 self-end text-[0.75rem] font-medium text-gray-200 px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {descriptionMutation.isPending
+                                ? "saving..."
+                                : "save"}
+                        </button>
+                    )}
                 </div>
             </div>
         </>

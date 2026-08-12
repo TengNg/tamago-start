@@ -58,6 +58,7 @@ export default function Login() {
                         type="text"
                         id="username"
                         autoComplete="off"
+                        autoFocus
                         readOnly={loginMutation.isPending}
                         onChange={(e) => setUsername(e.target.value)}
                         value={username}

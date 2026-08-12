@@ -29,7 +29,7 @@ function register({ username, password, confirmedPassword }) {
  */
 function logout({ allDevices = false }) {
     const endpoint = allDevices ? "/logout/all-devices" : "/logout";
-    return apiClient.get(endpoint);
+    return apiClient.post(endpoint);
 }
 
 export default { login, register, logout };

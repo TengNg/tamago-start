@@ -1,6 +1,6 @@
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useMemo, useState, useRef, useCallback, useEffect } from "react";
+import { memo, useMemo, useState, useRef, useCallback, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import Card from "../card/Card";
 import useBoardState from "../../hooks/useBoardState";
@@ -21,7 +21,7 @@ import { getErrorMessage } from "../../utils/getErrorMessage";
 /**
  * @param {ListProps} props
  */
-const List = ({ index, list, cards }) => {
+function List({ index, list, cards }) {
     const {
         boardState,
         updateListField,
@@ -380,6 +380,6 @@ const List = ({ index, list, cards }) => {
             </div>
         </div>
     );
-};
+}
 
-export default List;
+export default memo(List);

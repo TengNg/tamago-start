@@ -16,6 +16,8 @@ declare type BoardContextValue = {
     boardState: BoardState;
     dispatch: React.Dispatch<BoardAction>;
 
+    isOwner: boolean;
+
     pendingReorder: Set<string>;
     setPendingReorder: React.Dispatch<React.SetStateAction<Set<string>>>;
 
@@ -60,8 +62,6 @@ declare type BoardContextValue = {
 
     openMoveListForm: boolean;
     setOpenMoveListForm: React.Dispatch<React.SetStateAction<boolean>>;
-    openMembers: boolean;
-    setOpenMembers: React.Dispatch<React.SetStateAction<boolean>>;
     openFilter: boolean;
     setOpenFilter: React.Dispatch<React.SetStateAction<boolean>>;
     openChatBox: boolean;

@@ -41,8 +41,8 @@ const createWritedown = async (req, res) => {
     session.startTransaction();
 
     try {
-        const order = await generateWritedownOrder({ userId, prevId, nextId });
-        const newWritedown = await Writedown.create({ owner: userId, order });
+        const order = await generateWritedownOrder({ userId, prevId, nextId, session });
+        const [newWritedown] = await Writedown.create([{ owner: userId, order }], { session });
 
         await session.commitTransaction();
 
@@ -160,7 +160,7 @@ const deleteAllWritedowns = async (req, res) => {
     session.startTransaction();
 
     try {
-        await Attachment.deleteMany({ docModel: 'Ward', doc: { $in: writedownIds } }, { session });
+        await Attachment.deleteMany({ docModel: 'Writedown', doc: { $in: writedownIds } }, { session });
         await Writedown.deleteMany({ _id: { $in: writedownIds } }, { session });
 
         await session.commitTransaction();

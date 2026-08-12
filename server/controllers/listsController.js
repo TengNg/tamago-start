@@ -321,6 +321,17 @@ const copyList = async (req, res) => {
             session,
         });
 
+        await saveBoardActivity({
+            boardId,
+            userId,
+            docId: list._id,
+            action: "list.copied",
+            docModel: "List",
+            docTitle: list.title,
+            description: `"${foundList.title}" duplicated`,
+            session,
+        });
+
         await session.commitTransaction();
 
         emitToBoard(boardId, SOCKET_EVENTS.LIST_COPIED, {
@@ -429,6 +440,19 @@ const moveList = async (req, res) => {
 
         await Card.updateMany({ listId: id }, { boardId: targetBoard._id }).session(session);
         const newCards = await Card.find({ listId: id, boardId: targetBoard._id }).sort({ order: 'asc' }).session(session);
+
+        await saveBoardActivity({
+            boardId: targetBoard._id,
+            userId,
+            docId: foundList._id,
+            action: "list.moved",
+            docModel: "List",
+            docTitle: foundList.title,
+            description: isMovedToDifferentBoard
+                ? `moved to board "${targetBoard.title}"`
+                : `reordered to position ${+index + 1}`,
+            session,
+        });
 
         await session.commitTransaction();
 

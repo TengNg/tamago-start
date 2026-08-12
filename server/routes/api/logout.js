@@ -6,8 +6,8 @@ import {
     handleLogoutOfAllDevices,
 } from '../../controllers/logoutController.js';
 
-router.get('/', handleLogout);
-router.get('/all-devices', handleLogoutOfAllDevices);
+router.post('/', handleLogout);
+router.post('/all-devices', handleLogoutOfAllDevices);
 
 export default router;
 

@@ -46,10 +46,13 @@ const isActionAuthorized = async ({ boardId, userId, resource, action }) => {
     }
 
     if (action === 'view') {
-        return {
-            board,
-            authorized: true,
-        };
+        const allowed = hasPermission(membership.permissions, resource, 'view');
+        if (allowed) {
+            return {
+                board,
+                authorized: true,
+            };
+        }
     }
 
     const allowed = hasPermission(membership.permissions, resource, action);

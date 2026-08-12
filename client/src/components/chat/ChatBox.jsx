@@ -5,7 +5,6 @@ import Icon from "../shared/Icon";
 import { chatApi } from "../../services/api";
 import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
 import useBoardState from "../../hooks/useBoardState";
-import useCurrentUser from "../../hooks/useCurrentUser";
 import { chatKeys } from "../../queries/chatKeys";
 import useToast from "../../hooks/useToast";
 import { useKeybind } from "../../hooks/useKeybind";
@@ -14,9 +13,9 @@ import { getErrorMessage } from "../../utils/getErrorMessage";
 
 /** @returns {JSX.Element} */
 const ChatBox = () => {
-    const currentUser = useCurrentUser();
     const {
         boardState,
+        isOwner,
         openChatBox: open,
         setOpenChatBox: setOpen,
         isAtBottomOfChatBox: isAtBottom,
@@ -34,12 +33,6 @@ const ChatBox = () => {
     const previousScrollHeightRef = useRef(0);
 
     const [expanded, setExpanded] = useState(false);
-
-    const isOwner =
-        boardState.members.findIndex(
-            /** @param {BoardMember} m */
-            (m) => m.role === "owner" && m.userId === currentUser._id,
-        ) !== -1;
 
     useKeybind(kb.openChatBox, () => {
         setOpen((prev) => !prev);
@@ -80,11 +73,7 @@ const ChatBox = () => {
 
     function handleScroll() {
         const container = messagesRef.current;
-        if (
-            !container ||
-            chatQuery.isFetchingNextPage ||
-            !chatQuery.hasNextPage
-        ) {
+        if (!container || chatQuery.isFetchingNextPage) {
             return;
         }
 

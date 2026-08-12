@@ -250,11 +250,30 @@ const ListContainer = () => {
             return;
         }
 
-        if (isActiveTypeCard && isOverACard) {
-            const activeListId = active.data.current?.card.listId;
-            const overListId = over.data.current?.card.listId;
+        /**
+         * handleOnDragOver already moved the card between lists in boardState,
+         * so resolve the card's current list from state instead of trusting
+         * active.data.current.card.listId (stale snapshot from drag start)
+         * @returns {{ listId: string, index: number } | null}
+         */
+        const findActiveCardInState = () => {
+            for (const [listId, cards] of Object.entries(boardState.cards)) {
+                const idx = cards.findIndex((c) => c._id === activeId);
+                if (idx !== -1) {
+                    return { listId, index: idx };
+                }
+            }
+            return null;
+        };
 
-            if (!activeListId || !overListId) return;
+        if (isActiveTypeCard && isOverACard) {
+            const overListId = over.data.current?.card.listId;
+            const activeInfo = findActiveCardInState();
+            if (!overListId || !activeInfo) {
+                return;
+            }
+
+            const activeListId = activeInfo.listId;
 
             if (activeListId === overListId) {
                 if (!boardState.cards[activeListId]) {
@@ -297,7 +316,10 @@ const ListContainer = () => {
                 const activeIndex = newActiveCards.findIndex(
                     (c) => c._id === activeId,
                 );
-                if (activeIndex === -1) {
+                if (
+                    activeIndex === -1 ||
+                    String(activeIndex) !== String(activeInfo.index)
+                ) {
                     return;
                 }
 
@@ -343,10 +365,11 @@ const ListContainer = () => {
                 return;
             }
 
-            const activeListId = active.data.current?.card.listId;
-            if (!activeListId) {
+            const activeInfo = findActiveCardInState();
+            if (!activeInfo) {
                 return;
             }
+            const activeListId = activeInfo.listId;
 
             const overId = /** @type {string} */ (over.id);
 
@@ -364,10 +387,16 @@ const ListContainer = () => {
             const activeIndex = newActiveCards.findIndex(
                 (c) => c._id === active.id,
             );
+            if (
+                activeIndex === -1 ||
+                String(activeIndex) !== String(activeInfo.index)
+            ) {
+                return;
+            }
 
             const [removed] = newActiveCards.splice(activeIndex, 1);
-            removed.listId = overList._id;
-            newOverCards.push(removed);
+            const newCard = { ...removed, listId: overList._id };
+            newOverCards.push(newCard);
 
             dispatch({
                 type: BOARD_ACTIONS.SET_CARDS,

@@ -5,7 +5,6 @@ export const kb = /** @type {const} */ ({
     openAddList: "ctrl+;",
     openFilter: "ctrl+f",
     openInvitationForm: "ctrl+i",
-    openMembers: "ctrl+m",
     openConfiguration: "ctrl+x",
     openBoardActivities: "ctrl+.",
     openVisibilityConfig: "ctrl+z",

@@ -68,26 +68,14 @@ const getBoards = async (req, res) => {
     const boards = await Board.find({ _id: { $in: userBoardIds } })
         .sort({ title: 'asc' })
         .lean();
-
-    const membershipCounts = await BoardMembership.aggregate([
-        { $match: { boardId: { $in: userBoardIds } } },
-        { $group: { _id: '$boardId', memberCount: { $sum: 1 } } }
-    ]);
-
-    const countMap = {};
-    membershipCounts.forEach(item => {
-        countMap[item._id.toString()] = item.memberCount;
-    });
-
     const mapped = boards.map(board => ({
         ...board,
         owned: board.createdBy.toString() === userId.toString(),
-        memberCount: countMap[board._id.toString()] || 1,
+        listCount: board.stats?.listCount ?? 0,
     }));
 
     const ownedBoardsCount = mapped.filter(b => b.owned).length;
     const joinedBoardsCount = mapped.length - ownedBoardsCount;
-
     let filtered = [...mapped].filter(board => {
         return filter === "joined"
             ? !board.owned
@@ -446,7 +434,7 @@ const closeBoard = async (req, res) => {
         await Card.deleteMany({ boardId: id }, { session });
         await List.deleteMany({ boardId: id }, { session });
         await BoardMembership.deleteMany({ boardId: id }, { session });
-        await BoardActivity.deleteMany({ boardId: id }, { session });
+        await BoardActivity.deleteMany({ board: id }, { session });
         await ChatMessage.deleteMany({ boardId: id }, { session });
         await Board.deleteOne({ _id: id }, { session });
 

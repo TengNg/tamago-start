@@ -25,4 +25,6 @@ const AttachmentSchema = new Schema({
     }
 }, { timestamps: true });
 
+AttachmentSchema.index({ docModel: 1, doc: 1 });
+
 export default model('Attachment', AttachmentSchema);

@@ -13,7 +13,7 @@ const getInvitations = async (req, res) => {
     const { userId } = req.user;
 
     let { page } = req.query;
-    const pageNum = Number(Array.isArray(page) ? page[0] : page) || 1;
+    const pageNum = Math.max(Number(Array.isArray(page) ? page[0] : page) || 1, 1);
 
     const invitations = await Invitation
         .find({
@@ -57,7 +57,7 @@ const sendInvitation = async (req, res) => {
         return res.status(403).json({ message: "you must be a member of this board to send invitations" });
     }
 
-    const receiver = await User.findOne({ username: receiverName }).lean();
+    const receiver = await User.findOne({ username: receiverName.trim().toLowerCase() }).lean();
     if (!receiver) {
         return res.status(403).json({ message: "username is not found" });
     }
@@ -104,7 +104,7 @@ const acceptInvitation = async (req, res) => {
 
     let invitation = await Invitation.findById(id);
     if (!invitation) {
-        return res.status(404).json({ message: 'Invitation not found' });
+        return res.sendStatus(404);
     }
 
     if (invitation.invitedUserId.toString() !== userId) {
@@ -118,7 +118,7 @@ const acceptInvitation = async (req, res) => {
     const { boardId, invitedUserId } = invitation;
     const board = await Board.findById(boardId);
     if (!board) {
-        return res.status(404);
+        return res.status(403).json({ message: 'Board not found' });
     }
 
     const isAlreadyMember = await BoardMembership.exists({ boardId, userId });

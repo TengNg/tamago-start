@@ -24,14 +24,16 @@ const handleRegister = async (req, res) => {
         return res.status(400).json({ message: "Confirmed password is not matched" });
     }
 
-    const foundUser = await User.findOne({ username });
+    const normalizedUsername = username.trim().toLowerCase();
+
+    const foundUser = await User.findOne({ username: normalizedUsername });
     if (foundUser) {
         return res.status(409).json({ message: "Username is already exists" });
     }
 
     const hashedPwd = await bcrypt.hash(password, 10);
     const newUser = new User({
-        username: username,
+        username: normalizedUsername,
         password: hashedPwd,
     });
     await newUser.save();

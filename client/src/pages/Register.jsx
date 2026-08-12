@@ -6,9 +6,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import useToast from "../hooks/useToast";
 import { getErrorMessage } from "../utils/getErrorMessage";
 
-// const USER_REGEX = /^[A-z][A-z0-9-_]{3,23}$/;
-// const PWD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%]).{8,24}$/;
-
 const USERNAME_REGEX = /^[a-zA-Z0-9._-]{3,20}$/;
 const PWD_REGEX = /^.{8,24}$/;
 
@@ -135,6 +132,7 @@ export default function Register() {
                         type="text"
                         id="username"
                         autoComplete="off"
+                        autoFocus
                         ref={usernameInputEl}
                         onChange={(e) => setUsername(e.target.value)}
                         value={username}

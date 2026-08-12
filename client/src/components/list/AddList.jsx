@@ -144,7 +144,7 @@ const AddList = () => {
     return (
         <div
             ref={containerRef}
-            className={`${theme.itemTheme == "rounded-sm" ? "rounded-md" : ""} group board--style--sm overflow-hidden bg-gray-100 w-75 min-w-75 border-2 min-h-12 select-none cursor-pointer border-gray-500 shadow-gray-500 text-gray-500 font-medium`}
+            className={`${theme.itemTheme == "rounded-sm" ? "rounded-md" : ""} group shadow-[0px_4px_0_0] overflow-hidden bg-gray-100 w-75 min-w-75 border-2 min-h-12 select-none cursor-pointer border-gray-500 shadow-gray-500 text-gray-500 font-medium`}
             style={{ backgroundColor: "rgba(241, 241, 241, 0.75)" }}
         >
             {!open && (
