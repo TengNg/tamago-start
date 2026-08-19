@@ -24,9 +24,14 @@ const handleLogoutOfAllDevices = async (req, res) => {
     if (!cookies || !cookies[rTokenName]) return res.sendStatus(204);
 
     const refreshToken = cookies[rTokenName];
-    const data = /** @type AuthJwtPayload */ (
-        jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET)
-    );
+    let data;
+    try {
+        data = /** @type AuthJwtPayload */ (
+            jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET)
+        );
+    } catch {
+        return res.status(401).json({ message: "unauthorized" });
+    }
 
     await User.findOneAndUpdate(
         { _id: data.userId },

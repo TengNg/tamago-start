@@ -3,6 +3,7 @@ import Board from "../models/Board.js";
 import BoardMembership from "../models/BoardMembership.js";
 import JoinBoardRequest from "../models/JoinBoardRequest.js";
 import { checkAllowedRoles } from "../services/boardPermissionService.js";
+import mongoose from "mongoose";
 
 /**
  * @param {import('express').Request} req
@@ -128,48 +129,65 @@ const acceptRequest = async (req, res) => {
         boardId: board._id.toString(),
     });
 
-    const acceptedRequest = await JoinBoardRequest.findById(requestId);
-    if (!acceptedRequest) {
-        return res.sendStatus(404);
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const acceptedRequest = await JoinBoardRequest.findById(requestId).session(session);
+        if (!acceptedRequest) {
+            await session.abortTransaction();
+            return res.sendStatus(404);
+        }
+
+        if (acceptedRequest.status !== 'pending') {
+            await session.abortTransaction();
+            return res.status(409).json({ message: 'join request has already been responded to' });
+        }
+
+        if (
+            acceptedRequest.boardId.toString() !== board._id.toString() ||
+            acceptedRequest.requester.toString() !== requesterId
+        ) {
+            await session.abortTransaction();
+            return res.status(400).json({ message: "request does not match this board/requester" });
+        }
+
+        const requester = await User.findById(requesterId).session(session);
+        if (!requester) {
+            await session.abortTransaction();
+            return res.status(403).json({ message: "requester not found" });
+        }
+
+        const requesterBoardMembership = await BoardMembership.findOne({ boardId, userId: requester._id }).session(session);
+        if (requesterBoardMembership) {
+            await session.abortTransaction();
+            return res.status(409).json({ message: 'requester is already a member' });
+        }
+
+        const membershipCount = await BoardMembership.countDocuments({ boardId }).session(session);
+        if (membershipCount >= board.limits.maxMembers) {
+            await session.abortTransaction();
+            const msg = `Maximum member count reached for this board (maximum: ${board.limits.maxMembers})`;
+            return res.status(400).json({ message: msg });
+        }
+
+        acceptedRequest.status = 'accepted';
+        await acceptedRequest.save({ session });
+
+        await BoardMembership.create(
+            [{ boardId, userId: requester._id, role: 'member' }],
+            { session }
+        );
+
+        await session.commitTransaction();
+
+        return res.sendStatus(204);
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
     }
-
-    if (acceptedRequest.status !== 'pending') {
-        return res.status(409).json({ message: 'join request has already been responded to' });
-    }
-
-    if (
-        acceptedRequest.boardId.toString() !== board._id.toString() ||
-        acceptedRequest.requester.toString() !== requesterId
-    ) {
-        return res.status(400).json({ message: "request does not match this board/requester" });
-    }
-
-    const requester = await User.findById(requesterId);
-    if (!requester) {
-        return res.status(403).json({ message: "requester not found" });
-    }
-
-    const requesterBoardMembership = await BoardMembership.findOne({ boardId, userId: requester._id });
-    if (requesterBoardMembership) {
-        return res.status(409).json({ message: 'requester is already a member' });
-    }
-
-    const membershipCount = await BoardMembership.countDocuments({ boardId });
-    if (membershipCount >= board.limits.maxMembers) {
-        const msg = `Maximum member count reached for this board (maximum: ${board.limits.maxMembers})`;
-        return res.status(400).json({ message: msg });
-    }
-
-    acceptedRequest.status = 'accepted';
-    await acceptedRequest.save();
-
-    await BoardMembership.create({
-        boardId,
-        userId: requester._id,
-        role: 'member',
-    });
-
-    return res.sendStatus(204);
 };
 
 /**

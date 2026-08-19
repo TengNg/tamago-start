@@ -65,9 +65,14 @@ const updatePassword = async (req, res) => {
     const { userId } = req.user;
     const { currentPassword, newPassword } = req.body;
 
-    if (!newPassword) {
+    if (
+        typeof currentPassword !== 'string' ||
+        typeof newPassword !== 'string' ||
+        !currentPassword ||
+        !newPassword
+    ) {
         return res.status(400).json({
-            message: 'Please provide new password',
+            message: 'Please provide current and new password',
         })
     }
 

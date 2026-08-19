@@ -2,6 +2,7 @@ import Invitation from "../models/Invitation.js";
 import User from "../models/User.js";
 import Board from "../models/Board.js";
 import BoardMembership from "../models/BoardMembership.js";
+import mongoose from "mongoose";
 
 /**
  * @param {import('express').Request} req
@@ -57,12 +58,16 @@ const sendInvitation = async (req, res) => {
         return res.status(403).json({ message: "you must be a member of this board to send invitations" });
     }
 
+    if (typeof receiverName !== 'string' || !receiverName.trim()) {
+        return res.status(400).json({ message: "receiver name is required" });
+    }
+
     const receiver = await User.findOne({ username: receiverName.trim().toLowerCase() }).lean();
     if (!receiver) {
         return res.status(403).json({ message: "username is not found" });
     }
 
-    if (username === receiverName) {
+    if (username === receiverName.trim().toLowerCase()) {
         return res.status(409).json({ message: "can't send invitation" });
     }
 
@@ -102,46 +107,63 @@ const acceptInvitation = async (req, res) => {
     const { userId } = req.user;
     const { id } = req.params;
 
-    let invitation = await Invitation.findById(id);
-    if (!invitation) {
-        return res.sendStatus(404);
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const invitation = await Invitation.findById(id).session(session);
+        if (!invitation) {
+            await session.abortTransaction();
+            return res.sendStatus(404);
+        }
+
+        if (invitation.invitedUserId.toString() !== userId) {
+            await session.abortTransaction();
+            return res.status(403).json({ message: 'This invitation is not for you' });
+        }
+
+        if (invitation.status !== 'pending') {
+            await session.abortTransaction();
+            return res.status(409).json({ message: 'This invitation has already been responded to' });
+        }
+
+        const { boardId, invitedUserId } = invitation;
+        const board = await Board.findById(boardId).session(session);
+        if (!board) {
+            await session.abortTransaction();
+            return res.status(403).json({ message: 'Board not found' });
+        }
+
+        const isAlreadyMember = await BoardMembership.exists({ boardId, userId }).session(session);
+        if (isAlreadyMember) {
+            await session.abortTransaction();
+            return res.status(409).json({ message: "you're already a member of this board" });
+        }
+
+        const membershipCount = await BoardMembership.countDocuments({ boardId }).session(session);
+        if (membershipCount >= board.limits.maxMembers) {
+            await session.abortTransaction();
+            const msg = `Maximum member count reached for this board (maximum: ${board.limits.maxMembers})`;
+            return res.status(400).json({ message: msg });
+        }
+
+        invitation.status = "accepted";
+        await invitation.save({ session });
+
+        await BoardMembership.create(
+            [{ boardId, userId: invitedUserId, role: 'member' }],
+            { session }
+        );
+
+        await session.commitTransaction();
+
+        res.json({ invitation });
+    } catch (err) {
+        await session.abortTransaction();
+        throw err;
+    } finally {
+        session.endSession();
     }
-
-    if (invitation.invitedUserId.toString() !== userId) {
-        return res.status(403).json({ message: 'This invitation is not for you' });
-    }
-
-    if (invitation.status !== 'pending') {
-        return res.status(409).json({ message: 'This invitation has already been responded to' });
-    }
-
-    const { boardId, invitedUserId } = invitation;
-    const board = await Board.findById(boardId);
-    if (!board) {
-        return res.status(403).json({ message: 'Board not found' });
-    }
-
-    const isAlreadyMember = await BoardMembership.exists({ boardId, userId });
-    if (isAlreadyMember) {
-        return res.status(409).json({ message: "you're already a member of this board" });
-    }
-
-    const membershipCount = await BoardMembership.countDocuments({ boardId });
-    if (membershipCount >= board.limits.maxMembers) {
-        const msg = `Maximum member count reached for this board (maximum: ${board.limits.maxMembers})`;
-        return res.status(400).json({ message: msg });
-    }
-
-    invitation.status = "accepted";
-    await invitation.save();
-
-    await BoardMembership.create({
-        boardId,
-        userId: invitedUserId,
-        role: 'member',
-    });
-
-    res.json({ invitation });
 }
 
 /**

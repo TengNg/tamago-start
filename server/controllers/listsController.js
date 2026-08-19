@@ -28,15 +28,24 @@ const addList = async (req, res) => {
         action: "create"
     })
 
-    if (board.stats.listCount >= board.limits.maxLists) {
-        const msg = `Maximum list count reached for this board (maximum: ${board.limits.maxLists})`;
-        return res.status(400).json({ message: msg });
-    }
-
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
+        const boardAfterList = await Board.findOneAndUpdate(
+            {
+                _id: board._id,
+                $expr: { $lt: ["$stats.listCount", "$limits.maxLists"] },
+            },
+            { $inc: { "stats.listCount": 1 } },
+            { session, new: true },
+        );
+        if (!boardAfterList) {
+            await session.abortTransaction();
+            const msg = `Maximum list count reached for this board (maximum: ${board.limits.maxLists})`;
+            return res.status(400).json({ message: msg });
+        }
+
         const order = await generateListOrder({
             boardId,
             prevListId,
@@ -46,12 +55,6 @@ const addList = async (req, res) => {
 
         const [newList] = await List.create(
             [{ title, order, boardId }],
-            { session }
-        );
-
-        await Board.updateOne(
-            { _id: board._id },
-            { $inc: { "stats.listCount": 1 } },
             { session }
         );
 
@@ -297,17 +300,12 @@ const copyList = async (req, res) => {
 
     const boardId = foundList.boardId;
 
-    const { board } = await checkBoardPermission({
+    await checkBoardPermission({
         boardId: boardId.toString(),
         userId,
         resource: "list",
         action: "create"
     })
-
-    if (board.stats.listCount >= board.limits.maxLists) {
-        const msg = `Maximum list count reached for this board (maximum: ${board.limits.maxLists})`;
-        return res.status(400).json({ message: msg });
-    }
 
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -318,17 +316,6 @@ const copyList = async (req, res) => {
             prevListId,
             nextListId,
             userId,
-            session,
-        });
-
-        await saveBoardActivity({
-            boardId,
-            userId,
-            docId: list._id,
-            action: "list.copied",
-            docModel: "List",
-            docTitle: list.title,
-            description: `"${foundList.title}" duplicated`,
             session,
         });
 
@@ -402,6 +389,31 @@ const moveList = async (req, res) => {
                 return res.status(400).json({ message: msg });
             }
 
+            await Board.updateOne(
+                { _id: initialBoardId },
+                { $inc: { "stats.listCount": -1, "stats.cardCount": -movedCardCount } },
+                { session }
+            );
+
+            const targetAfter = await Board.findOneAndUpdate(
+                {
+                    _id: newBoard._id,
+                    $expr: {
+                        $and: [
+                            { $lte: [{ $add: ["$stats.listCount", 1] }, "$limits.maxLists"] },
+                            { $lte: [{ $add: ["$stats.cardCount", movedCardCount] }, "$limits.maxCards"] },
+                        ],
+                    },
+                },
+                { $inc: { "stats.listCount": 1, "stats.cardCount": movedCardCount } },
+                { session, new: true },
+            );
+            if (!targetAfter) {
+                await session.abortTransaction();
+                const msg = `Maximum card count reached for board "${newBoard.title}" (maximum: ${newBoard.limits.maxCards})`;
+                return res.status(400).json({ message: msg });
+            }
+
             targetBoard = newBoard;
 
             const sortedLists = await List.find({ boardId }).sort({ order: 'asc' });
@@ -456,7 +468,7 @@ const moveList = async (req, res) => {
 
         await session.commitTransaction();
 
-        emitToBoard(foundList.boardId, SOCKET_EVENTS.LIST_DELETED, {
+        emitToBoard(initialBoardId, SOCKET_EVENTS.LIST_DELETED, {
             id: foundList._id.toString(),
         });
         emitToBoard(targetBoard._id, SOCKET_EVENTS.LIST_MOVED_TO_BOARD, {

@@ -353,6 +353,8 @@ const leaveBoard = async (req, res) => {
         description: `${username} left`,
     })
 
+    revokeUserBoardSockets(userId, board._id);
+
     emitToBoard(board._id, SOCKET_EVENTS.BOARD_MEMBER_LEFT, {
         memberId: userId,
     });

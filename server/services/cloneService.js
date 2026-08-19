@@ -139,6 +139,21 @@ async function cloneBoard({ board, title, description, userId, session }) {
 async function cloneList({ list, prevListId, nextListId, userId, session }) {
     const boardId = list.boardId;
 
+    const boardAfterList = await Board.findOneAndUpdate(
+        {
+            _id: boardId,
+            $expr: { $lt: ["$stats.listCount", "$limits.maxLists"] },
+        },
+        { $inc: { "stats.listCount": 1 } },
+        { session, new: true },
+    );
+    if (!boardAfterList) {
+        throw {
+            status: 400,
+            message: "Maximum list count reached for this board",
+        };
+    }
+
     const order = await generateListOrder({
         boardId: boardId.toString(),
         prevListId: prevListId || null,
@@ -166,12 +181,7 @@ async function cloneList({ list, prevListId, nextListId, userId, session }) {
 
     await Board.updateOne(
         { _id: boardId },
-        {
-            $inc: {
-                'stats.listCount': 1,
-                'stats.cardCount': copiedCards.length,
-            },
-        },
+        { $inc: { 'stats.cardCount': copiedCards.length } },
         { session }
     );
 
@@ -208,12 +218,6 @@ async function cloneCard({ card, prevCardId, nextCardId, userId, session }) {
 
     const [newCard] = await Card.create(
         [{ ...buildCard(card, card.boardId, card.listId), order }],
-        { session }
-    );
-
-    await Board.updateOne(
-        { _id: card.boardId },
-        { $inc: { 'stats.cardCount': 1 } },
         { session }
     );
 

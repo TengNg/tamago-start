@@ -123,12 +123,14 @@ router.get("/auth/discord/callback", async (req, res) => {
 
         let user = await User.findOne({ discordId: currentProfile.id });
         if (!user) {
-            const secureId = generateRandomHex(10);
-            const initialUsername = `${currentProfile.username}-${secureId}`;
+            const sanitizedUsername = (currentProfile.username || "")
+                .toLowerCase()
+                .replace(/[^a-z0-9_]/g, "_");
+
             try {
                 user = await User.create({
-                    username: initialUsername,
-                    discordId: currentProfile.id
+                    username: `${sanitizedUsername}_${currentProfile.id}`,
+                    discordId: currentProfile.id,
                 });
             } catch (err) {
                 return res.redirect(FAILURE_REDIRECT_URL);

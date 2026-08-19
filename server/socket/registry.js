@@ -32,27 +32,37 @@ export function emitToBoard(boardId, event, payload) {
 }
 
 /**
- * Kick every socket of `userId` out of `boardId`. Used by the REST member
- * removal path so removed users lose socket access immediately.
- *
  * @param {string} userId
  * @param {string | import('mongoose').Types.ObjectId} boardId
  * @returns {void}
  */
 export function revokeUserBoardSockets(userId, boardId) {
-    if (!io) return;
-    const boardStr = String(boardId);
-    const sockets = Array.from(io.sockets.sockets.values()).filter(
-        (s) =>
-            s.user &&
-            s.user.id === userId &&
-            s.rooms &&
-            s.rooms.has(boardStr),
-    );
+    if (!io) {
+        return;
+    }
 
-    for (const socket of sockets) {
-        socket.emit(SOCKET_EVENTS.BOARD_MEMBER_KICKED, { userSocketId: socket.id });
-        socket.leave(boardStr);
-        delete socket.boardId;
+    const boardStr = String(boardId);
+    const adapter = io.sockets.adapter;
+
+    const socketIdsInRoom = adapter.rooms.get(boardStr);
+    if (!socketIdsInRoom) {
+        return;
+    }
+
+    for (const socketId of socketIdsInRoom) {
+        const socket = io.sockets.sockets.get(socketId);
+        if (socket && socket.user && socket.user.id === userId) {
+            socket.emit(SOCKET_EVENTS.BOARD_MEMBER_KICKED, { userSocketId: socket.id });
+            if (process.env.NODE_ENV === "development") {
+                console.log("emitted board member kicked event");
+            }
+
+            socket.leave(boardStr);
+            if (process.env.NODE_ENV === "development") {
+                console.log("left board " + boardStr);
+            }
+
+            delete socket.boardId;
+        }
     }
 }
