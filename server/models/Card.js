@@ -42,7 +42,7 @@ const cardSchema = new Schema({
 
                 return /^#([A-Fa-f0-9]{3,4}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$/.test(value);
             },
-            message: 'must be a valid hex color (e.g., #FF5733, #F00, or #FF5733AA)'
+            message: 'Must be a valid hex color (e.g., #FF5733, #F00, or #FF5733AA)'
         }
     },
 
@@ -72,7 +72,7 @@ const cardSchema = new Schema({
                     if (!value) return true;
                     return /^\d{4}-\d{2}-\d{2}$/.test(value);
                 },
-                message: 'must be in YYYY-MM-DD format'
+                message: 'Must be in YYYY-MM-DD format'
             },
             {
                 validator: function(/** @type {string | null} */value) {
@@ -87,7 +87,7 @@ const cardSchema = new Schema({
                         date.getUTCDate() === day
                     );
                 },
-                message: 'must be a valid calendar date'
+                message: 'Must be a valid calendar date'
             }
         ],
     },

@@ -168,7 +168,7 @@ const deleteCardComment = async (req, res) => {
     })
 
     if (foundComment.userId.toString() !== userId) {
-        return res.status(403).json({ message: "can't delete comments from others" });
+        return res.status(403).json({ message: "Can't delete comments from others" });
     }
 
     await CardComment.findOneAndDelete({ _id: commentId });

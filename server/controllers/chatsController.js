@@ -168,7 +168,7 @@ const clearMessages = async (req, res) => {
         role: "owner",
     });
     if (!isOwner) {
-        return res.status(403).json({ message: 'not allow to clear messages' });
+        return res.status(403).json({ message: 'Not allowed to clear messages' });
     }
 
     await ChatMessage.deleteMany({ boardId });

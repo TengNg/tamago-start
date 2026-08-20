@@ -135,7 +135,7 @@ const addPinnedBoard = async (req, res) => {
     const isPublic = board.visibility === 'public';
     const isOwner = board.createdBy.toString() === userId;
     if (!isMember && !isPublic && !isOwner) {
-        return res.status(403).json({ message: "you do not have access to this board" });
+        return res.status(403).json({ message: "You do not have access to this board" });
     }
 
     if (foundUser.pinnedBoardIdCollection && foundUser.pinnedBoardIdCollection.has(id)) {
@@ -166,7 +166,7 @@ const deletePinnedBoard = async (req, res) => {
 
     const foundUser = await User.findById(userId);
     if (!foundUser) {
-        return res.status(403).json({ message: "user not found" });
+        return res.status(403).json({ message: "User not found" });
     }
 
     if (foundUser.pinnedBoardIdCollection && foundUser.pinnedBoardIdCollection.has(id)) {

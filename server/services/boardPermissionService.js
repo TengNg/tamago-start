@@ -136,7 +136,7 @@ const checkAllowedRoles = async ({ roles, userId, boardId }) => {
         role: { $in: roles }
     });
     if (!allowed) {
-        throw { status: 403, message: "unauthorized" }
+        throw { status: 403, message: "Unauthorized" }
     }
 
     return allowed;

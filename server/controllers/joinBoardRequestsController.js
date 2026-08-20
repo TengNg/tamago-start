@@ -83,12 +83,12 @@ const sendRequest = async (req, res) => {
 
     const foundBoard = await Board.findById(boardId);
     if (!foundBoard) {
-        return res.status(403).json({ message: "board not found" });
+        return res.status(403).json({ message: "Board not found" });
     }
 
     const boardMembership = await BoardMembership.findOne({ boardId: foundBoard._id, userId });
     if (boardMembership) {
-        return res.status(409).json({ message: "you're already a member of this board" });
+        return res.status(409).json({ message: "You're already a member of this board" });
     }
 
     const joinRequestExists = await JoinBoardRequest.findOne({
@@ -97,7 +97,7 @@ const sendRequest = async (req, res) => {
         status: 'pending',
     });
     if (joinRequestExists) {
-        return res.status(409).json({ message: 'join request already sent' });
+        return res.status(409).json({ message: 'Join request already sent' });
     }
 
     const joinRequest = new JoinBoardRequest({
@@ -120,7 +120,7 @@ const acceptRequest = async (req, res) => {
 
     const board = await Board.findById(boardId);
     if (!board) {
-        return res.status(403).json({ message: "board not found" });
+        return res.status(403).json({ message: "Board not found" });
     }
 
     await checkAllowedRoles({
@@ -141,7 +141,7 @@ const acceptRequest = async (req, res) => {
 
         if (acceptedRequest.status !== 'pending') {
             await session.abortTransaction();
-            return res.status(409).json({ message: 'join request has already been responded to' });
+            return res.status(409).json({ message: 'Join request has already been responded to' });
         }
 
         if (
@@ -149,19 +149,19 @@ const acceptRequest = async (req, res) => {
             acceptedRequest.requester.toString() !== requesterId
         ) {
             await session.abortTransaction();
-            return res.status(400).json({ message: "request does not match this board/requester" });
+            return res.status(400).json({ message: "Request does not match this board/requester" });
         }
 
         const requester = await User.findById(requesterId).session(session);
         if (!requester) {
             await session.abortTransaction();
-            return res.status(403).json({ message: "requester not found" });
+            return res.status(403).json({ message: "Requester not found" });
         }
 
         const requesterBoardMembership = await BoardMembership.findOne({ boardId, userId: requester._id }).session(session);
         if (requesterBoardMembership) {
             await session.abortTransaction();
-            return res.status(409).json({ message: 'requester is already a member' });
+            return res.status(409).json({ message: 'Requester is already a member' });
         }
 
         const membershipCount = await BoardMembership.countDocuments({ boardId }).session(session);
@@ -201,7 +201,7 @@ const rejectRequest = async (req, res) => {
 
     const board = await Board.findById(boardId);
     if (!board) {
-        return res.status(403).json({ message: "board not found" });
+        return res.status(403).json({ message: "Board not found" });
     }
 
     await checkAllowedRoles({
@@ -216,11 +216,11 @@ const rejectRequest = async (req, res) => {
     }
 
     if (rejectedRequest.status !== 'pending') {
-        return res.status(409).json({ message: 'join request has already been responded to' });
+        return res.status(409).json({ message: 'Join request has already been responded to' });
     }
 
     if (rejectedRequest.boardId.toString() !== board._id.toString()) {
-        return res.status(400).json({ message: "request does not belong to this board" });
+        return res.status(400).json({ message: "Request does not belong to this board" });
     }
 
     rejectedRequest.status = 'rejected';

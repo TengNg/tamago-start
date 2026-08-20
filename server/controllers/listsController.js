@@ -344,7 +344,7 @@ const moveList = async (req, res) => {
     const { id, boardId, index } = req.params;
 
     if (isNaN(+index)) {
-        return res.status(422).json({ message: "index must be a number" });
+        return res.status(422).json({ message: "Index must be a number" });
     }
 
     const foundList = await List.findById(id);

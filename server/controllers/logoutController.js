@@ -30,7 +30,7 @@ const handleLogoutOfAllDevices = async (req, res) => {
             jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET)
         );
     } catch {
-        return res.status(401).json({ message: "unauthorized" });
+        return res.status(401).json({ message: "Unauthorized" });
     }
 
     await User.findOneAndUpdate(

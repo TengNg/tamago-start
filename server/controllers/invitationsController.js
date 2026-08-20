@@ -50,30 +50,30 @@ const sendInvitation = async (req, res) => {
 
     const board = await Board.findById(boardId);
     if (!board) {
-        return res.status(404).json({ message: "board not found" });
+        return res.status(404).json({ message: "Board not found" });
     }
 
     const isMember = await BoardMembership.exists({ boardId, userId });
     if (!isMember) {
-        return res.status(403).json({ message: "you must be a member of this board to send invitations" });
+        return res.status(403).json({ message: "You must be a member of this board to send invitations" });
     }
 
     if (typeof receiverName !== 'string' || !receiverName.trim()) {
-        return res.status(400).json({ message: "receiver name is required" });
+        return res.status(400).json({ message: "Receiver name is required" });
     }
 
     const receiver = await User.findOne({ username: receiverName.trim().toLowerCase() }).lean();
     if (!receiver) {
-        return res.status(403).json({ message: "username is not found" });
+        return res.status(403).json({ message: "Username is not found" });
     }
 
     if (username === receiverName.trim().toLowerCase()) {
-        return res.status(409).json({ message: "can't send invitation" });
+        return res.status(409).json({ message: "Can't send invitation" });
     }
 
     const receiverBoardMembership = await BoardMembership.findOne({ boardId, userId: receiver._id });
     if (receiverBoardMembership) {
-        return res.status(409).json({ message: "this user is already in this board" });
+        return res.status(409).json({ message: "This user is already in this board" });
     }
 
     const foundInvitation = await Invitation
@@ -86,7 +86,7 @@ const sendInvitation = async (req, res) => {
         .sort({ createdAt: -1 })
 
     if (foundInvitation) {
-        return res.status(409).json({ message: "invitation is already sent" }); // Conflict
+        return res.status(409).json({ message: "Invitation is already sent" }); // Conflict
     }
 
     const invitation = new Invitation({
@@ -137,7 +137,7 @@ const acceptInvitation = async (req, res) => {
         const isAlreadyMember = await BoardMembership.exists({ boardId, userId }).session(session);
         if (isAlreadyMember) {
             await session.abortTransaction();
-            return res.status(409).json({ message: "you're already a member of this board" });
+            return res.status(409).json({ message: "You're already a member of this board" });
         }
 
         const membershipCount = await BoardMembership.countDocuments({ boardId }).session(session);

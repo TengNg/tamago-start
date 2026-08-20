@@ -10,7 +10,7 @@ const UserSchema = new Schema({
         lowercase: true,
         validate: {
             validator: isValidUsername,
-            message: 'username is not allowed'
+            message: 'Username is not allowed'
         }
     },
 

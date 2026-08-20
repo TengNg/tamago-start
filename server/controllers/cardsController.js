@@ -48,7 +48,7 @@ const addCard = async (req, res) => {
 
     const foundList = await List.findById(listId).lean();
     if (!foundList) {
-        return res.status(403).json({ message: "list not found" });
+        return res.status(403).json({ message: "List not found" });
     }
 
     const { board } = await checkBoardPermission({
@@ -133,7 +133,7 @@ const reorder = async (req, res) => {
 
     const targetList = await List.findOne({ _id: listId, boardId: foundCard.boardId }).lean();
     if (!targetList) {
-        return res.status(403).json({ message: "list not found" });
+        return res.status(403).json({ message: "List not found" });
     }
 
     await checkBoardPermission({
@@ -236,7 +236,7 @@ const updateCard = async (req, res) => {
         } else {
             const ownerUser = await User.findOne({ username: value }).lean();
             if (!ownerUser) {
-                return res.status(400).json({ message: "user not found" });
+                return res.status(400).json({ message: "User not found" });
             }
 
             const isMember = await BoardMembership.exists({
@@ -244,7 +244,7 @@ const updateCard = async (req, res) => {
                 userId: ownerUser._id,
             });
             if (!isMember) {
-                return res.status(400).json({ message: "user is not a member of this board" });
+                return res.status(400).json({ message: "User is not a member of this board" });
             }
 
             foundCard.owner = ownerUser._id;
@@ -383,7 +383,7 @@ const copyCard = async (req, res) => {
 
     const foundList = await List.findById(foundCard.listId).lean();
     if (!foundList) {
-        return res.status(403).json({ message: "list not found" });
+        return res.status(403).json({ message: "List not found" });
     }
 
     const { board } = await checkBoardPermission({

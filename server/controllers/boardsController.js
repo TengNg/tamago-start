@@ -139,12 +139,12 @@ const getBoard = async (req, res) => {
     const memberships = await boardMemberships(board._id);
     const ownerFound = memberships.find(m => m.role === "owner");
     if (!ownerFound) {
-        return res.status(400).json({ message: "abandoned board" });
+        return res.sendStatus(400).json({ message: "Abandoned board" });
     }
 
     const isMember = memberships.find(m => m.userId.toString() === userId);
     if (board.visibility !== "public" && !isMember) {
-        return res.status(400).json({ message: "your're not a member of this board" });
+        return res.status(400).json({ message: "You're not a member of this board" });
     }
 
     await User.updateOne(
@@ -182,7 +182,7 @@ const getBoardStats = async (req, res) => {
     const memberships = await boardMemberships(foundBoard._id);
     const isMember = memberships.some(m => m.userId.toString() === userId);
     if (!isMember) {
-        return res.status(403).json({ message: "unauthorized" });
+        return res.status(403).json({ message: "Unauthorized" });
     }
 
     const priorityLevelStats = await Card.aggregate([
@@ -383,11 +383,11 @@ const removeMemberFromBoard = async (req, res) => {
 
     const foundMember = await User.findById(memberId);
     if (!foundMember) {
-        return res.status(403).json({ message: 'member not found' });
+        return res.status(403).json({ message: 'Member not found' });
     }
 
     if (foundMember._id.toString() === /** @type any */(membership).userId.toString()) {
-        return res.status(403).json({ message: 'cannot remove yourself' });
+        return res.status(403).json({ message: 'Cannot remove yourself' });
     }
 
     const result = await BoardMembership.deleteOne({
@@ -396,7 +396,7 @@ const removeMemberFromBoard = async (req, res) => {
         role: 'member'
     });
     if (result.deletedCount === 0) {
-        return res.status(400).json({ message: "failed to remove member" });
+        return res.status(400).json({ message: "Failed to remove member" });
     }
 
     revokeUserBoardSockets(foundMember._id.toString(), board._id);
