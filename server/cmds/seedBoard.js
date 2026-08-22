@@ -1,6 +1,7 @@
 import "dotenv/config";
 
 import mongoose from 'mongoose';
+import User from '../models/User.js';
 import Board from '../models/Board.js';
 import BoardMembership from '../models/BoardMembership.js';
 import List from '../models/List.js';
@@ -10,8 +11,6 @@ mongoose.set("strictQuery", true);
 mongoose
     .connect(process.env.DB_CONNECTION)
     .catch((err) => console.log(err));
-
-const userId = process.argv[2];
 
 const LISTS = [
     { title: "Backlog", order: "a" },
@@ -185,17 +184,23 @@ const CARDS = [
     },
 ];
 
+const username = process.argv[2];
+
 async function execute() {
+
     try {
-        if (!userId) {
-            console.error('Usage: node cmds/seedBoard.js <userId>');
+        if (!username) {
+            console.error('Usage: node cmds/seedBoard.js <username>');
             process.exit(1);
         }
 
-        if (!mongoose.Types.ObjectId.isValid(userId)) {
-            console.error('Invalid userId:', userId);
+        const user = await User.findOne({ username });
+        if (!user) {
+            console.error('User not found');
             process.exit(1);
         }
+
+        const userId = user._id;
 
         const board = await Board.create({
             title: "Sample Project Board",

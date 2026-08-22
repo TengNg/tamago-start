@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
     SortableContext,
@@ -58,15 +58,12 @@ const Pinned = ({ boardId, title }) => {
         onSuccess: (data) => {
             queryClient.setQueryData(
                 ["me"],
-                /** @param {{ user: CurrentUser } | undefined} old */
+                /** @param {CurrentUser | undefined} old */
                 (old) => {
-                    if (!old?.user) return old;
+                    if (!old) return old;
                     return {
                         ...old,
-                        user: {
-                            ...old.user,
-                            pinnedBoardIdCollection: data.pinnedBoards,
-                        },
+                        pinnedBoards: data.pinnedBoards,
                     };
                 },
             );
@@ -118,8 +115,18 @@ const PinnedBoards = () => {
 
     const { currentUser } = useAuth();
 
-    const [pinnedBoards, setPinnedBoards] = useState(
-        /** @type {string[][]} */ ([]),
+    const derivedPinnedBoards = useMemo(() => {
+        const idCollection = currentUser?.pinnedBoards ?? [];
+        return idCollection
+            .filter((p) => p.board)
+            .slice()
+            .sort((a, b) => a.order.localeCompare(b.order))
+            .map((p) => [p.board._id, p.board.title]);
+    }, [currentUser?.pinnedBoards]);
+
+    const [pinnedBoards, setPinnedBoards] = useState(derivedPinnedBoards);
+    const [prevPinnedBoards, setPrevPinnedBoards] = useState(
+        currentUser?.pinnedBoards,
     );
     const [activeItem, setActiveItem] = useState(
         /** @type {import('@dnd-kit/core').Active | null} */ (null),
@@ -140,32 +147,22 @@ const PinnedBoards = () => {
         }),
     );
 
-    useEffect(() => {
-        const idCollection = currentUser?.pinnedBoardIdCollection;
-        if (idCollection) {
-            const entries = Object.entries(idCollection).map((entry, _) => {
-                const [boardId, obj] = entry;
-                return [boardId, obj.title];
-            });
-
-            setPinnedBoards(entries);
-        }
-    }, [currentUser?.pinnedBoardIdCollection]);
+    if (currentUser?.pinnedBoards !== prevPinnedBoards) {
+        setPrevPinnedBoards(currentUser?.pinnedBoards);
+        setPinnedBoards(derivedPinnedBoards);
+    }
 
     const cleanMutation = useMutation({
         mutationFn: meApi.cleanPinnedBoards,
         onSuccess: () => {
             queryClient.setQueryData(
                 ["me"],
-                /** @param {{ user: CurrentUser } | undefined} old */
+                /** @param {CurrentUser | undefined} old */
                 (old) => {
-                    if (!old?.user) return old;
+                    if (!old) return old;
                     return {
                         ...old,
-                        user: {
-                            ...old.user,
-                            pinnedBoardIdCollection: {},
-                        },
+                        pinnedBoards: [],
                     };
                 },
             );
@@ -216,27 +213,22 @@ const PinnedBoards = () => {
             newPinnedBoards.splice(overIndex, 0, removed);
             setPinnedBoards(newPinnedBoards);
 
-            const mappedPinnedBoards = [...newPinnedBoards].reduce(
-                (obj, board) => {
-                    const [boardId, boardTitle] = board;
-                    obj[boardId] ||= { title: boardTitle };
-                    return obj;
-                },
-                /** @type {Record<string, { title: string }>} */ ({}),
-            );
+            const [removedId] = removed;
+            const prevBoardId = newPinnedBoards[overIndex - 1]?.[0];
+            const nextBoardId = newPinnedBoards[overIndex + 1]?.[0];
 
-            const data = await meApi.updatePinnedBoards(mappedPinnedBoards);
+            const data = await meApi.reorderPinnedBoard(removedId, {
+                prevBoardId,
+                nextBoardId,
+            });
             queryClient.setQueryData(
                 ["me"],
-                /** @param {{ user: CurrentUser } | undefined} old */
+                /** @param {CurrentUser | undefined} old */
                 (old) => {
-                    if (!old?.user) return old;
+                    if (!old) return old;
                     return {
                         ...old,
-                        user: {
-                            ...old.user,
-                            pinnedBoardIdCollection: data.pinnedBoards,
-                        },
+                        pinnedBoards: data.pinnedBoards,
                     };
                 },
             );

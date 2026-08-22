@@ -23,7 +23,7 @@ export const AuthContextProvider = ({ children }) => {
         <AuthContext.Provider
             value={{
                 currentUserQuery,
-                currentUser: currentUserQuery.data?.user,
+                currentUser: currentUserQuery.data,
                 logout,
             }}
         >

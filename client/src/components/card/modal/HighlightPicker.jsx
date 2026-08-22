@@ -32,7 +32,7 @@ const HighlightPicker = ({ setOpen, card, onHighlightChange }) => {
             })}
 
             <div
-                className={`w-full cursor-pointer mt-1 bg-transparent flex--center font-bold text-gray-400 hover:text-blue-400 text-[0.75rem]`}
+                className={`w-full cursor-pointer mt-1 bg-transparent flex-center font-bold text-gray-400 hover:text-blue-400 text-[0.75rem]`}
                 onClick={() => handleSetCardHighlight(null)}
             >
                 <Icon className="w-4 h-4" name="xmark" />

@@ -26,32 +26,24 @@
   }
 }
 
-@utility flex--center {
-  @apply flex justify-center items-center;
-}
-
 @utility badge {
   @apply text-[0.75rem] py-1 px-2 hover:brightness-105 font-medium;
 }
 
-@utility underline--style {
-  @apply before:content-[''] before:absolute before:w-[50%] before:h-[10%] before:bg-gray-600 before:-bottom-2 before:mx-auto before:left-0 before:right-0 before:transition-all;
+@utility key {
+  @apply bg-gray-100/30 border-[1.5px] border-gray-600 shadow-[0_2px_0_0] shadow-gray-600 p-1 px-2 text-[10px] text-gray-600 font-medium hover:bg-gray-400 hover:text-white select-none;
 }
 
-@utility underline--hover {
-  @apply hover:before:w-[95%];
+@utility page-title {
+  @apply before:content-[''] before:absolute before:w-[50%] before:h-[10%] before:bg-gray-600 before:-bottom-2 before:mx-auto before:left-0 before:right-0 before:transition-all hover:before:w-[95%];
 }
 
-@utility form--style {
-  @apply border-gray-700 border-2 shadow-[5px_6px_0_0_black] shadow-gray-700 bg-gray-100 rounded-xs;
+@utility flex-center {
+  @apply flex justify-center items-center;
 }
 
 @utility box--style {
   @apply shadow-[4px_6px_0_0];
-}
-
-@utility modal--content {
-  @apply box--style flex flex-col border-gray-700 border-2 bg-gray-200 shadow-gray-700;
 }
 
 @utility board--hover {
@@ -80,10 +72,6 @@
 
 @utility card--detail--button {
   @apply bg-gray-100 border-2 border-black shadow-[0_3px_0_0] w-fit text-[0.8rem] px-3 py-4 cursor-pointer;
-}
-
-@utility key {
-  @apply bg-gray-100/30 border-[1.5px] border-gray-600 shadow-[0_2px_0_0] shadow-gray-600 p-1 px-2 text-[10px] text-gray-600 font-medium hover:bg-gray-400 hover:text-white select-none;
 }
 
 @utility card--details--button {

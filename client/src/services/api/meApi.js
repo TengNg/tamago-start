@@ -1,7 +1,7 @@
 import { apiClient } from "../../lib/api-client";
 
 /**
- * @returns {Promise<{ user: CurrentUser }>}
+ * @returns {Promise<CurrentUser>}
  */
 function fetchCurrentUser() {
     return apiClient.get("/me");
@@ -25,25 +25,24 @@ function updatePassword({ currentPassword, newPassword }) {
 
 /**
  * @param {string} boardId
- * @returns {Promise<{ pinnedBoards: Record<string, { title: string }> }>}
+ * @returns {Promise<{ pinnedBoards: CurrentUser["pinnedBoards"] }>}
  */
 function pinBoard(boardId) {
     return apiClient.patch(`/me/pinned-boards/${boardId}`);
 }
 
 /**
- * @param {Record<string, { title: string }>} newPinnedBoards
- * @returns {Promise<{ pinnedBoards: Record<string, { title: string }> }>}
+ * @param {string} boardId
+ * @param {{ prevBoardId: string | null | undefined; nextBoardId: string | null | undefined }} data
+ * @returns {Promise<{ pinnedBoards: CurrentUser["pinnedBoards"] }>}
  */
-function updatePinnedBoards(newPinnedBoards) {
-    return apiClient.patch("/me/pinned-boards", {
-        pinnedBoards: newPinnedBoards,
-    });
+function reorderPinnedBoard(boardId, data) {
+    return apiClient.patch(`/me/pinned-boards/${boardId}/reorder`, data);
 }
 
 /**
  * @param {string} boardId
- * @returns {Promise<{ pinnedBoards: Record<string, { title: string }> }>}
+ * @returns {Promise<{ pinnedBoards: CurrentUser["pinnedBoards"] }>}
  */
 function deletePinnedBoard(boardId) {
     return apiClient.delete(`/me/pinned-boards/${boardId}`);
@@ -61,7 +60,7 @@ export default {
     updateUsername,
     updatePassword,
     pinBoard,
-    updatePinnedBoards,
+    reorderPinnedBoard,
     deletePinnedBoard,
     cleanPinnedBoards,
 };

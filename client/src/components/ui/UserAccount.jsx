@@ -60,9 +60,9 @@ const UserAccount = () => {
                 <div
                     onClick={() => setCollapse((collapse) => !collapse)}
                     ref={userProfileImageRef}
-                    className={`${currentUser.loginWithDiscord ? "bg-indigo-600 border-[3px] border-indigo-400" : "bg-sky-700"} text-white flex--center ms-auto text-[0.8rem] w-8 h-8 rounded-full bg-center bg-cover overflow-hidden cursor-pointer hover:opacity-90`}
+                    className="bg-sky-700 text-white flex-center ms-auto text-[0.8rem] w-8 h-8 rounded-full bg-center bg-cover overflow-hidden cursor-pointer hover:opacity-90"
                 >
-                    <div className="font-bold flex--center select-none">
+                    <div className="font-bold flex-center select-none">
                         {currentUser.username.charAt(0).toUpperCase()}
                     </div>
                 </div>

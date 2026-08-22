@@ -1,4 +1,5 @@
 import { SOCKET_EVENTS } from '../../shared/socket-events.js';
+import mongoose from 'mongoose';
 
 /**
  * @type {import('socket.io').Server | null}
@@ -42,9 +43,11 @@ export function revokeUserBoardSockets(userId, boardId) {
     }
 
     const boardStr = String(boardId);
-    const adapter = io.sockets.adapter;
+    if (!mongoose.Types.ObjectId.isValid(boardStr)) {
+        return;
+    }
 
-    const socketIdsInRoom = adapter.rooms.get(boardStr);
+    const socketIdsInRoom = io.sockets.adapter.rooms.get(boardStr);
     if (!socketIdsInRoom) {
         return;
     }

@@ -27,21 +27,16 @@ export default function JoinRequests({ show }) {
 
     const toast = useToast();
 
-    const {
-        data,
-        fetchNextPage,
-        isFetchingNextPage,
-        hasNextPage,
-        isError,
-    } = useInfiniteQuery({
-        queryKey: joinRequestKeys.all(),
-        queryFn: ({ pageParam }) =>
-            joinRequestApi.fetchJoinRequests({ page: pageParam }),
-        initialPageParam: 1,
-        getNextPageParam: (lastPage, _pages) => {
-            return lastPage.nextPage;
-        },
-    });
+    const { data, fetchNextPage, isFetchingNextPage, hasNextPage, isError } =
+        useInfiniteQuery({
+            queryKey: joinRequestKeys.all(),
+            queryFn: ({ pageParam }) =>
+                joinRequestApi.fetchJoinRequests({ page: pageParam }),
+            initialPageParam: 1,
+            getNextPageParam: (lastPage, _pages) => {
+                return lastPage.nextPage;
+            },
+        });
 
     const acceptMutation = useMutation({
         /**
@@ -340,7 +335,8 @@ export default function JoinRequests({ show }) {
                                             className="button--style--rounded rounded-none w-18 py-2 bg-white text-[0.65rem] sm:text-[0.75rem] text-red-700 border-red-700"
                                         >
                                             {rejectMutation.isPending &&
-                                            rejectMutation.variables.id === _id ? (
+                                            rejectMutation.variables.id ===
+                                                _id ? (
                                                 <span className="loader-circle w-3 h-3 inline-block align-middle"></span>
                                             ) : (
                                                 "Reject"

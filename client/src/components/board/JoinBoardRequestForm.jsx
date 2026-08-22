@@ -14,7 +14,9 @@ const JoinBoardRequestForm = () => {
             joinRequestApi.sendJoinRequest(boardId),
         onSuccess: () => {
             if (boardCodeInput.current) boardCodeInput.current.value = "";
-            toast.success("request sent");
+            toast.success(
+                "Request sent, wait for approval (check your activies tab for more details)",
+            );
         },
         onError: (err) => {
             const errMsg = getErrorMessage(err, "Failed to send join request");
@@ -39,7 +41,7 @@ const JoinBoardRequestForm = () => {
 
     return (
         <form onSubmit={handleSendJoinRequest} className="w-full">
-            <div className="w-full relative flex flex-col items-start gap-4">
+            <div className="w-full relative flex flex-col items-start gap-2">
                 <div className="w-full flex gap-2">
                     <input
                         autoFocus
@@ -50,6 +52,12 @@ const JoinBoardRequestForm = () => {
                         placeholder="enter board code..."
                     />
                 </div>
+                <button
+                    type="submit"
+                    className="text-[12px] sm:text-sm cursor-pointer p-2 bg-gray-600 text-gray-50 hover:bg-gray-500 h-10 w-full"
+                >
+                    send
+                </button>
             </div>
         </form>
     );

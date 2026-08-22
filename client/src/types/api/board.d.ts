@@ -9,7 +9,7 @@ declare type GetBoardsResponse = {
     total: number;
     totalOwned: number;
     totalJoined: number;
-    recentlyViewedBoard: BoardListItem | null;
+    recentBoards: BoardListItem[];
 };
 
 declare type BoardStatsResponse = {

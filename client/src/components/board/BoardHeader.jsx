@@ -104,7 +104,7 @@ const BoardHeader = ({ setOpenCopyBoardForm }) => {
                 <div>
                     <div
                         onClick={() => setOpenInvitationForm(true)}
-                        className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-20 px-4 border-2 text-[0.75rem] text-gray-600 font-medium
+                        className={`bg-[rgb(var(--card-item-bg))] h-full flex-center cursor-pointer select-none border-gray-600 shadow-gray-600 w-20 px-4 border-2 text-[0.75rem] text-gray-600 font-medium
                                 ${openInvitationForm ? "shadow-[0_1px_0_0] mt-0.5" : "shadow-[0_3px_0_0]"}`}
                     >
                         invite
@@ -114,7 +114,7 @@ const BoardHeader = ({ setOpenCopyBoardForm }) => {
                 <div>
                     <div
                         onClick={() => setOpenChatBox((prev) => !prev)}
-                        className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-20 px-4 border-2 text-[0.75rem] text-gray-600 font-medium
+                        className={`bg-[rgb(var(--card-item-bg))] h-full flex-center cursor-pointer select-none border-gray-600 shadow-gray-600 w-20 px-4 border-2 text-[0.75rem] text-gray-600 font-medium
                                 ${openChatBox ? "shadow-[0_1px_0_0] mt-0.5" : "shadow-[0_3px_0_0]"}`}
                     >
                         chat
@@ -124,7 +124,7 @@ const BoardHeader = ({ setOpenCopyBoardForm }) => {
                 <div>
                     <div
                         onClick={() => setOpenFilter((prev) => !prev)}
-                        className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-20 px-4 border-2 text-[0.75rem] text-gray-600 font-medium
+                        className={`bg-[rgb(var(--card-item-bg))] h-full flex-center cursor-pointer select-none border-gray-600 shadow-gray-600 w-20 px-4 border-2 text-[0.75rem] text-gray-600 font-medium
                                 ${openFilter ? "shadow-[0_1px_0_0] mt-0.5" : "shadow-[0_3px_0_0]"} ${hasFilter ? "text-white bg-teal-600" : ""}`}
                     >
                         filter
@@ -138,7 +138,7 @@ const BoardHeader = ({ setOpenCopyBoardForm }) => {
                                 setOpenBoardOptions((prev) => !prev);
                             }
                         }}
-                        className={`bg-[rgb(var(--card-item-bg))] h-full flex--center cursor-pointer select-none border-gray-600 shadow-gray-600 w-20 px-4 border-2 text-[0.75rem] text-gray-600 font-medium
+                        className={`bg-[rgb(var(--card-item-bg))] h-full flex-center cursor-pointer select-none border-gray-600 shadow-gray-600 w-20 px-4 border-2 text-[0.75rem] text-gray-600 font-medium
                             ${openBoardOptions ? "shadow-[0_1px_0_0] mt-0.5" : "shadow-[0_3px_0_0]"}`}
                     >
                         options

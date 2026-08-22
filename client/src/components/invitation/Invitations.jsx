@@ -27,21 +27,16 @@ export default function Invitations({ show }) {
 
     const toast = useToast();
 
-    const {
-        data,
-        fetchNextPage,
-        isFetchingNextPage,
-        hasNextPage,
-        isError,
-    } = useInfiniteQuery({
-        queryKey: invitationKeys.all(),
-        initialPageParam: 1,
-        queryFn: ({ pageParam }) =>
-            invitationApi.fetchInvitations({ page: pageParam }),
-        getNextPageParam: (lastPage, _pages) => {
-            return lastPage.nextPage;
-        },
-    });
+    const { data, fetchNextPage, isFetchingNextPage, hasNextPage, isError } =
+        useInfiniteQuery({
+            queryKey: invitationKeys.all(),
+            initialPageParam: 1,
+            queryFn: ({ pageParam }) =>
+                invitationApi.fetchInvitations({ page: pageParam }),
+            getNextPageParam: (lastPage, _pages) => {
+                return lastPage.nextPage;
+            },
+        });
 
     const acceptMutation = useMutation({
         mutationFn: (/** @type {string} */ invitationId) =>

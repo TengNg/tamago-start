@@ -29,7 +29,7 @@ const InvitationModal = () => {
             invitationApi.sendInvitation(boardState.board._id, receiverName),
         onSuccess: (_data, receiverName) => {
             setUsername("");
-            toast.success(`invitation sent to ${receiverName}`);
+            toast.success(`Invitation sent to ${receiverName}`);
         },
         onError: (err) => {
             toast.error(getErrorMessage(err, "Failed to send invitation"));
@@ -41,7 +41,7 @@ const InvitationModal = () => {
             boardApi.removeBoardMember(boardState.board._id, memberId),
         onSuccess: (_data, memberId) => {
             removeMemberFromBoard(memberId);
-            toast.success("member removed");
+            toast.success("Member removed");
         },
         onError: (err) => {
             toast.error(getErrorMessage(err, "Failed to remove member"));

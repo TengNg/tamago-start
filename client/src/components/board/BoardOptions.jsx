@@ -101,7 +101,7 @@ const BoardOptions = ({ open, setOpen, setOpenCopyBoardForm }) => {
                 id="board-menu"
                 className="bg-[rgb(var(--card-item-bg))] cursor-auto absolute outline-hidden bottom-0 right-0 overflow-x-hidden flex flex-col min-w-75 min-h-50 box--style shadow-gray-600 border-2 border-gray-600 p-3 gap-2 translate-y-[105%]"
             >
-                <div className="font-medium text-gray-600 flex-1 flex--center border-b border-black pb-1 mb-1">
+                <div className="font-medium text-gray-600 flex-1 flex-center border-b border-black pb-1 mb-1">
                     options
                 </div>
 
@@ -181,7 +181,7 @@ const BoardOptions = ({ open, setOpen, setOpenCopyBoardForm }) => {
                         <Icon className="w-4 h-4" name="arrow" />
                     </button>
 
-                    <div className="font-medium text-gray-600 my-3 border-b-gray-400 flex--center">
+                    <div className="font-medium text-gray-600 my-3 border-b-gray-400 flex-center">
                         information
                     </div>
 

@@ -29,20 +29,36 @@ const UserSchema = new Schema({
         default: null
     },
 
-    recentlyViewedBoardId: {
-        type: Schema.Types.ObjectId,
-        ref: 'Board',
-    },
-
-    pinnedBoardIdCollection: {
-        type: Map,
-        of: {
-            title: {
-                type: String,
-                required: true
+    recentBoards: [
+        {
+            board: {
+                type: Schema.Types.ObjectId,
+                ref: "Board"
             },
-        },
-    },
+            viewedAt: {
+                type: Date,
+                default: Date.now,
+            }
+        }
+    ],
+
+    pinnedBoards: [
+        {
+            board: {
+                type: Schema.Types.ObjectId,
+                ref: "Board",
+                required: true,
+            },
+            pinnedAt: {
+                type: Date,
+                default: Date.now,
+            },
+            order: {
+                type: String,
+                required: true,
+            },
+        }
+    ],
 
     discordId: {
         type: String,

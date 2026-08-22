@@ -81,24 +81,24 @@ const Avatar = ({
     }, [collapse]);
 
     return (
-        <div className="flex--center h-fit flex-col justify-start gap-2 relative">
+        <div className="flex-center h-fit flex-col justify-start gap-2 relative">
             <div
                 onClick={(e) => {
                     e.stopPropagation();
                     clickable && setCollapse((collapse) => !collapse);
                 }}
                 ref={userProfileImageRef}
-                className={`relative ${AVATAR_BG_COLORS[bgColor]} hover:opacity-[0.8] text-white flex--center text-[0.8rem] border-box ${withBorder && "border-4 border-teal-600"} rounded-full bg-center bg-cover overflow-hidden ${clickable && "cursor-pointer"} ${SIZE[size]}`}
+                className={`relative ${AVATAR_BG_COLORS[bgColor]} hover:opacity-[0.8] text-white flex-center text-[0.8rem] border-box ${withBorder && "border-4 border-teal-600"} rounded-full bg-center bg-cover overflow-hidden ${clickable && "cursor-pointer"} ${SIZE[size]}`}
             >
                 {!profileImage ? (
-                    <div className={`font-bold flex--center select-none`}>
+                    <div className={`font-bold flex-center select-none`}>
                         {username?.charAt(0)?.toUpperCase()}
                     </div>
                 ) : (
                     <img
                         src={profileImage}
                         alt={`${username}'s profile`}
-                        className="flex--center h-full w-full object-cover"
+                        className="flex-center h-full w-full object-cover"
                     />
                 )}
             </div>
@@ -115,17 +115,17 @@ const Avatar = ({
                 >
                     <div className="flex gap-2 items-center">
                         <div
-                            className={`bg-sky-700 text-white flex--center w-11.25 h-11.25 rounded-full bg-center bg-cover overflow-hidden cursor-pointer`}
+                            className={`bg-sky-700 text-white flex-center w-11.25 h-11.25 rounded-full bg-center bg-cover overflow-hidden cursor-pointer`}
                         >
                             {!profileImage ? (
-                                <div className="font-bold flex--center select-none">
+                                <div className="font-bold flex-center select-none">
                                     {username?.charAt(0)?.toUpperCase()}
                                 </div>
                             ) : (
                                 <img
                                     src={profileImage}
                                     alt={`${username}'s profile`}
-                                    className="flex--center h-full w-full object-cover"
+                                    className="flex-center h-full w-full object-cover"
                                 />
                             )}
                         </div>

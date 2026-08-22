@@ -65,7 +65,7 @@ const BoardStatsModal = ({ boardId, open, setOpen }) => {
                             onClick={() => {
                                 if (board?._id) {
                                     navigator.clipboard.writeText(board._id);
-                                    toast.success("code copied to clipboard");
+                                    toast.success("Code copied to clipboard");
                                 }
                             }}
                         >

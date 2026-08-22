@@ -91,7 +91,7 @@ const Boards = () => {
             <Modal
                 open={openJoinBoardRequestForm}
                 setOpen={setOpenJoinBoardRequestForm}
-                title="send join request"
+                title="send request"
             >
                 <JoinBoardRequestForm />
             </Modal>
@@ -112,80 +112,103 @@ const Boards = () => {
                 <div className="mx-auto sm:w-3/4 w-[90%]">
                     <Title titleName="boards" />
 
-                    <div className="flex flex-col sm:flex-row gap-1 sm:gap-0 mb-1 sm:mb-0 justify-between items-center">
-                        <div className="flex gap-3 text-[0.75rem] text-gray-700 mb-1 sm:mb-0">
-                            <div>
-                                <span
-                                    className={`cursor-pointer ${boardFilter === FILTERS.ALL ? "underline" : ""}`}
-                                    onClick={() => handleFilter(FILTERS.ALL)}
-                                >
-                                    total:{boardsQuery.data.total}
-                                </span>
+                    <div className="p-6 flex flex-col gap-4 items-start justify-start border shadow-gray-600 border-gray-600 shadow-[3px_5px_0_0]">
+                        <div className="w-full flex flex-row justify-between flex-wrap">
+                            <div className="flex flex-col gap-2">
+                                <p className="text-gray-700 font-semibold">
+                                    YOUR BOARDS
+                                </p>
+                                <div className="flex flex-col sm:flex-row gap-1 sm:gap-0 mb-1 sm:mb-0 justify-between items-center">
+                                    <div className="flex flex-row mb-1 text-gray-700 text-sm divide-x divide-gray-400">
+                                        <div className="pr-2">
+                                            <span
+                                                className={`cursor-pointer ${boardFilter === FILTERS.ALL ? "underline" : ""}`}
+                                                onClick={() =>
+                                                    handleFilter(FILTERS.ALL)
+                                                }
+                                            >
+                                                total:{boardsQuery.data.total}
+                                            </span>
+                                        </div>
+                                        {boardsQuery.data.totalOwned > 0 && (
+                                            <div className="px-2">
+                                                <span
+                                                    className={`cursor-pointer ${boardFilter === FILTERS.OWNED ? "underline" : ""}`}
+                                                    onClick={() =>
+                                                        handleFilter(
+                                                            FILTERS.OWNED,
+                                                        )
+                                                    }
+                                                >
+                                                    owned:
+                                                    {
+                                                        boardsQuery.data
+                                                            .totalOwned
+                                                    }
+                                                    /10
+                                                </span>
+                                            </div>
+                                        )}
+                                        {boardsQuery.data.totalJoined > 0 && (
+                                            <div className="px-2">
+                                                <span
+                                                    className={`cursor-pointer ${boardFilter === FILTERS.JOINED ? "underline" : ""}`}
+                                                    onClick={() =>
+                                                        handleFilter(
+                                                            FILTERS.JOINED,
+                                                        )
+                                                    }
+                                                >
+                                                    joined:
+                                                    {
+                                                        boardsQuery.data
+                                                            .totalJoined
+                                                    }
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
-
-                            {boardsQuery.data.totalOwned > 0 && (
-                                <div>
-                                    <span
-                                        className={`cursor-pointer ${boardFilter === FILTERS.OWNED ? "underline" : ""}`}
-                                        onClick={() =>
-                                            handleFilter(FILTERS.OWNED)
-                                        }
-                                    >
-                                        owned:{boardsQuery.data.totalOwned}/10
-                                    </span>
-                                </div>
-                            )}
-
-                            {boardsQuery.data.totalJoined > 0 && (
-                                <div>
-                                    <span
-                                        className={`cursor-pointer ${boardFilter === FILTERS.JOINED ? "underline" : ""}`}
-                                        onClick={() =>
-                                            handleFilter(FILTERS.JOINED)
-                                        }
-                                    >
-                                        joined:{boardsQuery.data.totalJoined}
-                                    </span>
-                                </div>
-                            )}
+                            <div className="flex sm:w-auto mt-1 sm:mt-0 w-full gap-3 font-semibold">
+                                <button
+                                    className="text-[12px] sm:text-sm text-gray-700 cursor-pointer border border-gray-800 hover:underline h-10 w-1/2 sm:w-35"
+                                    onClick={() =>
+                                        setOpenBoardForm((open) => !open)
+                                    }
+                                >
+                                    + new board
+                                </button>
+                                <button
+                                    className="text-[12px] sm:text-sm cursor-pointer p-2 bg-gray-600 text-gray-50 hover:bg-gray-500 h-10 w-1/2 sm:w-35"
+                                    onClick={() =>
+                                        setOpenJoinBoardRequestForm(
+                                            (open) => !open,
+                                        )
+                                    }
+                                >
+                                    join board
+                                </button>
+                            </div>
                         </div>
-
-                        <div className="flex gap-3">
-                            <button
-                                className="text-[0.75rem] text-gray-700 pe-1 text-end underline cursor-pointer sm:mb-0 mb-2"
-                                onClick={() =>
-                                    setOpenBoardForm((open) => !open)
-                                }
-                            >
-                                new board
-                            </button>
-
-                            <button
-                                className="text-[0.75rem] text-gray-700 pe-1 text-end underline cursor-pointer sm:mb-0 mb-2"
-                                onClick={() =>
-                                    setOpenJoinBoardRequestForm((open) => !open)
-                                }
-                            >
-                                join board
-                            </button>
+                        <div className="h-px bg-gray-400 w-full"></div>
+                        <div className="w-full my-1.5 relative flex flex-col items-center sm:justify-start sm:items-start sm:flex-row sm:flex-wrap gap-4">
+                            {boardsQuery.data.boards.map((item) => {
+                                return <BoardItem key={item._id} item={item} />;
+                            })}
                         </div>
                     </div>
 
-                    <div className="relative flex flex-col items-center mx-auto sm:m-0 sm:justify-start sm:items-start sm:flex-row sm:flex-wrap gap-4 p-6 sm:p-8 border-2 box--style shadow-gray-600 border-gray-600 w-70 sm:w-full">
-                        {boardsQuery.data.boards.map((item) => {
-                            return <BoardItem key={item._id} item={item} />;
-                        })}
-                    </div>
-
-                    {boardsQuery.data.recentlyViewedBoard && (
-                        <div className="w-full sm:w-fit sm:block flex flex-col items-center mt-8">
-                            <p className="text-gray-700 text-[0.75rem]">
-                                recently viewed board
+                    {boardsQuery.data.recentBoards.length > 0 && (
+                        <div className="mt-8 p-6 flex flex-col gap-4 items-start justify-start border shadow-gray-600 border-gray-600 shadow-[3px_5px_0_0]">
+                            <p className="text-gray-700 font-semibold">
+                                RECENTLY VIEWED
                             </p>
-                            <div className="w-70 sm:w-fit flex flex-col flex-wrap gap-1 px-8 pt-6 pb-8 box--style justify-start items-start border-2 shadow-gray-600 border-gray-600">
-                                <BoardItem
-                                    item={boardsQuery.data.recentlyViewedBoard}
-                                />
+                            <div className="h-px bg-gray-400 w-full"></div>
+                            <div className="w-full my-1.5 relative flex flex-col items-center sm:justify-start sm:items-start sm:flex-row sm:flex-wrap gap-4">
+                                {boardsQuery.data.recentBoards.map((item) => (
+                                    <BoardItem key={item._id} item={item} />
+                                ))}
                             </div>
                         </div>
                     )}

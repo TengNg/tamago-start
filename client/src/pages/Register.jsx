@@ -38,7 +38,7 @@ export default function Register() {
         onSuccess: (_data, _variables, _context) => {
             queryClient.resetQueries({ queryKey: ["me"], exact: true });
             navigate("/login");
-            toast.success("account successfully registered", 5000);
+            toast.success("Account successfully registered", 5000);
         },
         onMutate: () => {
             const username = usernameInputEl.current;
@@ -121,7 +121,7 @@ export default function Register() {
 
                 <form
                     onSubmit={handleSubmit}
-                    className="flex flex-col form--style p-6 pt-2 bg-gray-200 w-81.25"
+                    className="flex flex-col border-gray-700 border-2 shadow-[5px_6px_0_0_black] shadow-gray-700 rounded-xs p-6 pt-2 bg-gray-200 w-81.25"
                     style={{ backgroundColor: "rgba(241, 241, 241, 0.75)" }}
                 >
                     <label className="text-gray-700" htmlFor="username">
@@ -179,7 +179,7 @@ export default function Register() {
 
                     <div className="flex flex-col gap-3 mt-4">
                         <button
-                            className="button--style--dark flex--center"
+                            className="button--style--dark flex-center"
                             disabled={registerMutation.isPending}
                         >
                             {registerMutation.isPending
@@ -187,7 +187,7 @@ export default function Register() {
                                 : "Sign up"}
                         </button>
                         <a
-                            className="button--style border-0 text-gray-50! bg-indigo-700 hover:bg-indigo-500 flex--center"
+                            className="button--style border-0 text-gray-50! bg-indigo-700 hover:bg-indigo-500 flex-center"
                             href={`${import.meta.env.VITE_SERVER_URL || "http://localhost:3001"}/auth/discord`}
                         >
                             Log in with Discord

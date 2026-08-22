@@ -3,8 +3,8 @@ import Board from '../models/Board.js';
 import BoardMembership from '../models/BoardMembership.js';
 import bcrypt from 'bcryptjs';
 import { isValidUsername } from '../services/usernameValidationService.js';
-import { sanitizeUser } from '../services/userService.js';
 import { sendAuthCookies, clearAuthCookies } from '../services/createAuthTokensService.js';
+import { generatePinnedBoardOrder } from '../services/pinnedBoardService.js';
 
 /**
  * @param {import('express').Request} req
@@ -12,12 +12,14 @@ import { sendAuthCookies, clearAuthCookies } from '../services/createAuthTokensS
  */
 const getCurrentUser = async (req, res) => {
     const { userId } = req.user;
-    const user = await User.findById(userId).select('-password -refreshTokenVersion');
+    const user = await User.findById(userId)
+        .select('-password -refreshTokenVersion -__v')
+        .populate('pinnedBoards.board', 'title');
     if (!user) {
         return res.sendStatus(404);
     }
 
-    res.json({ user: sanitizeUser(user) });
+    res.json(user);
 }
 
 /**
@@ -138,22 +140,33 @@ const addPinnedBoard = async (req, res) => {
         return res.status(403).json({ message: "You do not have access to this board" });
     }
 
-    if (foundUser.pinnedBoardIdCollection && foundUser.pinnedBoardIdCollection.has(id)) {
-        const result = await User.findOneAndUpdate(
-            { _id: userId },
-            { $unset: { [`pinnedBoardIdCollection.${id}`]: 1 } },
-            { new: true }
-        ).select('pinnedBoardIdCollection');
-        return res.status(200).json({ pinnedBoards: result.pinnedBoardIdCollection });
+    const alreadyPinned = foundUser.pinnedBoards.some(
+        (p) => p.board.equals(board._id)
+    );
+
+    if (alreadyPinned) {
+        foundUser.pinnedBoards.pull({ board: board._id });
+    } else {
+        const sorted = [...foundUser.pinnedBoards].sort((a, b) =>
+            a.order.localeCompare(b.order)
+        );
+        const last = sorted[sorted.length - 1];
+        const order = generatePinnedBoardOrder({
+            user: foundUser,
+            prevBoardId: last?.board.toString() ?? null,
+            nextBoardId: null,
+        });
+        foundUser.pinnedBoards.push({
+            board: board._id,
+            pinnedAt: new Date(),
+            order,
+        });
     }
 
-    const result = await User.findOneAndUpdate(
-        { _id: userId },
-        { $set: { [`pinnedBoardIdCollection.${id}`]: { title: board.title } } },
-        { new: true, upsert: true }
-    ).select('pinnedBoardIdCollection');
+    await foundUser.save();
+    await foundUser.populate('pinnedBoards.board', 'title');
 
-    return res.status(200).json({ pinnedBoards: result.pinnedBoardIdCollection });
+    return res.status(200).json({ pinnedBoards: foundUser.pinnedBoards });
 };
 
 /**
@@ -166,43 +179,50 @@ const deletePinnedBoard = async (req, res) => {
 
     const foundUser = await User.findById(userId);
     if (!foundUser) {
-        return res.status(403).json({ message: "User not found" });
+        return res.sendStatus(404);
     }
 
-    if (foundUser.pinnedBoardIdCollection && foundUser.pinnedBoardIdCollection.has(id)) {
-        const result = await User.findOneAndUpdate(
-            { _id: userId },
-            { $unset: { [`pinnedBoardIdCollection.${id}`]: 1 } },
-            { new: true }
-        ).select('pinnedBoardIdCollection');
-        return res.status(200).json({ pinnedBoards: result.pinnedBoardIdCollection });
+    const entry = foundUser.pinnedBoards.find((p) => p.board.equals(id));
+    if (!entry) {
+        return res.sendStatus(404);
     }
 
-    return res.sendStatus(404);
+    foundUser.pinnedBoards.pull({ board: entry.board });
+    await foundUser.save();
+    await foundUser.populate('pinnedBoards.board', 'title');
+
+    return res.status(200).json({ pinnedBoards: foundUser.pinnedBoards });
 };
 
 /**
  * @param {import('express').Request} req
  * @param {import('express').Response} res
  */
-const updatePinnedBoards = async (req, res) => {
+const reorderPinnedBoard = async (req, res) => {
     const { userId } = req.user;
-    const { pinnedBoards } = req.body;
+    const { id } = req.params;
+    const { prevBoardId, nextBoardId } = req.body;
 
     const foundUser = await User.findById(userId);
-    if (JSON.stringify(foundUser.pinnedBoardIdCollection) === JSON.stringify(pinnedBoards)) {
-        return res.status(200).json({
-            pinnedBoards: foundUser.pinnedBoardIdCollection,
-        });
+    if (!foundUser) {
+        return res.sendStatus(404);
     }
 
-    const result = await User.findOneAndUpdate(
-        { _id: userId },
-        { pinnedBoardIdCollection: pinnedBoards },
-        { new: true }
-    ).select('pinnedBoardIdCollection');
+    const entry = foundUser.pinnedBoards.find((p) => p.board.equals(id));
+    if (!entry) {
+        return res.sendStatus(404);
+    }
 
-    return res.status(200).json({ pinnedBoards: result.pinnedBoardIdCollection });
+    entry.order = generatePinnedBoardOrder({
+        user: foundUser,
+        prevBoardId: prevBoardId || null,
+        nextBoardId: nextBoardId || null,
+    });
+
+    await foundUser.save();
+    await foundUser.populate('pinnedBoards.board', 'title');
+
+    return res.status(200).json({ pinnedBoards: foundUser.pinnedBoards });
 };
 
 /**
@@ -213,9 +233,9 @@ const cleanPinnedBoards = async (req, res) => {
     const { userId } = req.user;
     await User.findOneAndUpdate(
         { _id: userId },
-        { pinnedBoardIdCollection: {} },
+        { pinnedBoards: [] },
         { new: true }
-    ).select('pinnedBoardIdCollection');
+    ).select('pinnedBoards');
 
     return res.sendStatus(204);
 };
@@ -226,6 +246,6 @@ export {
     updatePassword,
     addPinnedBoard,
     deletePinnedBoard,
-    updatePinnedBoards,
+    reorderPinnedBoard,
     cleanPinnedBoards,
 }

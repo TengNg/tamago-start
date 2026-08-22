@@ -16,6 +16,7 @@ import { SOCKET_EVENTS } from '../../shared/socket-events.js';
 import { revokeUserBoardSockets, emitToBoard } from '../socket/registry.js';
 
 const MAX_BOARD_COUNT = 10;
+const MAX_RECENT_BOARDS = 5;
 
 /**
  * @param {import('mongoose').Types.ObjectId} boardId
@@ -61,17 +62,25 @@ const getBoards = async (req, res) => {
             total: 0,
             totalOwned: 0,
             totalJoined: 0,
-            recentlyViewedBoard: null,
+            recentBoards: [],
         });
     }
 
     const boards = await Board.find({ _id: { $in: userBoardIds } })
         .sort({ title: 'asc' })
         .lean();
+
+    const memberCounts = await BoardMembership.aggregate([
+        { $match: { boardId: { $in: userBoardIds } } },
+        { $group: { _id: '$boardId', count: { $sum: 1 } } },
+    ]);
+    const memberCountMap = new Map(memberCounts.map(m => [m._id.toString(), m.count]));
+
     const mapped = boards.map(board => ({
         ...board,
         owned: board.createdBy.toString() === userId.toString(),
         listCount: board.stats?.listCount ?? 0,
+        memberCount: memberCountMap.get(board._id.toString()) ?? 0,
     }));
 
     const ownedBoardsCount = mapped.filter(b => b.owned).length;
@@ -84,18 +93,37 @@ const getBoards = async (req, res) => {
                 : board
     });
 
-    const foundUser = await User.findById(userId);
-    const recentlyViewedBoardMembership = await BoardMembership.findOne({
-        userId: foundUser?._id,
-        boardId: foundUser?.recentlyViewedBoardId,
-    }).populate({ path: 'boardId' });
+    const user = await User.findById(userId).lean();
+    const recentBoards = (user?.recentBoards ?? [])
+        .filter((rb) => rb.board)
+        .slice(0, MAX_RECENT_BOARDS);
+
+    const recentBoardDocs = recentBoards.length > 0
+        ? await Board.find({ _id: { $in: recentBoards.map((rb) => rb.board) } })
+            .lean()
+        : [];
+
+    const recentBoardMap = new Map(
+        recentBoardDocs.map((b) => [b._id.toString(), b])
+    );
+
+    const populatedRecentBoards = recentBoards
+        .map((rb) => {
+            const board = recentBoardMap.get(rb.board.toString());
+            if (!board) return null;
+            return {
+                ...board,
+                memberCount: memberCountMap.get(board._id.toString()) ?? 0,
+            };
+        })
+        .filter(Boolean);
 
     return res.json({
         boards: filtered,
         total: mapped.length,
         totalOwned: ownedBoardsCount,
         totalJoined: joinedBoardsCount,
-        recentlyViewedBoard: recentlyViewedBoardMembership?.boardId || null,
+        recentBoards: populatedRecentBoards,
     });
 };
 
@@ -147,10 +175,26 @@ const getBoard = async (req, res) => {
         return res.status(400).json({ message: "You're not a member of this board" });
     }
 
-    await User.updateOne(
-        { _id: userId, recentlyViewedBoardId: { $ne: board._id } },
-        { $set: { recentlyViewedBoardId: board._id } },
-    );
+    const user = await User.findById(userId);
+    if (user) {
+        const existingIndex = user.recentBoards.findIndex(
+            (rb) => rb.board?.equals(board._id)
+        );
+        if (existingIndex !== -1) {
+            user.recentBoards.splice(existingIndex, 1);
+        }
+
+        user.recentBoards.unshift({
+            board: board._id,
+            viewedAt: new Date(),
+        });
+
+        user.recentBoards.splice(MAX_RECENT_BOARDS);
+
+        await user.save();
+    } else {
+        return res.status(400).json({ message: "Unauthorized" });
+    }
 
     return res.json({
         board,
@@ -339,8 +383,8 @@ const leaveBoard = async (req, res) => {
     await BoardMembership.deleteOne({ boardId: board._id, userId });
 
     await User.updateOne(
-        { _id: userId, recentlyViewedBoardId: board._id },
-        { $unset: { recentlyViewedBoardId: 1 } },
+        { _id: userId },
+        { $pull: { recentBoards: { board: board._id } } },
     );
 
     await saveBoardActivity({
@@ -399,6 +443,11 @@ const removeMemberFromBoard = async (req, res) => {
         return res.status(400).json({ message: "Failed to remove member" });
     }
 
+    await User.updateOne(
+        { _id: foundMember._id },
+        { $pull: { recentBoards: { board: board._id } } },
+    );
+
     revokeUserBoardSockets(foundMember._id.toString(), board._id);
 
     res.sendStatus(204);
@@ -438,6 +487,11 @@ const closeBoard = async (req, res) => {
         await BoardMembership.deleteMany({ boardId: id }, { session });
         await BoardActivity.deleteMany({ board: id }, { session });
         await ChatMessage.deleteMany({ boardId: id }, { session });
+        await User.updateMany(
+            { "recentBoards.board": id },
+            { $pull: { recentBoards: { board: id } } },
+            { session },
+        );
         await Board.deleteOne({ _id: id }, { session });
 
         await session.commitTransaction();

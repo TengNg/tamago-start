@@ -8,7 +8,7 @@ import {
     updatePassword,
     addPinnedBoard,
     deletePinnedBoard,
-    updatePinnedBoards,
+    reorderPinnedBoard,
     cleanPinnedBoards,
 } from "../../controllers/userController.js";
 
@@ -29,8 +29,10 @@ pinnedBoardRouter.route("/:id")
     .patch(addPinnedBoard)
     .delete(deletePinnedBoard)
 
+pinnedBoardRouter.route("/:id/reorder")
+    .patch(reorderPinnedBoard)
+
 pinnedBoardRouter.route("/")
-    .patch(updatePinnedBoards)
     .delete(cleanPinnedBoards)
 
 export default router;

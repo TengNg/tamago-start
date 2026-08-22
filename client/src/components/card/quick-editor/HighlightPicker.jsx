@@ -43,7 +43,7 @@ const QuickEditorHighlightPicker = ({ card }) => {
             })}
 
             <div
-                className={`w-full h-5 mt-1 bg-transparent flex--center font-bold border-2 hover:border-blue-700 hover:text-blue-700 text-gray-600 border-gray-600 text-[0.75rem]`}
+                className={`w-full h-5 mt-1 bg-transparent flex-center font-bold border-2 hover:border-blue-700 hover:text-blue-700 text-gray-600 border-gray-600 text-[0.75rem]`}
                 onClick={() => handleSetCardHighlight(null)}
             >
                 <Icon className="w-3 h-3" name="xmark" />

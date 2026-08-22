@@ -93,7 +93,7 @@ const Modal = ({ children, ...props }) => {
         >
             <div
                 ref={contentRef}
-                className={`relative modal--content gap-3 items-start p-3 h-fit min-w-81.25 w-106.25 ${className ? className : ""}`}
+                className={`relative flex flex-col shadow-[4px_6px_0_0] border-gray-700 border-2 bg-gray-200 shadow-gray-700 gap-3 items-start p-3 h-fit min-w-81.25 w-106.25 ${className ? className : ""}`}
             >
                 {title && (
                     <div className="flex w-full justify-between items-center border-b border-black pb-2 gap-2">

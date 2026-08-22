@@ -53,10 +53,11 @@ const NavBar = ({ setOpenPinnedBoards }) => {
                     return;
                 }
 
-                const recentlyViewedBoardId = currentUser.recentlyViewedBoardId;
-                if (recentlyViewedBoardId) {
-                    navigate(`/b/${recentlyViewedBoardId}`);
+                const lastBoardId = currentUser.recentBoards[0]?.board;
+                if (lastBoardId) {
+                    navigate(`/b/${lastBoardId}`);
                 }
+
                 return;
             }
 
@@ -83,7 +84,7 @@ const NavBar = ({ setOpenPinnedBoards }) => {
         return (
             <section
                 id="header-section"
-                className="w-full flex--center relative gap-2 py-3 px-2 sm:px-4"
+                className="w-full flex-center relative gap-2 py-3 px-2 sm:px-4"
             >
                 <nav className="unauthorized h-full top-4 m-auto border-gray-700 border-2 bg-transparent px-2 z-30 drop-shadow-xs">
                     <ul className="w-full h-full flex justify-around items-center sm:gap-4 gap-2">
@@ -126,24 +127,22 @@ const NavBar = ({ setOpenPinnedBoards }) => {
         <>
             <section
                 id="header-section"
-                className="w-full flex--center relative gap-2 py-3 px-2 sm:px-4"
+                className="w-full flex-center relative gap-2 py-3 px-2 sm:px-4"
             >
                 <div className="md:block hidden w-10 h-10"></div>
 
                 <div className="absolute md:flex hidden items-center gap-2 md:top-4 md:left-4 top-2 left-2 text-[0.75rem] font-medium">
-                    {currentUser.recentlyViewedBoardId && (
+                    {currentUser.recentBoards[0]?.board && (
                         <>
                             {!isBoardPath && (
                                 <button
                                     title="[05] Go to last viewed board"
                                     className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border border-dashed text-[0.75rem] md:p-2 p-1 font-medium cursor-pointer"
                                     onClick={() => {
-                                        const recentlyViewedBoardId =
-                                            currentUser.recentlyViewedBoardId;
-                                        if (recentlyViewedBoardId) {
-                                            navigate(
-                                                `/b/${recentlyViewedBoardId}`,
-                                            );
+                                        const lastBoardId =
+                                            currentUser.recentBoards[0]?.board;
+                                        if (lastBoardId) {
+                                            navigate(`/b/${lastBoardId}`);
                                         }
                                     }}
                                 >
@@ -197,17 +196,19 @@ const NavBar = ({ setOpenPinnedBoards }) => {
 
                         <li className="md:hidden block">
                             <div className="flex gap-2">
-                                {currentUser.recentlyViewedBoardId && (
+                                {currentUser.recentBoards[0]?.board && (
                                     <>
                                         {!isBoardPath && (
                                             <button
                                                 className="bg-transparent hover:bg-gray-600 hover:text-gray-50 text-slate-600 border-slate-600 border border-dashed text-[0.75rem] md:p-2 p-1 font-normal"
                                                 onClick={() => {
-                                                    const recentlyViewedBoardId =
-                                                        currentUser.recentlyViewedBoardId;
-                                                    if (recentlyViewedBoardId) {
+                                                    const lastBoardId =
+                                                        currentUser
+                                                            .recentBoards[0]
+                                                            ?.board;
+                                                    if (lastBoardId) {
                                                         navigate(
-                                                            `/b/${recentlyViewedBoardId}`,
+                                                            `/b/${lastBoardId}`,
                                                         );
                                                     }
                                                 }}

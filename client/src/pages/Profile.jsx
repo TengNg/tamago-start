@@ -312,7 +312,7 @@ const Profile = () => {
                                     />
                                 </div>
                             )}
-                            {!currentUser.loginWithDiscord && (
+                            {!currentUser.discordId && (
                                 <div className="flex flex-col gap-4">
                                     {!changePassword ? (
                                         <button
@@ -364,8 +364,8 @@ const Profile = () => {
                 <div className="mx-auto sm:w-3/4 w-[90%] flex flex-col items-center mt-6">
                     <span className="text-gray-600">owned boards</span>
 
-                    <div className="box--style relative border-2 border-gray-700 shadow-gray-700 sm:p-4 p-3 lg:w-[450px] sm:w-[400px] w-full bg-gray-100/20!">
-                        <div className="flex flex-col items-center mt-3 gap-4 pb-4 px-4 lg:px-2 max-h-[450px] overflow-auto">
+                    <div className="box--style relative border-2 border-gray-700 shadow-gray-700 sm:p-4 p-3 lg:w-112.5 sm:w-100 w-full bg-gray-100/20!">
+                        <div className="flex flex-col items-center mt-3 gap-4 pb-4 px-4 lg:px-2 max-h-112.5 overflow-auto">
                             {ownedBoardsQuery.isPending ||
                             ownedBoardsQuery.isError ? (
                                 <div className="loader mx-auto"></div>
@@ -390,33 +390,31 @@ const Profile = () => {
                                                 setBoardStatsBoardId(_id);
                                                 setBoardStatsOpen(true);
                                             }}
-                                            className="w-full h-[125px] sm:h-[150px] bg-transparent"
+                                            className="w-full h-31.25 sm:h-37.5 text-gray-600! shadow-[0px_6px_0_0] cursor-pointer hover:translate-y-1.5 hover:shadow-none hover:brightness-110 transition-all md:border-2 border-2 border-gray-600 py-3 px-3 md:px-5 shadow-gray-600 select-none relative bg-gray-100/30"
                                         >
-                                            <div className="w-full h-[125px] sm:h-[150px] board--style board--hover border-2 md:border-[2.5px] border-gray-600 text-gray-700 py-3 px-3 shadow-gray-600 select-none bg-transparent relative">
-                                                <p className="text-[12px] sm:text-[1rem] font-medium sm:font-medium text-gray-600 overflow-hidden whitespace-nowrap text-ellipsis">
-                                                    {title}
-                                                </p>
+                                            <p className="text-[12px] sm:text-[1rem] font-medium sm:font-medium text-gray-600 overflow-hidden whitespace-nowrap text-ellipsis">
+                                                {title}
+                                            </p>
 
-                                                <div className="h-px w-full bg-black my-2"></div>
+                                            <div className="h-px w-full bg-black my-2"></div>
 
-                                                <p className="text-[11px] sm:text-[0.85rem] mt-3">
-                                                    lists:{" "}
-                                                    {
-                                                        /** @type {BoardListItem & { listCount: number }} */ (
-                                                            item
-                                                        ).listCount
-                                                    }
-                                                </p>
+                                            <p className="text-[11px] sm:text-[0.85rem] mt-3">
+                                                lists:{" "}
+                                                {
+                                                    /** @type {BoardListItem & { listCount: number }} */ (
+                                                        item
+                                                    ).listCount
+                                                }
+                                            </p>
 
-                                                <p className="text-[11px] sm:text-[0.85rem] mt-1">
-                                                    members: {memberCount}
-                                                </p>
+                                            <p className="text-[11px] sm:text-[0.85rem] mt-1">
+                                                members: {memberCount}
+                                            </p>
 
-                                                <p className="text-[11px] sm:text-[0.85rem] mt-1">
-                                                    created:{" "}
-                                                    {dateFormatter(createdAt)}
-                                                </p>
-                                            </div>
+                                            <p className="text-[11px] sm:text-[0.85rem] mt-1">
+                                                created:{" "}
+                                                {dateFormatter(createdAt)}
+                                            </p>
                                         </div>
                                     );
                                 })

@@ -23,7 +23,7 @@ const Loading = ({
 }) => {
     return (
         <div
-            className={`${loading ? position : "hidden"} ${position} text-[${fontSize}] z-${zIndex} select-none top-0 left-0 text-gray-600 font-medium h-full w-full bg-white opacity-50 flex--center`}
+            className={`${loading ? position : "hidden"} ${position} text-[${fontSize}] z-${zIndex} select-none top-0 left-0 text-gray-600 font-medium h-full w-full bg-white opacity-50 flex-center`}
         >
             <div className={displayTextClassName}>
                 {displayText}
